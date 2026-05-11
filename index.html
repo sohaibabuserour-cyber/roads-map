@@ -2,43 +2,55 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <title>الخريطة التفاعلية لمشاريع البنية التحتية</title>
+  <title>الخريطة التفاعلية</title>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    body { margin: 0; font-family: "Arial", sans-serif; }
+    body { margin: 0; font-family: Arial, sans-serif; }
     #map { height: 100vh; width: 100%; }
 
-    /* ===== Popup Style ===== */
+    /* === Popup Style === */
     .popup-card {
-      width: 280px;
-      border-radius: 16px;
+      width: 320px;
+      border-radius: 18px;
       overflow: hidden;
       background: #ffffff;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     }
 
     .popup-header {
       background: #7a3fa0;
       color: #fff;
-      padding: 12px;
-      text-align: center;
+      padding: 12px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 18px;
       font-weight: bold;
-      font-size: 15px;
+    }
+
+    .popup-header img {
+      height: 42px;
+      width: auto;
+    }
+
+    .popup-title {
+      flex: 1;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
     }
 
     .popup-body {
-      padding: 12px;
-      font-size: 13px;
+      padding: 14px;
+      font-size: 15px;
       color: #333;
     }
 
     .popup-row {
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
     }
@@ -59,32 +71,23 @@
 <div id="map"></div>
 
 <script>
-/* =====================
-   إعداد الخريطة
-   ===================== */
+/* ===== الخريطة ===== */
 const map = L.map('map').setView([21.30, 39.70], 13);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
 
-/* =====================
-   دالة لون حسب الحالة
-   ===================== */
+/* ===== ألوان الحالات ===== */
 function getColorByStatus(status) {
   if (!status) return "#9e9e9e";
   status = status.trim();
-
-  if (status === "جاري") return "#4caf50";     // أخضر
-  if (status === "منتهي") return "#2196f3";    // أزرق
-  if (status === "متوقف") return "#f44336";    // أحمر
-
+  if (status === "جاري") return "#4caf50";
+  if (status === "منتهي") return "#2196f3";
+  if (status === "متوقف") return "#f44336";
   return "#9e9e9e";
 }
 
-/* =====================
-   قراءة Google Sheet
-   ===================== */
+/* ===== قراءة Google Sheet ===== */
 const sheetURL =
 "https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
 
@@ -101,14 +104,11 @@ fetch(sheetURL)
     const id = String(r.c[0].v).trim();
     sheetData[id] = {};
     cols.forEach((c, i) => {
-      sheetData[id][c] =
-        r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
+      sheetData[id][c] = r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
     });
   });
 
-  /* =====================
-     رسم الطرق
-     ===================== */
+  /* ===== رسم الطرق ===== */
   fetch("https://sohaibabuserour-cyber.github.io/roads-map/ROADS.geojson")
   .then(r => r.json())
   .then(geojson => {
@@ -123,29 +123,20 @@ fetch(sheetURL)
         const roadId = String(feature.properties["Name"]).trim();
         const row = sheetData[roadId];
 
-        if (!row) {
-          layer.setStyle({
-            color: "#9e9e9e",
-            fillColor: "#9e9e9e"
-          });
-          layer.bindPopup("لا توجد بيانات لهذا الطريق");
-          return;
-        }
+        if (!row) return;
 
         const status = row["status"];
+        const color = getColorByStatus(status);
 
         layer.setStyle({
-          color: getColorByStatus(status),
-          fillColor: getColorByStatus(status)
+          color: color,
+          fillColor: color
         });
 
-        /* ===== Popup HTML ===== */
         let popupHtml = `
           <div class="popup-card">
             <div class="popup-header">
-              بيانات الطريق
-            </div>
-            <div class="popup-body">
+              <img src="logo-right.png" alt="Logo Rightimg src="logo-left.png" alt="Logo           <div class="popup-body">
         `;
 
         Object.keys(row).forEach(key => {
@@ -172,4 +163,3 @@ fetch(sheetURL)
 </script>
 </body>
 </html>
-``
