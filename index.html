@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <title>الخريطة التفاعلية</title>
 
-  https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
-  https://unpkg.com/leaflet@1.9.4/dist/leaflet.jsscript>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
@@ -28,7 +28,7 @@
     .summary-title {
       font-size: 20px;
       font-weight: bold;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       text-align: center;
       border-bottom: 2px solid rgba(255,255,255,0.4);
       padding-bottom: 8px;
@@ -41,60 +41,7 @@
       padding: 6px 0;
       border-bottom: 1px solid rgba(255,255,255,0.4);
     }
-
-    .summary-row:last-child {
-      border-bottom: none;
-    }
-
-    /* ===== Popup ===== */
-    .popup-card {
-      width: 500px;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #ffffff;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    }
-
-    .popup-header {
-      background: #7a3fa0;
-      color: #fff;
-      padding: 18px 12px;
-      text-align: center;
-    }
-
-    .title-main { font-size: 34px; font-weight: bold; }
-    .title-sub { font-size: 26px; font-weight: bold; margin-top: 6px; }
-
-    .popup-body { padding: 14px; font-size: 24px; }
-
-    .popup-row {
-      padding: 8px 0;
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 2px solid #e0e0e0;
-    }
-
-    .popup-row:last-child { border-bottom: none; }
-
-    .popup-label {
-      color: #7a3fa0;
-      font-weight: bold;
-    }
-
-    /* ===== GPS Button ===== */
-    .locate-btn {
-      background: #7a3fa0;
-      color: #fff;
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      font-size: 22px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    }
+    .summary-row:last-child { border-bottom: none; }
   </style>
 </head>
 
@@ -113,50 +60,54 @@
 <div id="map"></div>
 
 <script>
-/* ===== إنشاء الخريطة بدون + / − ===== */
-const map = L.map('map', { zoomControl: false }).setView([21.30,39.70],13);
+/* ==============================
+   إنشاء الخريطة (بدون + / −)
+   ============================== */
+const map = L.map('map', { zoomControl: false }).setView([21.30, 39.70], 13);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:19
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19
 }).addTo(map);
 
-/* ===== زر تحديد الموقع ===== */
-let userLocationMarker = null;
+/* ==============================
+   تتبع الموقع Live (Google Maps style)
+   ============================== */
+let userMarker = null;
 
-const locateControl = L.control({ position: 'bottomright' });
-locateControl.onAdd = function () {
-  const div = L.DomUtil.create('div', 'locate-btn');
-  div.innerHTML = "📍";
-  div.onclick = () => {
-    map.locate({ setView: true, maxZoom: 17 });
-  };
-  return div;
-};
-locateControl.addTo(map);
+if ("geolocation" in navigator) {
+  navigator.geolocation.watchPosition(
+    function (position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
 
-/* ===== رسم نقطة الموقع الزرقاء ===== */
-map.on('locationfound', function(e) {
+      if (userMarker) {
+        map.removeLayer(userMarker);
+      }
 
-  if (userLocationMarker) {
-    map.removeLayer(userLocationMarker);
-  }
+      userMarker = L.circleMarker([lat, lng], {
+        radius: 8,
+        color: "#1e88e5",
+        fillColor: "#2196f3",
+        fillOpacity: 1,
+        weight: 3
+      }).addTo(map);
+    },
+    function (error) {
+      console.warn("تعذر تحديد الموقع");
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 10000
+    }
+  );
+}
 
-  userLocationMarker = L.circleMarker(e.latlng, {
-    radius: 8,
-    color: '#1e88e5',
-    fillColor: '#2196f3',
-    fillOpacity: 1,
-    weight: 3
-  }).addTo(map);
-});
-
-map.on('locationerror', function() {
-  alert("تعذّر تحديد موقعك");
-});
-
-/* ===== باقي كود الخرائط والـ Sheet (كما هو عندك) ===== */
-/* لم يتم تغييره نهائيًا */
-
+/* ==============================
+   (باقي كود الطرق والشيت والداش
+   تحطه زي ما هو عندك من غير تغيير)
+   ============================== */
 </script>
+
 </body>
 </html>
