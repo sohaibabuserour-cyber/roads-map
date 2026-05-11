@@ -1,219 +1,165 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <title>الخريطة التفاعلية</title>
+<meta charset="utf-8">
+<title>الخريطة التفاعلية مشروع ولى العهد ي</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
+https://unpkg.com/leaflet@1.9.4/dist/leaflet.js>
 
-  <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 100vh; width: 100%; }
+<style>
+body{margin:0;font-family:Arial}
+#map{height:100vh}
 
-    /* ===== Dashboard ===== */
-    .summary-box {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 1000;
-      background: #7a3fa0;
-      color: #fff;
-      padding: 16px 20px;
-      border-radius: 14px;
-      width: 320px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-    }
-    .summary-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 12px;
-      text-align: center;
-      border-bottom: 2px solid rgba(255,255,255,0.4);
-      padding-bottom: 6px;
-    }
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 15px;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.4);
-    }
-    .summary-row:last-child { border-bottom: none; }
+/* ===== Control Panel ===== */
+.control-box{
+ position:absolute;top:12px;right:12px;z-index:1000;
+ background:#fff;padding:10px 14px;border-radius:10px;
+ box-shadow:0 4px 12px rgba(0,0,0,.3);
+ font-size:14px
+}
 
-    /* ===== Popup ===== */
-    .popup-card {
-      width: 420px;
-      border-radius: 14px;
-      overflow: hidden;
-      background: #ffffff;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.3);
-    }
-    .popup-header {
-      background: #7a3fa0;
-      color: #fff;
-      padding: 14px;
-      text-align: center;
-    }
-    .title-main { font-size: 26px; font-weight: bold; }
-    .title-sub { font-size: 20px; font-weight: bold; margin-top: 4px; }
-    .popup-body { padding: 12px; font-size: 18px; }
-    .popup-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .popup-row:last-child { border-bottom: none; }
-    .popup-label { font-weight: bold; color: #7a3fa0; }
-  </style>
+/* ===== Dashboards ===== */
+.dashboard{
+ position:absolute;left:12px;z-index:1000;width:300px;
+ background:#7a3fa0;color:#fff;padding:14px;border-radius:14px;
+ box-shadow:0 6px 16px rgba(0,0,0,.35);
+ margin-bottom:12px
+}
+.dashboard h3{text-align:center;margin:0 0 8px;font-size:18px;border-bottom:1px solid rgba(255,255,255,.5)}
+.row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.3)}
+.row:last-child{border-bottom:none}
+
+#roadsDash{top:60px}
+#blocksDash{top:300px}
+
+/* ===== Legend ===== */
+.legend{
+ position:absolute;bottom:20px;right:20px;
+ background:#fff;padding:10px;border-radius:8px;
+ box-shadow:0 4px 10px rgba(0,0,0,.3);
+ font-size:14px
+}
+.legend span{display:flex;align-items:center;margin-bottom:5px}
+.legend i{width:14px;height:14px;margin-left:8px;border-radius:3px}
+.green{background:#4caf50}
+.blue{background:#2196f3}
+.red{background:#f44336}
+</style>
 </head>
 
 <body>
 
-<!-- ===== Dashboard ===== -->
-<div class="summary-box">
-  <div class="summary-title">إجماليات الطرق</div>
-  <div class="summary-row"><span>إجمالي الردم</span><span id="fillTotal">0</span></div>
-  <div class="summary-row"><span>إجمالي القطع</span><span id="cutTotal">0</span></div>
-  <div class="summary-row"><span>الردم المنفذ</span><span id="fillDone">0</span></div>
-  <div class="summary-row"><span>القطع المنفذ</span><span id="cutDone">0</span></div>
+<!-- ✅ Checkbox Control -->
+<div class="control-box">
+ <label><input id="chkRoads" type="checkbox" checked> الطرق</label><br>
+ <label><input id="chkBlocks" type="checkbox" checked> البلوكات</label>
+</div>
+
+<!-- ✅ Dashboard Roads -->
+<div class="dashboard" id="roadsDash">
+<h3>إجماليات الطرق</h3>
+<div class="row"><span>الردم الكلي</span><span id="rFillT">0</span></div>
+<div class="row"><span>القطع الكلي</span><span id="rCutT">0</span></div>
+<div class="row"><span>المنفذ</span><span id="rDone">0</span></div>
+<div class="row"><span>المتبقي</span><span id="rRemain">0</span></div>
+</div>
+
+<!-- ✅ Dashboard Blocks -->
+<div class="dashboard" id="blocksDash">
+<h3>إجماليات البلوكات</h3>
+<div class="row"><span>الردم الكلي</span><span id="bFillT">0</span></div>
+<div class="row"><span>القطع الكلي</span><span id="bCutT">0</span></div>
+<div class="row"><span>المنفذ</span><span id="bDone">0</span></div>
+<div class="row"><span>المتبقي</span><span id="bRemain">0</span></div>
 </div>
 
 <div id="map"></div>
 
+<!-- ✅ Legend -->
+<div class="legend">
+ <span><i class="green"></i>جاري</span>
+ <span><i class="blue"></i>منتهي</span>
+ <span><i class="red"></i>متوقف</span>
+</div>
+
 <script>
-/* ===== إنشاء الخريطة ===== */
-const map = L.map('map', { zoomControl: false }).setView([21.30,39.70],13);
+const map=L.map('map').setView([21.3,39.7],13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
-/* ===== GPS Live ===== */
-let userMarker = null;
-if ("geolocation" in navigator) {
-  navigator.geolocation.watchPosition(p => {
-    if (userMarker) map.removeLayer(userMarker);
-    userMarker = L.circleMarker(
-      [p.coords.latitude, p.coords.longitude],
-      { radius:8, color:"#1e88e5", fillColor:"#2196f3", fillOpacity:1, weight:3 }
-    ).addTo(map);
-  });
+let roadsLayer,blocksLayer;
+
+function colorByStatus(s){
+ if(!s)return"#999";
+ if(s==="جاري")return"#4caf50";
+ if(s==="منتهي")return"#2196f3";
+ if(s==="متوقف")return"#f44336";
+ return"#999";
+}
+function num(v){return !isNaN(v)&&v!==""?Number(v):0}
+
+function loadSheet(url,cb){
+ fetch(url).then(r=>r.text()).then(t=>{
+  const j=JSON.parse(t.substring(47).slice(0,-2));
+  let d={};j.table.rows.forEach(r=>{
+   if(!r.c[0])return;
+   let id=r.c[0].v;d[id]={};
+   j.table.cols.forEach((c,i)=>{
+    d[id][c.label.trim().toUpperCase()]=r.c[i]?.v||"";
+   });
+  });cb(d);
+ });
 }
 
-/* ===== ألوان الحالة ===== */
-function getColorByStatus(v){
-  if(!v) return "#9e9e9e";
-  v=v.trim();
-  if(v==="جاري") return "#4caf50";
-  if(v==="منتهي") return "#2196f3";
-  if(v==="متوقف") return "#f44336";
-  return "#9e9e9e";
-}
-function num(v){ return !isNaN(v)&&v!==""?Number(v):0; }
+/* ===== ROADS ===== */
+loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json",data=>{
+ let fT=0,cT=0,d=0,r=0;
+ Object.values(data).forEach(v=>{
+  fT+=num(v["FILL-TOTAL-QTY"]);
+  cT+=num(v["CUT-TOTAL-QTY"]);
+  d+=num(v["FILL-DONE-QTY"])+num(v["CUT-DONE-QTY"]);
+  r+=num(v["FILL-REMANING-QTY"])+num(v["CUT-REMANING-QTY"]);
+ });
+ rFillT.textContent=fT;rCutT.textContent=cT;rDone.textContent=d;rRemain.textContent=r;
 
-/* ===== دالة تحميل أي Sheet ===== */
-function loadSheet(sheetURL, callback){
-  fetch(sheetURL)
-    .then(r=>r.text())
-    .then(t=>{
-      const js=JSON.parse(t.substring(47).slice(0,-2));
-      const data={};
-
-      js.table.rows.forEach(r=>{
-        if(!r.c[0]) return;
-        const id = String(r.c[0].v).trim();
-        data[id]={};
-
-        js.table.cols.forEach((c,i)=>{
-          const key = c.label.trim().toUpperCase();
-          data[id][key] = r.c[i] && r.c[i].v!==null ? r.c[i].v : "";
-        });
-      });
-
-      callback(data);
-    });
-}
-
-/* ===== روابط الشيتات ===== */
-const ROADS_SHEET =
-"https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
-
-const BLOCKS_SHEET =
-"https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json";
-
-/* ===== تحميل الطرق ===== */
-loadSheet(ROADS_SHEET, function(roadsData){
-
-  /* تجميع إجماليات الطرق */
-  let fillTotal=0, cutTotal=0, fillDone=0, cutDone=0;
-
-  Object.values(roadsData).forEach(r=>{
-    fillTotal += num(r["FILL-TOTAL-QTY"]);
-    cutTotal  += num(r["CUT-TOTAL-QTY"]);
-    fillDone  += num(r["FILL-DONE-QTY"]);
-    cutDone   += num(r["CUT-DONE-QTY"]);
-  });
-
-  document.getElementById("fillTotal").innerText = fillTotal.toLocaleString();
-  document.getElementById("cutTotal").innerText  = cutTotal.toLocaleString();
-  document.getElementById("fillDone").innerText  = fillDone.toLocaleString();
-  document.getElementById("cutDone").innerText   = cutDone.toLocaleString();
-
-  fetch("https://sohaibabuserour-cyber.github.io/roads-map/ROADS.geojson")
-    .then(r=>r.json())
-    .then(geo=>{
-      L.geoJSON(geo,{
-        onEachFeature:(f,l)=>{
-          const row = roadsData[String(f.properties.ID)];
-          if(!row) return;
-
-          const color = getColorByStatus(row["STATUS"]);
-          l.setStyle({color, fillColor:color, fillOpacity:0.5, weight:3});
-
-          let html = `<div class="popup-card"><div class="popup-header">
-            <div class="title-main">مشروع ولي العهد 9‑ي</div>
-            <div class="title-sub">بيانات الطريق</div>
-            </div><div class="popup-body">`;
-
-          Object.keys(row).forEach(k=>{
-            if(k==="ID") return;
-            html += `<div class="popup-row"><div class="popup-label">${k}</div><div>${row[k]}</div></div>`;
-          });
-
-          l.bindPopup(html+"</div></div>");
-        }
-      }).addTo(map);
-    });
+ fetch("ROADS.geojson").then(r=>r.json()).then(g=>{
+  roadsLayer=L.geoJSON(g,{
+   onEachFeature:(f,l)=>{
+    let row=data[f.properties.ID];
+    if(!row)return;
+    let col=colorByStatus(row["STATUS"]);
+    l.setStyle({color:col,fillColor:col,fillOpacity:.5});
+   }
+  }).addTo(map);
+ });
 });
 
-/* ===== تحميل البلوكات ===== */
-loadSheet(BLOCKS_SHEET, function(blocksData){
+/* ===== BLOCKS ===== */
+loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json",data=>{
+ let fT=0,cT=0,d=0,r=0;
+ Object.values(data).forEach(v=>{
+  fT+=num(v["FILL-TOTAL-QTY"]);
+  cT+=num(v["CUT-TOTAL-QTY"]);
+  d+=num(v["FILL-DONE-QTY"])+num(v["CUT-DONE-QTY"]);
+  r+=num(v["FILL-REMANING-QTY"])+num(v["CUT-REMANING-QTY"]);
+ });
+ bFillT.textContent=fT;bCutT.textContent=cT;bDone.textContent=d;bRemain.textContent=r;
 
-  fetch("https://sohaibabuserour-cyber.github.io/roads-map/BLOCKS.geojson")
-    .then(r=>r.json())
-    .then(geo=>{
-      L.geoJSON(geo,{
-        onEachFeature:(f,l)=>{
-          const row = blocksData[String(f.properties.ID)];
-          if(!row) return;
-
-          const color = getColorByStatus(row["STATUS"]);
-          l.setStyle({color, fillColor:color, fillOpacity:0.4, weight:2});
-
-          let html = `<div class="popup-card"><div class="popup-header">
-            <div class="title-main">مشروع ولي العهد 9‑ي</div>
-            <div class="title-sub">بيانات البلوك</div>
-            </div><div class="popup-body">`;
-
-          Object.keys(row).forEach(k=>{
-            if(k==="ID") return;
-            html += `<div class="popup-row"><div class="popup-label">${k}</div><div>${row[k]}</div></div>`;
-          });
-
-          l.bindPopup(html+"</div></div>");
-        }
-      }).addTo(map);
-    });
+ fetch("BLOCKS.geojson").then(r=>r.json()).then(g=>{
+  blocksLayer=L.geoJSON(g,{
+   onEachFeature:(f,l)=>{
+    let row=data[f.properties.ID];
+    if(!row)return;
+    let col=colorByStatus(row["STATUS"]);
+    l.setStyle({color:col,fillColor:col,fillOpacity:.4});
+   }
+  }).addTo(map);
+ });
 });
+
+/* ===== Checkboxes ===== */
+chkRoads.onchange=()=>this.checked?map.addLayer(roadsLayer):map.removeLayer(roadsLayer);
+chkBlocks.onchange=()=>this.checked?map.addLayer(blocksLayer):map.removeLayer(blocksLayer);
 </script>
 
 </body>
