@@ -4,17 +4,24 @@
   <meta charset="utf-8">
   <title>الخريطة التفاعلية</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 100vh; width: 100%; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
 
-    /* === Popup Style === */
+    /* ===== Popup Style ===== */
     .popup-card {
-      width: 320px;
-      border-radius: 18px;
+      width: 300px;
+      border-radius: 16px;
       overflow: hidden;
       background: #ffffff;
       box-shadow: 0 8px 20px rgba(0,0,0,0.3);
@@ -23,29 +30,15 @@
     .popup-header {
       background: #7a3fa0;
       color: #fff;
-      padding: 12px 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .popup-header img {
-      height: 42px;
-      width: auto;
-    }
-
-    .popup-title {
-      flex: 1;
+      padding: 14px;
       text-align: center;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: bold;
     }
 
     .popup-body {
       padding: 14px;
-      font-size: 15px;
+      font-size: 16px;
       color: #333;
     }
 
@@ -73,17 +66,18 @@
 <script>
 /* ===== الخريطة ===== */
 const map = L.map('map').setView([21.30, 39.70], 13);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
 
 /* ===== ألوان الحالات ===== */
 function getColorByStatus(status) {
-  if (!status) return "#9e9e9e";
+  if (!status) return "#9e9e9e"; // رمادي
   status = status.trim();
-  if (status === "جاري") return "#4caf50";
-  if (status === "منتهي") return "#2196f3";
-  if (status === "متوقف") return "#f44336";
+  if (status === "جاري") return "#4caf50";     // أخضر
+  if (status === "منتهي") return "#2196f3";    // أزرق
+  if (status === "متوقف") return "#f44336";    // أحمر
   return "#9e9e9e";
 }
 
@@ -100,11 +94,12 @@ fetch(sheetURL)
   const sheetData = {};
 
   js.table.rows.forEach(r => {
-    if (!r.c[0]) return;
+    if (!r.c[0]) return;  // لازم Name
     const id = String(r.c[0].v).trim();
     sheetData[id] = {};
     cols.forEach((c, i) => {
-      sheetData[id][c] = r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
+      sheetData[id][c] =
+        r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
     });
   });
 
@@ -123,20 +118,29 @@ fetch(sheetURL)
         const roadId = String(feature.properties["Name"]).trim();
         const row = sheetData[roadId];
 
-        if (!row) return;
+        if (!row) {
+          layer.setStyle({
+            color: "#9e9e9e",
+            fillColor: "#9e9e9e"
+          });
+          layer.bindPopup("لا توجد بيانات لهذا الطريق");
+          return;
+        }
 
-        const status = row["status"];
-        const color = getColorByStatus(status);
+        const color = getColorByStatus(row["status"]);
 
         layer.setStyle({
           color: color,
           fillColor: color
         });
 
+        /* ===== Popup ===== */
         let popupHtml = `
           <div class="popup-card">
             <div class="popup-header">
-              <img src="logo-right.png" alt="Logo Rightimg src="logo-left.png" alt="Logo           <div class="popup-body">
+              مشروع ولي العهد 9‑ي
+            </div>
+            <div class="popup-body">
         `;
 
         Object.keys(row).forEach(key => {
