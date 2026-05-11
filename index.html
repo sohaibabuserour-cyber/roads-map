@@ -9,16 +9,42 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-    #map {
-      height: 100vh;
-      width: 100%;
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100vh; width: 100%; }
+
+    /* ===== Summary Box ===== */
+    .summary-box {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+      background: #7a3fa0;
+      color: #fff;
+      padding: 16px 20px;
+      border-radius: 14px;
+      width: 260px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
     }
 
-    /* ===== Popup Style ===== */
+    .summary-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .summary-value {
+      font-weight: bold;
+    }
+
+    /* ===== Popup Style (زي ما عندك) ===== */
     .popup-card {
       width: 500px;
       border-radius: 16px;
@@ -34,13 +60,12 @@
       text-align: center;
     }
 
-    .popup-header .title-main {
+    .title-main {
       font-size: 36px;
       font-weight: bold;
-      line-height: 1.2;
     }
 
-    .popup-header .title-sub {
+    .title-sub {
       font-size: 28px;
       font-weight: bold;
       margin-top: 6px;
@@ -62,15 +87,24 @@
       color: #7a3fa0;
       font-weight: bold;
     }
-
-    .popup-value {
-      color: #000;
-      text-align: left;
-    }
   </style>
 </head>
 
 <body>
+
+<!-- ===== Summary Panel ===== -->
+<div class="summary-box" id="summaryBox">
+  <div class="summary-title">إجماليات المشروع</div>
+  <div class="summary-row">
+    <span>إجمالي الكمية</span>
+    <span class="summary-value" id="totalQty">0</span>
+  </div>
+  <div class="summary-row">
+    <span>إجمالي المنفذ</span>
+    <span class="summary-value" id="doneQty">0</span>
+  </div>
+</div>
+
 <div id="map"></div>
 
 <script>
@@ -103,15 +137,26 @@ fetch(sheetURL)
   const cols = js.table.cols.map(c => c.label);
   const sheetData = {};
 
+  let totalSum = 0;
+  let doneSum = 0;
+
   js.table.rows.forEach(r => {
     if (!r.c[0]) return;
     const id = String(r.c[0].v).trim();
     sheetData[id] = {};
+
     cols.forEach((c, i) => {
-      sheetData[id][c] =
-        r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
+      const value = r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
+      sheetData[id][c] = value;
+
+      if (c === "total_qty" && !isNaN(value)) totalSum += Number(value);
+      if (c === "done_qty" && !isNaN(value)) doneSum += Number(value);
     });
   });
+
+  /* ===== عرض الإجماليات ===== */
+  document.getElementById("totalQty").innerText = totalSum.toLocaleString();
+  document.getElementById("doneQty").innerText = doneSum.toLocaleString();
 
   /* ===== رسم الطرق ===== */
   fetch("https://sohaibabuserour-cyber.github.io/roads-map/ROADS.geojson")
@@ -119,25 +164,16 @@ fetch(sheetURL)
   .then(geojson => {
 
     const roadsLayer = L.geoJSON(geojson, {
-      style: {
-        weight: 3,
-        fillOpacity: 0.5
-      },
+      style: { weight: 3, fillOpacity: 0.5 },
       onEachFeature: function(feature, layer) {
 
         const roadId = String(feature.properties["Name"]).trim();
         const row = sheetData[roadId];
-
         if (!row) return;
 
         const color = getColorByStatus(row["status"]);
+        layer.setStyle({ color, fillColor: color });
 
-        layer.setStyle({
-          color: color,
-          fillColor: color
-        });
-
-        /* ===== Popup ===== */
         let popupHtml = `
           <div class="popup-card">
             <div class="popup-header">
@@ -151,7 +187,7 @@ fetch(sheetURL)
           popupHtml += `
             <div class="popup-row">
               <div class="popup-label">${key}</div>
-              <div class="popup-value">${row[key]}</div>
+              <div>${row[key]}</div>
             </div>
           `;
         });
