@@ -2,26 +2,15 @@
 <html lang="ar">
 <head>
   <meta charset="utf-8">
-  <title>Live Roads Map</title>
+  <title>Roads – Live from Google Sheet</title>
 
-  <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-  </script>
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-    #map {
-      height: 100vh;
-      width: 100%;
-    }
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100vh; width: 100%; }
   </style>
 </head>
 
@@ -29,80 +18,96 @@
 <div id="map"></div>
 
 <script>
-/* ======================================
-   1) إنشاء الخريطة (View احتياطي)
-   ====================================== */
+/* =========================
+   1) إنشاء الخريطة
+   ========================= */
 const map = L.map('map').setView([21.30, 39.70], 13);
 
-/* ======================================
-   2) Base map
-   ====================================== */
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
 
-/* ======================================
-   3) Google Sheet JSON (LIVE)
-   ====================================== */
-const sheetUrl =
-"https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
+/* =========================
+   2) تحميل الطرق أولًا (ثابت)
+   ========================= */
+fetch("ROADS.geojson")
+  .then(r => r.json())
+  .then(geojson => {
 
-/* ======================================
-   4) تحميل بيانات Google Sheet
-   ====================================== */
-fetch(sheetUrl)
-  .then(res => res.text())
-  .then(text => {
+    const roadsLayer = L.geoJSON(geojson, {
+      style: {
+        color: "#0077ff",
+        weight: 3,
+        fill: true,
+        fillColor: "#0077ff",
+        fillOpacity: 0.35,
+        opacity: 1
+      },
+      onEachFeature: function (feature, layer) {
+        // popup احتياطي (لو الشيت فشل)
+        layer.bindPopup(
+          `<b>رقم الطريق:</b> ${feature.properties["Name"]}`
+        );
+      }
+    }).addTo(map);
 
-    // تحويل JSON الغريب بتاع Google
-    const json = JSON.parse(text.substring(47).slice(0, -2));
-    const rows = json.table.rows;
+    map.fitBounds(roadsLayer.getBounds());
 
-    /* ======================================
-       5) تحميل طبقة الطرق
-       ====================================== */
-    fetch("ROADS.geojson")
-      .then(res => res.json())
-      .then(geojson => {
+    /* =========================
+       3) تحميل Google Sheet
+       ========================= */
+    const sheetURL =
+      "https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
 
-        const roadsLayer = L.geoJSON(geojson, {
-          style: {
-            color: "#ff0000",        // لون الحدود
-            weight: 3,
-            fill: true,              // مهم مع MultiPolygon
-            fillColor: "#ff0000",
-            fillOpacity: 0.35,       // شفافية
-            opacity: 0.9
-          },
-          onEachFeature: function (feature, layer) {
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(text => {
 
-            // نطلع الطرق فوق الخريطة
-            layer.bringToFront();
+        const js = JSON.parse(text.substring(47).slice(0, -2));
 
-            // الربط على حقل Name
-            const row = rows.find(
-              r => r.c[0].v == feature.properties["Name"]
-            );
-            if (!row) return;
+        // تحويل الشيت إلى object سهل
+        const cols = js.table.cols.map(c => c.label);
+        const sheetData = {};
 
-            layer.bindPopup(`
-              <b>طريق رقم ${row.c[0].v}</b>
-              <hr>
-              الكمية الإجمالية: ${row.c[4]?.v || ""}<br>
-              الكمية المنفذة: ${row.c[5]?.v || ""}<br>
-              الحالة: ${row.c[6]?.v || ""}<br>
-              المعدات: ${row.c[7]?.v || ""}
-            `);
-          }
-        }).addTo(map);
+        js.table.rows.forEach(r => {
+          if (!r.c[0]) return;       // لازم Name
+          const id = String(r.c[0].v).trim();
+          sheetData[id] = {};
+          cols.forEach((c, i) => {
+            sheetData[id][c] =
+              r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
+          });
+        });
 
-        /* ======================================
-           6) Zoom تلقائي على كل الطرق
-           ====================================== */
-        map.fitBounds(roadsLayer.getBounds());
+        /* =========================
+           4) ربط الشيت بالطرق
+           ========================= */
+        roadsLayer.eachLayer(layer => {
+
+          const roadId =
+            String(layer.feature.properties["Name"]).trim();
+
+          const row = sheetData[roadId];
+          if (!row) return; // لو مفيش صف، سيب popup الاحتياطي
+
+          let html = "<b>بيانات الطريق</b><hr>";
+          Object.keys(row).forEach(k => {
+            html += `<b>${k}:</b> ${row[k]}<br>`;
+          });
+
+          layer.bindPopup(html);
+        });
+
+      })
+      .catch(err => {
+        console.warn("فشل تحميل الشيت – الطرق ظلت ظاهرة", err);
       });
+
+  })
+  .catch(err => {
+    alert("فشل تحميل ملف الطرق");
+    console.error(err);
   });
 </script>
 </body>
 </html>
-``
