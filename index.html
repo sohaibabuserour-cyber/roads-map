@@ -40,8 +40,6 @@
       margin-bottom: 8px;
     }
 
-    .summary-value { font-weight: bold; }
-
     /* ===== Popup ===== */
     .popup-card {
       width: 500px;
@@ -76,9 +74,10 @@
     }
 
     .popup-row {
-      margin-bottom: 10px;
+      padding: 8px 0;
       display: flex;
       justify-content: space-between;
+      border-bottom: 2px solid #e0e0e0;
     }
 
     .popup-label {
@@ -104,11 +103,13 @@
 <div id="map"></div>
 
 <script>
+/* ===== الخريطة ===== */
 const map = L.map('map').setView([21.30,39.70],13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
 function num(v){ return !isNaN(v) && v!=="" ? Number(v) : 0; }
 
+/* ===== قراءة Google Sheet ===== */
 const sheetURL =
 "https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
 
@@ -165,6 +166,7 @@ fetch(sheetURL)
           <div class="popup-body">`;
 
         Object.keys(row).forEach(k=>{
+          if(k==="Name") return; // إخفاء ID
           html+=`
             <div class="popup-row">
               <div class="popup-label">${k}</div>
@@ -182,4 +184,3 @@ fetch(sheetURL)
 </script>
 </body>
 </html>
-``
