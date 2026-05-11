@@ -49,6 +49,24 @@ body{margin:0;font-family:Arial}
 .green{background:#4caf50}
 .blue{background:#2196f3}
 .red{background:#f44336}
+
+/* ===== Popup Style (نفس القديم) ===== */
+.popup-card{
+ width:480px;border-radius:16px;overflow:hidden;
+ background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.3)
+}
+.popup-header{
+ background:#7a3fa0;color:#fff;padding:16px;text-align:center
+}
+.title-main{font-size:30px;font-weight:bold}
+.title-sub{font-size:22px;font-weight:bold;margin-top:4px}
+.popup-body{padding:12px;font-size:22px;color:#333}
+.popup-row{
+ padding:6px 0;display:flex;justify-content:space-between;
+ border-bottom:2px solid #e0e0e0
+}
+.popup-row:last-child{border-bottom:none}
+.popup-label{color:#7a3fa0;font-weight:bold}
 </style>
 </head>
 
@@ -117,58 +135,66 @@ function loadSheet(url,cb){
  });
 }
 
+/* ===== ROADS ===== */
 loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json",data=>{
- let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
- Object.values(data).forEach(v=>{
-  fT+=num(v["FILL-TOTAL-QTY"]);
-  cT+=num(v["CUT-TOTAL-QTY"]);
-  fD+=num(v["FILL-DONE-QTY"]);
-  cD+=num(v["CUT-DONE-QTY"]);
-  fR+=num(v["FILL-REMANING-QTY"]);
-  cR+=num(v["CUT-REMANING-QTY"]);
- });
- rFillT.textContent=fT;rCutT.textContent=cT;
- rFillD.textContent=fD;rCutD.textContent=cD;
- rFillR.textContent=fR;rCutR.textContent=cR;
-
  fetch("ROADS.geojson").then(r=>r.json()).then(g=>{
   roadsLayer=L.geoJSON(g,{
    onEachFeature:(f,l)=>{
     let row=data[f.properties.ID];if(!row)return;
     let col=colorByStatus(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.5});
-    let html="<b>بيانات الطريق</b><hr>";
-    Object.keys(row).forEach(k=>{if(k==="ID")return;html+=k+" : "+row[k]+"<br>";});
-    l.bindPopup(html);
+
+    let html=`
+    <div class="popup-card">
+      <div class="popup-header">
+        <div class="title-main">مشروع ولي العهد ي</div>
+        <div class="title-sub">بيانات الطريق</div>
+      </div>
+      <div class="popup-body">`;
+
+    Object.keys(row).forEach(k=>{
+      if(k==="ID")return;
+      html+=`
+        <div class="popup-row">
+          <div class="popup-label">${k}</div>
+          <div>${row[k]}</div>
+        </div>`;
+    });
+
+    l.bindPopup(html+`</div></div>`);
     l.on('click',()=>l.openPopup());
    }
   }).addTo(map);
  });
 });
 
+/* ===== BLOCKS ===== */
 loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json",data=>{
- let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
- Object.values(data).forEach(v=>{
-  fT+=num(v["FILL-TOTAL-QTY"]);
-  cT+=num(v["CUT-TOTAL-QTY"]);
-  fD+=num(v["FILL-DONE-QTY"]);
-  cD+=num(v["CUT-DONE-QTY"]);
-  fR+=num(v["FILL-REMANING-QTY"]);
-  cR+=num(v["CUT-REMANING-QTY"]);
- });
- bFillT.textContent=fT;bCutT.textContent=cT;
- bFillD.textContent=fD;bCutD.textContent=cD;
- bFillR.textContent=fR;bCutR.textContent=cR;
-
  fetch("BLOCKS.geojson").then(r=>r.json()).then(g=>{
   blocksLayer=L.geoJSON(g,{
    onEachFeature:(f,l)=>{
     let row=data[f.properties.ID];if(!row)return;
     let col=colorByStatus(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.4});
-    let html="<b>بيانات البلوك</b><hr>";
-    Object.keys(row).forEach(k=>{if(k==="ID")return;html+=k+" : "+row[k]+"<br>";});
-    l.bindPopup(html);
+
+    let html=`
+    <div class="popup-card">
+      <div class="popup-header">
+        <div class="title-main">مشروع ولي العهد ي</div>
+        <div class="title-sub">بيانات البلوك</div>
+      </div>
+      <div class="popup-body">`;
+
+    Object.keys(row).forEach(k=>{
+      if(k==="ID")return;
+      html+=`
+        <div class="popup-row">
+          <div class="popup-label">${k}</div>
+          <div>${row[k]}</div>
+        </div>`;
+    });
+
+    l.bindPopup(html+`</div></div>`);
     l.on('click',()=>l.openPopup());
    }
   }).addTo(map);
