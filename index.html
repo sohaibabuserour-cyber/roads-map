@@ -245,7 +245,7 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
     <div class="popup-card">
       <div class="popup-header">
         <div class="title-main">مشروع ولي العهد ي</div>
-        <div class="title-sub">بيانات البلوك</div>
+        <div class="title-main">بيانات البلوك</div>
       </div>
       <div class="popup-body">`;
     Object.keys(row).forEach(k=>{
@@ -264,8 +264,30 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
  });
 });
 
-chkRoads.onchange=function(){this.checked?map.addLayer(roadsLayer):map.removeLayer(roadsLayer)}
-chkBlocks.onchange=function(){this.checked?map.addLayer(blocksLayer):map.removeLayer(blocksLayer)}
+chkRoads.onchange = function () {
+  this.checked ? map.addLayer(roadsLayer) : map.removeLayer(roadsLayer);
+
+  // التحكم في الداشبورد
+  roadsDash.style.display = this.checked ? "block" : "none";
+
+  // إذا الطرق غير مفعلة والبلوكات مفعلة → نخفي الطرق
+  if (!this.checked && chkBlocks.checked) {
+    roadsDash.style.display = "none";
+  }
+};
+
+chkBlocks.onchange = function () {
+  this.checked ? map.addLayer(blocksLayer) : map.removeLayer(blocksLayer);
+
+  // التحكم في الداشبورد
+  blocksDash.style.display = this.checked ? "block" : "none";
+
+  // إذا البلوكات غير مفعلة والطرق مفعلة → نخفي البلوكات
+  if (!this.checked && chkRoads.checked) {
+    blocksDash.style.display = "none";
+  }
+};
+
 </script>
 
 </body>
