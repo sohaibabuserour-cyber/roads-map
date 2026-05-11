@@ -12,7 +12,7 @@
     body { margin: 0; font-family: Arial, sans-serif; }
     #map { height: 100vh; width: 100%; }
 
-    /* ===== Summary Box ===== */
+    /* ===== Dashboard ===== */
     .summary-box {
       position: absolute;
       top: 12px;
@@ -29,15 +29,22 @@
     .summary-title {
       font-size: 20px;
       font-weight: bold;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       text-align: center;
+      border-bottom: 2px solid rgba(255,255,255,0.4);
+      padding-bottom: 8px;
     }
 
     .summary-row {
       display: flex;
       justify-content: space-between;
       font-size: 16px;
-      margin-bottom: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
     }
 
     /* ===== Popup ===== */
@@ -57,20 +64,19 @@
     }
 
     .title-main {
-      font-size: 36px;
+      font-size: 34px;
       font-weight: bold;
     }
 
     .title-sub {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: bold;
       margin-top: 6px;
     }
 
     .popup-body {
       padding: 14px;
-      font-size: 26px;
-      color: #333;
+      font-size: 24px;
     }
 
     .popup-row {
@@ -80,9 +86,28 @@
       border-bottom: 2px solid #e0e0e0;
     }
 
+    .popup-row:last-child {
+      border-bottom: none;
+    }
+
     .popup-label {
       color: #7a3fa0;
       font-weight: bold;
+    }
+
+    /* ===== GPS button ===== */
+    .locate-btn {
+      background: #7a3fa0;
+      color: #fff;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
   </style>
 </head>
@@ -103,13 +128,28 @@
 <div id="map"></div>
 
 <script>
-/* ===== الخريطة ===== */
-const map = L.map('map').setView([21.30,39.70],13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+/* ===== إنشاء الخريطة بدون + / − ===== */
+const map = L.map('map', { zoomControl: false }).setView([21.30,39.70],13);
 
-function num(v){ return !isNaN(v) && v!=="" ? Number(v) : 0; }
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19
+}).addTo(map);
+
+/* ===== زر تحديد الموقع ===== */
+const locateControl = L.control({ position: 'bottomright' });
+locateControl.onAdd = function () {
+  const div = L.DomUtil.create('div', 'locate-btn');
+  div.innerHTML = "📍";
+  div.onclick = () => {
+    map.locate({ setView: true, maxZoom: 17 });
+  };
+  return div;
+};
+locateControl.addTo(map);
 
 /* ===== قراءة Google Sheet ===== */
+function num(v){ return !isNaN(v) && v!=="" ? Number(v) : 0; }
+
 const sheetURL =
 "https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
 
@@ -120,25 +160,22 @@ fetch(sheetURL)
   const cols = js.table.cols.map(c=>c.label);
   const data = {};
 
-  let sums = {
-    fillT:0, cutT:0, fillD:0, cutD:0, fillR:0, cutR:0
-  };
+  let sums={fillT:0,cutT:0,fillD:0,cutD:0,fillR:0,cutR:0};
 
   js.table.rows.forEach(r=>{
     if(!r.c[0]) return;
-    const id = String(r.c[0].v);
+    const id=String(r.c[0].v);
     data[id]={};
 
     cols.forEach((c,i)=>{
-      const v = r.c[i] && r.c[i].v!==null ? r.c[i].v : "";
+      const v=r.c[i]&&r.c[i].v!==null?r.c[i].v:"";
       data[id][c]=v;
-
-      if(c==="FILL-TOTAL-QTY") sums.fillT+=num(v);
-      if(c==="CUT-TOTAL-QTY") sums.cutT+=num(v);
-      if(c==="FILL-DONE-QTY") sums.fillD+=num(v);
-      if(c==="CUT-DONE-QTY") sums.cutD+=num(v);
-      if(c==="FILL-REMANING-QTY") sums.fillR+=num(v);
-      if(c==="CUT-REMANING-QTY") sums.cutR+=num(v);
+      if(c==="FILL-TOTAL-QTY")sums.fillT+=num(v);
+      if(c==="CUT-TOTAL-QTY")sums.cutT+=num(v);
+      if(c==="FILL-DONE-QTY")sums.fillD+=num(v);
+      if(c==="CUT-DONE-QTY")sums.cutD+=num(v);
+      if(c==="FILL-REMANING-QTY")sums.fillR+=num(v);
+      if(c==="CUT-REMANING-QTY")sums.cutR+=num(v);
     });
   });
 
@@ -166,7 +203,7 @@ fetch(sheetURL)
           <div class="popup-body">`;
 
         Object.keys(row).forEach(k=>{
-          if(k==="Name") return; // إخفاء ID
+          if(k==="Name")return;
           html+=`
             <div class="popup-row">
               <div class="popup-label">${k}</div>
@@ -184,3 +221,4 @@ fetch(sheetURL)
 </script>
 </body>
 </html>
+``
