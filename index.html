@@ -1,16 +1,57 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <title>Roads – Live from Google Sheet</title>
+  <title>الخريطة التفاعلية لمشاريع البنية التحتية</title>
 
+  <!-- Leaflet -->
   <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
+    body { margin: 0; font-family: "Arial", sans-serif; }
     #map { height: 100vh; width: 100%; }
+
+    /* ===== Popup Style ===== */
+    .popup-card {
+      width: 280px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    }
+
+    .popup-header {
+      background: #7a3fa0;
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .popup-body {
+      padding: 12px;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .popup-row {
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .popup-label {
+      color: #7a3fa0;
+      font-weight: bold;
+    }
+
+    .popup-value {
+      color: #000;
+      text-align: left;
+    }
   </style>
 </head>
 
@@ -18,96 +59,117 @@
 <div id="map"></div>
 
 <script>
-/* =========================
-   1) إنشاء الخريطة
-   ========================= */
+/* =====================
+   إعداد الخريطة
+   ===================== */
 const map = L.map('map').setView([21.30, 39.70], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
 
-/* =========================
-   2) تحميل الطرق أولًا (ثابت)
-   ========================= */
-fetch("ROADS.geojson")
+/* =====================
+   دالة لون حسب الحالة
+   ===================== */
+function getColorByStatus(status) {
+  if (!status) return "#9e9e9e";
+  status = status.trim();
+
+  if (status === "جاري") return "#4caf50";     // أخضر
+  if (status === "منتهي") return "#2196f3";    // أزرق
+  if (status === "متوقف") return "#f44336";    // أحمر
+
+  return "#9e9e9e";
+}
+
+/* =====================
+   قراءة Google Sheet
+   ===================== */
+const sheetURL =
+"https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
+
+fetch(sheetURL)
+.then(res => res.text())
+.then(text => {
+
+  const js = JSON.parse(text.substring(47).slice(0, -2));
+  const cols = js.table.cols.map(c => c.label);
+  const sheetData = {};
+
+  js.table.rows.forEach(r => {
+    if (!r.c[0]) return;
+    const id = String(r.c[0].v).trim();
+    sheetData[id] = {};
+    cols.forEach((c, i) => {
+      sheetData[id][c] =
+        r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
+    });
+  });
+
+  /* =====================
+     رسم الطرق
+     ===================== */
+  fetch("https://sohaibabuserour-cyber.github.io/roads-map/ROADS.geojson")
   .then(r => r.json())
   .then(geojson => {
 
     const roadsLayer = L.geoJSON(geojson, {
       style: {
-        color: "#0077ff",
         weight: 3,
-        fill: true,
-        fillColor: "#0077ff",
-        fillOpacity: 0.35,
-        opacity: 1
+        fillOpacity: 0.5
       },
-      onEachFeature: function (feature, layer) {
-        // popup احتياطي (لو الشيت فشل)
-        layer.bindPopup(
-          `<b>رقم الطريق:</b> ${feature.properties["Name"]}`
-        );
+      onEachFeature: function(feature, layer) {
+
+        const roadId = String(feature.properties["Name"]).trim();
+        const row = sheetData[roadId];
+
+        if (!row) {
+          layer.setStyle({
+            color: "#9e9e9e",
+            fillColor: "#9e9e9e"
+          });
+          layer.bindPopup("لا توجد بيانات لهذا الطريق");
+          return;
+        }
+
+        const status = row["status"];
+
+        layer.setStyle({
+          color: getColorByStatus(status),
+          fillColor: getColorByStatus(status)
+        });
+
+        /* ===== Popup HTML ===== */
+        let popupHtml = `
+          <div class="popup-card">
+            <div class="popup-header">
+              بيانات الطريق
+            </div>
+            <div class="popup-body">
+        `;
+
+        Object.keys(row).forEach(key => {
+          popupHtml += `
+            <div class="popup-row">
+              <div class="popup-label">${key}</div>
+              <div class="popup-value">${row[key]}</div>
+            </div>
+          `;
+        });
+
+        popupHtml += `
+            </div>
+          </div>
+        `;
+
+        layer.bindPopup(popupHtml);
       }
     }).addTo(map);
 
     map.fitBounds(roadsLayer.getBounds());
-
-    /* =========================
-       3) تحميل Google Sheet
-       ========================= */
-    const sheetURL =
-      "https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
-
-    fetch(sheetURL)
-      .then(res => res.text())
-      .then(text => {
-
-        const js = JSON.parse(text.substring(47).slice(0, -2));
-
-        // تحويل الشيت إلى object سهل
-        const cols = js.table.cols.map(c => c.label);
-        const sheetData = {};
-
-        js.table.rows.forEach(r => {
-          if (!r.c[0]) return;       // لازم Name
-          const id = String(r.c[0].v).trim();
-          sheetData[id] = {};
-          cols.forEach((c, i) => {
-            sheetData[id][c] =
-              r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
-          });
-        });
-
-        /* =========================
-           4) ربط الشيت بالطرق
-           ========================= */
-        roadsLayer.eachLayer(layer => {
-
-          const roadId =
-            String(layer.feature.properties["Name"]).trim();
-
-          const row = sheetData[roadId];
-          if (!row) return; // لو مفيش صف، سيب popup الاحتياطي
-
-          let html = "<b>بيانات الطريق</b><hr>";
-          Object.keys(row).forEach(k => {
-            html += `<b>${k}:</b> ${row[k]}<br>`;
-          });
-
-          layer.bindPopup(html);
-        });
-
-      })
-      .catch(err => {
-        console.warn("فشل تحميل الشيت – الطرق ظلت ظاهرة", err);
-      });
-
-  })
-  .catch(err => {
-    alert("فشل تحميل ملف الطرق");
-    console.error(err);
   });
+});
 </script>
 </body>
 </html>
+``
