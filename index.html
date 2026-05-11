@@ -60,7 +60,7 @@ body{margin:0;font-family:Arial}
 
 /* ===== Popup Style ===== */
 .popup-card{
- width:350px;border-radius:16px;overflow:hidden;
+ width:450px;border-radius:16px;overflow:hidden;
  background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.3)
 }
 .popup-header{
@@ -249,7 +249,12 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
       <div class="popup-body">`;
     Object.keys(row).forEach(k=>{
       if(k==="ID")return;
-      html+=`<div class="popup-row"><div class="popup-label">${k}</div><div>${row[k]}</div></div>`;
+      html+=`
+<div class="popup-row">
+  <div class="popup-label">${labelsAR[k] || k}</div>
+  <div>${row[k]}</div>
+</div>`;
+
     });
     l.bindPopup(html+"</div></div>");
     l.on('click',()=>l.openPopup());
