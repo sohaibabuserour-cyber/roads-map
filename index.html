@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<title>الخريطة التفاعلية مشروع ولى العهد ي</title>
+<title>الخريطة التفاعلية مشروع ولي العهد ي</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -54,7 +54,6 @@ body{margin:0;font-family:Arial}
 
 <body>
 
-<!-- Dashboards -->
 <div class="dashboard" id="roadsDash">
 <h3>إجماليات الطرق</h3>
 <div class="row"><span>ردم إجمالي</span><span id="rFillT">0</span></div>
@@ -75,7 +74,6 @@ body{margin:0;font-family:Arial}
 <div class="row"><span>قطع متبقي</span><span id="bCutR">0</span></div>
 </div>
 
-<!-- Right Bottom Panel -->
 <div class="right-panel">
 <div class="layer-toggle">
 <label><input type="checkbox" id="chkRoads" checked> الطرق</label>
@@ -119,7 +117,6 @@ function loadSheet(url,cb){
  });
 }
 
-/* ===== ROADS ===== */
 loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json",data=>{
  let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
  Object.values(data).forEach(v=>{
@@ -140,12 +137,15 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
     let row=data[f.properties.ID];if(!row)return;
     let col=colorByStatus(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.5});
+    let html="<b>بيانات الطريق</b><hr>";
+    Object.keys(row).forEach(k=>{if(k==="ID")return;html+=k+" : "+row[k]+"<br>";});
+    l.bindPopup(html);
+    l.on('click',()=>l.openPopup());
    }
   }).addTo(map);
  });
 });
 
-/* ===== BLOCKS ===== */
 loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json",data=>{
  let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
  Object.values(data).forEach(v=>{
@@ -166,12 +166,15 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
     let row=data[f.properties.ID];if(!row)return;
     let col=colorByStatus(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.4});
+    let html="<b>بيانات البلوك</b><hr>";
+    Object.keys(row).forEach(k=>{if(k==="ID")return;html+=k+" : "+row[k]+"<br>";});
+    l.bindPopup(html);
+    l.on('click',()=>l.openPopup());
    }
   }).addTo(map);
  });
 });
 
-/* ===== Checkboxes ===== */
 chkRoads.onchange=function(){this.checked?map.addLayer(roadsLayer):map.removeLayer(roadsLayer)}
 chkBlocks.onchange=function(){this.checked?map.addLayer(blocksLayer):map.removeLayer(blocksLayer)}
 </script>
