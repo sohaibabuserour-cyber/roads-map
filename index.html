@@ -16,6 +16,7 @@
   <style>
     body {
       margin: 0;
+      font-family: Arial, sans-serif;
     }
     #map {
       height: 100vh;
@@ -29,12 +30,12 @@
 
 <script>
 /* ======================================
-   1) إنشاء الخريطة (View مبدئي احتياطي)
+   1) إنشاء الخريطة (View احتياطي)
    ====================================== */
 const map = L.map('map').setView([21.30, 39.70], 13);
 
 /* ======================================
-   2) Base Map
+   2) Base map
    ====================================== */
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
@@ -52,6 +53,8 @@ const sheetUrl =
 fetch(sheetUrl)
   .then(res => res.text())
   .then(text => {
+
+    // تحويل JSON الغريب بتاع Google
     const json = JSON.parse(text.substring(47).slice(0, -2));
     const rows = json.table.rows;
 
@@ -64,28 +67,31 @@ fetch(sheetUrl)
 
         const roadsLayer = L.geoJSON(geojson, {
           style: {
-            color: "#ff0000",   // لون واضح
-            weight: 6,          // سمك مناسب
-            fill: false,        // مهم جدًا مع MultiPolygon
-            opacity: 1
+            color: "#ff0000",        // لون الحدود
+            weight: 3,
+            fill: true,              // مهم مع MultiPolygon
+            fillColor: "#ff0000",
+            fillOpacity: 0.35,       // شفافية
+            opacity: 0.9
           },
           onEachFeature: function (feature, layer) {
 
-            // نخلي الطرق فوق الـ basemap
+            // نطلع الطرق فوق الخريطة
             layer.bringToFront();
 
-            /* الربط على حقل Name */
+            // الربط على حقل Name
             const row = rows.find(
               r => r.c[0].v == feature.properties["Name"]
             );
             if (!row) return;
 
             layer.bindPopup(`
-              <b>طريق رقم ${row.c[0].v}</b><hr>
-              الكمية الإجمالية: ${row.c[4].v || ""}<br>
-              الكمية المنفذة: ${row.c[5].v || ""}<br>
-              الحالة: ${row.c[6].v || ""}<br>
-              المعدات: ${row.c[7].v || ""}
+              <b>طريق رقم ${row.c[0].v}</b>
+              <hr>
+              الكمية الإجمالية: ${row.c[4]?.v || ""}<br>
+              الكمية المنفذة: ${row.c[5]?.v || ""}<br>
+              الحالة: ${row.c[6]?.v || ""}<br>
+              المعدات: ${row.c[7]?.v || ""}
             `);
           }
         }).addTo(map);
