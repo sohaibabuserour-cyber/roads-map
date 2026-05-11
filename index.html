@@ -22,7 +22,7 @@
       color: #fff;
       padding: 16px 20px;
       border-radius: 14px;
-      width: 260px;
+      width: 320px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.35);
     }
 
@@ -36,15 +36,13 @@
     .summary-row {
       display: flex;
       justify-content: space-between;
-      font-size: 18px;
+      font-size: 16px;
       margin-bottom: 8px;
     }
 
-    .summary-value {
-      font-weight: bold;
-    }
+    .summary-value { font-weight: bold; }
 
-    /* ===== Popup Style (زي ما عندك) ===== */
+    /* ===== Popup ===== */
     .popup-card {
       width: 500px;
       border-radius: 16px;
@@ -73,7 +71,7 @@
 
     .popup-body {
       padding: 14px;
-      font-size: 28px;
+      font-size: 26px;
       color: #333;
     }
 
@@ -92,118 +90,96 @@
 
 <body>
 
-<!-- ===== Summary Panel ===== -->
-<div class="summary-box" id="summaryBox">
+<!-- ===== Dashboard ===== -->
+<div class="summary-box">
   <div class="summary-title">إجماليات المشروع</div>
-  <div class="summary-row">
-    <span>إجمالي الكمية</span>
-    <span class="summary-value" id="totalQty">0</span>
-  </div>
-  <div class="summary-row">
-    <span>إجمالي المنفذ</span>
-    <span class="summary-value" id="doneQty">0</span>
-  </div>
+  <div class="summary-row"><span>إجمالي الردم الكلي</span><span id="fillTotal">0</span></div>
+  <div class="summary-row"><span>إجمالي القطع الكلي</span><span id="cutTotal">0</span></div>
+  <div class="summary-row"><span>الردم المنفذ</span><span id="fillDone">0</span></div>
+  <div class="summary-row"><span>القطع المنفذ</span><span id="cutDone">0</span></div>
+  <div class="summary-row"><span>الردم المتبقي</span><span id="fillRemain">0</span></div>
+  <div class="summary-row"><span>القطع المتبقي</span><span id="cutRemain">0</span></div>
 </div>
 
 <div id="map"></div>
 
 <script>
-/* ===== الخريطة ===== */
-const map = L.map('map').setView([21.30, 39.70], 13);
+const map = L.map('map').setView([21.30,39.70],13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
-}).addTo(map);
+function num(v){ return !isNaN(v) && v!=="" ? Number(v) : 0; }
 
-/* ===== ألوان الحالات ===== */
-function getColorByStatus(status) {
-  if (!status) return "#9e9e9e";
-  status = status.trim();
-  if (status === "جاري") return "#4caf50";
-  if (status === "منتهي") return "#2196f3";
-  if (status === "متوقف") return "#f44336";
-  return "#9e9e9e";
-}
-
-/* ===== قراءة Google Sheet ===== */
 const sheetURL =
 "https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
 
 fetch(sheetURL)
-.then(res => res.text())
-.then(text => {
+.then(r=>r.text())
+.then(t=>{
+  const js = JSON.parse(t.substring(47).slice(0,-2));
+  const cols = js.table.cols.map(c=>c.label);
+  const data = {};
 
-  const js = JSON.parse(text.substring(47).slice(0, -2));
-  const cols = js.table.cols.map(c => c.label);
-  const sheetData = {};
+  let sums = {
+    fillT:0, cutT:0, fillD:0, cutD:0, fillR:0, cutR:0
+  };
 
-  let totalSum = 0;
-  let doneSum = 0;
+  js.table.rows.forEach(r=>{
+    if(!r.c[0]) return;
+    const id = String(r.c[0].v);
+    data[id]={};
 
-  js.table.rows.forEach(r => {
-    if (!r.c[0]) return;
-    const id = String(r.c[0].v).trim();
-    sheetData[id] = {};
+    cols.forEach((c,i)=>{
+      const v = r.c[i] && r.c[i].v!==null ? r.c[i].v : "";
+      data[id][c]=v;
 
-    cols.forEach((c, i) => {
-      const value = r.c[i] && r.c[i].v !== null ? r.c[i].v : "";
-      sheetData[id][c] = value;
-
-      if (c === "total_qty" && !isNaN(value)) totalSum += Number(value);
-      if (c === "done_qty" && !isNaN(value)) doneSum += Number(value);
+      if(c==="FILL-TOTAL-QTY") sums.fillT+=num(v);
+      if(c==="CUT-TOTAL-QTY") sums.cutT+=num(v);
+      if(c==="FILL-DONE-QTY") sums.fillD+=num(v);
+      if(c==="CUT-DONE-QTY") sums.cutD+=num(v);
+      if(c==="FILL-REMANING-QTY") sums.fillR+=num(v);
+      if(c==="CUT-REMANING-QTY") sums.cutR+=num(v);
     });
   });
 
-  /* ===== عرض الإجماليات ===== */
-  document.getElementById("totalQty").innerText = totalSum.toLocaleString();
-  document.getElementById("doneQty").innerText = doneSum.toLocaleString();
+  document.getElementById("fillTotal").innerText=sums.fillT.toLocaleString();
+  document.getElementById("cutTotal").innerText=sums.cutT.toLocaleString();
+  document.getElementById("fillDone").innerText=sums.fillD.toLocaleString();
+  document.getElementById("cutDone").innerText=sums.cutD.toLocaleString();
+  document.getElementById("fillRemain").innerText=sums.fillR.toLocaleString();
+  document.getElementById("cutRemain").innerText=sums.cutR.toLocaleString();
 
-  /* ===== رسم الطرق ===== */
   fetch("https://sohaibabuserour-cyber.github.io/roads-map/ROADS.geojson")
-  .then(r => r.json())
-  .then(geojson => {
+  .then(r=>r.json())
+  .then(geo=>{
+    const layer=L.geoJSON(geo,{
+      onEachFeature:(f,l)=>{
+        const row=data[String(f.properties.Name)];
+        if(!row) return;
 
-    const roadsLayer = L.geoJSON(geojson, {
-      style: { weight: 3, fillOpacity: 0.5 },
-      onEachFeature: function(feature, layer) {
+        let html=`
+        <div class="popup-card">
+          <div class="popup-header">
+            <div class="title-main">مشروع ولي العهد 9‑ي</div>
+            <div class="title-sub">بيانات الطرق</div>
+          </div>
+          <div class="popup-body">`;
 
-        const roadId = String(feature.properties["Name"]).trim();
-        const row = sheetData[roadId];
-        if (!row) return;
-
-        const color = getColorByStatus(row["status"]);
-        layer.setStyle({ color, fillColor: color });
-
-        let popupHtml = `
-          <div class="popup-card">
-            <div class="popup-header">
-              <div class="title-main">مشروع ولي العهد 9‑ي</div>
-              <div class="title-sub">بيانات الطرق</div>
-            </div>
-            <div class="popup-body">
-        `;
-
-        Object.keys(row).forEach(key => {
-          popupHtml += `
+        Object.keys(row).forEach(k=>{
+          html+=`
             <div class="popup-row">
-              <div class="popup-label">${key}</div>
-              <div>${row[key]}</div>
-            </div>
-          `;
+              <div class="popup-label">${k}</div>
+              <div>${row[k]}</div>
+            </div>`;
         });
 
-        popupHtml += `
-            </div>
-          </div>
-        `;
-
-        layer.bindPopup(popupHtml);
+        l.bindPopup(html+"</div></div>");
       }
     }).addTo(map);
 
-    map.fitBounds(roadsLayer.getBounds());
+    map.fitBounds(layer.getBounds());
   });
 });
 </script>
 </body>
 </html>
+``
