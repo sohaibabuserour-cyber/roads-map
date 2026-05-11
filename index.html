@@ -30,10 +30,20 @@
     .popup-header {
       background: #7a3fa0;
       color: #fff;
-      padding: 14px;
+      padding: 18px 12px;
       text-align: center;
+    }
+
+    .popup-header .title-main {
       font-size: 36px;
       font-weight: bold;
+      line-height: 1.2;
+    }
+
+    .popup-header .title-sub {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 6px;
     }
 
     .popup-body {
@@ -73,11 +83,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 /* ===== ألوان الحالات ===== */
 function getColorByStatus(status) {
-  if (!status) return "#9e9e9e"; // رمادي
+  if (!status) return "#9e9e9e";
   status = status.trim();
-  if (status === "جاري") return "#4caf50";     // أخضر
-  if (status === "منتهي") return "#2196f3";    // أزرق
-  if (status === "متوقف") return "#f44336";    // أحمر
+  if (status === "جاري") return "#4caf50";
+  if (status === "منتهي") return "#2196f3";
+  if (status === "متوقف") return "#f44336";
   return "#9e9e9e";
 }
 
@@ -94,7 +104,7 @@ fetch(sheetURL)
   const sheetData = {};
 
   js.table.rows.forEach(r => {
-    if (!r.c[0]) return;  // لازم Name
+    if (!r.c[0]) return;
     const id = String(r.c[0].v).trim();
     sheetData[id] = {};
     cols.forEach((c, i) => {
@@ -118,14 +128,7 @@ fetch(sheetURL)
         const roadId = String(feature.properties["Name"]).trim();
         const row = sheetData[roadId];
 
-        if (!row) {
-          layer.setStyle({
-            color: "#9e9e9e",
-            fillColor: "#9e9e9e"
-          });
-          layer.bindPopup("لا توجد بيانات لهذا الطريق");
-          return;
-        }
+        if (!row) return;
 
         const color = getColorByStatus(row["status"]);
 
@@ -138,8 +141,8 @@ fetch(sheetURL)
         let popupHtml = `
           <div class="popup-card">
             <div class="popup-header">
-              مشروع ولي العهد 9‑ي
-                 بيانات الطرق
+              <div class="title-main">مشروع ولي العهد 9‑ي</div>
+              <div class="title-sub">بيانات الطرق</div>
             </div>
             <div class="popup-body">
         `;
