@@ -31,22 +31,54 @@
       margin-bottom: 12px;
       text-align: center;
       border-bottom: 2px solid rgba(255,255,255,0.4);
-      padding-bottom: 8px;
+      padding-bottom: 6px;
     }
 
     .summary-row {
       display: flex;
       justify-content: space-between;
-      font-size: 16px;
+      font-size: 15px;
       padding: 6px 0;
       border-bottom: 1px solid rgba(255,255,255,0.4);
     }
     .summary-row:last-child { border-bottom: none; }
+
+    /* ===== Popup ===== */
+    .popup-card {
+      width: 480px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .popup-header {
+      background: #7a3fa0;
+      color: #fff;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .title-main { font-size: 30px; font-weight: bold; }
+    .title-sub { font-size: 22px; font-weight: bold; margin-top: 4px; }
+
+    .popup-body { padding: 12px; font-size: 22px; }
+
+    .popup-row {
+      padding: 6px 0;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .popup-row:last-child { border-bottom: none; }
+
+    .popup-label { color: #7a3fa0; font-weight: bold; }
   </style>
 </head>
 
 <body>
 
+<!-- Dashboard -->
 <div class="summary-box">
   <div class="summary-title">إجماليات المشروع</div>
   <div class="summary-row"><span>إجمالي الردم الكلي</span><span id="fillTotal">0</span></div>
@@ -60,31 +92,23 @@
 <div id="map"></div>
 
 <script>
-/* ==============================
-   إنشاء الخريطة (بدون + / −)
-   ============================== */
-const map = L.map('map', { zoomControl: false }).setView([21.30, 39.70], 13);
+/* ===== إنشاء الخريطة بدون + / − ===== */
+const map = L.map('map', { zoomControl: false }).setView([21.30,39.70],13);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
-}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
-/* ==============================
-   تتبع الموقع Live (Google Maps style)
-   ============================== */
+/* ===== تتبع الموقع Live ===== */
 let userMarker = null;
 
 if ("geolocation" in navigator) {
   navigator.geolocation.watchPosition(
-    function (position) {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
 
-      if (userMarker) {
-        map.removeLayer(userMarker);
-      }
+      if (userMarker) map.removeLayer(userMarker);
 
-      userMarker = L.circleMarker([lat, lng], {
+      userMarker = L.circleMarker([lat,lng], {
         radius: 8,
         color: "#1e88e5",
         fillColor: "#2196f3",
@@ -92,21 +116,85 @@ if ("geolocation" in navigator) {
         weight: 3
       }).addTo(map);
     },
-    function (error) {
-      console.warn("تعذر تحديد الموقع");
-    },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 10000
-    }
+    () => console.warn("تعذر تحديد الموقع"),
+    { enableHighAccuracy:true }
   );
 }
 
-/* ==============================
-   (باقي كود الطرق والشيت والداش
-   تحطه زي ما هو عندك من غير تغيير)
-   ============================== */
+/* ===== قراءة Google Sheet ===== */
+function num(v){ return !isNaN(v) && v!=="" ? Number(v) : 0; }
+
+const sheetURL =
+"https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json";
+
+fetch(sheetURL)
+.then(r=>r.text())
+.then(t=>{
+  const js = JSON.parse(t.substring(47).slice(0,-2));
+  const cols = js.table.cols.map(c=>c.label);
+  const data = {};
+
+  let sums={fillT:0,cutT:0,fillD:0,cutD:0,fillR:0,cutR:0};
+
+  js.table.rows.forEach(r=>{
+    if(!r.c[0]) return;
+    const id = String(r.c[0].v);
+    data[id]={};
+
+    cols.forEach((c,i)=>{
+      const v = r.c[i] && r.c[i].v!==null ? r.c[i].v : "";
+      data[id][c]=v;
+
+      if(c==="FILL-TOTAL-QTY")sums.fillT+=num(v);
+      if(c==="CUT-TOTAL-QTY")sums.cutT+=num(v);
+      if(c==="FILL-DONE-QTY")sums.fillD+=num(v);
+      if(c==="CUT-DONE-QTY")sums.cutD+=num(v);
+      if(c==="FILL-REMANING-QTY")sums.fillR+=num(v);
+      if(c==="CUT-REMANING-QTY")sums.cutR+=num(v);
+    });
+  });
+
+  // عرض الإجماليات
+  fillTotal.innerText=sums.fillT.toLocaleString();
+  cutTotal.innerText=sums.cutT.toLocaleString();
+  fillDone.innerText=sums.fillD.toLocaleString();
+  cutDone.innerText=sums.cutD.toLocaleString();
+  fillRemain.innerText=sums.fillR.toLocaleString();
+  cutRemain.innerText=sums.cutR.toLocaleString();
+
+  /* ===== رسم الطرق ===== */
+  fetch("https://sohaibabuserour-cyber.github.io/roads-map/ROADS.geojson")
+  .then(r=>r.json())
+  .then(geo=>{
+    const layer = L.geoJSON(geo,{
+      onEachFeature:(f,l)=>{
+        const row=data[String(f.properties.Name)];
+        if(!row) return;
+
+        let html=`
+        <div class="popup-card">
+          <div class="popup-header">
+            <div class="title-main">مشروع ولي العهد 9‑ي</div>
+            <div class="title-sub">بيانات الطرق</div>
+          </div>
+          <div class="popup-body">`;
+
+        Object.keys(row).forEach(k=>{
+          if(k==="Name") return;
+          html+=`
+            <div class="popup-row">
+              <div class="popup-label">${k}</div>
+              <div>${row[k]}</div>
+            </div>`;
+        });
+
+        l.bindPopup(html+"</div></div>");
+      }
+    }).addTo(map);
+
+    map.fitBounds(layer.getBounds());
+  });
+});
 </script>
 
 </body>
