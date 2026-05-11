@@ -82,8 +82,8 @@ body{margin:0;font-family:Arial}
 
 <div class="dashboard" id="roadsDash">
 <h3>إجماليات الطرق</h3>
-<div class="row"><span>إجمالي كمية الردم</span><span id="rFillT">0</span></div>
-<div class="row"><span>إجمالى كمية القطع</span><span id="rCutT">0</span></div>
+<div class="row"><span>كمية الردم الإجمالية</span><span id="rFillT">0</span></div>
+<div class="row"><span>كمية القطع الإجمالية</span><span id="rCutT">0</span></div>
 <div class="row"><span>كمية الردم المنفذة</span><span id="rFillD">0</span></div>
 <div class="row"><span>كمية القطع المنفذة</span><span id="rCutD">0</span></div>
 <div class="row"><span>كمية الردم المتبقيه</span><span id="rFillR">0</span></div>
@@ -92,8 +92,8 @@ body{margin:0;font-family:Arial}
 
 <div class="dashboard" id="blocksDash">
 <h3>إجماليات البلوكات</h3>
-<div class="row"><span>إجمالي كمية الردم</span><span id="bFillT">0</span></div>
-<div class="row"><span>إجمالى كمية القطع</span><span id="bCutT">0</span></div>
+<div class="row"><span>كمية الردم الإجمالية</span><span id="bFillT">0</span></div>
+<div class="row"><span>كمية القطع الإجمالية</span><span id="bCutT">0</span></div>
 <div class="row"><span>كمية الردم المنفذة</span><span id="bFillD">0</span></div>
 <div class="row"><span>كمية القطع المنفذة</span><span id="bCutD">0</span></div>
 <div class="row"><span>كمية الردم المتبقيه</span><span id="bFillR">0</span></div>
@@ -140,7 +140,18 @@ function colorByStatus(s){
  if(s==="متوقف")return"#f44336";
  return"#9e9e9e"
 }
-
+const labelsAR = {
+  "FILL-TOTAL-QTY": "كمية الردم الإجمالية",
+  "CUT-TOTAL-QTY": "كمية القطع الإجمالية",
+  "FILL-DONE-QTY": "كمية الردم المنفذة",
+  "CUT-DONE-QTY": "كمية القطع المنفذة",
+  "FILL-REMANING-QTY": "كمية الردم المتبقية",
+  "CUT-REMANING-QTY": "كمية القطع المتبقية",
+  "STATUS": "الحالة",
+  "CONTRACTOR": "المقاول",
+  "EQUIPMENTS": "المعدات"
+};
+ 
 function loadSheet(url,cb){
  fetch(url).then(r=>r.text()).then(t=>{
   const j=JSON.parse(t.substring(47).slice(0,-2));
@@ -190,7 +201,12 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
       <div class="popup-body">`;
     Object.keys(row).forEach(k=>{
       if(k==="ID")return;
-      html+=`<div class="popup-row"><div class="popup-label">${k}</div><div>${row[k]}</div></div>`;
+      html+=`
+<div class="popup-row">
+  <div class="popup-label">${labelsAR[k] || k}</div>
+  <div>${row[k]}</div>
+</div>`;
+
     });
     l.bindPopup(html+"</div></div>");
     l.on('click',()=>l.openPopup());
