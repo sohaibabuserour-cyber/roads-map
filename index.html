@@ -2,89 +2,53 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-
-<!-- عنوان الصفحة -->
 <title>الخريطة التفاعلية مشروع ولي العهد ي</title>
 
-<!-- ملفات Leaflet (الخريطة) -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-/* إعدادات عامة للصفحة */
-body{
-  margin:0;
-  font-family:Arial;
-}
+body{margin:0;font-family:Arial}
+#map{height:100vh}
 
-/* عنصر الخريطة */
-#map{
-  height:100vh;
-}
-
-/* ================================
-   حاوية الداشبوردات (طرق + بلوكات)
-   ================================ */
+/* حاوية الداشبوردات */
 .dash-container{
  position:absolute;
  top:20px;
  left:12px;
  display:flex;
- flex-direction:column;   /* 👈 يخليهم تحت بعض */
+ flex-direction:column;
  gap:16px;
  z-index:1000
 }
 
-/* وضع داشبورد واحد */
-.dash-container.single{
-  flex-direction:column;
-}
-
-/* وضع أكثر من داشبورد */
-.dash-container.multi{
-  flex-direction:column;
-}
-
-
-/* ================================
-   كرت الداشبورد
-   ================================ */
+/* كرت الداشبورد */
 .dashboard{
  width:320px;
- background:#7a3fa0;      /* اللون البنفسجي */
+ background:#7a3fa0;
  color:#fff;
  padding:14px;
  border-radius:14px;
- box-shadow:0 6px 16px rgba(0,0,0,.35);
+ box-shadow:0 6px 16px rgba(0,0,0,.35)
 }
-
-/* عنوان الداشبورد */
 .dashboard h3{
  text-align:center;
  margin:0 0 8px;
  font-size:24px;
- border-bottom:1px solid rgba(255,255,255,.5);
+ border-bottom:1px solid rgba(255,255,255,.5)
 }
-
-/* صف داخل الداشبورد */
 .row{
  display:flex;
  justify-content:space-between;
  font-size:20px;
  padding:4px 0;
- border-bottom:1px solid rgba(255,255,255,.3);
+ border-bottom:1px solid rgba(255,255,255,.3)
 }
+.row:last-child{border-bottom:none}
 
-/* آخر صف بدون خط */
-.row:last-child{
-  border-bottom:none;
-}
-
-/* ================================
-   لوحة التحكم يمين (CheckBox + Legend)
-   ================================ */
+/* لوحة التحكم */
 .right-panel{
- position:fixed;          /* ثابتة */
+ position:fixed;
  bottom:20px;
  right:20px;
  background:#fff;
@@ -93,111 +57,70 @@ body{
  width:190px;
  box-shadow:0 4px 12px rgba(0,0,0,.35);
  font-size:22px;
- z-index:2000;
+ z-index:2000
 }
-
-/* مجموعة الـ CheckBoxes */
 .layer-toggle{
  margin-bottom:10px;
  border-bottom:1px solid #ddd;
- padding-bottom:8px;
+ padding-bottom:8px
 }
-
 .layer-toggle label{
  display:block;
  margin-bottom:8px;
- cursor:pointer;
+ cursor:pointer
 }
-
-/* تكبير شكل الـ Checkbox */
 .layer-toggle input{
- width:20px;
- height:20px;
+ width:20px;height:20px;
  transform:scale(1.4);
- margin-left:6px;
+ margin-left:6px
 }
-
-/* ================================
-   مفتاح الألوان (Legend)
-   ================================ */
 .legend-item{
  display:flex;
  align-items:center;
- margin-bottom:8px;
+ margin-bottom:8px
 }
-
 .legend-color{
  width:20px;
  height:20px;
  margin-left:8px;
- border-radius:4px;
+ border-radius:4px
 }
+.green{background:#4caf50}
+.blue{background:#2196f3}
+.red{background:#f44336}
 
-.green{background:#4caf50;}   /* جاري */
-.blue {background:#2196f3;}   /* منتهي */
-.red  {background:#f44336;}   /* متوقف */
-
-/* ================================
-   Popup Style (الاستايل المرجعي)
-   ================================ */
+/* Popup */
 .popup-card{
  width:450px;
  border-radius:16px;
  overflow:hidden;
  background:#fff;
- box-shadow:0 8px 20px rgba(0,0,0,.3);
+ box-shadow:0 8px 20px rgba(0,0,0,.3)
 }
-
 .popup-header{
  background:#7a3fa0;
  color:#fff;
  padding:16px;
- text-align:center;
+ text-align:center
 }
-
-.title-main{
- font-size:28px;
- font-weight:bold;
-}
-
-.title-sub{
- font-size:20px;
- font-weight:bold;
- margin-top:4px;
-}
-
-.popup-body{
- padding:12px;
- font-size:20px;
- color:#333;
-}
-
+.title-main{font-size:28px;font-weight:bold}
+.title-sub{font-size:20px;font-weight:bold;margin-top:4px}
+.popup-body{padding:12px;font-size:20px;color:#333}
 .popup-row{
  padding:6px 0;
  display:flex;
  justify-content:space-between;
- border-bottom:2px solid #e0e0e0;
+ border-bottom:2px solid #e0e0e0
 }
-
-.popup-row:last-child{
- border-bottom:none;
-}
-
-.popup-label{
- color:#7a3fa0;
- font-weight:bold;
-}
+.popup-row:last-child{border-bottom:none}
+.popup-label{color:#7a3fa0;font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<!-- ================================
-     حاوية الداشبوردات
-     ================================ -->
-<div class="dash-container single" id="dashContainer">
+<div class="dash-container" id="dashContainer">
 
-  <!-- داشبورد الطرق -->
   <div class="dashboard" id="roadsDash">
     <h3>إجماليات الطرق</h3>
     <div class="row"><span>كمية الردم الإجمالية</span><span id="rFillT">0</span></div>
@@ -208,7 +131,6 @@ body{
     <div class="row"><span>كمية القطع المتبقية</span><span id="rCutR">0</span></div>
   </div>
 
-  <!-- داشبورد البلوكات -->
   <div class="dashboard" id="blocksDash">
     <h3>إجماليات البلوكات</h3>
     <div class="row"><span>كمية الردم الإجمالية</span><span id="bFillT">0</span></div>
@@ -221,15 +143,11 @@ body{
 
 </div>
 
-<!-- ================================
-     لوحة التحكم
-     ================================ -->
 <div class="right-panel">
   <div class="layer-toggle">
     <label><input type="checkbox" id="chkRoads" checked> الطرق</label>
     <label><input type="checkbox" id="chkBlocks" checked> البلوكات</label>
   </div>
-
   <div class="legend">
     <div class="legend-item"><div class="legend-color green"></div>جاري</div>
     <div class="legend-item"><div class="legend-color blue"></div>منتهي</div>
@@ -237,30 +155,20 @@ body{
   </div>
 </div>
 
-<!-- عنصر الخريطة -->
 <div id="map"></div>
 
 <script>
-/* ================================
-   إنشاء الخريطة
-   ================================ */
-const map = L.map('map',{zoomControl:false})
-  .setView([21.3,39.7],13);
+const map = L.map('map',{zoomControl:false}).setView([21.3,39.7],13);
 
-/* إضافة طبقة الخلفية */
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:19
-}).addTo(map);
+/* غيّر نوع الخريطة من هنا */
+L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
+  {maxZoom:16}
+).addTo(map);
 
-/* متغيرات الطبقات */
 let roadsLayer, blocksLayer;
 
-/* دالة تحويل القيم الرقمية */
-function num(v){
-  return !isNaN(v) && v!=="" ? Number(v) : 0;
-}
-
-/* تلوين حسب الحالة */
+function num(v){return !isNaN(v)&&v!==""?Number(v):0}
 function colorByStatus(s){
  if(s==="جاري")return"#4caf50";
  if(s==="منتهي")return"#2196f3";
@@ -268,7 +176,6 @@ function colorByStatus(s){
  return"#9e9e9e";
 }
 
-/* ترجمة أسماء الأعمدة */
 const labelsAR = {
  "ROAD NAME":"اسم الطريق",
  "BLOCK NAME":"اسم البلوك",
@@ -283,38 +190,125 @@ const labelsAR = {
  "EQUPIMENTS":"المعدات"
 };
 
-/* تحميل بيانات Google Sheet */
 function loadSheet(url,cb){
- fetch(url)
- .then(r=>r.text())
- .then(t=>{
+ fetch(url).then(r=>r.text()).then(t=>{
   const j=JSON.parse(t.substring(47).slice(0,-2));
   let d={};
   j.table.rows.forEach(r=>{
-   if(!r.c[0])return;
-   let id=String(r.c[0].v);
-   d[id]={};
-   j.table.cols.forEach((c,i)=>{
-    d[id][c.label.trim().toUpperCase()] = r.c[i]?.v || "";
-   });
+    if(!r.c[0])return;
+    let id=String(r.c[0].v);
+    d[id]={};
+    j.table.cols.forEach((c,i)=>{
+      d[id][c.label.trim().toUpperCase()] = r.c[i]?.v || "";
+    });
   });
   cb(d);
  });
 }
 
-/* التحكم في عرض ومكان الداشبورد */
+/* ROADS */
+loadSheet(
+ "https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json",
+ data=>{
+  let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
+  Object.values(data).forEach(v=>{
+    fT+=num(v["FILL-TOTAL-QTY"]);
+    cT+=num(v["CUT-TOTAL-QTY"]);
+    fD+=num(v["FILL-DONE-QTY"]);
+    cD+=num(v["CUT-DONE-QTY"]);
+    fR+=num(v["FILL-REMANING-QTY"]);
+    cR+=num(v["CUT-REMANING-QTY"]);
+  });
+  rFillT.textContent=fT;
+  rCutT.textContent=cT;
+  rFillD.textContent=fD;
+  rCutD.textContent=cD;
+  rFillR.textContent=fR;
+  rCutR.textContent=cR;
+
+  fetch("ROADS.geojson").then(r=>r.json()).then(g=>{
+    roadsLayer = L.geoJSON(g,{
+      onEachFeature:(f,l)=>{
+        let row=data[f.properties.ID];
+        if(!row)return;
+        let col=colorByStatus(row["STATUS"]);
+        l.setStyle({color:col,fillColor:col,fillOpacity:.5});
+        let html=`
+        <div class="popup-card">
+          <div class="popup-header">
+            <div class="title-main">مشروع ولي العهد ي</div>
+            <div class="title-sub">بيانات الطريق</div>
+          </div>
+          <div class="popup-body">`;
+        Object.keys(row).forEach(k=>{
+          if(k==="ID")return;
+          html+=`
+          <div class="popup-row">
+            <div class="popup-label">${labelsAR[k]||k}</div>
+            <div>${row[k]}</div>
+          </div>`;
+        });
+        l.bindPopup(html+"</div></div>");
+        l.on("click",()=>l.openPopup());
+      }
+    }).addTo(map);
+  });
+});
+
+/* BLOCKS */
+loadSheet(
+ "https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json",
+ data=>{
+  let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
+  Object.values(data).forEach(v=>{
+    fT+=num(v["FILL-TOTAL-QTY"]);
+    cT+=num(v["CUT-TOTAL-QTY"]);
+    fD+=num(v["FILL-DONE-QTY"]);
+    cD+=num(v["CUT-DONE-QTY"]);
+    fR+=num(v["FILL-REMANING-QTY"]);
+    cR+=num(v["CUT-REMANING-QTY"]);
+  });
+  bFillT.textContent=fT;
+  bCutT.textContent=cT;
+  bFillD.textContent=fD;
+  bCutD.textContent=cD;
+  bFillR.textContent=fR;
+  bCutR.textContent=cR;
+
+  fetch("BLOCKS.geojson").then(r=>r.json()).then(g=>{
+    blocksLayer = L.geoJSON(g,{
+      onEachFeature:(f,l)=>{
+        let row=data[f.properties.ID];
+        if(!row)return;
+        let col=colorByStatus(row["STATUS"]);
+        l.setStyle({color:col,fillColor:col,fillOpacity:.4});
+        let html=`
+        <div class="popup-card">
+          <div class="popup-header">
+            <div class="title-main">مشروع ولي العهد ي</div>
+            <div class="title-sub">بيانات البلوك</div>
+          </div>
+          <div class="popup-body">`;
+        Object.keys(row).forEach(k=>{
+          if(k==="ID")return;
+          html+=`
+          <div class="popup-row">
+            <div class="popup-label">${labelsAR[k]||k}</div>
+            <div>${row[k]}</div>
+          </div>`;
+        });
+        l.bindPopup(html+"</div></div>");
+        l.on("click",()=>l.openPopup());
+      }
+    }).addTo(map);
+  });
+});
+
 function updateDashLayout(){
  roadsDash.style.display = chkRoads.checked ? "block" : "none";
  blocksDash.style.display = chkBlocks.checked ? "block" : "none";
-
- const activeCount = 
-   (chkRoads.checked?1:0) + (chkBlocks.checked?1:0);
-
- dashContainer.classList.toggle("single", activeCount<=1);
- dashContainer.classList.toggle("multi", activeCount>1);
 }
 
-/* ربط الـ CheckBoxes */
 chkRoads.onchange=function(){
  this.checked ? map.addLayer(roadsLayer) : map.removeLayer(roadsLayer);
  updateDashLayout();
@@ -324,7 +318,6 @@ chkBlocks.onchange=function(){
  updateDashLayout();
 };
 
-/* أول تشغيل */
 updateDashLayout();
 </script>
 
