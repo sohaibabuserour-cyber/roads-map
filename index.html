@@ -29,7 +29,7 @@ body{
  position:absolute;       /* تثبيت في الصفحة */
  top:20px;                /* من أعلى */
  left:12px;               /* من اليسار */
- display:flex;             /* Flexbox */
+ flex-direction:column;             /* Flexbox */
  gap:16px;                 /* مسافة بين الداشبوردات */
  z-index:1000;             /* فوق الخريطة */
 }
@@ -247,9 +247,9 @@ const map = L.map('map',{zoomControl:false})
 
 /* إضافة طبقة الخلفية */
 L.tileLayer(
-  'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
   {
-    maxZoom: 20
+    maxZoom: 16
   }
 ).addTo(map);
 
