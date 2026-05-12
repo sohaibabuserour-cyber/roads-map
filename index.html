@@ -26,12 +26,13 @@ body{
    حاوية الداشبوردات (طرق + بلوكات)
    ================================ */
 .dash-container{
- position:absolute;       /* تثبيت في الصفحة */
- top:20px;                /* من أعلى */
- left:12px;               /* من اليسار */
- flex-direction:column;             /* Flexbox */
- gap:16px;                 /* مسافة بين الداشبوردات */
- z-index:1000;             /* فوق الخريطة */
+ position:absolute;
+ top:20px;
+ left:12px;
+ display:flex;
+ flex-direction:column;   /* 👈 يخليهم تحت بعض */
+ gap:16px;
+ z-index:1000
 }
 
 /* وضع داشبورد واحد */
@@ -41,8 +42,9 @@ body{
 
 /* وضع أكثر من داشبورد */
 .dash-container.multi{
-  flex-direction:row;
+  flex-direction:column;
 }
+
 
 /* ================================
    كرت الداشبورد
