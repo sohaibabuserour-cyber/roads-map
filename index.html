@@ -246,12 +246,9 @@ const map = L.map('map',{zoomControl:false})
   .setView([21.3,39.7],13);
 
 /* إضافة طبقة الخلفية */
-L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
-  {
-    maxZoom: 16
-  }
-).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19
+}).addTo(map);
 
 /* متغيرات الطبقات */
 let roadsLayer, blocksLayer;
