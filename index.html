@@ -179,6 +179,13 @@ body{margin:0;font-family:Arial}
 
 <script>
 const map = L.map('map',{zoomControl:false}).setView([21.3,39.7],13);
+ 
+map.on("zoomend", function(){
+  if(map._popup){
+    map._popup.update();
+  }
+});
+
 
 /* غيّر نوع الخريطة من هنا */
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
@@ -337,7 +344,7 @@ chkBlocks.onchange=function(){
  updateDashLayout();
 };
 // ===== كود البحث =====
-document.getElementById("searchInput").addEventListener("change", function(){
+dodocument.getElementById("searchInput").addEventListener("change", function(){
 
   const name = this.value.trim();
 
@@ -345,10 +352,8 @@ document.getElementById("searchInput").addEventListener("change", function(){
 
     const layer = roadsFeatures[name];
 
-    // ✅ أول حاجة: زووم على الطريق
     map.fitBounds(layer.getBounds());
 
-    // ✅ بعد الزووم: افتح البوب (بتأخير بسيط)
     setTimeout(() => {
       layer.openPopup();
     }, 300);
@@ -358,7 +363,7 @@ document.getElementById("searchInput").addEventListener("change", function(){
   }
 
 });
-``
+
 
 
 // ===== تحديث الداشبورد
