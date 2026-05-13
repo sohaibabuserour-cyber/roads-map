@@ -336,8 +336,9 @@ chkBlocks.onchange=function(){
  this.checked ? map.addLayer(blocksLayer) : map.removeLayer(blocksLayer);
  updateDashLayout();
 };
-// ===== كود البحث =====
-dodocument.getElementById("searchInput").addEventListener("change", function(){
+
+ // دالة البحث
+document.getElementById("searchInput").addEventListener("change", function(){
 
   const name = this.value.trim();
 
@@ -345,10 +346,36 @@ dodocument.getElementById("searchInput").addEventListener("change", function(){
 
     const layer = roadsFeatures[name];
 
-    map.fitBounds(layer.getBounds());
+    // نحفظ اللون الأصلي
+    const originalStyle = {
+      color: layer.options.color,
+      fillColor: layer.options.fillColor
+    };
 
-    setTimeout(() => {
-      layer.openPopup();
+    let count = 0;
+
+    // ✅ وميض (blink)
+    const interval = setInterval(() => {
+
+      if(count % 2 === 0){
+        // ينوّر (أصفر)
+        layer.setStyle({
+          color: "#ffff00",
+          fillColor: "#ffff00"
+        });
+      } else {
+        // يرجع للون الأصلي
+        layer.setStyle(originalStyle);
+      }
+
+      count++;
+
+      // يوقف بعد 6 مرات
+      if(count > 6){
+        clearInterval(interval);
+        layer.setStyle(originalStyle);
+      }
+
     }, 300);
 
   } else {
@@ -356,9 +383,7 @@ dodocument.getElementById("searchInput").addEventListener("change", function(){
   }
 
 });
-
-
-
+``
 // ===== تحديث الداشبورد
 updateDashLayout();
 
