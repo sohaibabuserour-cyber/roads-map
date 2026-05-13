@@ -345,17 +345,21 @@ document.getElementById("searchInput").addEventListener("change", function(){
 
     const layer = roadsFeatures[name];
 
-    // زووم على الطريق
-    //map.fitBounds(layer.getBounds());
+    // ✅ أول حاجة: زووم على الطريق
+    map.fitBounds(layer.getBounds());
 
-    // فتح Popup
-    layer.openPopup();
+    // ✅ بعد الزووم: افتح البوب (بتأخير بسيط)
+    setTimeout(() => {
+      layer.openPopup();
+    }, 300);
 
   } else {
     alert("الطريق غير موجود");
   }
 
 });
+``
+
 
 // ===== تحديث الداشبورد
 updateDashLayout();
