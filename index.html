@@ -11,6 +11,21 @@
 body{margin:0;font-family:Arial}
 #map{height:100vh}
 
+.search-box {
+ position:absolute;
+ top:20px;
+ right:220px;
+ z-index:2000;
+}
+
+.search-box input {
+ width:200px;
+ padding:6px 10px;
+ font-size:16px;
+ border-radius:6px;
+ border:1px solid #ccc;
+}
+
 /* حاوية الداشبوردات */
 .dash-container{
  position:absolute;
@@ -155,6 +170,11 @@ body{margin:0;font-family:Arial}
   </div>
 </div>
 
+<!-- ===== Search Box ===== -->
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="ابحث باسم الطريق...">
+</div>
+<!-- عنصر الخريطة -->
 <div id="map"></div>
 
 <script>
@@ -164,7 +184,8 @@ const map = L.map('map',{zoomControl:false}).setView([21.3,39.7],13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
 
 let roadsLayer, blocksLayer;
-
+let roadsFeatures = {}; // تخزين الطرق بالاسم
+ 
 function num(v){return !isNaN(v)&&v!==""?Number(v):0}
 function colorByStatus(s){
  if(s==="جاري")return"#4caf50";
@@ -228,6 +249,7 @@ loadSheet(
       onEachFeature:(f,l)=>{
         let row=data[f.properties.ID];
         if(!row)return;
+        roadsFeatures[row["ROAD NAME"]] = l;
         let col=colorByStatus(row["STATUS"]);
         l.setStyle({color:col,fillColor:col,fillOpacity:.5});
         let html=`
@@ -314,8 +336,30 @@ chkBlocks.onchange=function(){
  this.checked ? map.addLayer(blocksLayer) : map.removeLayer(blocksLayer);
  updateDashLayout();
 };
+// ===== كود البحث =====
+document.getElementById("searchInput").addEventListener("change", function(){
 
+  const name = this.value.trim();
+
+  if(roadsFeatures[name]){
+
+    const layer = roadsFeatures[name];
+
+    // زووم على الطريق
+    map.fitBounds(layer.getBounds());
+
+    // فتح Popup
+    layer.openPopup();
+
+  } else {
+    alert("الطريق غير موجود");
+  }
+
+});
+
+// ===== تحديث الداشبورد
 updateDashLayout();
+
 </script>
 
 </body>
