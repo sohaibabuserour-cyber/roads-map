@@ -715,8 +715,9 @@
 }
 
 /* ===== ROADS ===== */
-roadsData = data;
+
 loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json",data=>{
+ roadsData = data;
  let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
  Object.values(data).forEach(v=>{
   fT+=num(v["FILL-TOTAL-QTY"]);
@@ -734,44 +735,50 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
  rCutR.textContent=cR;
 
  fetch("ROADS.geojson").then(r=>r.json()).then(g=>{
-  roadsLayer=L.geoJSON(g,{
-   onEachFeature:(f,l)=>{
-    let row=data[f.properties.ID];if(!row)return;
-       
-    roadsFeatures[row["ROAD NAME"]] = l;
 
-    let col = getStatusColor(row["STATUS"]);
-    l.setStyle({color:col,fillColor:col,fillOpacity:.5});
-    let html=`
-    <div class="popup-card">
-      <div class="popup-header">
-        <div class="title-main">مشروع ولي العهد ي</div>
-        <div class="title-main">بيانات الطريق</div>
-      </div>
-      <div class="popup-body">`;
-    Object.keys(row).forEach(k=>{
-      if(k==="ID")return;
-      html+=`
-<div class="popup-row">
-  <div class="popup-label">${labelsAR[k] || k}</div>
-  <div>${row[k]}</div>
-</div>`;
+  roadsLayer = L.geoJSON(g,{
+    onEachFeature:(f,l)=>{
+      let row = data[f.properties.ID];
+      if(!row) return;
 
-    });
-    l.bindPopup(html+"</div></div>");
-    l.on('click',()=>l.openPopup());
-   }
-  
-if(document.getElementById("chkRoads").checked){
-  roadsLayer.addTo(map);
-}
+      roadsFeatures[row["ROAD NAME"]] = l;
 
- });
+      let col = getStatusColor(row["STATUS"]);
+      l.setStyle({color:col,fillColor:col,fillOpacity:.5});
+
+      let html=`
+      <div class="popup-card">
+        <div class="popup-header">
+          <div class="title-main">مشروع ولي العهد ي</div>
+          <div class="title-main">بيانات الطريق</div>
+        </div>
+        <div class="popup-body">`;
+
+      Object.keys(row).forEach(k=>{
+        if(k==="ID")return;
+        html+=`
+        <div class="popup-row">
+          <div class="popup-label">${labelsAR[k] || k}</div>
+          <div>${row[k]}</div>
+        </div>`;
+      });
+
+      l.bindPopup(html+"</div></div>");
+      l.on('click',()=>l.openPopup());
+    }
+  });
+
+  /* ✅ الإضافة الصح */
+  if(chkRoads.checked){
+    roadsLayer.addTo(map);
+  }
+
 });
 
 /* ===== BLOCKS ===== */
-blocksData = data;
+
 loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json",data=>{
+ blocksData = data;
  let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
  Object.values(data).forEach(v=>{
   fT+=num(v["FILL-TOTAL-QTY"]);
@@ -789,40 +796,46 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
  bCutR.textContent=cR;
 
  fetch("BLOCKS.geojson").then(r=>r.json()).then(g=>{
-  blocksLayer=L.geoJSON(g,{
-   onEachFeature:(f,l)=>{
-    let row=data[f.properties.ID];if(!row)return;
 
-       blocksFeatures[row["BLOCK NAME"]] = l;
-       
-    let col = getStatusColor(row["STATUS"]);
-    l.setStyle({color:col,fillColor:col,fillOpacity:.4});
-    let html=`
-    <div class="popup-card">
-      <div class="popup-header">
-        <div class="title-main">مشروع ولي العهد ي</div>
-        <div class="title-main">بيانات البلوك</div>
-      </div>
-      <div class="popup-body">`;
-    Object.keys(row).forEach(k=>{
-      if(k==="ID")return;
-      html+=`
-<div class="popup-row">
-  <div class="popup-label">${labelsAR[k] || k}</div>
-  <div>${row[k]}</div>
-</div>`;
+  blocksLayer = L.geoJSON(g,{
+    onEachFeature:(f,l)=>{
+      let row=data[f.properties.ID]; 
+      if(!row) return;
 
-    });
-    l.bindPopup(html+"</div></div>");
-    l.on('click',()=>l.openPopup());
-   }
-  
-if(document.getElementById("chkBlocks").checked){
-  blocksLayer.addTo(map);
-}
+      blocksFeatures[row["BLOCK NAME"]] = l;
 
- });
+      let col = getStatusColor(row["STATUS"]);
+      l.setStyle({color:col,fillColor:col,fillOpacity:.4});
+
+      let html=`
+      <div class="popup-card">
+        <div class="popup-header">
+          <div class="title-main">مشروع ولي العهد ي</div>
+          <div class="title-main">بيانات البلوك</div>
+        </div>
+        <div class="popup-body">`;
+
+      Object.keys(row).forEach(k=>{
+        if(k==="ID")return;
+        html+=`
+        <div class="popup-row">
+          <div class="popup-label">${labelsAR[k] || k}</div>
+          <div>${row[k]}</div>
+        </div>`;
+      });
+
+      l.bindPopup(html+"</div></div>");
+      l.on('click',()=>l.openPopup());
+    }
+  });
+
+  // ✅ هنا بالظبط (بعد إغلاق geoJSON)
+  if(document.getElementById("chkBlocks").checked){
+    blocksLayer.addTo(map);
+  }
+
 });
+``
 
 
 
