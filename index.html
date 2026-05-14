@@ -57,11 +57,11 @@
 
         .search-box-roads {
             top: 20px;
-            right: 20px;
+            right: 230px;   /* ✅ يمين شوية */
         }
 
         .search-box-blocks {
-            top: 80px;
+            top: 20px;
             right: 20px;
         }
 
@@ -733,6 +733,13 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
  rCutD.textContent=cD;
  rFillR.textContent=fR;
  rCutR.textContent=cR;
+    
+rFillT.textContent = formatNumber(fT);
+rCutT.textContent = formatNumber(cT);
+rFillD.textContent = formatNumber(fD);
+rCutD.textContent = formatNumber(cD);
+rFillR.textContent = formatNumber(fR);
+rCutR.textContent = formatNumber(cR);
 
  fetch("ROADS.geojson").then(r=>r.json()).then(g=>{
 
@@ -740,6 +747,17 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
     onEachFeature:(f,l)=>{
       let row = data[f.properties.ID];
       if(!row) return;
+        
+// ✅ الفلتر هنا بالظبط
+    if (!selectedRoadsStatuses.includes(row["STATUS"])) {
+      return;
+    }
+
+    roadsFeatures[row["ROAD NAME"]] = l;
+
+    let col = getStatusColor(row["STATUS"]);
+    l.setStyle({color:col,fillColor:col,fillOpacity:.5});
+
 
       roadsFeatures[row["ROAD NAME"]] = l;
 
@@ -759,7 +777,7 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
         html+=`
         <div class="popup-row">
           <div class="popup-label">${labelsAR[k] || k}</div>
-          <div>${row[k]}</div>
+          <div>${formatNumber(row[k])}</div>
         </div>`;
       });
 
@@ -796,6 +814,13 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
  bCutD.textContent=cD;
  bFillR.textContent=fR;
  bCutR.textContent=cR;
+bFillT.textContent = formatNumber(fT);
+bCutT.textContent = formatNumber(cT);
+bFillD.textContent = formatNumber(fD);
+bCutD.textContent = formatNumber(cD);
+bFillR.textContent = formatNumber(fR);
+bCutR.textContent = formatNumber(cR);
+``
 
  fetch("BLOCKS.geojson").then(r=>r.json()).then(g=>{
 
@@ -803,6 +828,10 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
     onEachFeature:(f,l)=>{
       let row=data[f.properties.ID]; 
       if(!row) return;
+        if (!selectedBlocksStatuses.includes(row["STATUS"])) {
+  return;
+}
+
 
       blocksFeatures[row["BLOCK NAME"]] = l;
 
@@ -822,7 +851,7 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
         html+=`
         <div class="popup-row">
           <div class="popup-label">${labelsAR[k] || k}</div>
-          <div>${row[k]}</div>
+          <div>${formatNumber(row[k])}</div>
         </div>`;
       });
 
