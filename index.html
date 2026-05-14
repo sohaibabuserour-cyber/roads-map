@@ -738,7 +738,7 @@
          */
         function loadSheetFromAPI(sheetId, sheetName, cb) {
             // ⚠️ استبدل هذا الـ API KEY بمفتاحك
-            const API_KEY = "AIzaSyDxxxxxxxxxxxxxxxxxxxxxxxxxxx"; // ⚠️ ضع مفتاح API هنا
+            const API_KEY = "AIzaSy_YourActualKeyHere_";هنا
             const range = `'${sheetName}'!A:Z`;
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
 
