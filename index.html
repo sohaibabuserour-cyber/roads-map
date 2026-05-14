@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الخريطة التفاعلية مشروع ولي العهد</title>
 
-    <!-- مكتبة Leaflet للخرائط -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* ===== تنسيقات عامة ===== */
         * {
             margin: 0;
             padding: 0;
@@ -22,13 +20,11 @@
             background: #f5f5f5;
         }
 
-        /* ===== الخريطة ===== */
         #map {
             height: 100vh;
             width: 100%;
         }
 
-        /* ===== صندوق البحث ===== */
         .search-box {
             position: absolute;
             top: 20px;
@@ -39,6 +35,10 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             width: 200px;
+        }
+
+        .search-box.hidden {
+            display: none;
         }
 
         .search-box input {
@@ -65,11 +65,6 @@
             right: 20px;
         }
 
-        .search-box.hidden {
-            display: none;
-        }
-
-        /* ===== قائمة البحث المنسدلة ===== */
         .search-dropdown {
             position: absolute;
             top: 100%;
@@ -111,7 +106,6 @@
             color: white;
         }
 
-        /* ===== حاوية لوحة المعلومات ===== */
         .dash-container {
             position: absolute;
             top: 20px;
@@ -122,7 +116,6 @@
             z-index: 1000;
         }
 
-        /* ===== كرت لوحة المعلومات ===== */
         .dashboard {
             width: 320px;
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
@@ -168,7 +161,6 @@
             border-bottom: none;
         }
 
-        /* ===== لوحة التحكم (اليمين) ===== */
         .right-panel {
             position: fixed;
             bottom: 20px;
@@ -190,7 +182,6 @@
             text-align: right;
         }
 
-        /* ===== خيارات الطبقات ===== */
         .layer-toggle {
             margin-bottom: 16px;
             border-bottom: 2px solid #ddd;
@@ -221,7 +212,6 @@
             accent-color: #7a3fa0;
         }
 
-        /* ===== مفتاح الخريطة (Legend) ===== */
         .legend {
             padding-top: 8px;
             text-align: right;
@@ -276,27 +266,12 @@
             order: 2;
         }
 
-        .color-ongoing {
-            background: #4caf50;
-        }
+        .color-ongoing { background: #4caf50; }
+        .color-available { background: #2196f3; }
+        .color-unavailable { background: #ff9800; }
+        .color-completed { background: #9c27b0; }
+        .color-stopped { background: #f44336; }
 
-        .color-available {
-            background: #2196f3;
-        }
-
-        .color-unavailable {
-            background: #ff9800;
-        }
-
-        .color-completed {
-            background: #9c27b0;
-        }
-
-        .color-stopped {
-            background: #f44336;
-        }
-
-        /* ===== بطاقة المعلومات (Popup) ===== */
         .popup-card {
             width: 450px;
             border-radius: 16px;
@@ -351,37 +326,6 @@
             min-width: 200px;
         }
 
-        /* ===== الحالات ===== */
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            color: white;
-            text-align: center;
-            font-size: 13px;
-        }
-
-        .status-ongoing {
-            background: #4caf50;
-        }
-
-        .status-available {
-            background: #2196f3;
-        }
-
-        .status-unavailable {
-            background: #ff9800;
-        }
-
-        .status-completed {
-            background: #9c27b0;
-        }
-
-        .status-stopped {
-            background: #f44336;
-        }
-
-        /* ===== رسائل التنبيه ===== */
         .alert {
             position: fixed;
             top: 20px;
@@ -404,31 +348,20 @@
             }
         }
 
-        .alert-error {
-            background: #f44336;
-            color: white;
-        }
+        .alert-error { background: #f44336; color: white; }
+        .alert-success { background: #4caf50; color: white; }
 
-        .alert-success {
-            background: #4caf50;
-            color: white;
-        }
-
-        /* ===== المحمول ===== */
         @media (max-width: 768px) {
             .search-box {
                 width: calc(100% - 20px);
                 right: 10px;
             }
-
             .search-box-roads {
                 top: 10px;
             }
-
             .search-box-blocks {
                 top: 70px;
             }
-
             .dash-container {
                 left: 10px;
                 right: 10px;
@@ -437,19 +370,16 @@
                 overflow-x: auto;
                 gap: 10px;
             }
-
             .dashboard {
                 width: 280px;
                 flex-shrink: 0;
             }
-
             .right-panel {
                 bottom: 10px;
                 right: 10px;
                 width: calc(100% - 20px);
                 max-width: 300px;
             }
-
             .popup-card {
                 width: 100%;
                 max-width: 400px;
@@ -460,187 +390,87 @@
 
 <body>
 
-    <!-- ===== لوحات المعلومات (الجهة اليسرى) ===== -->
     <div class="dash-container" id="dashContainer">
-
-        <!-- لوحة الطرق -->
         <div class="dashboard" id="roadsDash">
             <h3>📍 إجماليات الطرق</h3>
-            <div class="row">
-                <span>كمية الردم الإجمالية</span>
-                <span id="rFillT">0</span>
-            </div>
-            <div class="row">
-                <span>كمية القطع الإجمالية</span>
-                <span id="rCutT">0</span>
-            </div>
-            <div class="row">
-                <span>كمية الردم المنفذة</span>
-                <span id="rFillD">0</span>
-            </div>
-            <div class="row">
-                <span>كمية القطع المنفذة</span>
-                <span id="rCutD">0</span>
-            </div>
-            <div class="row">
-                <span>كمية الردم المتبقية</span>
-                <span id="rFillR">0</span>
-            </div>
-            <div class="row">
-                <span>كمية القطع المتبقية</span>
-                <span id="rCutR">0</span>
-            </div>
+            <div class="row"><span>كمية الردم الإجمالية</span><span id="rFillT">0</span></div>
+            <div class="row"><span>كمية القطع الإجمالية</span><span id="rCutT">0</span></div>
+            <div class="row"><span>كمية الردم المنفذة</span><span id="rFillD">0</span></div>
+            <div class="row"><span>كمية القطع المنفذة</span><span id="rCutD">0</span></div>
+            <div class="row"><span>كمية الردم المتبقية</span><span id="rFillR">0</span></div>
+            <div class="row"><span>كمية القطع المتبقية</span><span id="rCutR">0</span></div>
         </div>
 
-        <!-- لوحة البلوكات -->
         <div class="dashboard" id="blocksDash">
             <h3>🏗️ إجماليات البلوكات</h3>
-            <div class="row">
-                <span>كمية الردم الإجمالية</span>
-                <span id="bFillT">0</span>
-            </div>
-            <div class="row">
-                <span>كمية القطع الإجمالية</span>
-                <span id="bCutT">0</span>
-            </div>
-            <div class="row">
-                <span>كمية الردم المنفذة</span>
-                <span id="bFillD">0</span>
-            </div>
-            <div class="row">
-                <span>كمية القطع المنفذة</span>
-                <span id="bCutD">0</span>
-            </div>
-            <div class="row">
-                <span>كمية الردم المتبقية</span>
-                <span id="bFillR">0</span>
-            </div>
-            <div class="row">
-                <span>كمية القطع المتبقية</span>
-                <span id="bCutR">0</span>
-            </div>
+            <div class="row"><span>كمية الردم الإجمالية</span><span id="bFillT">0</span></div>
+            <div class="row"><span>كمية القطع الإجمالية</span><span id="bCutT">0</span></div>
+            <div class="row"><span>كمية الردم المنفذة</span><span id="bFillD">0</span></div>
+            <div class="row"><span>كمية القطع المنفذة</span><span id="bCutD">0</span></div>
+            <div class="row"><span>كمية الردم المتبقية</span><span id="bFillR">0</span></div>
+            <div class="row"><span>كمية القطع المتبقية</span><span id="bCutR">0</span></div>
         </div>
-
     </div>
 
-    <!-- ===== لوحة التحكم (الجهة اليمين) ===== -->
     <div class="right-panel">
         <h4>⚙️ إعدادات الخريطة</h4>
-
-        <!-- خيارات إظهار/إخفاء الطبقات -->
         <div class="layer-toggle">
-            <label>
-                الطرق
-                <input type="checkbox" id="chkRoads" checked>
-            </label>
-            <label>
-                البلوكات
-                <input type="checkbox" id="chkBlocks" checked>
-            </label>
+            <label><span>الطرق</span><input type="checkbox" id="chkRoads" checked></label>
+            <label><span>البلوكات</span><input type="checkbox" id="chkBlocks" checked></label>
         </div>
 
-        <!-- مفتاح الخريطة (رموز الحالات) مع Checkboxes -->
         <div class="legend">
             <div class="legend-title">📋 حالات التقدم:</div>
-            
-            <!-- جاري التنفيذ -->
             <div class="legend-item">
                 <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
-                <label>
-                    جاري التنفيذ
-                    <div class="legend-color color-ongoing"></div>
-                </label>
+                <label>جاري التنفيذ <div class="legend-color color-ongoing"></div></label>
             </div>
-
-            <!-- متاح للتنفيذ -->
             <div class="legend-item">
                 <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
-                <label>
-                    متاح للتنفيذ
-                    <div class="legend-color color-available"></div>
-                </label>
+                <label>متاح للتنفيذ <div class="legend-color color-available"></div></label>
             </div>
-
-            <!-- غير متاح -->
             <div class="legend-item">
                 <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
-                <label>
-                    غير متاح
-                    <div class="legend-color color-unavailable"></div>
-                </label>
+                <label>غير متاح <div class="legend-color color-unavailable"></div></label>
             </div>
-
-            <!-- تم الانتهاء -->
             <div class="legend-item">
                 <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
-                <label>
-                    تم الانتهاء
-                    <div class="legend-color color-completed"></div>
-                </label>
+                <label>تم الانتهاء <div class="legend-color color-completed"></div></label>
             </div>
-
-            <!-- متوقف -->
             <div class="legend-item">
                 <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
-                <label>
-                    متوقف
-                    <div class="legend-color color-stopped"></div>
-                </label>
+                <label>متوقف <div class="legend-color color-stopped"></div></label>
             </div>
         </div>
     </div>
 
-    <!-- ===== صندوق البحث للطرق ===== -->
     <div class="search-box search-box-roads" id="roadsSearchBox">
-        <input 
-            type="text" 
-            id="roadsSearchInput" 
-            placeholder="ابحث عن طريق..."
-            title="أدخل اسم الطريق"
-        >
+        <input type="text" id="roadsSearchInput" placeholder="ابحث عن طريق...">
         <div class="search-dropdown" id="roadsSearchDropdown"></div>
     </div>
 
-    <!-- ===== صندوق البحث للبلوكات ===== -->
     <div class="search-box search-box-blocks" id="blocksSearchBox">
-        <input 
-            type="text" 
-            id="blocksSearchInput" 
-            placeholder="ابحث عن بلوك..."
-            title="أدخل اسم البلوك"
-        >
+        <input type="text" id="blocksSearchInput" placeholder="ابحث عن بلوك...">
         <div class="search-dropdown" id="blocksSearchDropdown"></div>
     </div>
 
-    <!-- ===== عنصر الخريطة ===== -->
     <div id="map"></div>
 
     <script>
-        /* =====================================
-           ===== متغيرات عامة ===== 
-           ===================================== */
-
-        let map;
-        let roadsLayer, blocksLayer;
-        let roadsData = {};
-        let blocksData = {};
-        let roadsFeatures = {};
-        let blocksFeatures = {};
+        let map, roadsLayer, blocksLayer;
+        let roadsData = {}, blocksData = {};
+        let roadsFeatures = {}, blocksFeatures = {};
         let selectedRoadsStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
         let selectedBlocksStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
 
-        // الحالات المتاحة
         const statuses = [
             { label: "جاري التنفيذ", value: "جاري", color: "#4caf50" },
             { label: "متاح للتنفيذ", value: "متاح", color: "#2196f3" },
-            { label: "غير متاح ( متوقف على أعمال أخري )", value: "غير متاح", color: "#ff9800" },
+            { label: "غير متاح", value: "غير متاح", color: "#ff9800" },
             { label: "تم الانتهاء", value: "تم الانتهاء", color: "#9c27b0" },
             { label: "متوقف", value: "متوقف", color: "#f44336" }
         ];
 
-        /* =====================================
-           ===== قاموس الترجمة ===== 
-           ===================================== */
         const labelsAR = {
             "ROAD NAME": "اسم الطريق",
             "BLOCK NAME": "اسم البلوك",
@@ -655,36 +485,20 @@
             "EQUPIMENTS": "المعدات"
         };
 
-        /* =====================================
-           ===== دوال مساعدة ===== 
-           ===================================== */
-
-        /**
-         * تنسيق الأرقام بفاصلة كل 3 أرقام
-         */
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
-        /**
-         * تحويل القيمة إلى رقم صحيح
-         */
         function num(v) {
             return !isNaN(v) && v !== "" ? Number(v) : 0;
         }
 
-        /**
-         * الحصول على لون الحالة
-         */
         function getStatusColor(status) {
             status = (status || "").trim().toLowerCase();
             const found = statuses.find(s => s.value.toLowerCase() === status);
-            return found ? found.color : "#cccccc";
+            return found ? found.color : "#9e9e9e";
         }
 
-        /**
-         * عرض رسالة تنبيه
-         */
         function showAlert(message, type = "error") {
             const alert = document.createElement("div");
             alert.className = `alert alert-${type}`;
@@ -693,9 +507,6 @@
             setTimeout(() => alert.remove(), 3000);
         }
 
-        /* =====================================
-           ===== تهيئة الخريطة ===== 
-           ===================================== */
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -705,52 +516,68 @@
             showAlert("✅ تم تحميل الخريطة", "success");
         }
 
-        /**
-         * تحميل البيانات من Google Sheets
-         * ✅ يسحب جميع الصفوف حتى لو كانت مخفية بفلتر
-         */
+        // ✅ يسحب جميع البيانات حتى لو كانت مخفية بسبب فلتر Google Sheets
         function loadSheet(url, cb) {
-            fetch(url).then(r => r.text()).then(t => {
-                try {
-                    const j = JSON.parse(t.substring(47).slice(0, -2));
-                    let d = {};
-                    
-                    // سحب جميع الصفوف بدون استثناء
-                    if (j.table && j.table.rows) {
-                        j.table.rows.forEach(r => {
-                            if (!r.c || !r.c[0]) return;
-                            let id = String(r.c[0].v).trim();
-                            if (!id) return;
-                            
-                            d[id] = {};
-                            j.table.cols.forEach((c, i) => {
-                                let colLabel = (c.label || "").trim().toUpperCase();
-                                let cellValue = (r.c[i]?.v || "").toString().trim();
-                                d[id][colLabel] = cellValue;
+            fetch(url)
+                .then(r => r.text())
+                .then(t => {
+                    try {
+                        const jsonStr = t.substring(47).slice(0, -2);
+                        const j = JSON.parse(jsonStr);
+                        let d = {};
+                        
+                        if (j.table && j.table.rows) {
+                            j.table.rows.forEach(r => {
+                                if (!r.c || !r.c[0]) return;
+                                let id = String(r.c[0].v).trim();
+                                d[id] = {};
+                                j.table.cols.forEach((c, i) => {
+                                    const value = (r.c[i]?.v || "").toString().trim();
+                                    d[id][c.label.trim().toUpperCase()] = value;
+                                });
                             });
-                        });
+                        }
+                        cb(d);
+                    } catch (error) {
+                        console.error("خطأ:", error);
+                        showAlert("❌ خطأ في تحميل البيانات", "error");
                     }
-                    
-                    cb(d);
-                } catch (e) {
-                    console.error("خطأ في تحميل البيانات:", e);
-                    showAlert("❌ خطأ في تحميل البيانات من Google Sheet", "error");
-                }
-            }).catch(err => {
-                console.error("خطأ في الاتصال:", err);
-                showAlert("❌ فشل الاتصال بـ Google Sheet", "error");
+                })
+                .catch(error => {
+                    console.error("خطأ:", error);
+                    showAlert("❌ خطأ في الاتصال", "error");
+                });
+        }
+
+        // ✅ تحديث الألوان بناءً على الفلترة (شرط واحد = لا تداخل)
+        function updateLayerColors(layer, data, type) {
+            const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
+            
+            layer.eachLayer(feature => {
+                const properties = feature.feature.properties;
+                const row = data[properties.ID];
+                if (!row) return;
+
+                const status = row["STATUS"].trim().toLowerCase();
+                const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
+                const opacity = isSelected ? 0.5 : 0.2;
+                
+                feature.setStyle({
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: opacity,
+                    weight: isSelected ? 2 : 1
+                });
             });
         }
 
-        /**
-         * تحديث إحصائيات الطرق على الخريطة
-         */
+        // تحميل الطرق
         function loadRoads() {
             loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json", data => {
                 roadsData = data;
-                let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
                 
-                // حساب الإجماليات فقط للحالات المختارة
+                let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
                 Object.values(data).forEach(v => {
                     const status = (v["STATUS"] || "").trim().toLowerCase();
                     const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status);
@@ -772,72 +599,54 @@
                 document.getElementById("rFillR").textContent = formatNumber(fR);
                 document.getElementById("rCutR").textContent = formatNumber(cR);
 
-                fetch("ROADS.geojson").then(r => r.json()).then(g => {
-                    // حذف الطبقة القديمة
-                    if (roadsLayer && map.hasLayer(roadsLayer)) {
-                        map.removeLayer(roadsLayer);
-                    }
+                fetch("ROADS.geojson")
+                    .then(r => r.json())
+                    .then(g => {
+                        if (roadsLayer) map.removeLayer(roadsLayer);
+                        
+                        roadsLayer = L.geoJSON(g, {
+                            onEachFeature: (f, l) => {
+                                let row = data[f.properties.ID];
+                                if (!row) return;
 
-                    roadsLayer = L.geoJSON(g, {
-                        onEachFeature: (f, l) => {
-                            let row = data[f.properties.ID];
-                            if (!row) return;
+                                const status = (row["STATUS"] || "").trim().toLowerCase();
+                                const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status);
+                                
+                                roadsFeatures[row["ROAD NAME"]] = l;
 
-                            const status = (row["STATUS"] || "").trim();
-                            const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status.toLowerCase());
-                            
-                            roadsFeatures[row["ROAD NAME"]] = l;
+                                const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
+                                const opacity = isSelected ? 0.5 : 0.2;
+                                
+                                l.setStyle({
+                                    color: color,
+                                    fillColor: color,
+                                    fillOpacity: opacity,
+                                    weight: isSelected ? 2 : 1
+                                });
 
-                            // ✅ إذا كانت الحالة مختارة، ظهر اللون الأصلي
-                            // وإلا ظهر رمادي
-                            let col = isSelected ? getStatusColor(status) : "#cccccc";
-                            l.setStyle({ 
-                                color: col, 
-                                fillColor: col, 
-                                fillOpacity: isSelected ? 0.5 : 0.3,
-                                weight: isSelected ? 2 : 1
-                            });
+                                let html = `<div class="popup-card"><div class="popup-header"><div class="title-main">مشروع ولي العهد</div><div class="title-sub">بيانات الطريق</div></div><div class="popup-body">`;
+                                Object.keys(row).forEach(k => {
+                                    if (k === "ID") return;
+                                    html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div>${formatNumber(row[k])}</div></div>`;
+                                });
+                                l.bindPopup(html + "</div></div>");
+                                l.on('click', () => l.openPopup());
+                            }
+                        });
 
-                            let html = `
-                            <div class="popup-card">
-                                <div class="popup-header">
-                                    <div class="title-main">مشروع ولي العهد</div>
-                                    <div class="title-sub">بيانات الطريق</div>
-                                </div>
-                                <div class="popup-body">`;
-
-                            Object.keys(row).forEach(k => {
-                                if (k === "ID") return;
-                                html += `
-                                <div class="popup-row">
-                                    <div class="popup-label">${labelsAR[k] || k}</div>
-                                    <div>${formatNumber(row[k])}</div>
-                                </div>`;
-                            });
-
-                            l.bindPopup(html + "</div></div>");
-                            l.on('click', () => l.openPopup());
+                        if (document.getElementById("chkRoads").checked) {
+                            roadsLayer.addTo(map);
                         }
                     });
-
-                    if (document.getElementById("chkRoads").checked) {
-                        roadsLayer.addTo(map);
-                    }
-                }).catch(err => {
-                    console.warn("ملف ROADS.geojson غير موجود:", err);
-                });
             });
         }
 
-        /**
-         * تحديث إحصائيات البلوكات على الخريطة
-         */
+        // تحميل البلوكات
         function loadBlocks() {
             loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json", data => {
                 blocksData = data;
-                let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
                 
-                // حساب الإجماليات فقط للحالات المختارة
+                let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
                 Object.values(data).forEach(v => {
                     const status = (v["STATUS"] || "").trim().toLowerCase();
                     const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status);
@@ -859,66 +668,49 @@
                 document.getElementById("bFillR").textContent = formatNumber(fR);
                 document.getElementById("bCutR").textContent = formatNumber(cR);
 
-                fetch("BLOCKS.geojson").then(r => r.json()).then(g => {
-                    // حذف الطبقة القديمة
-                    if (blocksLayer && map.hasLayer(blocksLayer)) {
-                        map.removeLayer(blocksLayer);
-                    }
+                fetch("BLOCKS.geojson")
+                    .then(r => r.json())
+                    .then(g => {
+                        if (blocksLayer) map.removeLayer(blocksLayer);
+                        
+                        blocksLayer = L.geoJSON(g, {
+                            onEachFeature: (f, l) => {
+                                let row = data[f.properties.ID];
+                                if (!row) return;
 
-                    blocksLayer = L.geoJSON(g, {
-                        onEachFeature: (f, l) => {
-                            let row = data[f.properties.ID];
-                            if (!row) return;
+                                const status = (row["STATUS"] || "").trim().toLowerCase();
+                                const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status);
+                                
+                                blocksFeatures[row["BLOCK NAME"]] = l;
 
-                            const status = (row["STATUS"] || "").trim();
-                            const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status.toLowerCase());
-                            
-                            blocksFeatures[row["BLOCK NAME"]] = l;
+                                const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
+                                const opacity = isSelected ? 0.5 : 0.2;
+                                
+                                l.setStyle({
+                                    color: color,
+                                    fillColor: color,
+                                    fillOpacity: opacity,
+                                    weight: isSelected ? 2 : 1
+                                });
 
-                            // ✅ إذا كانت الحالة مختارة، ظهر اللون الأصلي
-                            // وإلا ظهر رمادي
-                            let col = isSelected ? getStatusColor(status) : "#cccccc";
-                            l.setStyle({ 
-                                color: col, 
-                                fillColor: col, 
-                                fillOpacity: isSelected ? 0.4 : 0.2,
-                                weight: isSelected ? 2 : 1
-                            });
+                                let html = `<div class="popup-card"><div class="popup-header"><div class="title-main">مشروع ولي العهد</div><div class="title-sub">بيانات البلوك</div></div><div class="popup-body">`;
+                                Object.keys(row).forEach(k => {
+                                    if (k === "ID") return;
+                                    html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div>${formatNumber(row[k])}</div></div>`;
+                                });
+                                l.bindPopup(html + "</div></div>");
+                                l.on('click', () => l.openPopup());
+                            }
+                        });
 
-                            let html = `
-                            <div class="popup-card">
-                                <div class="popup-header">
-                                    <div class="title-main">مشروع ولي العهد</div>
-                                    <div class="title-sub">بيانات البلوك</div>
-                                </div>
-                                <div class="popup-body">`;
-
-                            Object.keys(row).forEach(k => {
-                                if (k === "ID") return;
-                                html += `
-                                <div class="popup-row">
-                                    <div class="popup-label">${labelsAR[k] || k}</div>
-                                    <div>${formatNumber(row[k])}</div>
-                                </div>`;
-                            });
-
-                            l.bindPopup(html + "</div></div>");
-                            l.on('click', () => l.openPopup());
+                        if (document.getElementById("chkBlocks").checked) {
+                            blocksLayer.addTo(map);
                         }
                     });
-
-                    if (document.getElementById("chkBlocks").checked) {
-                        blocksLayer.addTo(map);
-                    }
-                }).catch(err => {
-                    console.warn("ملف BLOCKS.geojson غير موجود:", err);
-                });
             });
         }
 
-        /* =====================================
-           ===== البحث والدروب ليست ===== 
-           ===================================== */
+        // البحث
         function updateSearchDropdown(type) {
             const data = type === "roads" ? roadsData : blocksData;
             const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
@@ -938,8 +730,8 @@
 
             const filtered = Object.values(data).filter(item => {
                 const name = (item[nameKey] || "").toString().trim().toLowerCase();
-                const status = (item["STATUS"] || "").toString().trim();
-                const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status.toLowerCase());
+                const status = (item["STATUS"] || "").trim().toLowerCase();
+                const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
                 return name.includes(searchValue) && isStatusSelected;
             });
 
@@ -982,19 +774,7 @@
             dropdown.classList.add("active");
         }
 
-        /**
-         * إعادة تحميل البيانات بناءً على الفلترة
-         */
-        function reloadMapData() {
-            loadRoads();
-            loadBlocks();
-        }
-
-        /* =====================================
-           ===== معالجات الأحداث ===== 
-           ===================================== */
-
-        // تبديل الطرق والبلوكات
+        // معالجات الأحداث
         document.getElementById("chkRoads").addEventListener("change", function() {
             if (roadsLayer) {
                 this.checked ? map.addLayer(roadsLayer) : map.removeLayer(roadsLayer);
@@ -1011,35 +791,32 @@
             document.getElementById("blocksSearchBox").classList.toggle("hidden", !this.checked);
         });
 
-        // معالجات الـ Checkboxes للحالات
+        // ✅ معالج الحالات - تحديث فوري بدون إعادة تحميل
         document.querySelectorAll(".status-checkbox").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
                 const status = this.dataset.status;
                 
                 if (this.checked) {
-                    if (!selectedRoadsStatuses.find(s => s.toLowerCase() === status.toLowerCase())) {
-                        selectedRoadsStatuses.push(status);
-                    }
-                    if (!selectedBlocksStatuses.find(s => s.toLowerCase() === status.toLowerCase())) {
-                        selectedBlocksStatuses.push(status);
-                    }
+                    if (!selectedRoadsStatuses.includes(status)) selectedRoadsStatuses.push(status);
+                    if (!selectedBlocksStatuses.includes(status)) selectedBlocksStatuses.push(status);
                 } else {
-                    selectedRoadsStatuses = selectedRoadsStatuses.filter(s => s.toLowerCase() !== status.toLowerCase());
-                    selectedBlocksStatuses = selectedBlocksStatuses.filter(s => s.toLowerCase() !== status.toLowerCase());
+                    selectedRoadsStatuses = selectedRoadsStatuses.filter(s => s !== status);
+                    selectedBlocksStatuses = selectedBlocksStatuses.filter(s => s !== status);
                 }
                 
-                // إعادة تحميل البيانات بدلاً من تحديث الصفحة
-                reloadMapData();
+                // تحديث فوري بدون تحميل من Google Sheets
+                if (roadsLayer && roadsData) updateLayerColors(roadsLayer, roadsData, "roads");
+                if (blocksLayer && blocksData) updateLayerColors(blocksLayer, blocksData, "blocks");
+                
+                // تحديث الإجماليات في Dashboard
+                loadRoads();
+                loadBlocks();
             });
         });
 
-        // البحث عن الطرق
         document.getElementById("roadsSearchInput").addEventListener("input", () => updateSearchDropdown("roads"));
-
-        // البحث عن البلوكات
         document.getElementById("blocksSearchInput").addEventListener("input", () => updateSearchDropdown("blocks"));
 
-        // إغلاق الدروب ليست عند النقر خارجها
         document.addEventListener("click", (e) => {
             if (!e.target.closest(".search-box")) {
                 document.getElementById("roadsSearchDropdown").classList.remove("active");
@@ -1047,9 +824,7 @@
             }
         });
 
-        /* =====================================
-           ===== بدء التطبيق ===== 
-           ===================================== */
+        // بدء التطبيق
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
             loadRoads();
