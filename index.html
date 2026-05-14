@@ -57,7 +57,7 @@
 
         .search-box-roads {
             top: 20px;
-            right: 230px;   /* ✅ يمين شوية */
+            right: 230px;
         }
 
         .search-box-blocks {
@@ -669,7 +669,7 @@
          * الحصول على لون الحالة
          */
         function getStatusColor(status) {
-            status = (status || "").trim();   // ✅ مهم جدًا
+            status = (status || "").trim();
             const found = statuses.find(s => s.value === status);
             return found ? found.color : "#9e9e9e";
         }
@@ -697,164 +697,160 @@
             showAlert("✅ تم تحميل الخريطة", "success");
         }
 
+        /**
+         * تحميل البيانات من Google Sheets
+         */
+        function loadSheet(url, cb) {
+            fetch(url).then(r => r.text()).then(t => {
+                const j = JSON.parse(t.substring(47).slice(0, -2));
+                let d = {};
+                j.table.rows.forEach(r => {
+                    if (!r.c[0]) return;
+                    let id = String(r.c[0].v);
+                    d[id] = {};
+                    j.table.cols.forEach((c, i) => {
+                        d[id][c.label.trim().toUpperCase()] = r.c[i]?.v || "";
+                    });
+                });
+                cb(d);
+            });
+        }
 
-        function loadSheet(url,cb){
- fetch(url).then(r=>r.text()).then(t=>{
-  const j=JSON.parse(t.substring(47).slice(0,-2));
-  let d={};
-  j.table.rows.forEach(r=>{
-   if(!r.c[0])return;
-   let id=String(r.c[0].v);
-   d[id]={};
-   j.table.cols.forEach((c,i)=>{
-    d[id][c.label.trim().toUpperCase()]=r.c[i]?.v||"";
-   });
-  });
-  cb(d);
- });
-}
+        /**
+         * تحديث إحصائيات الطرق على الخريطة
+         */
+        function loadRoads() {
+            loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json", data => {
+                roadsData = data;
+                let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
+                Object.values(data).forEach(v => {
+                    fT += num(v["FILL-TOTAL-QTY"]);
+                    cT += num(v["CUT-TOTAL-QTY"]);
+                    fD += num(v["FILL-DONE-QTY"]);
+                    cD += num(v["CUT-DONE-QTY"]);
+                    fR += num(v["FILL-REMANING-QTY"]);
+                    cR += num(v["CUT-REMANING-QTY"]);
+                });
 
-/* ===== ROADS ===== */
+                document.getElementById("rFillT").textContent = formatNumber(fT);
+                document.getElementById("rCutT").textContent = formatNumber(cT);
+                document.getElementById("rFillD").textContent = formatNumber(fD);
+                document.getElementById("rCutD").textContent = formatNumber(cD);
+                document.getElementById("rFillR").textContent = formatNumber(fR);
+                document.getElementById("rCutR").textContent = formatNumber(cR);
 
-loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json",data=>{
- roadsData = data;
- let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
- Object.values(data).forEach(v=>{
-  fT+=num(v["FILL-TOTAL-QTY"]);
-  cT+=num(v["CUT-TOTAL-QTY"]);
-  fD+=num(v["FILL-DONE-QTY"]);
-  cD+=num(v["CUT-DONE-QTY"]);
-  fR+=num(v["FILL-REMANING-QTY"]);
-  cR+=num(v["CUT-REMANING-QTY"]);
- });
-    
-rFillT.textContent = formatNumber(fT);
-rCutT.textContent = formatNumber(cT);
-rFillD.textContent = formatNumber(fD);
-rCutD.textContent = formatNumber(cD);
-rFillR.textContent = formatNumber(fR);
-rCutR.textContent = formatNumber(cR);
+                fetch("ROADS.geojson").then(r => r.json()).then(g => {
+                    roadsLayer = L.geoJSON(g, {
+                        onEachFeature: (f, l) => {
+                            let row = data[f.properties.ID];
+                            if (!row) return;
 
- fetch("ROADS.geojson").then(r=>r.json()).then(g=>{
+                            // ✅ الفلتر الصحيح
+                            if (!selectedRoadsStatuses.includes(row["STATUS"])) {
+                                return;
+                            }
 
-  roadsLayer = L.geoJSON(g,{
-    onEachFeature:(f,l)=>{
-      let row = data[f.properties.ID];
-      if(!row) return;
-        
-// ✅ الفلتر هنا بالظبط
-    if (!selectedRoadsStatuses.includes(row["STATUS"])) {
-      return;
-    }
+                            roadsFeatures[row["ROAD NAME"]] = l;
 
-    roadsFeatures[row["ROAD NAME"]] = l;
+                            let col = getStatusColor(row["STATUS"]);
+                            l.setStyle({ color: col, fillColor: col, fillOpacity: 0.5 });
 
-    let col = getStatusColor(row["STATUS"]);
-    l.setStyle({color:col,fillColor:col,fillOpacity:.5});
+                            let html = `
+                            <div class="popup-card">
+                                <div class="popup-header">
+                                    <div class="title-main">مشروع ولي العهد</div>
+                                    <div class="title-sub">بيانات الطريق</div>
+                                </div>
+                                <div class="popup-body">`;
 
-      let col = getStatusColor(row["STATUS"]);
-      l.setStyle({color:col,fillColor:col,fillOpacity:.5});
+                            Object.keys(row).forEach(k => {
+                                if (k === "ID") return;
+                                html += `
+                                <div class="popup-row">
+                                    <div class="popup-label">${labelsAR[k] || k}</div>
+                                    <div>${formatNumber(row[k])}</div>
+                                </div>`;
+                            });
 
-      let html=`
-      <div class="popup-card">
-        <div class="popup-header">
-          <div class="title-main">مشروع ولي العهد ي</div>
-          <div class="title-main">بيانات الطريق</div>
-        </div>
-        <div class="popup-body">`;
+                            l.bindPopup(html + "</div></div>");
+                            l.on('click', () => l.openPopup());
+                        }
+                    });
 
-      Object.keys(row).forEach(k=>{
-        if(k==="ID")return;
-        html+=`
-        <div class="popup-row">
-          <div class="popup-label">${labelsAR[k] || k}</div>
-          <div>${formatNumber(row[k])}</div>
-        </div>`;
-      });
+                    if (document.getElementById("chkRoads").checked) {
+                        roadsLayer.addTo(map);
+                    }
+                });
+            });
+        }
 
-      l.bindPopup(html+"</div></div>");
-      l.on('click',()=>l.openPopup());
-    }
-  });
+        /**
+         * تحديث إحصائيات البلوكات على الخريطة
+         */
+        function loadBlocks() {
+            loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json", data => {
+                blocksData = data;
+                let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
+                Object.values(data).forEach(v => {
+                    fT += num(v["FILL-TOTAL-QTY"]);
+                    cT += num(v["CUT-TOTAL-QTY"]);
+                    fD += num(v["FILL-DONE-QTY"]);
+                    cD += num(v["CUT-DONE-QTY"]);
+                    fR += num(v["FILL-REMANING-QTY"]);
+                    cR += num(v["CUT-REMANING-QTY"]);
+                });
 
-  /* ✅ الإضافة الصح */
-  if(chkRoads.checked){
-    roadsLayer.addTo(map);
-  }
+                document.getElementById("bFillT").textContent = formatNumber(fT);
+                document.getElementById("bCutT").textContent = formatNumber(cT);
+                document.getElementById("bFillD").textContent = formatNumber(fD);
+                document.getElementById("bCutD").textContent = formatNumber(cD);
+                document.getElementById("bFillR").textContent = formatNumber(fR);
+                document.getElementById("bCutR").textContent = formatNumber(cR);
 
+                fetch("BLOCKS.geojson").then(r => r.json()).then(g => {
+                    blocksLayer = L.geoJSON(g, {
+                        onEachFeature: (f, l) => {
+                            let row = data[f.properties.ID];
+                            if (!row) return;
 
-}); // ✅ يقفل fetch
-}); // ✅ يقفل loadSheet
+                            // ✅ الفلتر الصحيح
+                            if (!selectedBlocksStatuses.includes(row["STATUS"])) {
+                                return;
+                            }
 
-/* ===== BLOCKS ===== */
+                            blocksFeatures[row["BLOCK NAME"]] = l;
 
-loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json",data=>{
- blocksData = data;
- let fT=0,cT=0,fD=0,cD=0,fR=0,cR=0;
- Object.values(data).forEach(v=>{
-  fT+=num(v["FILL-TOTAL-QTY"]);
-  cT+=num(v["CUT-TOTAL-QTY"]);
-  fD+=num(v["FILL-DONE-QTY"]);
-  cD+=num(v["CUT-DONE-QTY"]);
-  fR+=num(v["FILL-REMANING-QTY"]);
-  cR+=num(v["CUT-REMANING-QTY"]);
- });
-    
-bFillT.textContent = formatNumber(fT);
-bCutT.textContent = formatNumber(cT);
-bFillD.textContent = formatNumber(fD);
-bCutD.textContent = formatNumber(cD);
-bFillR.textContent = formatNumber(fR);
-bCutR.textContent = formatNumber(cR);
+                            let col = getStatusColor(row["STATUS"]);
+                            l.setStyle({ color: col, fillColor: col, fillOpacity: 0.4 });
 
- fetch("BLOCKS.geojson").then(r=>r.json()).then(g=>{
+                            let html = `
+                            <div class="popup-card">
+                                <div class="popup-header">
+                                    <div class="title-main">مشروع ولي العهد</div>
+                                    <div class="title-sub">بيانات البلوك</div>
+                                </div>
+                                <div class="popup-body">`;
 
-  blocksLayer = L.geoJSON(g,{
-    onEachFeature:(f,l)=>{
-      let row=data[f.properties.ID]; 
-      if(!row) return;
-        if (!selectedBlocksStatuses.includes(row["STATUS"])) {
-  return;
-}
+                            Object.keys(row).forEach(k => {
+                                if (k === "ID") return;
+                                html += `
+                                <div class="popup-row">
+                                    <div class="popup-label">${labelsAR[k] || k}</div>
+                                    <div>${formatNumber(row[k])}</div>
+                                </div>`;
+                            });
 
-      blocksFeatures[row["BLOCK NAME"]] = l;
+                            l.bindPopup(html + "</div></div>");
+                            l.on('click', () => l.openPopup());
+                        }
+                    });
 
-      let col = getStatusColor(row["STATUS"]);
-      l.setStyle({color:col,fillColor:col,fillOpacity:.4});
-
-      let html=`
-      <div class="popup-card">
-        <div class="popup-header">
-          <div class="title-main">مشروع ولي العهد ي</div>
-          <div class="title-main">بيانات البلوك</div>
-        </div>
-        <div class="popup-body">`;
-
-      Object.keys(row).forEach(k=>{
-        if(k==="ID")return;
-        html+=`
-        <div class="popup-row">
-          <div class="popup-label">${labelsAR[k] || k}</div>
-          <div>${formatNumber(row[k])}</div>
-        </div>`;
-      });
-
-      l.bindPopup(html+"</div></div>");
-      l.on('click',()=>l.openPopup());
-    }
-  });
-
-  // ✅ هنا بالظبط (بعد إغلاق geoJSON)
-  if(document.getElementById("chkBlocks").checked){
-    blocksLayer.addTo(map);
-  }
-
-
-}); // ✅ يقفل fetch
-}); // ✅ يقفل loadSheet
-
-
-
+                    if (document.getElementById("chkBlocks").checked) {
+                        blocksLayer.addTo(map);
+                    }
+                });
+            });
+        }
 
         /* =====================================
            ===== البحث والدروب ليست ===== 
@@ -920,6 +916,22 @@ bCutR.textContent = formatNumber(cR);
             dropdown.classList.add("active");
         }
 
+        /**
+         * إعادة تحميل البيانات بناءً على الفلترة
+         */
+        function reloadMapData() {
+            // مسح الطبقات القديمة
+            if (roadsLayer) map.removeLayer(roadsLayer);
+            if (blocksLayer) map.removeLayer(blocksLayer);
+            
+            roadsFeatures = {};
+            blocksFeatures = {};
+
+            // تحميل البيانات الجديدة
+            loadRoads();
+            loadBlocks();
+        }
+
         /* =====================================
            ===== معالجات الأحداث ===== 
            ===================================== */
@@ -939,7 +951,7 @@ bCutR.textContent = formatNumber(cR);
             document.getElementById("blocksDash").style.display = this.checked ? "block" : "none";
         });
 
-        // معالجات الـ Checkboxes للحالات - منفصلة لكل نوع
+        // معالجات الـ Checkboxes للحالات
         document.querySelectorAll(".status-checkbox").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
                 const status = this.dataset.status;
@@ -952,7 +964,8 @@ bCutR.textContent = formatNumber(cR);
                     selectedBlocksStatuses = selectedBlocksStatuses.filter(s => s !== status);
                 }
                 
-                location.reload()
+                // إعادة تحميل البيانات بدلاً من تحديث الصفحة
+                reloadMapData();
             });
         });
 
@@ -975,8 +988,8 @@ bCutR.textContent = formatNumber(cR);
            ===================================== */
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
-            loadRoadsData();
-            loadBlocksData();
+            loadRoads();
+            loadBlocks();
         });
     </script>
 
