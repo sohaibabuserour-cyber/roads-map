@@ -659,7 +659,8 @@
             "CUT-REMANING-QTY": "كمية القطع المتبقية",
             "STATUS": "الحالة",
             "CONTRACTOR": "المقاول",
-            "EQUPIMENTS": "المعدات"
+            "EQUPIMENTS": "المعدات",
+            "ID": "الرقم"
         };
 
         /* =====================================
@@ -733,43 +734,51 @@
         }
 
         /**
-         * تحميل البيانات من Google Sheets
+         * 🔥 سحب البيانات من Google Sheets API (جميع الصفوف بدون فلتر)
          */
-        function loadSheet(url, cb) {
+        function loadSheetFromAPI(sheetId, sheetName, cb) {
+            // ⚠️ استبدل هذا الـ API KEY بمفتاحك
+            const API_KEY = "AIzaSyDxxxxxxxxxxxxxxxxxxxxxxxxxxx"; // ⚠️ ضع مفتاح API هنا
+            const range = `'${sheetName}'!A:Z`;
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+
             fetch(url)
                 .then(r => {
                     if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-                    return r.text();
+                    return r.json();
                 })
-                .then(t => {
-                    try {
-                        const j = JSON.parse(t.substring(47).slice(0, -2));
-                        let d = {};
-                        
-                        if (j.table && j.table.rows) {
-                            j.table.rows.forEach(r => {
-                                if (!r.c || !r.c[0]) return;
-                                let id = String(r.c[0].v).trim();
-                                if (!id) return;
-                                
-                                d[id] = {};
-                                j.table.cols.forEach((c, i) => {
-                                    let colLabel = (c.label || "").trim().toUpperCase();
-                                    let cellValue = (r.c[i]?.v || "").toString().trim();
-                                    d[id][colLabel] = cellValue;
-                                });
-                            });
-                        }
-                        
-                        cb(d);
-                    } catch (e) {
-                        console.error("❌ خطأ في تحليل بيانات Google Sheet:", e);
-                        showAlert("❌ خطأ في معالجة بيانات Google Sheet", "error");
+                .then(data => {
+                    if (!data.values || data.values.length === 0) {
+                        console.warn("⚠️ لا توجد بيانات في الشيت");
+                        showAlert("⚠️ الشيت فارغ أو خطأ في الوصول", "warning");
+                        cb({});
+                        return;
                     }
+
+                    let result = {};
+                    const headers = data.values[0] || [];
+                    
+                    // تحويل الصفوف إلى objects
+                    for (let i = 1; i < data.values.length; i++) {
+                        const row = data.values[i];
+                        const id = (row[0] || "").toString().trim();
+                        
+                        if (!id) continue;
+
+                        result[id] = {};
+                        headers.forEach((header, idx) => {
+                            const columnName = (header || "").trim().toUpperCase();
+                            const value = (row[idx] || "").toString().trim();
+                            result[id][columnName] = value;
+                        });
+                    }
+
+                    console.log("✅ تم سحب البيانات من API:", result);
+                    cb(result);
                 })
                 .catch(err => {
-                    console.error("❌ خطأ في الاتصال بـ Google Sheet:", err);
-                    showAlert("❌ فشل الاتصال بـ Google Sheet - تحقق من الاتصال بالإنترنت", "error");
+                    console.error("❌ خطأ في سحب البيانات من API:", err);
+                    showAlert(`❌ خطأ: ${err.message}`, "error");
                 });
         }
 
@@ -781,7 +790,6 @@
                 if (map.hasLayer(layer)) {
                     map.removeLayer(layer);
                 }
-                // تنظيف المرجع
                 layer.clearLayers();
                 return null;
             }
@@ -795,13 +803,13 @@
             return fetch(filename)
                 .then(r => {
                     if (!r.ok) {
-                        throw new Error(`فشل تحميل ${filename} - الحالة: ${r.status}`);
+                        throw new Error(`فشل تحميل ${filename}`);
                     }
                     return r.json();
                 })
                 .catch(err => {
                     console.error(`❌ خطأ في تحميل ${filename}:`, err);
-                    showAlert(`❌ خطأ: تأكد من وجود ملف ${filename} في المشروع`, "error");
+                    showAlert(`❌ تأكد من وجود ملف ${filename}`, "error");
                     return null;
                 });
         }
@@ -810,11 +818,12 @@
          * تحديث إحصائيات الطرق على الخريطة
          */
         function loadRoads() {
-            loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json", async data => {
+            const ROADS_SHEET_ID = "1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA";
+            
+            loadSheetFromAPI(ROADS_SHEET_ID, "Roads", async data => {
                 roadsData = data;
                 let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
                 
-                // حساب الإجماليات للحالات المختارة فقط
                 Object.values(data).forEach(v => {
                     const status = (v["STATUS"] || "").trim().toLowerCase();
                     const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status);
@@ -829,7 +838,6 @@
                     }
                 });
 
-                // تحديث لوحة المعلومات
                 document.getElementById("rFillT").textContent = formatNumber(fT);
                 document.getElementById("rCutT").textContent = formatNumber(cT);
                 document.getElementById("rFillD").textContent = formatNumber(fD);
@@ -837,11 +845,9 @@
                 document.getElementById("rFillR").textContent = formatNumber(fR);
                 document.getElementById("rCutR").textContent = formatNumber(cR);
 
-                // تحميل GeoJSON
                 const geoJSON = await loadGeoJSON("ROADS.geojson");
                 if (!geoJSON) return;
 
-                // حذف الطبقة القديمة بشكل صحيح
                 roadsLayer = clearLayer(roadsLayer);
 
                 roadsLayer = L.geoJSON(geoJSON, {
@@ -854,7 +860,6 @@
                         
                         roadsFeatures[row["ROAD NAME"]] = l;
 
-                        // تلوين الطبقة بناءً على الحالة
                         let col = isSelected ? getStatusColor(status) : "#cccccc";
                         l.setStyle({ 
                             color: col, 
@@ -863,32 +868,19 @@
                             weight: isSelected ? 2 : 1
                         });
 
-                        // إنشاء بطاقة المعلومات
-                        let html = `
-                            <div class="popup-card">
-                                <div class="popup-header">
-                                    <div class="title-main">مشروع ولي العهد</div>
-                                    <div class="title-sub">بيانات الطريق</div>
-                                </div>
-                                <div class="popup-body">`;
+                        let html = `<div class="popup-card"><div class="popup-header"><div class="title-main">مشروع ولي العهد</div><div class="title-sub">بيانات الطريق</div></div><div class="popup-body">`;
 
                         Object.keys(row).forEach(k => {
                             if (k === "ID") return;
-                            html += `
-                                <div class="popup-row">
-                                    <div class="popup-label">${labelsAR[k] || k}</div>
-                                    <div>${formatNumber(row[k])}</div>
-                                </div>`;
+                            html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div>${k === "STATUS" ? `<span class="status-badge" style="background: ${getStatusColor(row[k])}">${row[k]}</span>` : formatNumber(row[k])}</div></div>`;
                         });
 
                         html += "</div></div>";
-
                         l.bindPopup(html);
                         l.on('click', () => l.openPopup());
                     }
                 });
 
-                // إضافة الطبقة إذا كانت مفعلة
                 if (document.getElementById("chkRoads").checked) {
                     roadsLayer.addTo(map);
                 }
@@ -899,11 +891,12 @@
          * تحديث إحصائيات البلوكات على الخريطة
          */
         function loadBlocks() {
-            loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json", async data => {
+            const BLOCKS_SHEET_ID = "1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0";
+            
+            loadSheetFromAPI(BLOCKS_SHEET_ID, "Blocks", async data => {
                 blocksData = data;
                 let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
                 
-                // حساب الإجماليات للحالات المختارة فقط
                 Object.values(data).forEach(v => {
                     const status = (v["STATUS"] || "").trim().toLowerCase();
                     const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status);
@@ -918,7 +911,6 @@
                     }
                 });
 
-                // تحديث لوحة المعلومات
                 document.getElementById("bFillT").textContent = formatNumber(fT);
                 document.getElementById("bCutT").textContent = formatNumber(cT);
                 document.getElementById("bFillD").textContent = formatNumber(fD);
@@ -926,11 +918,9 @@
                 document.getElementById("bFillR").textContent = formatNumber(fR);
                 document.getElementById("bCutR").textContent = formatNumber(cR);
 
-                // تحميل GeoJSON
                 const geoJSON = await loadGeoJSON("BLOCKS.geojson");
                 if (!geoJSON) return;
 
-                // حذف الطبقة القديمة بشكل صحيح
                 blocksLayer = clearLayer(blocksLayer);
 
                 blocksLayer = L.geoJSON(geoJSON, {
@@ -943,7 +933,6 @@
                         
                         blocksFeatures[row["BLOCK NAME"]] = l;
 
-                        // تلوين الطبقة بناءً على الحالة
                         let col = isSelected ? getStatusColor(status) : "#cccccc";
                         l.setStyle({ 
                             color: col, 
@@ -952,32 +941,19 @@
                             weight: isSelected ? 2 : 1
                         });
 
-                        // إنشاء بطاقة المعلومات
-                        let html = `
-                            <div class="popup-card">
-                                <div class="popup-header">
-                                    <div class="title-main">مشروع ولي العهد</div>
-                                    <div class="title-sub">بيانات البلوك</div>
-                                </div>
-                                <div class="popup-body">`;
+                        let html = `<div class="popup-card"><div class="popup-header"><div class="title-main">مشروع ولي العهد</div><div class="title-sub">بيانات البلوك</div></div><div class="popup-body">`;
 
                         Object.keys(row).forEach(k => {
                             if (k === "ID") return;
-                            html += `
-                                <div class="popup-row">
-                                    <div class="popup-label">${labelsAR[k] || k}</div>
-                                    <div>${formatNumber(row[k])}</div>
-                                </div>`;
+                            html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div>${k === "STATUS" ? `<span class="status-badge" style="background: ${getStatusColor(row[k])}">${row[k]}</span>` : formatNumber(row[k])}</div></div>`;
                         });
 
                         html += "</div></div>";
-
                         l.bindPopup(html);
                         l.on('click', () => l.openPopup());
                     }
                 });
 
-                // إضافة الطبقة إذا كانت مفعلة
                 if (document.getElementById("chkBlocks").checked) {
                     blocksLayer.addTo(map);
                 }
@@ -1062,7 +1038,6 @@
            ===== معالجات الأحداث ===== 
            ===================================== */
 
-        // تبديل الطرق
         document.getElementById("chkRoads").addEventListener("change", function() {
             if (roadsLayer) {
                 this.checked ? map.addLayer(roadsLayer) : map.removeLayer(roadsLayer);
@@ -1071,7 +1046,6 @@
             document.getElementById("roadsSearchBox").classList.toggle("hidden", !this.checked);
         });
 
-        // تبديل البلوكات
         document.getElementById("chkBlocks").addEventListener("change", function() {
             if (blocksLayer) {
                 this.checked ? map.addLayer(blocksLayer) : map.removeLayer(blocksLayer);
@@ -1080,7 +1054,6 @@
             document.getElementById("blocksSearchBox").classList.toggle("hidden", !this.checked);
         });
 
-        // معالجات الـ Checkboxes للحالات
         document.querySelectorAll(".status-checkbox").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
                 const status = this.dataset.status;
@@ -1097,22 +1070,18 @@
                     selectedBlocksStatuses = selectedBlocksStatuses.filter(s => s.toLowerCase() !== status.toLowerCase());
                 }
                 
-                // إعادة تحميل البيانات
                 reloadMapData();
             });
         });
 
-        // البحث عن الطرق مع Debounce
         document.getElementById("roadsSearchInput").addEventListener("input", debounce(() => {
             updateSearchDropdown("roads");
         }, 300, "roads"));
 
-        // البحث عن البلوكات مع Debounce
         document.getElementById("blocksSearchInput").addEventListener("input", debounce(() => {
             updateSearchDropdown("blocks");
         }, 300, "blocks"));
 
-        // إغلاق الدروب ليست عند النقر خارجها
         document.addEventListener("click", (e) => {
             if (!e.target.closest(".search-box")) {
                 document.getElementById("roadsSearchDropdown").classList.remove("active");
@@ -1120,9 +1089,6 @@
             }
         });
 
-        /* =====================================
-           ===== بدء التطبيق ===== 
-           ===================================== */
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
             loadRoads();
