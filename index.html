@@ -738,7 +738,7 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
        
     roadsFeatures[row["ROAD NAME"]] = l;
 
-    let col=colorByStatus(row["STATUS"]);
+    let col = getStatusColor(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.5});
     let html=`
     <div class="popup-card">
@@ -788,7 +788,7 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
 
        blocksFeatures[row["BLOCK NAME"]] = l;
        
-    let col=colorByStatus(row["STATUS"]);
+    let col = getStatusColor(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.4});
     let html=`
     <div class="popup-card">
