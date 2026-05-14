@@ -618,13 +618,13 @@
         let blocksData = {};
         let roadsFeatures = {};
         let blocksFeatures = {};
-        let selectedRoadsStatuses = ["جاري التنفيذ", "متاح للتنفيذ", "غير متاح", "تم الانتهاء", "متوقف"];
-        let selectedBlocksStatuses = ["جاري التنفيذ", "متاح للتنفيذ", "غير متاح", "تم الانتهاء", "متوقف"];
+        let selectedRoadsStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
+        let selectedBlocksStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
 
         // الحالات المتاحة
         const statuses = [
-            { label: "جاري التنفيذ", value: "جاري التنفيذ", color: "#4caf50" },
-            { label: "متاح للتنفيذ", value: "متاح للتنفيذ", color: "#2196f3" },
+            { label: "جاري التنفيذ", value: "جاري", color: "#4caf50" },
+            { label: "متاح للتنفيذ", value: "متاح", color: "#2196f3" },
             { label: "غير متاح ( متوقف على أعمال أخري )", value: "غير متاح", color: "#ff9800" },
             { label: "تم الانتهاء", value: "تم الانتهاء", color: "#9c27b0" },
             { label: "متوقف", value: "متوقف", color: "#f44336" }
@@ -727,12 +727,6 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
   fR+=num(v["FILL-REMANING-QTY"]);
   cR+=num(v["CUT-REMANING-QTY"]);
  });
- rFillT.textContent=fT;
- rCutT.textContent=cT;
- rFillD.textContent=fD;
- rCutD.textContent=cD;
- rFillR.textContent=fR;
- rCutR.textContent=cR;
     
 rFillT.textContent = formatNumber(fT);
 rCutT.textContent = formatNumber(cT);
@@ -757,9 +751,6 @@ rCutR.textContent = formatNumber(cR);
 
     let col = getStatusColor(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.5});
-
-
-      roadsFeatures[row["ROAD NAME"]] = l;
 
       let col = getStatusColor(row["STATUS"]);
       l.setStyle({color:col,fillColor:col,fillOpacity:.5});
@@ -808,19 +799,13 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
   fR+=num(v["FILL-REMANING-QTY"]);
   cR+=num(v["CUT-REMANING-QTY"]);
  });
- bFillT.textContent=fT;
- bCutT.textContent=cT;
- bFillD.textContent=fD;
- bCutD.textContent=cD;
- bFillR.textContent=fR;
- bCutR.textContent=cR;
+    
 bFillT.textContent = formatNumber(fT);
 bCutT.textContent = formatNumber(cT);
 bFillD.textContent = formatNumber(fD);
 bCutD.textContent = formatNumber(cD);
 bFillR.textContent = formatNumber(fR);
 bCutR.textContent = formatNumber(cR);
-``
 
  fetch("BLOCKS.geojson").then(r=>r.json()).then(g=>{
 
@@ -831,7 +816,6 @@ bCutR.textContent = formatNumber(cR);
         if (!selectedBlocksStatuses.includes(row["STATUS"])) {
   return;
 }
-
 
       blocksFeatures[row["BLOCK NAME"]] = l;
 
