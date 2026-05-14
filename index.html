@@ -773,7 +773,9 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
     roadsLayer.addTo(map);
   }
 
-});
+
+}); // ✅ يقفل fetch
+}); // ✅ يقفل loadSheet
 
 /* ===== BLOCKS ===== */
 
@@ -834,8 +836,10 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
     blocksLayer.addTo(map);
   }
 
-});
-``
+
+}); // ✅ يقفل fetch
+}); // ✅ يقفل loadSheet
+
 
 
 
