@@ -419,7 +419,7 @@
 
         .popup-card {
             width: 95vw;
-            max-width: 450px;
+            max-width: 380px;
             border-radius: 14px;
             overflow: hidden;
             background: white;
@@ -442,29 +442,29 @@
         .popup-header {
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
             color: white;
-            padding: 14px;
+            padding: 12px;
             text-align: center;
             border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .title-main {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             letter-spacing: 0.8px;
         }
 
         .title-sub {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            margin-top: 4px;
+            margin-top: 3px;
             opacity: 0.9;
         }
 
         .popup-body {
-            padding: 14px;
+            padding: 12px;
             font-size: 13px;
             color: #333;
-            max-height: 60vh;
+            max-height: 40vh;
             overflow-y: auto;
         }
 
@@ -483,13 +483,13 @@
         }
 
         .popup-row {
-            padding: 10px 0;
-            display: flex;
-            justify-content: space-between;
+            padding: 8px 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
             border-bottom: 1px solid #e8e8e8;
             align-items: center;
             transition: all 0.2s ease;
-            gap: 8px;
         }
 
         .popup-row:hover {
@@ -506,15 +506,47 @@
         .popup-label {
             color: #7a3fa0;
             font-weight: 600;
-            min-width: 160px;
             font-size: 12px;
-            flex: 1;
+            text-align: right;
         }
 
-        .popup-row > div:last-child {
-            font-weight: 600;
+        .popup-value {
+            font-weight: 700;
             color: #333;
-            white-space: nowrap;
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .popup-value.status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            background: #7a3fa0;
+        }
+
+        .popup-value.status.ongoing {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        }
+
+        .popup-value.status.available {
+            background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%);
+        }
+
+        .popup-value.status.unavailable {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+
+        .popup-value.status.completed {
+            background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%);
+        }
+
+        .popup-value.status.stopped {
+            background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
         }
 
         .alert {
@@ -648,7 +680,7 @@
             }
 
             .popup-header {
-                padding: 12px;
+                padding: 10px;
             }
 
             .title-main {
@@ -660,19 +692,27 @@
             }
 
             .popup-body {
-                padding: 12px;
+                padding: 10px;
                 max-height: 50vh;
                 font-size: 12px;
             }
 
             .popup-row {
-                padding: 8px 0;
+                padding: 6px 0;
                 font-size: 12px;
             }
 
             .popup-label {
-                min-width: 140px;
                 font-size: 11px;
+            }
+
+            .popup-value {
+                font-size: 12px;
+            }
+
+            .popup-value.status {
+                font-size: 10px;
+                padding: 3px 8px;
             }
         }
 
@@ -734,7 +774,7 @@
             }
 
             .popup-header {
-                padding: 10px;
+                padding: 8px;
             }
 
             .title-main {
@@ -742,18 +782,22 @@
             }
 
             .popup-body {
-                padding: 10px;
+                padding: 8px;
                 max-height: 45vh;
                 font-size: 11px;
             }
 
             .popup-row {
-                padding: 6px 0;
+                padding: 5px 0;
             }
 
             .popup-label {
-                min-width: 120px;
                 font-size: 10px;
+            }
+
+            .popup-value.status {
+                font-size: 9px;
+                padding: 2px 6px;
             }
         }
     </style>
@@ -835,11 +879,11 @@
         let selectedBlocksStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
 
         const statuses = [
-            { label: "جاري التنفيذ", value: "جاري", color: "#4caf50" },
-            { label: "متاح للتنفيذ", value: "متاح", color: "#2196f3" },
-            { label: "غير متاح", value: "غير متاح", color: "#ff9800" },
-            { label: "تم الانتهاء", value: "تم الانتهاء", color: "#9c27b0" },
-            { label: "متوقف", value: "متوقف", color: "#f44336" }
+            { label: "جاري التنفيذ", value: "جاري", color: "#4caf50", class: "ongoing" },
+            { label: "متاح للتنفيذ", value: "متاح", color: "#2196f3", class: "available" },
+            { label: "غير متاح", value: "غير متاح", color: "#ff9800", class: "unavailable" },
+            { label: "تم الانتهاء", value: "تم الانتهاء", color: "#9c27b0", class: "completed" },
+            { label: "متوقف", value: "متوقف", color: "#f44336", class: "stopped" }
         ];
 
         const labelsAR = {
@@ -869,6 +913,12 @@
             status = (status || "").trim().toLowerCase();
             const found = statuses.find(s => s.value.toLowerCase() === status);
             return found ? found.color : "#9e9e9e";
+        }
+
+        function getStatusClass(status) {
+            status = (status || "").trim().toLowerCase();
+            const found = statuses.find(s => s.value.toLowerCase() === status);
+            return found ? found.class : "";
         }
 
         function showAlert(message, type = "error") {
@@ -1025,7 +1075,10 @@
                                 let html = `<div class="popup-card"><div class="popup-header"><div class="title-main">مشروع ولي العهد</div><div class="title-sub">بيانات الطريق</div></div><div class="popup-body">`;
                                 Object.keys(row).forEach(k => {
                                     if (k === "ID") return;
-                                    html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div>${formatNumber(row[k])}</div></div>`;
+                                    const isStatus = k === "STATUS";
+                                    const statusClass = isStatus ? `status ${getStatusClass(row[k])}` : "";
+                                    const value = isStatus ? row[k] : formatNumber(row[k]);
+                                    html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div class="popup-value ${statusClass}">${value}</div></div>`;
                                 });
                                 l.bindPopup(html + "</div></div>");
                                 l.on('click', () => l.openPopup());
@@ -1073,7 +1126,10 @@
                                 let html = `<div class="popup-card"><div class="popup-header"><div class="title-main">مشروع ولي العهد</div><div class="title-sub">بيانات البلوك</div></div><div class="popup-body">`;
                                 Object.keys(row).forEach(k => {
                                     if (k === "ID") return;
-                                    html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div>${formatNumber(row[k])}</div></div>`;
+                                    const isStatus = k === "STATUS";
+                                    const statusClass = isStatus ? `status ${getStatusClass(row[k])}` : "";
+                                    const value = isStatus ? row[k] : formatNumber(row[k]);
+                                    html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div class="popup-value ${statusClass}">${value}</div></div>`;
                                 });
                                 l.bindPopup(html + "</div></div>");
                                 l.on('click', () => l.openPopup());
