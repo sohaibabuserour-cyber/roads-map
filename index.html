@@ -618,14 +618,14 @@
         let blocksData = {};
         let roadsFeatures = {};
         let blocksFeatures = {};
-        let selectedRoadsStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
-        let selectedBlocksStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
+        let selectedRoadsStatuses = ["جاري التنفيذ", "متاح للتنفيذ", "غير متاح", "تم الانتهاء", "متوقف"];
+        let selectedBlocksStatuses = ["جاري التنفيذ", "متاح للتنفيذ", "غير متاح", "تم الانتهاء", "متوقف"];
 
         // الحالات المتاحة
         const statuses = [
-            { label: "جاري التنفيذ", value: "جاري", color: "#4caf50" },
-            { label: "متاح للتنفيذ", value: "متاح", color: "#2196f3" },
-            { label: "غير متاح", value: "غير متاح", color: "#ff9800" },
+            { label: "جاري التنفيذ", value: "جاري التنفيذ", color: "#4caf50" },
+            { label: "متاح للتنفيذ", value: "متاح للتنفيذ", color: "#2196f3" },
+            { label: "غير متاح ( متوقف على أعمال أخري )", value: "غير متاح", color: "#ff9800" },
             { label: "تم الانتهاء", value: "تم الانتهاء", color: "#9c27b0" },
             { label: "متوقف", value: "متوقف", color: "#f44336" }
         ];
