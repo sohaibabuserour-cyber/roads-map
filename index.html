@@ -180,8 +180,10 @@
             color: #333;
             margin-bottom: 10px;
             text-align: right;
+            font-weight: bold;
         }
 
+        /* ===== تنسيق الطرق والبلوكات ===== */
         .layer-toggle {
             margin-bottom: 16px;
             border-bottom: 2px solid #ddd;
@@ -189,81 +191,81 @@
             text-align: right;
         }
 
-        .layer-toggle label {
+        .layer-toggle-item {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            justify-content: flex-end;
+            margin-bottom: 8px;
             cursor: pointer;
             font-size: 16px;
             color: #333;
-            transition: color 0.2s;
-            justify-content: flex-end;
+            gap: 8px;
         }
 
-        .layer-toggle label:hover {
-            color: #7a3fa0;
+        .layer-toggle-item:last-child {
+            margin-bottom: 0;
         }
 
-        .layer-toggle input {
+        .layer-toggle-item input {
             width: 20px;
             height: 20px;
-            margin-left: 10px;
             cursor: pointer;
             accent-color: #7a3fa0;
         }
 
+        /* ===== تنسيق التقرير (حالات التقدم) ===== */
         .legend {
             padding-top: 8px;
             text-align: right;
         }
 
         .legend-title {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             font-weight: bold;
             color: #7a3fa0;
-            font-size: 12px;
+            font-size: 16px;
+            text-align: right;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             margin-bottom: 10px;
-            font-size: 13px;
+            font-size: 14px;
             color: #333;
             cursor: pointer;
-            padding: 6px;
-            border-radius: 4px;
-            transition: background 0.2s;
-            justify-content: flex-end;
+            padding: 6px 0;
+            gap: 8px;
         }
 
         .legend-item:hover {
             background: #f5f5f5;
+            padding: 6px 4px;
+            border-radius: 4px;
         }
 
         .legend-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            margin-left: 10px;
+            width: 18px;
+            height: 18px;
             cursor: pointer;
             accent-color: #7a3fa0;
+            margin: 0;
         }
 
-        .legend-item label {
-            cursor: pointer;
+        .legend-label {
             display: flex;
             align-items: center;
             gap: 8px;
-            flex: 1;
-            justify-content: flex-end;
+            cursor: pointer;
         }
 
         .legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
             border: 1px solid #ccc;
-            order: 2;
+            flex-shrink: 0;
         }
 
         .color-ongoing { background: #4caf50; }
@@ -378,7 +380,7 @@
                 bottom: 10px;
                 right: 10px;
                 width: calc(100% - 20px);
-                max-width: 300px;
+                max-width: 320px;
             }
             .popup-card {
                 width: 100%;
@@ -414,32 +416,61 @@
 
     <div class="right-panel">
         <h4>⚙️ إعدادات الخريطة</h4>
+        
+        <!-- ===== الطرق والبلوكات ===== -->
         <div class="layer-toggle">
-            <label><span>الطرق</span><input type="checkbox" id="chkRoads" checked></label>
-            <label><span>البلوكات</span><input type="checkbox" id="chkBlocks" checked></label>
+            <div class="layer-toggle-item">
+                <label for="chkRoads" style="margin: 0; cursor: pointer;">الطرق</label>
+                <input type="checkbox" id="chkRoads" checked>
+            </div>
+            <div class="layer-toggle-item">
+                <label for="chkBlocks" style="margin: 0; cursor: pointer;">البلوكات</label>
+                <input type="checkbox" id="chkBlocks" checked>
+            </div>
         </div>
 
+        <!-- ===== حالات التقدم ===== -->
         <div class="legend">
             <div class="legend-title">📋 حالات التقدم:</div>
+            
             <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
-                <label>جاري التنفيذ <div class="legend-color color-ongoing"></div></label>
+                <input type="checkbox" class="status-checkbox" id="status-jaari" data-status="جاري" checked>
+                <label for="status-jaari" class="legend-label">
+                    <span>جاري التنفيذ</span>
+                    <div class="legend-color color-ongoing"></div>
+                </label>
             </div>
+
             <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
-                <label>متاح للتنفيذ <div class="legend-color color-available"></div></label>
+                <input type="checkbox" class="status-checkbox" id="status-motaa" data-status="متاح" checked>
+                <label for="status-motaa" class="legend-label">
+                    <span>متاح للتنفيذ</span>
+                    <div class="legend-color color-available"></div>
+                </label>
             </div>
+
             <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
-                <label>غير متاح <div class="legend-color color-unavailable"></div></label>
+                <input type="checkbox" class="status-checkbox" id="status-ghair" data-status="غير متاح" checked>
+                <label for="status-ghair" class="legend-label">
+                    <span>غير متاح</span>
+                    <div class="legend-color color-unavailable"></div>
+                </label>
             </div>
+
             <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
-                <label>تم الانتهاء <div class="legend-color color-completed"></div></label>
+                <input type="checkbox" class="status-checkbox" id="status-tamam" data-status="تم الانتهاء" checked>
+                <label for="status-tamam" class="legend-label">
+                    <span>تم الانتهاء</span>
+                    <div class="legend-color color-completed"></div>
+                </label>
             </div>
+
             <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
-                <label>متوقف <div class="legend-color color-stopped"></div></label>
+                <input type="checkbox" class="status-checkbox" id="status-mowaqaf" data-status="متوقف" checked>
+                <label for="status-mowaqaf" class="legend-label">
+                    <span>متوقف</span>
+                    <div class="legend-color color-stopped"></div>
+                </label>
             </div>
         </div>
     </div>
@@ -517,7 +548,6 @@
             showAlert("✅ تم تحميل الخريطة", "success");
         }
 
-        // ✅ تحميل من CSV (يسحب جميع البيانات حتى لو عمل فلتر)
         function loadSheetCSV(sheetId, sheetName, cb) {
             const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${sheetName}`;
             
@@ -533,7 +563,6 @@
                             return;
                         }
 
-                        // استخراج رؤوس الأعمدة
                         const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
                         const idIndex = headers.findIndex(h => h === 'ID');
                         
@@ -542,7 +571,6 @@
                             return;
                         }
 
-                        // معالجة البيانات
                         for (let i = 1; i < lines.length; i++) {
                             const values = lines[i].split(',').map(v => v.trim());
                             if (!values[idIndex]) continue;
@@ -567,7 +595,6 @@
                 });
         }
 
-        // تحديث الألوان
         function updateLayerColors(layer, data, type) {
             const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
             
@@ -590,7 +617,6 @@
             });
         }
 
-        // تحديث Dashboard والخريطة
         function updateDashboard(data, type) {
             const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
             let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
@@ -626,9 +652,7 @@
             }
         }
 
-        // تحميل الطرق
         function loadRoads() {
-            // الـ sheetName هو 0 للشيت الأول
             loadSheetCSV("1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA", "0", data => {
                 roadsData = data;
                 updateDashboard(data, "roads");
@@ -676,7 +700,6 @@
             });
         }
 
-        // تحميل البلوكات
         function loadBlocks() {
             loadSheetCSV("1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0", "0", data => {
                 blocksData = data;
@@ -725,7 +748,6 @@
             });
         }
 
-        // البحث
         function updateSearchDropdown(type) {
             const data = type === "roads" ? roadsData : blocksData;
             const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
@@ -806,7 +828,6 @@
             document.getElementById("blocksSearchBox").classList.toggle("hidden", !this.checked);
         });
 
-        // ✅ معالج الحالات - تحديث فوري
         document.querySelectorAll(".status-checkbox").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
                 const status = this.dataset.status;
@@ -819,7 +840,6 @@
                     selectedBlocksStatuses = selectedBlocksStatuses.filter(s => s !== status);
                 }
                 
-                // تحديث فوري بدون تحميل جديد من Google Sheets
                 if (roadsLayer && roadsData) {
                     updateLayerColors(roadsLayer, roadsData, "roads");
                     updateDashboard(roadsData, "roads");
@@ -841,7 +861,6 @@
             }
         });
 
-        // بدء التطبيق
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
             loadRoads();
