@@ -18,7 +18,7 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f5f5f5;
         }
 
@@ -391,6 +391,7 @@
             border-radius: 8px;
             z-index: 3000;
             animation: slideDown 0.3s ease-out;
+            font-weight: 500;
         }
 
         @keyframes slideDown {
@@ -411,6 +412,11 @@
 
         .alert-success {
             background: #4caf50;
+            color: white;
+        }
+
+        .alert-warning {
+            background: #ff9800;
             color: white;
         }
 
@@ -628,6 +634,7 @@
         let blocksFeatures = {};
         let selectedRoadsStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
         let selectedBlocksStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
+        let searchDebounceTimers = {};
 
         // الحالات المتاحة
         const statuses = [
@@ -683,74 +690,131 @@
         }
 
         /**
-         * عرض رسالة تنبيه
+         * عرض رسالة تنبيه مع إزالة تلقائية
          */
-        function showAlert(message, type = "error") {
+        function showAlert(message, type = "error", duration = 3000) {
             const alert = document.createElement("div");
             alert.className = `alert alert-${type}`;
             alert.textContent = message;
             document.body.appendChild(alert);
-            setTimeout(() => alert.remove(), 3000);
+            
+            setTimeout(() => {
+                alert.style.opacity = "0";
+                alert.style.transition = "opacity 0.3s ease-out";
+                setTimeout(() => alert.remove(), 300);
+            }, duration);
+        }
+
+        /**
+         * Debounce function لتحسين الأداء
+         */
+        function debounce(func, delay, id = 'default') {
+            return function(...args) {
+                clearTimeout(searchDebounceTimers[id]);
+                searchDebounceTimers[id] = setTimeout(() => func(...args), delay);
+            };
         }
 
         /* =====================================
            ===== تهيئة الخريطة ===== 
            ===================================== */
         function initMap() {
-            map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-            showAlert("✅ تم تحميل الخريطة", "success");
+            try {
+                map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+                showAlert("✅ تم تحميل الخريطة بنجاح", "success", 2000);
+            } catch (error) {
+                console.error("❌ خطأ في تهيئة الخريطة:", error);
+                showAlert("❌ خطأ في تحميل الخريطة", "error");
+            }
         }
 
         /**
          * تحميل البيانات من Google Sheets
-         * ✅ يسحب جميع الصفوف حتى لو كانت مخفية بفلتر
          */
         function loadSheet(url, cb) {
-            fetch(url).then(r => r.text()).then(t => {
-                try {
-                    const j = JSON.parse(t.substring(47).slice(0, -2));
-                    let d = {};
-                    
-                    // سحب جميع الصفوف بدون استثناء
-                    if (j.table && j.table.rows) {
-                        j.table.rows.forEach(r => {
-                            if (!r.c || !r.c[0]) return;
-                            let id = String(r.c[0].v).trim();
-                            if (!id) return;
-                            
-                            d[id] = {};
-                            j.table.cols.forEach((c, i) => {
-                                let colLabel = (c.label || "").trim().toUpperCase();
-                                let cellValue = (r.c[i]?.v || "").toString().trim();
-                                d[id][colLabel] = cellValue;
+            fetch(url)
+                .then(r => {
+                    if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                    return r.text();
+                })
+                .then(t => {
+                    try {
+                        const j = JSON.parse(t.substring(47).slice(0, -2));
+                        let d = {};
+                        
+                        if (j.table && j.table.rows) {
+                            j.table.rows.forEach(r => {
+                                if (!r.c || !r.c[0]) return;
+                                let id = String(r.c[0].v).trim();
+                                if (!id) return;
+                                
+                                d[id] = {};
+                                j.table.cols.forEach((c, i) => {
+                                    let colLabel = (c.label || "").trim().toUpperCase();
+                                    let cellValue = (r.c[i]?.v || "").toString().trim();
+                                    d[id][colLabel] = cellValue;
+                                });
                             });
-                        });
+                        }
+                        
+                        cb(d);
+                    } catch (e) {
+                        console.error("❌ خطأ في تحليل بيانات Google Sheet:", e);
+                        showAlert("❌ خطأ في معالجة بيانات Google Sheet", "error");
                     }
-                    
-                    cb(d);
-                } catch (e) {
-                    console.error("خطأ في تحميل البيانات:", e);
-                    showAlert("❌ خطأ في تحميل البيانات من Google Sheet", "error");
+                })
+                .catch(err => {
+                    console.error("❌ خطأ في الاتصال بـ Google Sheet:", err);
+                    showAlert("❌ فشل الاتصال بـ Google Sheet - تحقق من الاتصال بالإنترنت", "error");
+                });
+        }
+
+        /**
+         * حذف وتنظيف الطبقة القديمة
+         */
+        function clearLayer(layer) {
+            if (layer) {
+                if (map.hasLayer(layer)) {
+                    map.removeLayer(layer);
                 }
-            }).catch(err => {
-                console.error("خطأ في الاتصال:", err);
-                showAlert("❌ فشل الاتصال بـ Google Sheet", "error");
-            });
+                // تنظيف المرجع
+                layer.clearLayers();
+                return null;
+            }
+            return layer;
+        }
+
+        /**
+         * تحميل ملف GeoJSON مع معالجة الأخطاء
+         */
+        function loadGeoJSON(filename) {
+            return fetch(filename)
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`فشل تحميل ${filename} - الحالة: ${r.status}`);
+                    }
+                    return r.json();
+                })
+                .catch(err => {
+                    console.error(`❌ خطأ في تحميل ${filename}:`, err);
+                    showAlert(`❌ خطأ: تأكد من وجود ملف ${filename} في المشروع`, "error");
+                    return null;
+                });
         }
 
         /**
          * تحديث إحصائيات الطرق على الخريطة
          */
         function loadRoads() {
-            loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json", data => {
+            loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json", async data => {
                 roadsData = data;
                 let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
                 
-                // حساب الإجماليات فقط للحالات المختارة
+                // حساب الإجماليات للحالات المختارة فقط
                 Object.values(data).forEach(v => {
                     const status = (v["STATUS"] || "").trim().toLowerCase();
                     const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status);
@@ -765,6 +829,7 @@
                     }
                 });
 
+                // تحديث لوحة المعلومات
                 document.getElementById("rFillT").textContent = formatNumber(fT);
                 document.getElementById("rCutT").textContent = formatNumber(cT);
                 document.getElementById("rFillD").textContent = formatNumber(fD);
@@ -772,33 +837,34 @@
                 document.getElementById("rFillR").textContent = formatNumber(fR);
                 document.getElementById("rCutR").textContent = formatNumber(cR);
 
-                fetch("ROADS.geojson").then(r => r.json()).then(g => {
-                    // حذف الطبقة القديمة
-                    if (roadsLayer && map.hasLayer(roadsLayer)) {
-                        map.removeLayer(roadsLayer);
-                    }
+                // تحميل GeoJSON
+                const geoJSON = await loadGeoJSON("ROADS.geojson");
+                if (!geoJSON) return;
 
-                    roadsLayer = L.geoJSON(g, {
-                        onEachFeature: (f, l) => {
-                            let row = data[f.properties.ID];
-                            if (!row) return;
+                // حذف الطبقة القديمة بشكل صحيح
+                roadsLayer = clearLayer(roadsLayer);
 
-                            const status = (row["STATUS"] || "").trim();
-                            const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status.toLowerCase());
-                            
-                            roadsFeatures[row["ROAD NAME"]] = l;
+                roadsLayer = L.geoJSON(geoJSON, {
+                    onEachFeature: (f, l) => {
+                        let row = data[f.properties.ID];
+                        if (!row) return;
 
-                            // ✅ إذا كانت الحالة مختارة، ظهر اللون الأصلي
-                            // وإلا ظهر رمادي
-                            let col = isSelected ? getStatusColor(status) : "#cccccc";
-                            l.setStyle({ 
-                                color: col, 
-                                fillColor: col, 
-                                fillOpacity: isSelected ? 0.5 : 0.3,
-                                weight: isSelected ? 2 : 1
-                            });
+                        const status = (row["STATUS"] || "").trim();
+                        const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status.toLowerCase());
+                        
+                        roadsFeatures[row["ROAD NAME"]] = l;
 
-                            let html = `
+                        // تلوين الطبقة بناءً على الحالة
+                        let col = isSelected ? getStatusColor(status) : "#cccccc";
+                        l.setStyle({ 
+                            color: col, 
+                            fillColor: col, 
+                            fillOpacity: isSelected ? 0.5 : 0.3,
+                            weight: isSelected ? 2 : 1
+                        });
+
+                        // إنشاء بطاقة المعلومات
+                        let html = `
                             <div class="popup-card">
                                 <div class="popup-header">
                                     <div class="title-main">مشروع ولي العهد</div>
@@ -806,26 +872,26 @@
                                 </div>
                                 <div class="popup-body">`;
 
-                            Object.keys(row).forEach(k => {
-                                if (k === "ID") return;
-                                html += `
+                        Object.keys(row).forEach(k => {
+                            if (k === "ID") return;
+                            html += `
                                 <div class="popup-row">
                                     <div class="popup-label">${labelsAR[k] || k}</div>
                                     <div>${formatNumber(row[k])}</div>
                                 </div>`;
-                            });
+                        });
 
-                            l.bindPopup(html + "</div></div>");
-                            l.on('click', () => l.openPopup());
-                        }
-                    });
+                        html += "</div></div>";
 
-                    if (document.getElementById("chkRoads").checked) {
-                        roadsLayer.addTo(map);
+                        l.bindPopup(html);
+                        l.on('click', () => l.openPopup());
                     }
-                }).catch(err => {
-                    console.warn("ملف ROADS.geojson غير موجود:", err);
                 });
+
+                // إضافة الطبقة إذا كانت مفعلة
+                if (document.getElementById("chkRoads").checked) {
+                    roadsLayer.addTo(map);
+                }
             });
         }
 
@@ -833,11 +899,11 @@
          * تحديث إحصائيات البلوكات على الخريطة
          */
         function loadBlocks() {
-            loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json", data => {
+            loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json", async data => {
                 blocksData = data;
                 let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
                 
-                // حساب الإجماليات فقط للحالات المختارة
+                // حساب الإجماليات للحالات المختارة فقط
                 Object.values(data).forEach(v => {
                     const status = (v["STATUS"] || "").trim().toLowerCase();
                     const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status);
@@ -852,6 +918,7 @@
                     }
                 });
 
+                // تحديث لوحة المعلومات
                 document.getElementById("bFillT").textContent = formatNumber(fT);
                 document.getElementById("bCutT").textContent = formatNumber(cT);
                 document.getElementById("bFillD").textContent = formatNumber(fD);
@@ -859,33 +926,34 @@
                 document.getElementById("bFillR").textContent = formatNumber(fR);
                 document.getElementById("bCutR").textContent = formatNumber(cR);
 
-                fetch("BLOCKS.geojson").then(r => r.json()).then(g => {
-                    // حذف الطبقة القديمة
-                    if (blocksLayer && map.hasLayer(blocksLayer)) {
-                        map.removeLayer(blocksLayer);
-                    }
+                // تحميل GeoJSON
+                const geoJSON = await loadGeoJSON("BLOCKS.geojson");
+                if (!geoJSON) return;
 
-                    blocksLayer = L.geoJSON(g, {
-                        onEachFeature: (f, l) => {
-                            let row = data[f.properties.ID];
-                            if (!row) return;
+                // حذف الطبقة القديمة بشكل صحيح
+                blocksLayer = clearLayer(blocksLayer);
 
-                            const status = (row["STATUS"] || "").trim();
-                            const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status.toLowerCase());
-                            
-                            blocksFeatures[row["BLOCK NAME"]] = l;
+                blocksLayer = L.geoJSON(geoJSON, {
+                    onEachFeature: (f, l) => {
+                        let row = data[f.properties.ID];
+                        if (!row) return;
 
-                            // ✅ إذا كانت الحالة مختارة، ظهر اللون الأصلي
-                            // وإلا ظهر رمادي
-                            let col = isSelected ? getStatusColor(status) : "#cccccc";
-                            l.setStyle({ 
-                                color: col, 
-                                fillColor: col, 
-                                fillOpacity: isSelected ? 0.4 : 0.2,
-                                weight: isSelected ? 2 : 1
-                            });
+                        const status = (row["STATUS"] || "").trim();
+                        const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status.toLowerCase());
+                        
+                        blocksFeatures[row["BLOCK NAME"]] = l;
 
-                            let html = `
+                        // تلوين الطبقة بناءً على الحالة
+                        let col = isSelected ? getStatusColor(status) : "#cccccc";
+                        l.setStyle({ 
+                            color: col, 
+                            fillColor: col, 
+                            fillOpacity: isSelected ? 0.4 : 0.2,
+                            weight: isSelected ? 2 : 1
+                        });
+
+                        // إنشاء بطاقة المعلومات
+                        let html = `
                             <div class="popup-card">
                                 <div class="popup-header">
                                     <div class="title-main">مشروع ولي العهد</div>
@@ -893,26 +961,26 @@
                                 </div>
                                 <div class="popup-body">`;
 
-                            Object.keys(row).forEach(k => {
-                                if (k === "ID") return;
-                                html += `
+                        Object.keys(row).forEach(k => {
+                            if (k === "ID") return;
+                            html += `
                                 <div class="popup-row">
                                     <div class="popup-label">${labelsAR[k] || k}</div>
                                     <div>${formatNumber(row[k])}</div>
                                 </div>`;
-                            });
+                        });
 
-                            l.bindPopup(html + "</div></div>");
-                            l.on('click', () => l.openPopup());
-                        }
-                    });
+                        html += "</div></div>";
 
-                    if (document.getElementById("chkBlocks").checked) {
-                        blocksLayer.addTo(map);
+                        l.bindPopup(html);
+                        l.on('click', () => l.openPopup());
                     }
-                }).catch(err => {
-                    console.warn("ملف BLOCKS.geojson غير موجود:", err);
                 });
+
+                // إضافة الطبقة إذا كانت مفعلة
+                if (document.getElementById("chkBlocks").checked) {
+                    blocksLayer.addTo(map);
+                }
             });
         }
 
@@ -970,7 +1038,7 @@
                     const layer = type === "roads" ? roadsFeatures[name] : blocksFeatures[name];
                     if (layer) {
                         map.fitBounds(layer.getBounds());
-                        layer.openPopup();
+                        setTimeout(() => layer.openPopup(), 300);
                         input.value = "";
                         dropdown.classList.remove("active");
                     }
@@ -994,7 +1062,7 @@
            ===== معالجات الأحداث ===== 
            ===================================== */
 
-        // تبديل الطرق والبلوكات
+        // تبديل الطرق
         document.getElementById("chkRoads").addEventListener("change", function() {
             if (roadsLayer) {
                 this.checked ? map.addLayer(roadsLayer) : map.removeLayer(roadsLayer);
@@ -1003,6 +1071,7 @@
             document.getElementById("roadsSearchBox").classList.toggle("hidden", !this.checked);
         });
 
+        // تبديل البلوكات
         document.getElementById("chkBlocks").addEventListener("change", function() {
             if (blocksLayer) {
                 this.checked ? map.addLayer(blocksLayer) : map.removeLayer(blocksLayer);
@@ -1028,16 +1097,20 @@
                     selectedBlocksStatuses = selectedBlocksStatuses.filter(s => s.toLowerCase() !== status.toLowerCase());
                 }
                 
-                // إعادة تحميل البيانات بدلاً من تحديث الصفحة
+                // إعادة تحميل البيانات
                 reloadMapData();
             });
         });
 
-        // البحث عن الطرق
-        document.getElementById("roadsSearchInput").addEventListener("input", () => updateSearchDropdown("roads"));
+        // البحث عن الطرق مع Debounce
+        document.getElementById("roadsSearchInput").addEventListener("input", debounce(() => {
+            updateSearchDropdown("roads");
+        }, 300, "roads"));
 
-        // البحث عن البلوكات
-        document.getElementById("blocksSearchInput").addEventListener("input", () => updateSearchDropdown("blocks"));
+        // البحث عن البلوكات مع Debounce
+        document.getElementById("blocksSearchInput").addEventListener("input", debounce(() => {
+            updateSearchDropdown("blocks");
+        }, 300, "blocks"));
 
         // إغلاق الدروب ليست عند النقر خارجها
         document.addEventListener("click", (e) => {
