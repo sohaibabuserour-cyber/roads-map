@@ -200,6 +200,7 @@
             font-size: 16px;
             color: #333;
             gap: 8px;
+            flex-direction: row-reverse;   /* RTL */
         }
 
         .layer-toggle-item:last-child {
@@ -209,15 +210,19 @@
         .layer-toggle-item input {
             width: 20px;
             height: 20px;
+            order: 0;   /* checkbox الأول */
             cursor: pointer;
             accent-color: #7a3fa0;
         }
 
         /* ===== تنسيق التقرير (حالات التقدم) ===== */
-        .legend {
-            padding-top: 8px;
-            text-align: right;
-        }
+        
+.legend {
+    padding-top: 8px;
+    text-align: right;
+    direction: rtl;   /* ✅ ضيف السطر ده هنا */
+}
+
 
         .legend-title {
             margin-bottom: 12px;
@@ -230,7 +235,10 @@
         .legend-item {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
+            
+    justify-content: flex-start;   /* ✅ بدل space-between */
+    flex-direction: row-reverse;      /* يعكس الترتيب RTL */
+
             margin-bottom: 10px;
             font-size: 14px;
             color: #333;
@@ -257,8 +265,29 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            justify-content: flex-end;
             cursor: pointer;
         }
+        
+.legend-color {
+    order: 0;   /* اللون الأول */
+}
+
+.legend-label span {
+    order: 1;   /* النص بعده */
+}
+
+.legend-item input[type="checkbox"] {
+    order: 2;   /* الشيك بوكس أقصى يمين */
+}
+        
+
+
+.layer-toggle-item label {
+    order: 1;   /* النص بعده */
+}
+
+
 
         .legend-color {
             width: 18px;
