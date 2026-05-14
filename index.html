@@ -472,6 +472,7 @@
         ];
 
         const labelsAR = {
+            "ID": "معرف",
             "ROAD NAME": "اسم الطريق",
             "BLOCK NAME": "اسم البلوك",
             "FILL-TOTAL-QTY": "كمية الردم الإجمالية",
@@ -516,40 +517,57 @@
             showAlert("✅ تم تحميل الخريطة", "success");
         }
 
-        // ✅ يسحب جميع البيانات حتى لو كانت مخفية بسبب فلتر Google Sheets
-        function loadSheet(url, cb) {
-            fetch(url)
+        // ✅ تحميل من CSV (يسحب جميع البيانات حتى لو عمل فلتر)
+        function loadSheetCSV(sheetId, sheetName, cb) {
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${sheetName}`;
+            
+            fetch(csvUrl)
                 .then(r => r.text())
-                .then(t => {
+                .then(csv => {
                     try {
-                        const jsonStr = t.substring(47).slice(0, -2);
-                        const j = JSON.parse(jsonStr);
                         let d = {};
+                        const lines = csv.split('\n').filter(line => line.trim());
                         
-                        if (j.table && j.table.rows) {
-                            j.table.rows.forEach(r => {
-                                if (!r.c || !r.c[0]) return;
-                                let id = String(r.c[0].v).trim();
-                                d[id] = {};
-                                j.table.cols.forEach((c, i) => {
-                                    const value = (r.c[i]?.v || "").toString().trim();
-                                    d[id][c.label.trim().toUpperCase()] = value;
-                                });
+                        if (lines.length === 0) {
+                            showAlert("❌ الشيت فارغ أو خطأ في الاتصال", "error");
+                            return;
+                        }
+
+                        // استخراج رؤوس الأعمدة
+                        const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+                        const idIndex = headers.findIndex(h => h === 'ID');
+                        
+                        if (idIndex === -1) {
+                            showAlert("❌ لا يوجد عمود ID في الشيت", "error");
+                            return;
+                        }
+
+                        // معالجة البيانات
+                        for (let i = 1; i < lines.length; i++) {
+                            const values = lines[i].split(',').map(v => v.trim());
+                            if (!values[idIndex]) continue;
+
+                            const id = values[idIndex];
+                            d[id] = {};
+
+                            headers.forEach((header, idx) => {
+                                d[id][header] = values[idx] || "";
                             });
                         }
+
                         cb(d);
                     } catch (error) {
                         console.error("خطأ:", error);
-                        showAlert("❌ خطأ في تحميل البيانات", "error");
+                        showAlert("❌ خطأ في معالجة البيانات", "error");
                     }
                 })
                 .catch(error => {
                     console.error("خطأ:", error);
-                    showAlert("❌ خطأ في الاتصال", "error");
+                    showAlert("❌ خطأ في سحب البيانات من Google Sheets", "error");
                 });
         }
 
-        // ✅ تحديث الألوان بناءً على الفلترة (شرط واحد = لا تداخل)
+        // تحديث الألوان
         function updateLayerColors(layer, data, type) {
             const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
             
@@ -572,32 +590,48 @@
             });
         }
 
-        // تحميل الطرق
-        function loadRoads() {
-            loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA/gviz/tq?tqx=out:json", data => {
-                roadsData = data;
-                
-                let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
-                Object.values(data).forEach(v => {
-                    const status = (v["STATUS"] || "").trim().toLowerCase();
-                    const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status);
-                    
-                    if (isSelected) {
-                        fT += num(v["FILL-TOTAL-QTY"]);
-                        cT += num(v["CUT-TOTAL-QTY"]);
-                        fD += num(v["FILL-DONE-QTY"]);
-                        cD += num(v["CUT-DONE-QTY"]);
-                        fR += num(v["FILL-REMANING-QTY"]);
-                        cR += num(v["CUT-REMANING-QTY"]);
-                    }
-                });
+        // تحديث Dashboard والخريطة
+        function updateDashboard(data, type) {
+            const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
+            let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
 
+            Object.values(data).forEach(v => {
+                const status = (v["STATUS"] || "").trim().toLowerCase();
+                const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                
+                if (isSelected) {
+                    fT += num(v["FILL-TOTAL-QTY"]);
+                    cT += num(v["CUT-TOTAL-QTY"]);
+                    fD += num(v["FILL-DONE-QTY"]);
+                    cD += num(v["CUT-DONE-QTY"]);
+                    fR += num(v["FILL-REMANING-QTY"]);
+                    cR += num(v["CUT-REMANING-QTY"]);
+                }
+            });
+
+            if (type === "roads") {
                 document.getElementById("rFillT").textContent = formatNumber(fT);
                 document.getElementById("rCutT").textContent = formatNumber(cT);
                 document.getElementById("rFillD").textContent = formatNumber(fD);
                 document.getElementById("rCutD").textContent = formatNumber(cD);
                 document.getElementById("rFillR").textContent = formatNumber(fR);
                 document.getElementById("rCutR").textContent = formatNumber(cR);
+            } else {
+                document.getElementById("bFillT").textContent = formatNumber(fT);
+                document.getElementById("bCutT").textContent = formatNumber(cT);
+                document.getElementById("bFillD").textContent = formatNumber(fD);
+                document.getElementById("bCutD").textContent = formatNumber(cD);
+                document.getElementById("bFillR").textContent = formatNumber(fR);
+                document.getElementById("bCutR").textContent = formatNumber(cR);
+            }
+        }
+
+        // تحميل الطرق
+        function loadRoads() {
+            // الـ sheetName هو 0 للشيت الأول
+            loadSheetCSV("1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA", "0", data => {
+                roadsData = data;
+                updateDashboard(data, "roads");
 
                 fetch("ROADS.geojson")
                     .then(r => r.json())
@@ -637,36 +671,16 @@
                         if (document.getElementById("chkRoads").checked) {
                             roadsLayer.addTo(map);
                         }
-                    });
+                    })
+                    .catch(e => console.error("خطأ في تحميل ROADS.geojson:", e));
             });
         }
 
         // تحميل البلوكات
         function loadBlocks() {
-            loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0/gviz/tq?tqx=out:json", data => {
+            loadSheetCSV("1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0", "0", data => {
                 blocksData = data;
-                
-                let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
-                Object.values(data).forEach(v => {
-                    const status = (v["STATUS"] || "").trim().toLowerCase();
-                    const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status);
-                    
-                    if (isSelected) {
-                        fT += num(v["FILL-TOTAL-QTY"]);
-                        cT += num(v["CUT-TOTAL-QTY"]);
-                        fD += num(v["FILL-DONE-QTY"]);
-                        cD += num(v["CUT-DONE-QTY"]);
-                        fR += num(v["FILL-REMANING-QTY"]);
-                        cR += num(v["CUT-REMANING-QTY"]);
-                    }
-                });
-
-                document.getElementById("bFillT").textContent = formatNumber(fT);
-                document.getElementById("bCutT").textContent = formatNumber(cT);
-                document.getElementById("bFillD").textContent = formatNumber(fD);
-                document.getElementById("bCutD").textContent = formatNumber(cD);
-                document.getElementById("bFillR").textContent = formatNumber(fR);
-                document.getElementById("bCutR").textContent = formatNumber(cR);
+                updateDashboard(data, "blocks");
 
                 fetch("BLOCKS.geojson")
                     .then(r => r.json())
@@ -706,7 +720,8 @@
                         if (document.getElementById("chkBlocks").checked) {
                             blocksLayer.addTo(map);
                         }
-                    });
+                    })
+                    .catch(e => console.error("خطأ في تحميل BLOCKS.geojson:", e));
             });
         }
 
@@ -791,7 +806,7 @@
             document.getElementById("blocksSearchBox").classList.toggle("hidden", !this.checked);
         });
 
-        // ✅ معالج الحالات - تحديث فوري بدون إعادة تحميل
+        // ✅ معالج الحالات - تحديث فوري
         document.querySelectorAll(".status-checkbox").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
                 const status = this.dataset.status;
@@ -804,13 +819,15 @@
                     selectedBlocksStatuses = selectedBlocksStatuses.filter(s => s !== status);
                 }
                 
-                // تحديث فوري بدون تحميل من Google Sheets
-                if (roadsLayer && roadsData) updateLayerColors(roadsLayer, roadsData, "roads");
-                if (blocksLayer && blocksData) updateLayerColors(blocksLayer, blocksData, "blocks");
-                
-                // تحديث الإجماليات في Dashboard
-                loadRoads();
-                loadBlocks();
+                // تحديث فوري بدون تحميل جديد من Google Sheets
+                if (roadsLayer && roadsData) {
+                    updateLayerColors(roadsLayer, roadsData, "roads");
+                    updateDashboard(roadsData, "roads");
+                }
+                if (blocksLayer && blocksData) {
+                    updateLayerColors(blocksLayer, blocksData, "blocks");
+                    updateDashboard(blocksData, "blocks");
+                }
             });
         });
 
