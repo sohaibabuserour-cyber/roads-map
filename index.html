@@ -695,7 +695,7 @@
             }).addTo(map);
             showAlert("✅ تم تحميل الخريطة", "success");
         }
-let roadsLayer,blocksLayer;
+
 
         function loadSheet(url,cb){
  fetch(url).then(r=>r.text()).then(t=>{
@@ -735,6 +735,9 @@ loadSheet("https://docs.google.com/spreadsheets/d/1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8
   roadsLayer=L.geoJSON(g,{
    onEachFeature:(f,l)=>{
     let row=data[f.properties.ID];if(!row)return;
+       
+    roadsFeatures[row["ROAD NAME"]] = l;
+
     let col=colorByStatus(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.5});
     let html=`
@@ -782,6 +785,9 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
   blocksLayer=L.geoJSON(g,{
    onEachFeature:(f,l)=>{
     let row=data[f.properties.ID];if(!row)return;
+
+       blocksFeatures[row["BLOCK NAME"]] = l;
+       
     let col=colorByStatus(row["STATUS"]);
     l.setStyle({color:col,fillColor:col,fillOpacity:.4});
     let html=`
@@ -808,10 +814,6 @@ loadSheet("https://docs.google.com/spreadsheets/d/1OSYpiZjdPfshQL7-KswuHynT2Kh15
 });
 
 
-            updateSearchDropdown("roads");
-
-            updateSearchDropdown("blocks");
-        }
 
         /* =====================================
            ===== البحث والدروب ليست ===== 
