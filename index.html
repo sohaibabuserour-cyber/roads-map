@@ -55,6 +55,13 @@
             padding-bottom: 6px;
         }
 
+        .stats-group-type {
+            font-size: 11px;
+            opacity: 0.85;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
         .stat-row {
             display: flex;
             gap: 16px;
@@ -458,6 +465,15 @@
             opacity: 0.9;
         }
 
+        .popup-type {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 6px;
+            opacity: 0.8;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            padding-top: 6px;
+        }
+
         .popup-body {
             padding: 14px;
             max-height: 50vh;
@@ -648,6 +664,7 @@
             <!-- ROADS STATS -->
             <div class="stats-group">
                 <div class="stats-group-title">📍 الطرق</div>
+                <div class="stats-group-type" id="roadsType">-</div>
                 <div class="stat-row">
                     <div class="stat-item">
                         <div class="stat-label">الإجمالي</div>
@@ -667,6 +684,7 @@
             <!-- BLOCKS STATS -->
             <div class="stats-group">
                 <div class="stats-group-title">🏗️ البلوكات</div>
+                <div class="stats-group-type" id="blocksType">-</div>
                 <div class="stat-row">
                     <div class="stat-item">
                         <div class="stat-label">الإجمالي</div>
@@ -710,23 +728,23 @@
                     </div>
                     <div class="dropdown-items" id="roadsItems">
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA">
+                            <input type="checkbox" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA" data-road-name="الردم">
                             <label for="road-fill">الردم</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY">
+                            <input type="checkbox" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY" data-road-name="القطع">
                             <label for="road-cut">القطع</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI">
+                            <input type="checkbox" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI" data-road-name="الأساس الحصوي">
                             <label for="road-gravel">الأساس الحصوي</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q">
+                            <input type="checkbox" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q" data-road-name="طبقة التشرب">
                             <label for="road-tack">طبقة التشرب</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y">
+                            <input type="checkbox" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y" data-road-name="الأسفلت">
                             <label for="road-asphalt">الأسفلت</label>
                         </div>
                     </div>
@@ -740,11 +758,11 @@
                     </div>
                     <div class="dropdown-items" id="blocksItems">
                         <div class="dropdown-item">
-                            <input type="checkbox" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0">
+                            <input type="checkbox" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0" data-block-name="الردم">
                             <label for="block-fill">الردم</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM">
+                            <input type="checkbox" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM" data-block-name="القطع">
                             <label for="block-cut">القطع</label>
                         </div>
                     </div>
@@ -786,12 +804,12 @@
     </div>
 
     <script>
-        let map, currentLayer;
-        let allData = {};
+        let map, roadLayers = {}, blockLayers = {};
+        let roadsData = {}, blocksData = {};
         let allFeatures = {};
         let selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
-        let currentSheetId = null;
-        let currentType = null;
+        let selectedRoadType = null;
+        let selectedBlockType = null;
         let equipmentData = {};
         let roadsExpanded = false;
         let blocksExpanded = false;
@@ -912,71 +930,119 @@
                 });
         }
 
-        function updateStats(data) {
+        function updateStats() {
             let rTotal = 0, rDone = 0;
             let bTotal = 0, bDone = 0;
 
-            Object.values(data).forEach(row => {
-                const status = (row["STATUS"] || "").trim().toLowerCase();
-                const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                
-                if (isSelected) {
-                    if (currentType === "road") {
+            if (selectedRoadType && roadsData[selectedRoadType]) {
+                Object.values(roadsData[selectedRoadType]).forEach(row => {
+                    const status = (row["STATUS"] || "").trim().toLowerCase();
+                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                    
+                    if (isSelected) {
                         rTotal += num(row["TOTAL-QTY"] || 0);
                         rDone += num(row["DONE-QTY"] || 0);
-                    } else {
+                    }
+                });
+            }
+
+            if (selectedBlockType && blocksData[selectedBlockType]) {
+                Object.values(blocksData[selectedBlockType]).forEach(row => {
+                    const status = (row["STATUS"] || "").trim().toLowerCase();
+                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                    
+                    if (isSelected) {
                         bTotal += num(row["TOTAL-QTY"] || 0);
                         bDone += num(row["DONE-QTY"] || 0);
                     }
-                }
-            });
-
-            if (currentType === "road") {
-                document.getElementById("rTotal").textContent = formatNumber(rTotal);
-                document.getElementById("rDone").textContent = formatNumber(rDone);
-                document.getElementById("rRemaining").textContent = formatNumber(rTotal - rDone);
-            } else {
-                document.getElementById("bTotal").textContent = formatNumber(bTotal);
-                document.getElementById("bDone").textContent = formatNumber(bDone);
-                document.getElementById("bRemaining").textContent = formatNumber(bTotal - bDone);
+                });
             }
+
+            document.getElementById("rTotal").textContent = formatNumber(rTotal);
+            document.getElementById("rDone").textContent = formatNumber(rDone);
+            document.getElementById("rRemaining").textContent = formatNumber(rTotal - rDone);
+
+            document.getElementById("bTotal").textContent = formatNumber(bTotal);
+            document.getElementById("bDone").textContent = formatNumber(bDone);
+            document.getElementById("bRemaining").textContent = formatNumber(bTotal - bDone);
         }
 
-        function updateLayerColors(layer, data) {
-            layer.eachLayer(feature => {
-                const row = data[feature.feature.properties.ID];
-                if (!row) return;
-
-                const status = (row["STATUS"] || "").trim().toLowerCase();
-                const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                const opacity = isSelected ? 0.6 : 0.2;
+        function updateLayerColors() {
+            // تحديث الطبقات المرئية
+            Object.keys(roadLayers).forEach(sheetId => {
+                const layer = roadLayers[sheetId];
+                const data = roadsData[sheetId];
                 
-                feature.setStyle({
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: opacity,
-                    weight: isSelected ? 2 : 1
+                if (!layer || !data) return;
+
+                layer.eachLayer(feature => {
+                    const row = data[feature.feature.properties.ID];
+                    if (!row) return;
+
+                    const status = (row["STATUS"] || "").trim().toLowerCase();
+                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                    const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
+                    const opacity = isSelected ? 0.6 : 0.2;
+                    
+                    feature.setStyle({
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: opacity,
+                        weight: isSelected ? 2 : 1
+                    });
+                });
+            });
+
+            Object.keys(blockLayers).forEach(sheetId => {
+                const layer = blockLayers[sheetId];
+                const data = blocksData[sheetId];
+                
+                if (!layer || !data) return;
+
+                layer.eachLayer(feature => {
+                    const row = data[feature.feature.properties.ID];
+                    if (!row) return;
+
+                    const status = (row["STATUS"] || "").trim().toLowerCase();
+                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                    const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
+                    const opacity = isSelected ? 0.6 : 0.2;
+                    
+                    feature.setStyle({
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: opacity,
+                        weight: isSelected ? 2 : 1
+                    });
                 });
             });
         }
 
-        function loadLayer(sheetId, type) {
-            currentSheetId = sheetId;
-            currentType = type;
-
+        function loadLayer(sheetId, type, typeName) {
             loadSheetCSV(sheetId, data => {
-                allData = data;
-                updateStats(data);
+                if (type === "road") {
+                    roadsData[sheetId] = data;
+                    selectedRoadType = sheetId;
+                    document.getElementById("roadsType").textContent = typeName;
+                } else {
+                    blocksData[sheetId] = data;
+                    selectedBlockType = sheetId;
+                    document.getElementById("blocksType").textContent = typeName;
+                }
 
                 const geoJsonFile = type === "road" ? "ROADS.geojson" : "BLOCKS.geojson";
                 
                 fetch(geoJsonFile)
                     .then(r => r.json())
                     .then(g => {
-                        if (currentLayer) map.removeLayer(currentLayer);
+                        // حذف الطبقة القديمة
+                        if (type === "road" && roadLayers[sheetId]) {
+                            map.removeLayer(roadLayers[sheetId]);
+                        } else if (type === "block" && blockLayers[sheetId]) {
+                            map.removeLayer(blockLayers[sheetId]);
+                        }
                         
-                        currentLayer = L.geoJSON(g, {
+                        const layer = L.geoJSON(g, {
                             onEachFeature: (f, l) => {
                                 const id = f.properties.ID;
                                 const row = data[id];
@@ -995,7 +1061,7 @@
                                     weight: isSelected ? 2 : 1
                                 });
 
-                                let html = `<div class="popup-card"><div class="popup-header"><div class="popup-title">مشروع ولي العهد</div><div class="popup-subtitle">بيانات ${type === "road" ? "الطريق" : "البلوك"}</div></div><div class="popup-body">`;
+                                let html = `<div class="popup-card"><div class="popup-header"><div class="popup-title">مشروع ولي العهد</div><div class="popup-subtitle">بيانات ${type === "road" ? "الطريق" : "البلوك"}</div><div class="popup-type">${type === "road" ? "الطرق - " : "البلوكات - "}${typeName}</div></div><div class="popup-body">`;
                                 
                                 Object.keys(row).forEach(k => {
                                     if (k === "ID") return;
@@ -1013,9 +1079,17 @@
                             }
                         });
 
-                        currentLayer.addTo(map);
+                        if (type === "road") {
+                            roadLayers[sheetId] = layer;
+                        } else {
+                            blockLayers[sheetId] = layer;
+                        }
+
+                        layer.addTo(map);
                     })
                     .catch(e => console.error(`خطأ في تحميل ${geoJsonFile}:`, e));
+
+                updateStats();
             });
         }
 
@@ -1031,39 +1105,64 @@
                 return;
             }
 
-            const filtered = Object.values(allData).filter(item => {
-                const nameKey = currentType === "road" ? "ROAD NAME" : "BLOCK NAME";
-                const name = (item[nameKey] || "").toString().trim().toLowerCase();
-                const status = (item["STATUS"] || "").trim().toLowerCase();
-                const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                return name.includes(searchValue) && isStatusSelected;
+            let results = [];
+
+            // البحث في الطرق
+            Object.entries(roadsData).forEach(([sheetId, data]) => {
+                Object.values(data).forEach(item => {
+                    const name = (item["ROAD NAME"] || "").toString().trim().toLowerCase();
+                    const status = (item["STATUS"] || "").trim().toLowerCase();
+                    const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                    if (name.includes(searchValue) && isStatusSelected) {
+                        results.push({
+                            name: item["ROAD NAME"],
+                            type: "طريق",
+                            status: item["STATUS"],
+                            id: item["ID"],
+                            layer: item["ROAD NAME"]
+                        });
+                    }
+                });
             });
 
-            if (filtered.length === 0) {
+            // البحث في البلوكات
+            Object.entries(blocksData).forEach(([sheetId, data]) => {
+                Object.values(data).forEach(item => {
+                    const name = (item["BLOCK NAME"] || "").toString().trim().toLowerCase();
+                    const status = (item["STATUS"] || "").trim().toLowerCase();
+                    const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                    if (name.includes(searchValue) && isStatusSelected) {
+                        results.push({
+                            name: item["BLOCK NAME"],
+                            type: "بلوك",
+                            status: item["STATUS"],
+                            id: item["ID"],
+                            layer: item["BLOCK NAME"]
+                        });
+                    }
+                });
+            });
+
+            if (results.length === 0) {
                 dropdown.innerHTML = "<div style='padding: 10px; text-align: right; color: #999;'>لم يتم العثور على نتائج</div>";
                 dropdown.classList.add("active");
                 return;
             }
 
-            filtered.forEach(item => {
-                const nameKey = currentType === "road" ? "ROAD NAME" : "BLOCK NAME";
-                const name = item[nameKey];
-                const status = item["STATUS"];
-                const typeText = currentType === "road" ? "طريق" : "بلوك";
-                
+            results.forEach(item => {
                 const div = document.createElement("div");
                 div.className = "search-item";
 
                 div.innerHTML = `
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <div class="search-item-type">${typeText}</div>
-                        <div class="search-item-status" style="background: ${getStatusColor(status)}">${status}</div>
+                        <div class="search-item-type">${item.type}</div>
+                        <div class="search-item-status" style="background: ${getStatusColor(item.status)}">${item.status}</div>
                     </div>
-                    <div class="search-item-name">${name}</div>
+                    <div class="search-item-name">${item.name}</div>
                 `;
 
                 div.addEventListener("click", () => {
-                    const layer = allFeatures[name];
+                    const layer = allFeatures[item.layer];
                     if (layer) {
                         map.fitBounds(layer.getBounds());
                         layer.openPopup();
@@ -1099,7 +1198,7 @@
                         el.closest(".dropdown-item").classList.remove("selected");
                     });
                     this.closest(".dropdown-item").classList.add("selected");
-                    loadLayer(this.dataset.roadType, "road");
+                    loadLayer(this.dataset.roadType, "road", this.dataset.roadName);
                 }
             });
         });
@@ -1112,7 +1211,7 @@
                         el.closest(".dropdown-item").classList.remove("selected");
                     });
                     this.closest(".dropdown-item").classList.add("selected");
-                    loadLayer(this.dataset.blockType, "block");
+                    loadLayer(this.dataset.blockType, "block", this.dataset.blockName);
                 }
             });
         });
@@ -1127,10 +1226,8 @@
                     selectedStatuses = selectedStatuses.filter(s => s !== status);
                 }
                 
-                if (currentLayer && allData) {
-                    updateLayerColors(currentLayer, allData);
-                    updateStats(allData);
-                }
+                updateLayerColors();
+                updateStats();
             });
         });
 
