@@ -751,25 +751,25 @@
                         <span>📍 الطرق</span>
                         <button class="expand-btn" id="roadsExpandBtn">+</button>
                     </div>
-                    <div class="dropdown-items active" id="roadsItems">
+                    <div class="dropdown-items" id="roadsItems">
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA" data-road-name="الردم">
+                            <input type="checkbox" name="roads-check" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA" data-road-name="الردم">
                             <label for="road-fill">الردم</label>
                         </div>
-                        <div class="dropdown-item selected">
-                            <input type="checkbox" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY" data-road-name="القطع" checked>
+                        <div class="dropdown-item">
+                            <input type="checkbox" name="roads-check" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY" data-road-name="القطع">
                             <label for="road-cut">القطع</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI" data-road-name="الأساس الحصوي">
+                            <input type="checkbox" name="roads-check" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI" data-road-name="الأساس الحصوي">
                             <label for="road-gravel">الأساس الحصوي</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q" data-road-name="طبقة التشرب">
+                            <input type="checkbox" name="roads-check" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q" data-road-name="طبقة التشرب">
                             <label for="road-tack">طبقة التشرب</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y" data-road-name="الأسفلت">
+                            <input type="checkbox" name="roads-check" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y" data-road-name="الأسفلت">
                             <label for="road-asphalt">الأسفلت</label>
                         </div>
                     </div>
@@ -783,11 +783,11 @@
                     </div>
                     <div class="dropdown-items" id="blocksItems">
                         <div class="dropdown-item">
-                            <input type="checkbox" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0" data-block-name="الردم">
+                            <input type="checkbox" name="blocks-check" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0" data-block-name="الردم">
                             <label for="block-fill">الردم</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM" data-block-name="القطع">
+                            <input type="checkbox" name="blocks-check" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM" data-block-name="القطع">
                             <label for="block-cut">القطع</label>
                         </div>
                     </div>
@@ -836,7 +836,7 @@
         let selectedRoadSheets = {};
         let selectedBlockSheets = {};
         let equipmentData = {};
-        let roadsExpanded = true;
+        let roadsExpanded = false;
         let blocksExpanded = false;
 
         const statuses = [
@@ -1237,36 +1237,56 @@
             document.getElementById("blocksItems").classList.toggle("active");
         });
 
-        // معالجات Checkboxes للطرق
-        document.querySelectorAll("input[data-road-type]").forEach(checkbox => {
+        // معالجات Checkboxes للطرق - اختيار واحد فقط (مثل Radio لكن يمكن إلغاء التحديد)
+        document.querySelectorAll("input[name='roads-check']").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
-                const sheetId = this.dataset.roadType;
-                const typeName = this.dataset.roadName;
-                const item = this.closest(".dropdown-item");
-                
                 if (this.checked) {
-                    item.classList.add("selected");
+                    // فك تحديد باقي الـ checkboxes
+                    document.querySelectorAll("input[name='roads-check']").forEach(cb => {
+                        if (cb !== this) {
+                            cb.checked = false;
+                            cb.closest(".dropdown-item").classList.remove("selected");
+                            // إزالة الطبقة المرتبطة
+                            removeLayer(cb.dataset.roadType, "road");
+                        }
+                    });
+                    
+                    // تحميل الطبقة الجديدة
+                    const sheetId = this.dataset.roadType;
+                    const typeName = this.dataset.roadName;
+                    this.closest(".dropdown-item").classList.add("selected");
                     loadLayer(sheetId, "road", typeName);
                 } else {
-                    item.classList.remove("selected");
-                    removeLayer(sheetId, "road");
+                    // إزالة الطبقة عند إلغاء التحديد
+                    this.closest(".dropdown-item").classList.remove("selected");
+                    removeLayer(this.dataset.roadType, "road");
                 }
             });
         });
 
-        // معالجات Checkboxes للبلوكات
-        document.querySelectorAll("input[data-block-type]").forEach(checkbox => {
+        // معالجات Checkboxes للبلوكات - اختيار واحد فقط (مثل Radio لكن يمكن إلغاء التحديد)
+        document.querySelectorAll("input[name='blocks-check']").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
-                const sheetId = this.dataset.blockType;
-                const typeName = this.dataset.blockName;
-                const item = this.closest(".dropdown-item");
-                
                 if (this.checked) {
-                    item.classList.add("selected");
+                    // فك تحديد باقي الـ checkboxes
+                    document.querySelectorAll("input[name='blocks-check']").forEach(cb => {
+                        if (cb !== this) {
+                            cb.checked = false;
+                            cb.closest(".dropdown-item").classList.remove("selected");
+                            // إزالة الطبقة المرتبطة
+                            removeLayer(cb.dataset.blockType, "block");
+                        }
+                    });
+                    
+                    // تحميل الطبقة الجديدة
+                    const sheetId = this.dataset.blockType;
+                    const typeName = this.dataset.blockName;
+                    this.closest(".dropdown-item").classList.add("selected");
                     loadLayer(sheetId, "block", typeName);
                 } else {
-                    item.classList.remove("selected");
-                    removeLayer(sheetId, "block");
+                    // إزالة الطبقة عند إلغاء التحديد
+                    this.closest(".dropdown-item").classList.remove("selected");
+                    removeLayer(this.dataset.blockType, "block");
                 }
             });
         });
@@ -1294,18 +1314,19 @@
             }
         });
 
+        // تحميل Default: "القطع" من الطرق تلقائياً عند البداية
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
             loadEquipmentData();
             
-            // تحميل "القطع" من الطرق تلقائياً عند البداية
+            // تحديد "القطع" كـ default
             const defaultRoadCheckbox = document.getElementById("road-cut");
             if (defaultRoadCheckbox) {
                 defaultRoadCheckbox.checked = true;
                 defaultRoadCheckbox.dispatchEvent(new Event('change'));
             }
             
-            showAlert("✅ جاهز - اختر البنود التي تريد عرضها", "success");
+            showAlert("✅ جاهز - اختر بند واحد من الطرق وبند واحد من البلوكات أو لا تختار شيء", "success");
         });
     </script>
 
