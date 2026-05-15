@@ -28,41 +28,49 @@
         .top-panel {
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
             color: white;
-            padding: 12px 16px;
+            padding: 14px 16px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            overflow-x: auto;
             flex-shrink: 0;
         }
 
-        .top-panel::-webkit-scrollbar {
-            height: 4px;
+        .stats-wrapper {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
         }
 
-        .top-panel::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 10px;
+        .stats-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .stats-container {
+        .stats-group-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.95;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 6px;
+        }
+
+        .stat-row {
             display: flex;
             gap: 16px;
-            min-width: max-content;
+            align-items: center;
         }
 
         .stat-item {
-            text-align: center;
-            flex-shrink: 0;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
         }
 
         .stat-label {
-            font-size: 11px;
-            opacity: 0.9;
+            font-size: 10px;
+            opacity: 0.85;
             font-weight: 500;
-            margin-bottom: 4px;
         }
 
         .stat-value {
@@ -202,10 +210,10 @@
             background: white;
             border-left: 1px solid #e0e0e0;
             box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
             z-index: 1000;
+            overflow-y: auto;
         }
 
         .right-sidebar::-webkit-scrollbar {
@@ -224,6 +232,7 @@
         .sidebar-section {
             padding: 16px;
             border-bottom: 1px solid #e8e8e8;
+            flex-shrink: 0;
         }
 
         .sidebar-section:last-child {
@@ -238,87 +247,90 @@
             text-align: right;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 6px;
+            justify-content: space-between;
+            gap: 8px;
         }
 
-        /* ===== DROPDOWN MENUS ===== */
-        .dropdown-menu {
-            position: relative;
-        }
-
-        .dropdown-toggle {
-            width: 100%;
-            padding: 10px 12px;
+        .expand-btn {
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
             color: white;
             border: none;
-            border-radius: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 16px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            font-family: inherit;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
-        .dropdown-toggle:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(122, 63, 160, 0.3);
+        .expand-btn:hover {
+            transform: scale(1.1);
         }
 
-        .dropdown-toggle.active {
-            background: linear-gradient(135deg, #9b59b6 0%, #7a3fa0 100%);
+        .expand-btn.active {
+            transform: rotate(45deg);
         }
 
-        .dropdown-content {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            left: 0;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 2000;
+        /* ===== DROPDOWN ITEMS ===== */
+        .dropdown-items {
             display: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .dropdown-content.active {
-            display: block;
+        .dropdown-items.active {
+            display: flex;
         }
 
         .dropdown-item {
-            padding: 10px 12px;
-            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: linear-gradient(90deg, rgba(122, 63, 160, 0.05) 0%, transparent 100%);
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
-            text-align: right;
-            font-size: 13px;
-            color: #333;
-        }
-
-        .dropdown-item:last-child {
-            border-bottom: none;
+            border: 1px solid #e0e0e0;
         }
 
         .dropdown-item:hover {
-            background: rgba(122, 63, 160, 0.08);
-            padding-left: 16px;
+            background: linear-gradient(90deg, rgba(122, 63, 160, 0.1) 0%, transparent 100%);
+            border-color: #7a3fa0;
         }
 
-        .dropdown-item.active {
+        .dropdown-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #7a3fa0;
+            flex-shrink: 0;
+        }
+
+        .dropdown-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .dropdown-item.selected {
             background: linear-gradient(90deg, rgba(122, 63, 160, 0.15) 0%, transparent 100%);
-            color: #7a3fa0;
-            font-weight: 600;
+            border-color: #7a3fa0;
         }
 
-        /* ===== LAYER TOGGLE ===== */
+        /* ===== LEGEND ===== */
+        .legend-section {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
         .legend {
             text-align: right;
         }
@@ -513,19 +525,27 @@
                 border-left: none;
                 border-top: 1px solid #e0e0e0;
                 max-height: 35vh;
+                flex-direction: row;
+                overflow-x: auto;
             }
 
             #map {
                 height: 100%;
             }
 
-            .stats-container {
-                gap: 8px;
+            .sidebar-section {
+                flex-shrink: 0;
+                min-width: 200px;
+                border-right: 1px solid #e8e8e8;
+                border-bottom: none;
             }
 
-            .stat-item {
-                padding: 6px 10px;
-                font-size: 12px;
+            .sidebar-section:last-child {
+                border-right: none;
+            }
+
+            .stats-wrapper {
+                gap: 12px;
             }
 
             .stat-value {
@@ -541,24 +561,20 @@
 
             .sidebar-section {
                 padding: 12px;
-            }
-
-            .stat-item {
-                padding: 5px 8px;
+                min-width: 180px;
             }
 
             .stat-value {
                 font-size: 12px;
             }
 
-            .dropdown-toggle {
-                padding: 8px 10px;
-                font-size: 12px;
-            }
-
             .search-input {
                 font-size: 13px;
                 padding: 8px 12px;
+            }
+
+            .stats-group-title {
+                font-size: 11px;
             }
         }
     </style>
@@ -568,38 +584,43 @@
 
     <!-- TOP PANEL: الإجماليات -->
     <div class="top-panel">
-        <div class="stats-container">
-            <div class="stat-item">
-                <div class="stat-label">ردم الطرق الإجمالي</div>
-                <div class="stat-value" id="rFillTotal">0</div>
+        <div class="stats-wrapper">
+            <!-- ROADS STATS -->
+            <div class="stats-group">
+                <div class="stats-group-title">📍 الطرق</div>
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-label">الإجمالي</div>
+                        <div class="stat-value" id="rTotal">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">المنفذ</div>
+                        <div class="stat-value" id="rDone">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">المتبقي</div>
+                        <div class="stat-value" id="rRemaining">0</div>
+                    </div>
+                </div>
             </div>
-            <div class="stat-item">
-                <div class="stat-label">قطع الطرق الإجمالي</div>
-                <div class="stat-value" id="rCutTotal">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">ردم الطرق المنفذ</div>
-                <div class="stat-value" id="rFillDone">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">قطع الطرق المنفذ</div>
-                <div class="stat-value" id="rCutDone">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">ردم البلوكات الإجمالي</div>
-                <div class="stat-value" id="bFillTotal">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">قطع البلوكات الإجمالي</div>
-                <div class="stat-value" id="bCutTotal">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">ردم البلوكات المنفذ</div>
-                <div class="stat-value" id="bFillDone">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">قطع البلوكات المنفذ</div>
-                <div class="stat-value" id="bCutDone">0</div>
+
+            <!-- BLOCKS STATS -->
+            <div class="stats-group">
+                <div class="stats-group-title">🏗️ البلوكات</div>
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-label">الإجمالي</div>
+                        <div class="stat-value" id="bTotal">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">المنفذ</div>
+                        <div class="stat-value" id="bDone">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">المتبقي</div>
+                        <div class="stat-value" id="bRemaining">0</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -621,58 +642,81 @@
         <div class="right-sidebar">
             <!-- ROADS MENU -->
             <div class="sidebar-section">
-                <div class="section-title">📍 الطرق</div>
-                <div class="dropdown-menu">
-                    <button class="dropdown-toggle" id="roadsToggle">اختر نوع الطريق</button>
-                    <div class="dropdown-content" id="roadsContent">
-                        <div class="dropdown-item" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA">الردم</div>
-                        <div class="dropdown-item" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY">القطع</div>
-                        <div class="dropdown-item" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI">الأساس الحصوي</div>
-                        <div class="dropdown-item" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q">طبقة التشرب</div>
-                        <div class="dropdown-item" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y">الأسفلت</div>
+                <div class="section-title">
+                    <span>📍 الطرق</span>
+                    <button class="expand-btn" id="roadsExpandBtn">+</button>
+                </div>
+                <div class="dropdown-items" id="roadsItems">
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA">
+                        <label for="road-fill">الردم</label>
+                    </div>
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY">
+                        <label for="road-cut">القطع</label>
+                    </div>
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI">
+                        <label for="road-gravel">الأساس الحصوي</label>
+                    </div>
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q">
+                        <label for="road-tack">طبقة التشرب</label>
+                    </div>
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y">
+                        <label for="road-asphalt">الأسفلت</label>
                     </div>
                 </div>
             </div>
 
             <!-- BLOCKS MENU -->
             <div class="sidebar-section">
-                <div class="section-title">🏗️ البلوكات</div>
-                <div class="dropdown-menu">
-                    <button class="dropdown-toggle" id="blocksToggle">اختر نوع البلوك</button>
-                    <div class="dropdown-content" id="blocksContent">
-                        <div class="dropdown-item" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0">الردم</div>
-                        <div class="dropdown-item" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM">القطع</div>
+                <div class="section-title">
+                    <span>🏗️ البلوكات</span>
+                    <button class="expand-btn" id="blocksExpandBtn">+</button>
+                </div>
+                <div class="dropdown-items" id="blocksItems">
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0">
+                        <label for="block-fill">الردم</label>
+                    </div>
+                    <div class="dropdown-item">
+                        <input type="checkbox" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM">
+                        <label for="block-cut">القطع</label>
                     </div>
                 </div>
             </div>
 
             <!-- LEGEND -->
-            <div class="sidebar-section legend">
-                <div class="legend-title">📋 حالات التقدم:</div>
-                <div class="legend-item">
-                    <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
-                    <label>جاري التنفيذ</label>
-                    <div class="legend-color color-ongoing"></div>
-                </div>
-                <div class="legend-item">
-                    <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
-                    <label>متاح للتنفيذ</label>
-                    <div class="legend-color color-available"></div>
-                </div>
-                <div class="legend-item">
-                    <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
-                    <label>غير متاح</label>
-                    <div class="legend-color color-unavailable"></div>
-                </div>
-                <div class="legend-item">
-                    <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
-                    <label>تم الانتهاء</label>
-                    <div class="legend-color color-completed"></div>
-                </div>
-                <div class="legend-item">
-                    <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
-                    <label>متوقف</label>
-                    <div class="legend-color color-stopped"></div>
+            <div class="sidebar-section legend-section">
+                <div class="legend">
+                    <div class="legend-title">📋 حالات التقدم:</div>
+                    <div class="legend-item">
+                        <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
+                        <label>جاري التنفيذ</label>
+                        <div class="legend-color color-ongoing"></div>
+                    </div>
+                    <div class="legend-item">
+                        <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
+                        <label>متاح للتنفيذ</label>
+                        <div class="legend-color color-available"></div>
+                    </div>
+                    <div class="legend-item">
+                        <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
+                        <label>غير متاح</label>
+                        <div class="legend-color color-unavailable"></div>
+                    </div>
+                    <div class="legend-item">
+                        <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
+                        <label>تم الانتهاء</label>
+                        <div class="legend-color color-completed"></div>
+                    </div>
+                    <div class="legend-item">
+                        <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
+                        <label>متوقف</label>
+                        <div class="legend-color color-stopped"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -684,8 +728,10 @@
         let allFeatures = {};
         let selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
         let currentSheetId = null;
-        let currentType = null; // 'road' or 'block'
+        let currentType = null;
         let equipmentData = {};
+        let roadsExpanded = false;
+        let blocksExpanded = false;
 
         const statuses = [
             { value: "جاري", color: "#4caf50", class: "ongoing" },
@@ -705,19 +751,6 @@
             "STATUS": "الحالة",
             "CONTRACTOR": "المقاول",
             "EQUIPMENT": "المعدات"
-        };
-
-        const roadSheets = {
-            "1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA": "الردم",
-            "11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY": "القطع",
-            "1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI": "الأساس الحصوي",
-            "1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q": "طبقة التشرب",
-            "1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y": "الأسفلت"
-        };
-
-        const blockSheets = {
-            "1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0": "الردم",
-            "11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM": "القطع"
         };
 
         const equipmentSheetId = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
@@ -817,8 +850,8 @@
         }
 
         function updateStats(data) {
-            let rFillT = 0, rCutT = 0, rFillD = 0, rCutD = 0;
-            let bFillT = 0, bCutT = 0, bFillD = 0, bCutD = 0;
+            let rTotal = 0, rDone = 0;
+            let bTotal = 0, bDone = 0;
 
             Object.values(data).forEach(row => {
                 const status = (row["STATUS"] || "").trim().toLowerCase();
@@ -826,21 +859,23 @@
                 
                 if (isSelected) {
                     if (currentType === "road") {
-                        rFillT += num(row["TOTAL-QTY"] || 0);
-                        rFillD += num(row["DONE-QTY"] || 0);
+                        rTotal += num(row["TOTAL-QTY"] || 0);
+                        rDone += num(row["DONE-QTY"] || 0);
                     } else {
-                        bFillT += num(row["TOTAL-QTY"] || 0);
-                        bFillD += num(row["DONE-QTY"] || 0);
+                        bTotal += num(row["TOTAL-QTY"] || 0);
+                        bDone += num(row["DONE-QTY"] || 0);
                     }
                 }
             });
 
             if (currentType === "road") {
-                document.getElementById("rFillTotal").textContent = formatNumber(rFillT);
-                document.getElementById("rFillDone").textContent = formatNumber(rFillD);
+                document.getElementById("rTotal").textContent = formatNumber(rTotal);
+                document.getElementById("rDone").textContent = formatNumber(rDone);
+                document.getElementById("rRemaining").textContent = formatNumber(rTotal - rDone);
             } else {
-                document.getElementById("bFillTotal").textContent = formatNumber(bFillT);
-                document.getElementById("bFillDone").textContent = formatNumber(bFillD);
+                document.getElementById("bTotal").textContent = formatNumber(bTotal);
+                document.getElementById("bDone").textContent = formatNumber(bDone);
+                document.getElementById("bRemaining").textContent = formatNumber(bTotal - bDone);
             }
         }
 
@@ -907,7 +942,6 @@
                                     html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div class="popup-value ${statusClass}">${value}</div></div>`;
                                 });
 
-                                // إضافة المعدات إن وجدت
                                 const equipment = equipmentData[id] || "غير محدد";
                                 html += `<div class="popup-row"><div class="popup-label">المعدات</div><div class="popup-value">${equipment}</div></div>`;
 
@@ -982,37 +1016,41 @@
         }
 
         // Event Listeners
-        document.getElementById("roadsToggle").addEventListener("click", function() {
+        document.getElementById("roadsExpandBtn").addEventListener("click", function() {
+            roadsExpanded = !roadsExpanded;
             this.classList.toggle("active");
-            document.getElementById("roadsContent").classList.toggle("active");
+            document.getElementById("roadsItems").classList.toggle("active");
         });
 
-        document.getElementById("blocksToggle").addEventListener("click", function() {
+        document.getElementById("blocksExpandBtn").addEventListener("click", function() {
+            blocksExpanded = !blocksExpanded;
             this.classList.toggle("active");
-            document.getElementById("blocksContent").classList.toggle("active");
+            document.getElementById("blocksItems").classList.toggle("active");
         });
 
-        document.querySelectorAll("[data-road-type]").forEach(item => {
-            item.addEventListener("click", function() {
-                const sheetId = this.dataset.roadType;
-                document.getElementById("roadsToggle").textContent = this.textContent;
-                document.getElementById("roadsContent").classList.remove("active");
-                document.getElementById("roadsToggle").classList.remove("active");
-                document.querySelectorAll("[data-road-type]").forEach(el => el.classList.remove("active"));
-                this.classList.add("active");
-                loadLayer(sheetId, "road");
+        document.querySelectorAll("[data-road-type]").forEach(checkbox => {
+            checkbox.addEventListener("change", function() {
+                if (this.checked) {
+                    document.querySelectorAll("[data-road-type]").forEach(el => {
+                        if (el !== this) el.checked = false;
+                        el.closest(".dropdown-item").classList.remove("selected");
+                    });
+                    this.closest(".dropdown-item").classList.add("selected");
+                    loadLayer(this.dataset.roadType, "road");
+                }
             });
         });
 
-        document.querySelectorAll("[data-block-type]").forEach(item => {
-            item.addEventListener("click", function() {
-                const sheetId = this.dataset.blockType;
-                document.getElementById("blocksToggle").textContent = this.textContent;
-                document.getElementById("blocksContent").classList.remove("active");
-                document.getElementById("blocksToggle").classList.remove("active");
-                document.querySelectorAll("[data-block-type]").forEach(el => el.classList.remove("active"));
-                this.classList.add("active");
-                loadLayer(sheetId, "block");
+        document.querySelectorAll("[data-block-type]").forEach(checkbox => {
+            checkbox.addEventListener("change", function() {
+                if (this.checked) {
+                    document.querySelectorAll("[data-block-type]").forEach(el => {
+                        if (el !== this) el.checked = false;
+                        el.closest(".dropdown-item").classList.remove("selected");
+                    });
+                    this.closest(".dropdown-item").classList.add("selected");
+                    loadLayer(this.dataset.blockType, "block");
+                }
             });
         });
 
