@@ -832,8 +832,8 @@
         let roadsData = {}, blocksData = {};
         let allFeatures = {};
         let selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
-        let selectedRoadType = null;
-        let selectedBlockType = null;
+        let selectedRoadSheets = {};
+        let selectedBlockSheets = {};
         let equipmentData = {};
         let roadsExpanded = false;
         let blocksExpanded = false;
@@ -957,38 +957,50 @@
         function updateStats() {
             let rTotal = 0, rDone = 0;
             let bTotal = 0, bDone = 0;
+            let roadTypeNames = [];
+            let blockTypeNames = [];
 
-            if (selectedRoadType && roadsData[selectedRoadType]) {
-                Object.values(roadsData[selectedRoadType]).forEach(row => {
-                    const status = (row["STATUS"] || "").trim().toLowerCase();
-                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                    
-                    if (isSelected) {
-                        rTotal += num(row["TOTAL-QTY"] || 0);
-                        rDone += num(row["DONE-QTY"] || 0);
-                    }
-                });
-            }
+            // حساب إجماليات الطرق
+            Object.entries(selectedRoadSheets).forEach(([sheetId, typeName]) => {
+                if (roadsData[sheetId]) {
+                    roadTypeNames.push(typeName);
+                    Object.values(roadsData[sheetId]).forEach(row => {
+                        const status = (row["STATUS"] || "").trim().toLowerCase();
+                        const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                        
+                        if (isSelected) {
+                            rTotal += num(row["TOTAL-QTY"] || 0);
+                            rDone += num(row["DONE-QTY"] || 0);
+                        }
+                    });
+                }
+            });
 
-            if (selectedBlockType && blocksData[selectedBlockType]) {
-                Object.values(blocksData[selectedBlockType]).forEach(row => {
-                    const status = (row["STATUS"] || "").trim().toLowerCase();
-                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                    
-                    if (isSelected) {
-                        bTotal += num(row["TOTAL-QTY"] || 0);
-                        bDone += num(row["DONE-QTY"] || 0);
-                    }
-                });
-            }
+            // حساب إجماليات البلوكات
+            Object.entries(selectedBlockSheets).forEach(([sheetId, typeName]) => {
+                if (blocksData[sheetId]) {
+                    blockTypeNames.push(typeName);
+                    Object.values(blocksData[sheetId]).forEach(row => {
+                        const status = (row["STATUS"] || "").trim().toLowerCase();
+                        const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                        
+                        if (isSelected) {
+                            bTotal += num(row["TOTAL-QTY"] || 0);
+                            bDone += num(row["DONE-QTY"] || 0);
+                        }
+                    });
+                }
+            });
 
             document.getElementById("rTotal").textContent = formatNumber(rTotal);
             document.getElementById("rDone").textContent = formatNumber(rDone);
             document.getElementById("rRemaining").textContent = formatNumber(rTotal - rDone);
+            document.getElementById("roadsType").textContent = roadTypeNames.length > 0 ? roadTypeNames.join(" + ") : "-";
 
             document.getElementById("bTotal").textContent = formatNumber(bTotal);
             document.getElementById("bDone").textContent = formatNumber(bDone);
             document.getElementById("bRemaining").textContent = formatNumber(bTotal - bDone);
+            document.getElementById("blocksType").textContent = blockTypeNames.length > 0 ? blockTypeNames.join(" + ") : "-";
         }
 
         function updateLayerColors() {
@@ -1044,25 +1056,12 @@
 
         function loadLayer(sheetId, type, typeName) {
             loadSheetCSV(sheetId, data => {
-                // حذف جميع الطبقات القديمة من نفس النوع
                 if (type === "road") {
-                    Object.values(roadLayers).forEach(layer => {
-                        if (layer) map.removeLayer(layer);
-                    });
-                    roadLayers = {};
-                    roadsData = {};
                     roadsData[sheetId] = data;
-                    selectedRoadType = sheetId;
-                    document.getElementById("roadsType").textContent = typeName;
+                    selectedRoadSheets[sheetId] = typeName;
                 } else {
-                    Object.values(blockLayers).forEach(layer => {
-                        if (layer) map.removeLayer(layer);
-                    });
-                    blockLayers = {};
-                    blocksData = {};
                     blocksData[sheetId] = data;
-                    selectedBlockType = sheetId;
-                    document.getElementById("blocksType").textContent = typeName;
+                    selectedBlockSheets[sheetId] = typeName;
                 }
 
                 const geoJsonFile = type === "road" ? "ROADS.geojson" : "BLOCKS.geojson";
@@ -1119,6 +1118,25 @@
 
                 updateStats();
             });
+        }
+
+        function removeLayer(sheetId, type) {
+            if (type === "road") {
+                if (roadLayers[sheetId]) {
+                    map.removeLayer(roadLayers[sheetId]);
+                    delete roadLayers[sheetId];
+                    delete roadsData[sheetId];
+                    delete selectedRoadSheets[sheetId];
+                }
+            } else {
+                if (blockLayers[sheetId]) {
+                    map.removeLayer(blockLayers[sheetId]);
+                    delete blockLayers[sheetId];
+                    delete blocksData[sheetId];
+                    delete selectedBlockSheets[sheetId];
+                }
+            }
+            updateStats();
         }
 
         function updateSearchDropdown() {
@@ -1220,26 +1238,30 @@
 
         document.querySelectorAll("[data-road-type]").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
+                const sheetId = this.dataset.roadType;
+                const typeName = this.dataset.roadName;
+                
                 if (this.checked) {
-                    document.querySelectorAll("[data-road-type]").forEach(el => {
-                        if (el !== this) el.checked = false;
-                        el.closest(".dropdown-item").classList.remove("selected");
-                    });
                     this.closest(".dropdown-item").classList.add("selected");
-                    loadLayer(this.dataset.roadType, "road", this.dataset.roadName);
+                    loadLayer(sheetId, "road", typeName);
+                } else {
+                    this.closest(".dropdown-item").classList.remove("selected");
+                    removeLayer(sheetId, "road");
                 }
             });
         });
 
         document.querySelectorAll("[data-block-type]").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
+                const sheetId = this.dataset.blockType;
+                const typeName = this.dataset.blockName;
+                
                 if (this.checked) {
-                    document.querySelectorAll("[data-block-type]").forEach(el => {
-                        if (el !== this) el.checked = false;
-                        el.closest(".dropdown-item").classList.remove("selected");
-                    });
                     this.closest(".dropdown-item").classList.add("selected");
-                    loadLayer(this.dataset.blockType, "block", this.dataset.blockName);
+                    loadLayer(sheetId, "block", typeName);
+                } else {
+                    this.closest(".dropdown-item").classList.remove("selected");
+                    removeLayer(sheetId, "block");
                 }
             });
         });
