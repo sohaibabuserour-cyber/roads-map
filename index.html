@@ -213,18 +213,26 @@
             display: flex;
             flex-direction: column;
             z-index: 1000;
-            overflow-y: auto;
+            overflow: hidden;
         }
 
-        .right-sidebar::-webkit-scrollbar {
+        /* ===== ITEMS SECTION (البنود) ===== */
+        .items-section {
+            flex: 1;
+            overflow-y: auto;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0;
+        }
+
+        .items-section::-webkit-scrollbar {
             width: 6px;
         }
 
-        .right-sidebar::-webkit-scrollbar-track {
+        .items-section::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
 
-        .right-sidebar::-webkit-scrollbar-thumb {
+        .items-section::-webkit-scrollbar-thumb {
             background: #7a3fa0;
             border-radius: 10px;
         }
@@ -232,10 +240,9 @@
         .sidebar-section {
             padding: 16px;
             border-bottom: 1px solid #e8e8e8;
-            flex-shrink: 0;
         }
 
-        .sidebar-section:last-child {
+        .sidebar-section:last-of-type {
             border-bottom: none;
         }
 
@@ -325,10 +332,27 @@
             border-color: #7a3fa0;
         }
 
-        /* ===== LEGEND ===== */
+        /* ===== LEGEND SECTION (حالات التقدم) ===== */
         .legend-section {
-            flex-grow: 1;
+            flex-shrink: 0;
+            padding: 16px;
+            background: #f9f9f9;
+            border-top: 2px solid #e0e0e0;
+            max-height: 280px;
             overflow-y: auto;
+        }
+
+        .legend-section::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .legend-section::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .legend-section::-webkit-scrollbar-thumb {
+            background: #7a3fa0;
+            border-radius: 10px;
         }
 
         .legend {
@@ -342,6 +366,8 @@
             text-transform: uppercase;
             letter-spacing: 0.3px;
             margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
         }
 
         .legend-item {
@@ -358,8 +384,12 @@
             gap: 8px;
         }
 
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
         .legend-item:hover {
-            background: rgba(122, 63, 160, 0.05);
+            background: rgba(122, 63, 160, 0.08);
             padding-right: 12px;
         }
 
@@ -521,27 +551,49 @@
 
             .right-sidebar {
                 width: 100%;
-                height: 200px;
+                height: auto;
                 border-left: none;
                 border-top: 1px solid #e0e0e0;
-                max-height: 35vh;
+                max-height: 40vh;
                 flex-direction: row;
                 overflow-x: auto;
+                overflow-y: hidden;
             }
 
-            #map {
-                height: 100%;
+            .items-section {
+                display: flex;
+                gap: 12px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                border-bottom: none;
+                flex-direction: row;
+                padding: 0 8px;
+            }
+
+            .items-section::-webkit-scrollbar {
+                height: 4px;
+                width: auto;
             }
 
             .sidebar-section {
                 flex-shrink: 0;
-                min-width: 200px;
+                min-width: 180px;
                 border-right: 1px solid #e8e8e8;
                 border-bottom: none;
+                padding: 12px;
             }
 
-            .sidebar-section:last-child {
-                border-right: none;
+            .legend-section {
+                flex-shrink: 0;
+                min-width: 200px;
+                border-top: none;
+                border-left: 1px solid #e0e0e0;
+                max-height: 100%;
+                padding: 12px;
+            }
+
+            #map {
+                height: 100%;
             }
 
             .stats-wrapper {
@@ -555,13 +607,17 @@
 
         @media (max-width: 480px) {
             .right-sidebar {
-                height: 180px;
-                max-height: 30vh;
+                max-height: 35vh;
             }
 
             .sidebar-section {
-                padding: 12px;
-                min-width: 180px;
+                min-width: 160px;
+                padding: 10px;
+            }
+
+            .legend-section {
+                min-width: 170px;
+                padding: 10px;
             }
 
             .stat-value {
@@ -575,6 +631,10 @@
 
             .stats-group-title {
                 font-size: 11px;
+            }
+
+            .section-title {
+                font-size: 12px;
             }
         }
     </style>
@@ -640,56 +700,59 @@
 
         <!-- RIGHT SIDEBAR -->
         <div class="right-sidebar">
-            <!-- ROADS MENU -->
-            <div class="sidebar-section">
-                <div class="section-title">
-                    <span>📍 الطرق</span>
-                    <button class="expand-btn" id="roadsExpandBtn">+</button>
+            <!-- ITEMS SECTION (البنود) -->
+            <div class="items-section">
+                <!-- ROADS MENU -->
+                <div class="sidebar-section">
+                    <div class="section-title">
+                        <span>📍 الطرق</span>
+                        <button class="expand-btn" id="roadsExpandBtn">+</button>
+                    </div>
+                    <div class="dropdown-items" id="roadsItems">
+                        <div class="dropdown-item">
+                            <input type="checkbox" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA">
+                            <label for="road-fill">الردم</label>
+                        </div>
+                        <div class="dropdown-item">
+                            <input type="checkbox" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY">
+                            <label for="road-cut">القطع</label>
+                        </div>
+                        <div class="dropdown-item">
+                            <input type="checkbox" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI">
+                            <label for="road-gravel">الأساس الحصوي</label>
+                        </div>
+                        <div class="dropdown-item">
+                            <input type="checkbox" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q">
+                            <label for="road-tack">طبقة التشرب</label>
+                        </div>
+                        <div class="dropdown-item">
+                            <input type="checkbox" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y">
+                            <label for="road-asphalt">الأسفلت</label>
+                        </div>
+                    </div>
                 </div>
-                <div class="dropdown-items" id="roadsItems">
-                    <div class="dropdown-item">
-                        <input type="checkbox" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA">
-                        <label for="road-fill">الردم</label>
+
+                <!-- BLOCKS MENU -->
+                <div class="sidebar-section">
+                    <div class="section-title">
+                        <span>🏗️ البلوكات</span>
+                        <button class="expand-btn" id="blocksExpandBtn">+</button>
                     </div>
-                    <div class="dropdown-item">
-                        <input type="checkbox" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY">
-                        <label for="road-cut">القطع</label>
-                    </div>
-                    <div class="dropdown-item">
-                        <input type="checkbox" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI">
-                        <label for="road-gravel">الأساس الحصوي</label>
-                    </div>
-                    <div class="dropdown-item">
-                        <input type="checkbox" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q">
-                        <label for="road-tack">طبقة التشرب</label>
-                    </div>
-                    <div class="dropdown-item">
-                        <input type="checkbox" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y">
-                        <label for="road-asphalt">الأسفلت</label>
+                    <div class="dropdown-items" id="blocksItems">
+                        <div class="dropdown-item">
+                            <input type="checkbox" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0">
+                            <label for="block-fill">الردم</label>
+                        </div>
+                        <div class="dropdown-item">
+                            <input type="checkbox" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM">
+                            <label for="block-cut">القطع</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- BLOCKS MENU -->
-            <div class="sidebar-section">
-                <div class="section-title">
-                    <span>🏗️ البلوكات</span>
-                    <button class="expand-btn" id="blocksExpandBtn">+</button>
-                </div>
-                <div class="dropdown-items" id="blocksItems">
-                    <div class="dropdown-item">
-                        <input type="checkbox" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0">
-                        <label for="block-fill">الردم</label>
-                    </div>
-                    <div class="dropdown-item">
-                        <input type="checkbox" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM">
-                        <label for="block-cut">القطع</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- LEGEND -->
-            <div class="sidebar-section legend-section">
+            <!-- LEGEND SECTION (حالات التقدم - ثابت) -->
+            <div class="legend-section">
                 <div class="legend">
                     <div class="legend-title">📋 حالات التقدم:</div>
                     <div class="legend-item">
