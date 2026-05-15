@@ -35,7 +35,7 @@
 
         .stats-wrapper {
             display: flex;
-            gap: 24px;
+            gap: 40px;
             flex-wrap: wrap;
         }
 
@@ -223,6 +223,21 @@
             overflow: hidden;
         }
 
+        /* ===== ITEMS SECTION HEADER ===== */
+        .items-section-header {
+            padding: 16px;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .items-header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            text-align: right;
+        }
+
         /* ===== ITEMS SECTION (البنود) ===== */
         .items-section {
             flex: 1;
@@ -367,7 +382,7 @@
         }
 
         .legend-title {
-            font-size: 12px;
+            font-size: 16px;
             font-weight: 600;
             color: #7a3fa0;
             text-transform: uppercase;
@@ -576,6 +591,10 @@
                 overflow-y: hidden;
             }
 
+            .items-section-header {
+                display: none;
+            }
+
             .items-section {
                 display: flex;
                 gap: 12px;
@@ -718,9 +737,13 @@
 
         <!-- RIGHT SIDEBAR -->
         <div class="right-sidebar">
+            <!-- ITEMS SECTION HEADER -->
+            <div class="items-section-header">
+                <div class="items-header-title">📋 البنود</div>
+            </div>
+
             <!-- ITEMS SECTION (البنود) -->
             <div class="items-section">
-            <div class="legend-title">📋 البنود:</div>
                 <!-- ROADS MENU -->
                 <div class="sidebar-section">
                     <div class="section-title">
@@ -1021,11 +1044,22 @@
 
         function loadLayer(sheetId, type, typeName) {
             loadSheetCSV(sheetId, data => {
+                // حذف جميع الطبقات القديمة من نفس النوع
                 if (type === "road") {
+                    Object.values(roadLayers).forEach(layer => {
+                        if (layer) map.removeLayer(layer);
+                    });
+                    roadLayers = {};
+                    roadsData = {};
                     roadsData[sheetId] = data;
                     selectedRoadType = sheetId;
                     document.getElementById("roadsType").textContent = typeName;
                 } else {
+                    Object.values(blockLayers).forEach(layer => {
+                        if (layer) map.removeLayer(layer);
+                    });
+                    blockLayers = {};
+                    blocksData = {};
                     blocksData[sheetId] = data;
                     selectedBlockType = sheetId;
                     document.getElementById("blocksType").textContent = typeName;
@@ -1036,13 +1070,6 @@
                 fetch(geoJsonFile)
                     .then(r => r.json())
                     .then(g => {
-                        // حذف الطبقة القديمة
-                        if (type === "road" && roadLayers[sheetId]) {
-                            map.removeLayer(roadLayers[sheetId]);
-                        } else if (type === "block" && blockLayers[sheetId]) {
-                            map.removeLayer(blockLayers[sheetId]);
-                        }
-                        
                         const layer = L.geoJSON(g, {
                             onEachFeature: (f, l) => {
                                 const id = f.properties.ID;
@@ -1062,7 +1089,7 @@
                                     weight: isSelected ? 2 : 1
                                 });
 
-                                let html = `<div class="popup-card"><div class="popup-header"><div class="popup-title">مشروع ولي العهد</div><div class="popup-subtitle">بيانات ${type === "road" ? "الطريق" : "البلوك"}</div><div class="popup-type">${type === "road" ? "الطرق - " : "البلوكات - "}${typeName}</div></div><div class="popup-body">`;
+                                let html = `<div class="popup-card"><div class="popup-header"><div class="popup-title">مشروع ولي العهد</div><div class="popup-subtitle">${typeName}</div></div><div class="popup-body">`;
                                 
                                 Object.keys(row).forEach(k => {
                                     if (k === "ID") return;
