@@ -701,22 +701,22 @@
                 </div>
             </div>
 
-            <!-- BLOCKS STATS -->
+            <!-- LANDS STATS -->
             <div class="stats-group">
-                <div class="stats-group-title">🏗️ البلوكات</div>
-                <div class="stats-group-type" id="blocksType">-</div>
+                <div class="stats-group-title">🏗️ قطع الأراضي</div>
+                <div class="stats-group-type" id="landsType">-</div>
                 <div class="stat-row">
                     <div class="stat-item">
                         <div class="stat-label">الإجمالي</div>
-                        <div class="stat-value" id="bTotal">0</div>
+                        <div class="stat-value" id="lTotal">0</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">المنفذ</div>
-                        <div class="stat-value" id="bDone">0</div>
+                        <div class="stat-value" id="lDone">0</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">المتبقي</div>
-                        <div class="stat-value" id="bRemaining">0</div>
+                        <div class="stat-value" id="lRemaining">0</div>
                     </div>
                 </div>
             </div>
@@ -775,20 +775,20 @@
                     </div>
                 </div>
 
-                <!-- BLOCKS MENU -->
+                <!-- LANDS MENU -->
                 <div class="sidebar-section">
                     <div class="section-title">
-                        <span>🏗️ البلوكات</span>
-                        <button class="expand-btn" id="blocksExpandBtn">+</button>
+                        <span>🏗️ قطع الأراضي</span>
+                        <button class="expand-btn" id="landsExpandBtn">+</button>
                     </div>
-                    <div class="dropdown-items" id="blocksItems">
+                    <div class="dropdown-items" id="landsItems">
                         <div class="dropdown-item">
-                            <input type="checkbox" name="blocks-check" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0" data-block-name="الردم">
-                            <label for="block-fill">الردم</label>
+                            <input type="checkbox" name="lands-check" id="land-fill" data-land-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0" data-land-name="الردم">
+                            <label for="land-fill">الردم</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" name="blocks-check" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM" data-block-name="القطع">
-                            <label for="block-cut">القطع</label>
+                            <input type="checkbox" name="lands-check" id="land-cut" data-land-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM" data-land-name="القطع">
+                            <label for="land-cut">القطع</label>
                         </div>
                     </div>
                 </div>
@@ -829,15 +829,15 @@
     </div>
 
     <script>
-        let map, roadLayers = {}, blockLayers = {};
-        let roadsData = {}, blocksData = {};
+        let map, roadLayers = {}, landLayers = {};
+        let roadsData = {}, landsData = {};
         let allFeatures = {};
         let selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
         let selectedRoadSheets = {};
-        let selectedBlockSheets = {};
+        let selectedLandSheets = {};
         let equipmentData = {};
         let roadsExpanded = false;
-        let blocksExpanded = false;
+        let landsExpanded = false;
 
         const statuses = [
             { value: "جاري", color: "#4caf50", class: "ongoing" },
@@ -850,7 +850,7 @@
         const labelsAR = {
             "ID": "معرف",
             "ROAD NAME": "اسم الطريق",
-            "BLOCK NAME": "اسم البلوك",
+            "BLOCK NAME": "اسم قطعة الأرض",
             "TOTAL-QTY": "الكمية الإجمالية",
             "DONE-QTY": "الكمية المنفذة",
             "REMANING-QTY": "الكمية المتبقية",
@@ -957,9 +957,9 @@
 
         function updateStats() {
             let rTotal = 0, rDone = 0;
-            let bTotal = 0, bDone = 0;
+            let lTotal = 0, lDone = 0;
             let roadTypeNames = [];
-            let blockTypeNames = [];
+            let landTypeNames = [];
 
             // حساب إجماليات الطرق
             Object.entries(selectedRoadSheets).forEach(([sheetId, typeName]) => {
@@ -977,17 +977,17 @@
                 }
             });
 
-            // حساب إجماليات البلوكات
-            Object.entries(selectedBlockSheets).forEach(([sheetId, typeName]) => {
-                if (blocksData[sheetId]) {
-                    blockTypeNames.push(typeName);
-                    Object.values(blocksData[sheetId]).forEach(row => {
+            // حساب إجماليات قطع الأراضي
+            Object.entries(selectedLandSheets).forEach(([sheetId, typeName]) => {
+                if (landsData[sheetId]) {
+                    landTypeNames.push(typeName);
+                    Object.values(landsData[sheetId]).forEach(row => {
                         const status = (row["STATUS"] || "").trim().toLowerCase();
                         const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
                         
                         if (isSelected) {
-                            bTotal += num(row["TOTAL-QTY"] || 0);
-                            bDone += num(row["DONE-QTY"] || 0);
+                            lTotal += num(row["TOTAL-QTY"] || 0);
+                            lDone += num(row["DONE-QTY"] || 0);
                         }
                     });
                 }
@@ -998,10 +998,10 @@
             document.getElementById("rRemaining").textContent = formatNumber(rTotal - rDone);
             document.getElementById("roadsType").textContent = roadTypeNames.length > 0 ? roadTypeNames.join(" + ") : "-";
 
-            document.getElementById("bTotal").textContent = formatNumber(bTotal);
-            document.getElementById("bDone").textContent = formatNumber(bDone);
-            document.getElementById("bRemaining").textContent = formatNumber(bTotal - bDone);
-            document.getElementById("blocksType").textContent = blockTypeNames.length > 0 ? blockTypeNames.join(" + ") : "-";
+            document.getElementById("lTotal").textContent = formatNumber(lTotal);
+            document.getElementById("lDone").textContent = formatNumber(lDone);
+            document.getElementById("lRemaining").textContent = formatNumber(lTotal - lDone);
+            document.getElementById("landsType").textContent = landTypeNames.length > 0 ? landTypeNames.join(" + ") : "-";
         }
 
         function updateLayerColors() {
@@ -1030,9 +1030,9 @@
                 });
             });
 
-            Object.keys(blockLayers).forEach(sheetId => {
-                const layer = blockLayers[sheetId];
-                const data = blocksData[sheetId];
+            Object.keys(landLayers).forEach(sheetId => {
+                const layer = landLayers[sheetId];
+                const data = landsData[sheetId];
                 
                 if (!layer || !data) return;
 
@@ -1061,8 +1061,8 @@
                     roadsData[sheetId] = data;
                     selectedRoadSheets[sheetId] = typeName;
                 } else {
-                    blocksData[sheetId] = data;
-                    selectedBlockSheets[sheetId] = typeName;
+                    landsData[sheetId] = data;
+                    selectedLandSheets[sheetId] = typeName;
                 }
 
                 const geoJsonFile = type === "road" ? "ROADS.geojson" : "BLOCKS.geojson";
@@ -1110,7 +1110,7 @@
                         if (type === "road") {
                             roadLayers[sheetId] = layer;
                         } else {
-                            blockLayers[sheetId] = layer;
+                            landLayers[sheetId] = layer;
                         }
 
                         layer.addTo(map);
@@ -1130,11 +1130,11 @@
                     delete selectedRoadSheets[sheetId];
                 }
             } else {
-                if (blockLayers[sheetId]) {
-                    map.removeLayer(blockLayers[sheetId]);
-                    delete blockLayers[sheetId];
-                    delete blocksData[sheetId];
-                    delete selectedBlockSheets[sheetId];
+                if (landLayers[sheetId]) {
+                    map.removeLayer(landLayers[sheetId]);
+                    delete landLayers[sheetId];
+                    delete landsData[sheetId];
+                    delete selectedLandSheets[sheetId];
                 }
             }
             updateStats();
@@ -1172,8 +1172,8 @@
                 });
             });
 
-            // البحث في البلوكات
-            Object.entries(blocksData).forEach(([sheetId, data]) => {
+            // البحث في قطع الأراضي
+            Object.entries(landsData).forEach(([sheetId, data]) => {
                 Object.values(data).forEach(item => {
                     const name = (item["BLOCK NAME"] || "").toString().trim().toLowerCase();
                     const status = (item["STATUS"] || "").trim().toLowerCase();
@@ -1181,7 +1181,7 @@
                     if (name.includes(searchValue) && isStatusSelected) {
                         results.push({
                             name: item["BLOCK NAME"],
-                            type: "بلوك",
+                            type: "قطعة أرض",
                             status: item["STATUS"],
                             id: item["ID"],
                             layer: item["BLOCK NAME"]
@@ -1231,10 +1231,10 @@
             document.getElementById("roadsItems").classList.toggle("active");
         });
 
-        document.getElementById("blocksExpandBtn").addEventListener("click", function() {
-            blocksExpanded = !blocksExpanded;
+        document.getElementById("landsExpandBtn").addEventListener("click", function() {
+            landsExpanded = !landsExpanded;
             this.classList.toggle("active");
-            document.getElementById("blocksItems").classList.toggle("active");
+            document.getElementById("landsItems").classList.toggle("active");
         });
 
         // معالجات Checkboxes للطرق - اختيار واحد فقط (مثل Radio لكن يمكن إلغاء التحديد)
@@ -1264,29 +1264,29 @@
             });
         });
 
-        // معالجات Checkboxes للبلوكات - اختيار واحد فقط (مثل Radio لكن يمكن إلغاء التحديد)
-        document.querySelectorAll("input[name='blocks-check']").forEach(checkbox => {
+        // معالجات Checkboxes لقطع الأراضي - اختيار واحد فقط (مثل Radio لكن يمكن إلغاء التحديد)
+        document.querySelectorAll("input[name='lands-check']").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
                 if (this.checked) {
                     // فك تحديد باقي الـ checkboxes
-                    document.querySelectorAll("input[name='blocks-check']").forEach(cb => {
+                    document.querySelectorAll("input[name='lands-check']").forEach(cb => {
                         if (cb !== this) {
                             cb.checked = false;
                             cb.closest(".dropdown-item").classList.remove("selected");
                             // إزالة الطبقة المرتبطة
-                            removeLayer(cb.dataset.blockType, "block");
+                            removeLayer(cb.dataset.landType, "land");
                         }
                     });
                     
                     // تحميل الطبقة الجديدة
-                    const sheetId = this.dataset.blockType;
-                    const typeName = this.dataset.blockName;
+                    const sheetId = this.dataset.landType;
+                    const typeName = this.dataset.landName;
                     this.closest(".dropdown-item").classList.add("selected");
-                    loadLayer(sheetId, "block", typeName);
+                    loadLayer(sheetId, "land", typeName);
                 } else {
                     // إزالة الطبقة عند إلغاء التحديد
                     this.closest(".dropdown-item").classList.remove("selected");
-                    removeLayer(this.dataset.blockType, "block");
+                    removeLayer(this.dataset.landType, "land");
                 }
             });
         });
@@ -1326,7 +1326,7 @@
                 defaultRoadCheckbox.dispatchEvent(new Event('change'));
             }
             
-            showAlert("✅ جاهز - اختر بند واحد من الطرق وبند واحد من البلوكات أو لا تختار شيء", "success");
+            showAlert("✅ جاهز - اختر بند واحد من الطرق وبند واحد من قطع الأراضي أو لا تختار شيء", "success");
         });
     </script>
 
