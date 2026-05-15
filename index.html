@@ -333,7 +333,7 @@
             border-color: #7a3fa0;
         }
 
-        .dropdown-item input[type="radio"] {
+        .dropdown-item input[type="checkbox"] {
             width: 16px;
             height: 16px;
             cursor: pointer;
@@ -751,25 +751,25 @@
                         <span>📍 الطرق</span>
                         <button class="expand-btn" id="roadsExpandBtn">+</button>
                     </div>
-                    <div class="dropdown-items" id="roadsItems">
+                    <div class="dropdown-items active" id="roadsItems">
                         <div class="dropdown-item">
-                            <input type="radio" name="roads" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA" data-road-name="الردم">
+                            <input type="checkbox" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA" data-road-name="الردم">
                             <label for="road-fill">الردم</label>
                         </div>
-                        <div class="dropdown-item">
-                            <input type="radio" name="roads" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY" data-road-name="القطع">
+                        <div class="dropdown-item selected">
+                            <input type="checkbox" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY" data-road-name="القطع" checked>
                             <label for="road-cut">القطع</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="radio" name="roads" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI" data-road-name="الأساس الحصوي">
+                            <input type="checkbox" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI" data-road-name="الأساس الحصوي">
                             <label for="road-gravel">الأساس الحصوي</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="radio" name="roads" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q" data-road-name="طبقة التشرب">
+                            <input type="checkbox" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q" data-road-name="طبقة التشرب">
                             <label for="road-tack">طبقة التشرب</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="radio" name="roads" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y" data-road-name="الأسفلت">
+                            <input type="checkbox" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y" data-road-name="الأسفلت">
                             <label for="road-asphalt">الأسفلت</label>
                         </div>
                     </div>
@@ -783,11 +783,11 @@
                     </div>
                     <div class="dropdown-items" id="blocksItems">
                         <div class="dropdown-item">
-                            <input type="radio" name="blocks" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0" data-block-name="الردم">
+                            <input type="checkbox" id="block-fill" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0" data-block-name="الردم">
                             <label for="block-fill">الردم</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="radio" name="blocks" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM" data-block-name="القطع">
+                            <input type="checkbox" id="block-cut" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM" data-block-name="القطع">
                             <label for="block-cut">القطع</label>
                         </div>
                     </div>
@@ -833,10 +833,10 @@
         let roadsData = {}, blocksData = {};
         let allFeatures = {};
         let selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
-        let selectedRoadSheet = null;
-        let selectedBlockSheet = null;
+        let selectedRoadSheets = {};
+        let selectedBlockSheets = {};
         let equipmentData = {};
-        let roadsExpanded = false;
+        let roadsExpanded = true;
         let blocksExpanded = false;
 
         const statuses = [
@@ -958,110 +958,111 @@
         function updateStats() {
             let rTotal = 0, rDone = 0;
             let bTotal = 0, bDone = 0;
-            let roadTypeName = "-";
-            let blockTypeName = "-";
+            let roadTypeNames = [];
+            let blockTypeNames = [];
 
             // حساب إجماليات الطرق
-            if (selectedRoadSheet && roadsData[selectedRoadSheet]) {
-                Object.values(roadsData[selectedRoadSheet]).forEach(row => {
-                    const status = (row["STATUS"] || "").trim().toLowerCase();
-                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                    
-                    if (isSelected) {
-                        rTotal += num(row["TOTAL-QTY"] || 0);
-                        rDone += num(row["DONE-QTY"] || 0);
-                    }
-                });
-                
-                const radio = document.querySelector(`input[data-road-type="${selectedRoadSheet}"]:checked`);
-                roadTypeName = radio ? radio.dataset.roadName : "-";
-            }
+            Object.entries(selectedRoadSheets).forEach(([sheetId, typeName]) => {
+                if (roadsData[sheetId]) {
+                    roadTypeNames.push(typeName);
+                    Object.values(roadsData[sheetId]).forEach(row => {
+                        const status = (row["STATUS"] || "").trim().toLowerCase();
+                        const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                        
+                        if (isSelected) {
+                            rTotal += num(row["TOTAL-QTY"] || 0);
+                            rDone += num(row["DONE-QTY"] || 0);
+                        }
+                    });
+                }
+            });
 
             // حساب إجماليات البلوكات
-            if (selectedBlockSheet && blocksData[selectedBlockSheet]) {
-                Object.values(blocksData[selectedBlockSheet]).forEach(row => {
-                    const status = (row["STATUS"] || "").trim().toLowerCase();
-                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                    
-                    if (isSelected) {
-                        bTotal += num(row["TOTAL-QTY"] || 0);
-                        bDone += num(row["DONE-QTY"] || 0);
-                    }
-                });
-                
-                const radio = document.querySelector(`input[data-block-type="${selectedBlockSheet}"]:checked`);
-                blockTypeName = radio ? radio.dataset.blockName : "-";
-            }
+            Object.entries(selectedBlockSheets).forEach(([sheetId, typeName]) => {
+                if (blocksData[sheetId]) {
+                    blockTypeNames.push(typeName);
+                    Object.values(blocksData[sheetId]).forEach(row => {
+                        const status = (row["STATUS"] || "").trim().toLowerCase();
+                        const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                        
+                        if (isSelected) {
+                            bTotal += num(row["TOTAL-QTY"] || 0);
+                            bDone += num(row["DONE-QTY"] || 0);
+                        }
+                    });
+                }
+            });
 
             document.getElementById("rTotal").textContent = formatNumber(rTotal);
             document.getElementById("rDone").textContent = formatNumber(rDone);
             document.getElementById("rRemaining").textContent = formatNumber(rTotal - rDone);
-            document.getElementById("roadsType").textContent = roadTypeName;
+            document.getElementById("roadsType").textContent = roadTypeNames.length > 0 ? roadTypeNames.join(" + ") : "-";
 
             document.getElementById("bTotal").textContent = formatNumber(bTotal);
             document.getElementById("bDone").textContent = formatNumber(bDone);
             document.getElementById("bRemaining").textContent = formatNumber(bTotal - bDone);
-            document.getElementById("blocksType").textContent = blockTypeName;
+            document.getElementById("blocksType").textContent = blockTypeNames.length > 0 ? blockTypeNames.join(" + ") : "-";
         }
 
         function updateLayerColors() {
-            // تحديث طبقة الطرق المختارة
-            if (selectedRoadSheet && roadLayers[selectedRoadSheet]) {
-                const layer = roadLayers[selectedRoadSheet];
-                const data = roadsData[selectedRoadSheet];
+            // تحديث الطبقات المرئية
+            Object.keys(roadLayers).forEach(sheetId => {
+                const layer = roadLayers[sheetId];
+                const data = roadsData[sheetId];
                 
-                if (data) {
-                    layer.eachLayer(feature => {
-                        const row = data[feature.feature.properties.ID];
-                        if (!row) return;
+                if (!layer || !data) return;
 
-                        const status = (row["STATUS"] || "").trim().toLowerCase();
-                        const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                        const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                        const opacity = isSelected ? 0.6 : 0.2;
-                        
-                        feature.setStyle({
-                            color: color,
-                            fillColor: color,
-                            fillOpacity: opacity,
-                            weight: isSelected ? 2 : 1
-                        });
+                layer.eachLayer(feature => {
+                    const row = data[feature.feature.properties.ID];
+                    if (!row) return;
+
+                    const status = (row["STATUS"] || "").trim().toLowerCase();
+                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                    const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
+                    const opacity = isSelected ? 0.6 : 0.2;
+                    
+                    feature.setStyle({
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: opacity,
+                        weight: isSelected ? 2 : 1
                     });
-                }
-            }
+                });
+            });
 
-            // تحديث طبقة البلوكات المختارة
-            if (selectedBlockSheet && blockLayers[selectedBlockSheet]) {
-                const layer = blockLayers[selectedBlockSheet];
-                const data = blocksData[selectedBlockSheet];
+            Object.keys(blockLayers).forEach(sheetId => {
+                const layer = blockLayers[sheetId];
+                const data = blocksData[sheetId];
                 
-                if (data) {
-                    layer.eachLayer(feature => {
-                        const row = data[feature.feature.properties.ID];
-                        if (!row) return;
+                if (!layer || !data) return;
 
-                        const status = (row["STATUS"] || "").trim().toLowerCase();
-                        const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                        const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                        const opacity = isSelected ? 0.6 : 0.2;
-                        
-                        feature.setStyle({
-                            color: color,
-                            fillColor: color,
-                            fillOpacity: opacity,
-                            weight: isSelected ? 2 : 1
-                        });
+                layer.eachLayer(feature => {
+                    const row = data[feature.feature.properties.ID];
+                    if (!row) return;
+
+                    const status = (row["STATUS"] || "").trim().toLowerCase();
+                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                    const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
+                    const opacity = isSelected ? 0.6 : 0.2;
+                    
+                    feature.setStyle({
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: opacity,
+                        weight: isSelected ? 2 : 1
                     });
-                }
-            }
+                });
+            });
         }
 
         function loadLayer(sheetId, type, typeName) {
             loadSheetCSV(sheetId, data => {
                 if (type === "road") {
                     roadsData[sheetId] = data;
+                    selectedRoadSheets[sheetId] = typeName;
                 } else {
                     blocksData[sheetId] = data;
+                    selectedBlockSheets[sheetId] = typeName;
                 }
 
                 const geoJsonFile = type === "road" ? "ROADS.geojson" : "BLOCKS.geojson";
@@ -1126,15 +1127,15 @@
                     map.removeLayer(roadLayers[sheetId]);
                     delete roadLayers[sheetId];
                     delete roadsData[sheetId];
+                    delete selectedRoadSheets[sheetId];
                 }
-                selectedRoadSheet = null;
             } else {
                 if (blockLayers[sheetId]) {
                     map.removeLayer(blockLayers[sheetId]);
                     delete blockLayers[sheetId];
                     delete blocksData[sheetId];
+                    delete selectedBlockSheets[sheetId];
                 }
-                selectedBlockSheet = null;
             }
             updateStats();
         }
@@ -1153,9 +1154,9 @@
 
             let results = [];
 
-            // البحث في الطرق المختارة فقط
-            if (selectedRoadSheet && roadsData[selectedRoadSheet]) {
-                Object.values(roadsData[selectedRoadSheet]).forEach(item => {
+            // البحث في الطرق
+            Object.entries(roadsData).forEach(([sheetId, data]) => {
+                Object.values(data).forEach(item => {
                     const name = (item["ROAD NAME"] || "").toString().trim().toLowerCase();
                     const status = (item["STATUS"] || "").trim().toLowerCase();
                     const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
@@ -1169,11 +1170,11 @@
                         });
                     }
                 });
-            }
+            });
 
-            // البحث في البلوكات المختارة فقط
-            if (selectedBlockSheet && blocksData[selectedBlockSheet]) {
-                Object.values(blocksData[selectedBlockSheet]).forEach(item => {
+            // البحث في البلوكات
+            Object.entries(blocksData).forEach(([sheetId, data]) => {
+                Object.values(data).forEach(item => {
                     const name = (item["BLOCK NAME"] || "").toString().trim().toLowerCase();
                     const status = (item["STATUS"] || "").trim().toLowerCase();
                     const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
@@ -1187,7 +1188,7 @@
                         });
                     }
                 });
-            }
+            });
 
             if (results.length === 0) {
                 dropdown.innerHTML = "<div style='padding: 10px; text-align: right; color: #999;'>لم يتم العثور على نتائج</div>";
@@ -1236,42 +1237,36 @@
             document.getElementById("blocksItems").classList.toggle("active");
         });
 
-        // معالجات الراديو للطرق - اختيار واحد فقط
-        document.querySelectorAll("input[name='roads']").forEach(radio => {
-            radio.addEventListener("change", function() {
+        // معالجات Checkboxes للطرق
+        document.querySelectorAll("input[data-road-type]").forEach(checkbox => {
+            checkbox.addEventListener("change", function() {
+                const sheetId = this.dataset.roadType;
+                const typeName = this.dataset.roadName;
+                const item = this.closest(".dropdown-item");
+                
                 if (this.checked) {
-                    const sheetId = this.dataset.roadType;
-                    const typeName = this.dataset.roadName;
-                    
-                    // إزالة الطبقة السابقة
-                    if (selectedRoadSheet && selectedRoadSheet !== sheetId) {
-                        removeLayer(selectedRoadSheet, "road");
-                    }
-                    
-                    // تعيين الطبقة الجديدة وتحميلها
-                    selectedRoadSheet = sheetId;
-                    this.closest(".dropdown-item").classList.add("selected");
+                    item.classList.add("selected");
                     loadLayer(sheetId, "road", typeName);
+                } else {
+                    item.classList.remove("selected");
+                    removeLayer(sheetId, "road");
                 }
             });
         });
 
-        // معالجات الراديو للبلوكات - اختيار واحد فقط
-        document.querySelectorAll("input[name='blocks']").forEach(radio => {
-            radio.addEventListener("change", function() {
+        // معالجات Checkboxes للبلوكات
+        document.querySelectorAll("input[data-block-type]").forEach(checkbox => {
+            checkbox.addEventListener("change", function() {
+                const sheetId = this.dataset.blockType;
+                const typeName = this.dataset.blockName;
+                const item = this.closest(".dropdown-item");
+                
                 if (this.checked) {
-                    const sheetId = this.dataset.blockType;
-                    const typeName = this.dataset.blockName;
-                    
-                    // إزالة الطبقة السابقة
-                    if (selectedBlockSheet && selectedBlockSheet !== sheetId) {
-                        removeLayer(selectedBlockSheet, "block");
-                    }
-                    
-                    // تعيين الطبقة الجديدة وتحميلها
-                    selectedBlockSheet = sheetId;
-                    this.closest(".dropdown-item").classList.add("selected");
+                    item.classList.add("selected");
                     loadLayer(sheetId, "block", typeName);
+                } else {
+                    item.classList.remove("selected");
+                    removeLayer(sheetId, "block");
                 }
             });
         });
@@ -1302,7 +1297,15 @@
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
             loadEquipmentData();
-            showAlert("✅ جاهز - اختر نوع واحد من الطرق ونوع واحد من البلوكات", "success");
+            
+            // تحميل "القطع" من الطرق تلقائياً عند البداية
+            const defaultRoadCheckbox = document.getElementById("road-cut");
+            if (defaultRoadCheckbox) {
+                defaultRoadCheckbox.checked = true;
+                defaultRoadCheckbox.dispatchEvent(new Event('change'));
+            }
+            
+            showAlert("✅ جاهز - اختر البنود التي تريد عرضها", "success");
         });
     </script>
 
