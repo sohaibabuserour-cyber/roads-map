@@ -17,42 +17,77 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: #f5f7fa;
             overflow: hidden;
-        }
-
-        #map {
+            display: flex;
+            flex-direction: column;
             height: 100vh;
-            width: 100%;
         }
 
-        .search-box {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 2000;
-            background: white;
-            padding: 8px;
+        /* ===== TOP PANEL (إجماليات) ===== */
+        .top-panel {
+            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
+            color: white;
+            padding: 12px 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .top-panel::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .top-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
             border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-            width: 180px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
         }
 
-        .search-box:hover {
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        .stats-container {
+            display: flex;
+            gap: 16px;
+            min-width: max-content;
         }
 
-        .search-box.hidden {
-            display: none;
+        .stat-item {
+            text-align: center;
+            flex-shrink: 0;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .search-box input {
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.9;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        /* ===== SEARCH PANEL ===== */
+        .search-panel {
+            background: white;
+            padding: 10px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .search-box-wrapper {
+            position: relative;
+            max-width: 100%;
+        }
+
+        .search-input {
             width: 100%;
-            padding: 8px 10px;
-            font-size: 13px;
+            padding: 10px 14px;
+            font-size: 14px;
             border-radius: 8px;
             border: 1.5px solid #e0e0e0;
             outline: none;
@@ -61,54 +96,30 @@
             color: #333;
         }
 
-        .search-box input::placeholder {
+        .search-input::placeholder {
             color: #999;
-            font-size: 12px;
         }
 
-        .search-box input:focus {
+        .search-input:focus {
             border-color: #7a3fa0;
-            box-shadow: 0 0 8px rgba(122, 63, 160, 0.2);
+            box-shadow: 0 0 10px rgba(122, 63, 160, 0.2);
             background: #f9f9f9;
-        }
-
-        .search-box-roads {
-            top: 10px;
-            right: 200px;
-        }
-
-        .search-box-blocks {
-            top: 10px;
-            right: 10px;
         }
 
         .search-dropdown {
             position: absolute;
             top: 100%;
             right: 0;
-            width: 100%;
-            max-height: 250px;
+            left: 0;
             background: white;
             border: none;
             border-radius: 0 0 8px 8px;
+            max-height: 300px;
             overflow-y: auto;
             z-index: 3000;
             display: none;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
             margin-top: 2px;
-        }
-
-        .search-dropdown::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .search-dropdown::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .search-dropdown::-webkit-scrollbar-thumb {
-            background: #7a3fa0;
-            border-radius: 10px;
         }
 
         .search-dropdown.active {
@@ -128,230 +139,203 @@
         }
 
         .search-item {
-            padding: 10px 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
-            border-bottom: 1px solid #f5f5f5;
             transition: all 0.2s ease;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 13px;
-            gap: 8px;
+            gap: 10px;
         }
 
         .search-item:hover {
-            background: linear-gradient(90deg, rgba(122, 63, 160, 0.05) 0%, transparent 100%);
-            padding-left: 12px;
+            background: rgba(122, 63, 160, 0.05);
+            padding-left: 16px;
+        }
+
+        .search-item-name {
+            flex: 1;
+            text-align: right;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .search-item-type {
+            font-size: 11px;
+            padding: 3px 8px;
+            background: #7a3fa0;
+            color: white;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            flex-shrink: 0;
         }
 
         .search-item-status {
             font-size: 10px;
-            padding: 3px 6px;
-            border-radius: 4px;
+            padding: 3px 8px;
             color: white;
+            border-radius: 4px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
             flex-shrink: 0;
         }
 
-        .dash-container {
-            position: absolute;
-            top: 10px;
-            left: 10px;
+        /* ===== MAIN CONTAINER ===== */
+        .main-container {
+            display: flex;
+            flex: 1;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ===== RIGHT SIDEBAR ===== */
+        .right-sidebar {
+            width: 280px;
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
             z-index: 1000;
-            max-height: 70vh;
-            overflow-y: auto;
         }
 
-        .dash-container::-webkit-scrollbar {
-            width: 4px;
+        .right-sidebar::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .dash-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .dash-container::-webkit-scrollbar-thumb {
-            background: rgba(122, 63, 160, 0.3);
-            border-radius: 10px;
-        }
-
-        .dashboard {
-            width: 280px;
-            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
-            color: white;
-            padding: 12px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(122, 63, 160, 0.25);
-            animation: slideIn 0.5s ease-out;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .dashboard:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(122, 63, 160, 0.35);
-        }
-
-        .dashboard.hidden {
-            display: none;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-25px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .dashboard h3 {
-            text-align: center;
-            margin: 0 0 10px;
-            font-size: 18px;
-            font-weight: 600;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-            padding-bottom: 8px;
-            letter-spacing: 0.3px;
-        }
-
-        .row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            padding: 7px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-            gap: 8px;
-        }
-
-        .row:last-child {
-            border-bottom: none;
-        }
-
-        .row span:first-child {
-            opacity: 0.95;
-            font-weight: 500;
-            flex: 1;
-        }
-
-        .row span:last-child {
-            font-weight: 700;
-            color: #ffd700;
-            white-space: nowrap;
-        }
-
-        .right-panel {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: white;
-            padding: 12px;
-            border-radius: 12px;
-            width: calc(100% - 20px);
-            max-width: 200px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-            z-index: 2000;
-            max-height: calc(100vh - 140px);
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .right-panel::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .right-panel::-webkit-scrollbar-track {
+        .right-sidebar::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border-radius: 10px;
         }
 
-        .right-panel::-webkit-scrollbar-thumb {
+        .right-sidebar::-webkit-scrollbar-thumb {
             background: #7a3fa0;
             border-radius: 10px;
         }
 
-        .right-panel h4 {
-            font-size: 13px;
-            color: #333;
-            margin-bottom: 10px;
-            text-align: right;
+        .sidebar-section {
+            padding: 16px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 14px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 5px;
-        }
-
-        .layer-toggle {
-            margin-bottom: 12px;
-            border-bottom: 2px solid #e8e8e8;
-            padding-bottom: 10px;
-            text-align: right;
-        }
-
-        .layer-toggle label {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            cursor: pointer;
-            font-size: 13px;
             color: #333;
-            transition: all 0.2s ease;
+            margin-bottom: 12px;
+            text-align: right;
+            display: flex;
+            align-items: center;
             justify-content: flex-end;
             gap: 6px;
         }
 
-        .layer-toggle label:hover {
-            color: #7a3fa0;
-            transform: translateX(-2px);
+        /* ===== DROPDOWN MENUS ===== */
+        .dropdown-menu {
+            position: relative;
         }
 
-        .layer-toggle label:last-child {
-            margin-bottom: 0;
-        }
-
-        .layer-toggle input {
-            width: 18px;
-            height: 18px;
+        .dropdown-toggle {
+            width: 100%;
+            padding: 10px 12px;
+            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
             cursor: pointer;
-            accent-color: #7a3fa0;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: inherit;
+        }
+
+        .dropdown-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(122, 63, 160, 0.3);
+        }
+
+        .dropdown-toggle.active {
+            background: linear-gradient(135deg, #9b59b6 0%, #7a3fa0 100%);
+        }
+
+        .dropdown-content {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-content.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
             transition: all 0.2s ease;
-            flex-shrink: 0;
+            text-align: right;
+            font-size: 13px;
+            color: #333;
         }
 
-        .layer-toggle input:hover {
-            transform: scale(1.1);
+        .dropdown-item:last-child {
+            border-bottom: none;
         }
 
+        .dropdown-item:hover {
+            background: rgba(122, 63, 160, 0.08);
+            padding-left: 16px;
+        }
+
+        .dropdown-item.active {
+            background: linear-gradient(90deg, rgba(122, 63, 160, 0.15) 0%, transparent 100%);
+            color: #7a3fa0;
+            font-weight: 600;
+        }
+
+        /* ===== LAYER TOGGLE ===== */
         .legend {
-            padding-top: 6px;
             text-align: right;
         }
 
         .legend-title {
-            margin-bottom: 8px;
+            font-size: 12px;
             font-weight: 600;
             color: #7a3fa0;
-            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
+            margin-bottom: 10px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-size: 12px;
             color: #333;
             cursor: pointer;
@@ -359,56 +343,28 @@
             border-radius: 6px;
             transition: all 0.2s ease;
             justify-content: flex-end;
-            gap: 6px;
-        }
-
-        .legend-item:last-child {
-            margin-bottom: 0;
+            gap: 8px;
         }
 
         .legend-item:hover {
-            background: linear-gradient(90deg, rgba(122, 63, 160, 0.05) 0%, transparent 100%);
-            padding-right: 10px;
+            background: rgba(122, 63, 160, 0.05);
+            padding-right: 12px;
         }
 
         .legend-item input[type="checkbox"] {
             width: 16px;
             height: 16px;
-            margin-left: 6px;
             cursor: pointer;
             accent-color: #7a3fa0;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-        }
-
-        .legend-item input[type="checkbox"]:hover {
-            transform: scale(1.15);
-        }
-
-        .legend-item label {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex: 1;
-            justify-content: flex-end;
-            font-weight: 500;
+            margin-left: 8px;
         }
 
         .legend-color {
             width: 14px;
             height: 14px;
             border-radius: 4px;
-            border: 1.5px solid #ccc;
-            order: 2;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
+            border: 1px solid #ccc;
             flex-shrink: 0;
-        }
-
-        .legend-item:hover .legend-color {
-            transform: scale(1.15);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
 
         .color-ongoing { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
@@ -417,14 +373,14 @@
         .color-completed { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
         .color-stopped { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
 
+        /* ===== POPUP ===== */
         .popup-card {
             width: 95vw;
-            max-width: 380px;
+            max-width: 400px;
             border-radius: 14px;
             overflow: hidden;
             background: white;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.8);
             animation: popupSlideIn 0.3s ease-out;
         }
 
@@ -442,44 +398,29 @@
         .popup-header {
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
             color: white;
-            padding: 12px;
+            padding: 14px;
             text-align: center;
             border-bottom: 2px solid rgba(255, 255, 255, 0.2);
         }
 
-        .title-main {
-            font-size: 20px;
+        .popup-title {
+            font-size: 18px;
             font-weight: 700;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.5px;
         }
 
-        .title-sub {
-            font-size: 14px;
+        .popup-subtitle {
+            font-size: 13px;
             font-weight: 600;
-            margin-top: 3px;
+            margin-top: 4px;
             opacity: 0.9;
         }
 
         .popup-body {
-            padding: 12px;
-            font-size: 13px;
-            color: #333;
-            max-height: 40vh;
+            padding: 14px;
+            max-height: 50vh;
             overflow-y: auto;
-        }
-
-        .popup-body::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .popup-body::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .popup-body::-webkit-scrollbar-thumb {
-            background: #7a3fa0;
-            border-radius: 10px;
+            font-size: 13px;
         }
 
         .popup-row {
@@ -489,14 +430,6 @@
             gap: 8px;
             border-bottom: 1px solid #e8e8e8;
             align-items: center;
-            transition: all 0.2s ease;
-        }
-
-        .popup-row:hover {
-            background: linear-gradient(90deg, rgba(122, 63, 160, 0.05) 0%, transparent 100%);
-            padding-left: 4px;
-            padding-right: 4px;
-            border-radius: 4px;
         }
 
         .popup-row:last-child {
@@ -511,7 +444,7 @@
         }
 
         .popup-value {
-            font-weight: 700;
+            font-weight: 600;
             color: #333;
             text-align: left;
             word-break: break-word;
@@ -525,43 +458,27 @@
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
             background: #7a3fa0;
         }
 
-        .popup-value.status.ongoing {
-            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-        }
-
-        .popup-value.status.available {
-            background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%);
-        }
-
-        .popup-value.status.unavailable {
-            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-        }
-
-        .popup-value.status.completed {
-            background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%);
-        }
-
-        .popup-value.status.stopped {
-            background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
-        }
+        .popup-value.status.ongoing { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
+        .popup-value.status.available { background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%); }
+        .popup-value.status.unavailable { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
+        .popup-value.status.completed { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
+        .popup-value.status.stopped { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
 
         .alert {
             position: fixed;
-            top: 10px;
+            top: 80px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 18px;
+            padding: 12px 20px;
             border-radius: 10px;
             z-index: 3000;
-            animation: slideDown 0.3s ease-out;
             font-weight: 600;
             font-size: 13px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            letter-spacing: 0.3px;
+            animation: slideDown 0.3s ease-out;
         }
 
         @keyframes slideDown {
@@ -575,229 +492,73 @@
             }
         }
 
-        .alert-error { 
-            background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
-            color: white; 
+        .alert-error { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); color: white; }
+        .alert-success { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .right-sidebar {
+                width: 250px;
+            }
         }
 
-        .alert-success { 
-            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-            color: white; 
-        }
-
-        /* Responsive Design */
         @media (max-width: 768px) {
-            .search-box {
-                width: 150px;
-                font-size: 12px;
-                padding: 6px;
-            }
-
-            .search-box input {
-                font-size: 12px;
-                padding: 6px 8px;
-            }
-
-            .search-box-roads {
-                right: 170px;
-            }
-
-            .search-box-blocks {
-                right: 10px;
-            }
-
-            .dash-container {
-                left: 10px;
-                top: 60px;
+            .main-container {
                 flex-direction: column;
-                max-height: calc(100vh - 350px);
+            }
+
+            .right-sidebar {
                 width: 100%;
+                height: 200px;
+                border-left: none;
+                border-top: 1px solid #e0e0e0;
+                max-height: 35vh;
             }
 
-            .dashboard {
-                width: 100%;
-                max-width: 300px;
-                padding: 10px;
-                margin-right: 0;
+            #map {
+                height: 100%;
             }
 
-            .dashboard h3 {
-                font-size: 16px;
-                padding-bottom: 6px;
-                margin-bottom: 8px;
+            .stats-container {
+                gap: 8px;
             }
 
-            .row {
-                font-size: 12px;
-                padding: 6px 0;
-            }
-
-            .right-panel {
-                bottom: 10px;
-                right: 10px;
-                left: 10px;
-                width: calc(100% - 20px);
-                max-width: none;
-                max-height: 40vh;
-                padding: 10px;
-            }
-
-            .right-panel h4 {
-                font-size: 12px;
-                margin-bottom: 8px;
-            }
-
-            .layer-toggle {
-                margin-bottom: 10px;
-                padding-bottom: 8px;
-            }
-
-            .layer-toggle label {
-                font-size: 12px;
-                margin-bottom: 6px;
-            }
-
-            .legend-title {
-                font-size: 11px;
-                margin-bottom: 6px;
-            }
-
-            .legend-item {
-                font-size: 11px;
-                margin-bottom: 6px;
-                padding: 5px 6px;
-            }
-
-            .legend-color {
-                width: 12px;
-                height: 12px;
-            }
-
-            .popup-card {
-                width: calc(100vw - 20px);
-                max-width: 95vw;
-                border-radius: 12px;
-            }
-
-            .popup-header {
-                padding: 10px;
-            }
-
-            .title-main {
-                font-size: 18px;
-            }
-
-            .title-sub {
-                font-size: 13px;
-            }
-
-            .popup-body {
-                padding: 10px;
-                max-height: 50vh;
+            .stat-item {
+                padding: 6px 10px;
                 font-size: 12px;
             }
 
-            .popup-row {
-                padding: 6px 0;
-                font-size: 12px;
-            }
-
-            .popup-label {
-                font-size: 11px;
-            }
-
-            .popup-value {
-                font-size: 12px;
-            }
-
-            .popup-value.status {
-                font-size: 10px;
-                padding: 3px 8px;
+            .stat-value {
+                font-size: 14px;
             }
         }
 
         @media (max-width: 480px) {
-            .search-box {
-                width: 130px;
-                top: 8px;
-                right: 8px;
+            .right-sidebar {
+                height: 180px;
+                max-height: 30vh;
             }
 
-            .search-box input {
-                font-size: 11px;
-                padding: 5px 7px;
+            .sidebar-section {
+                padding: 12px;
             }
 
-            .search-box-roads {
-                right: 145px;
+            .stat-item {
+                padding: 5px 8px;
             }
 
-            .search-box-blocks {
-                right: 8px;
+            .stat-value {
+                font-size: 12px;
             }
 
-            .dashboard {
-                max-width: 280px;
+            .dropdown-toggle {
+                padding: 8px 10px;
+                font-size: 12px;
             }
 
-            .dashboard h3 {
-                font-size: 14px;
-                padding-bottom: 6px;
-                margin-bottom: 6px;
-            }
-
-            .row {
-                font-size: 11px;
-                padding: 5px 0;
-            }
-
-            .row span:first-child {
-                flex: 0.8;
-            }
-
-            .right-panel {
-                max-height: 35vh;
-                padding: 8px;
-                bottom: 8px;
-                right: 8px;
-                left: 8px;
-                width: calc(100% - 16px);
-            }
-
-            .legend-item {
-                font-size: 10px;
-                padding: 4px 5px;
-            }
-
-            .popup-card {
-                width: calc(100vw - 16px);
-            }
-
-            .popup-header {
-                padding: 8px;
-            }
-
-            .title-main {
-                font-size: 16px;
-            }
-
-            .popup-body {
-                padding: 8px;
-                max-height: 45vh;
-                font-size: 11px;
-            }
-
-            .popup-row {
-                padding: 5px 0;
-            }
-
-            .popup-label {
-                font-size: 10px;
-            }
-
-            .popup-value.status {
-                font-size: 9px;
-                padding: 2px 6px;
+            .search-input {
+                font-size: 13px;
+                padding: 8px 12px;
             }
         }
     </style>
@@ -805,101 +566,161 @@
 
 <body>
 
-    <div class="dash-container" id="dashContainer">
-        <div class="dashboard" id="roadsDash">
-            <h3>📍 إجماليات الطرق</h3>
-            <div class="row"><span>كمية الردم الإجمالية</span><span id="rFillT">0</span></div>
-            <div class="row"><span>كمية القطع الإجمالية</span><span id="rCutT">0</span></div>
-            <div class="row"><span>كمية الردم المنفذة</span><span id="rFillD">0</span></div>
-            <div class="row"><span>كمية القطع المنفذة</span><span id="rCutD">0</span></div>
-            <div class="row"><span>كمية الردم المتبقية</span><span id="rFillR">0</span></div>
-            <div class="row"><span>كمية القطع المتبقية</span><span id="rCutR">0</span></div>
-        </div>
-
-        <div class="dashboard" id="blocksDash">
-            <h3>🏗️ إجماليات البلوكات</h3>
-            <div class="row"><span>كمية الردم الإجمالية</span><span id="bFillT">0</span></div>
-            <div class="row"><span>كمية القطع الإجمالية</span><span id="bCutT">0</span></div>
-            <div class="row"><span>كمية الردم المنفذة</span><span id="bFillD">0</span></div>
-            <div class="row"><span>كمية القطع المنفذة</span><span id="bCutD">0</span></div>
-            <div class="row"><span>كمية الردم المتبقية</span><span id="bFillR">0</span></div>
-            <div class="row"><span>كمية القطع المتبقية</span><span id="bCutR">0</span></div>
-        </div>
-    </div>
-
-    <div class="right-panel">
-        <h4>⚙️ إعدادات الخريطة</h4>
-        <div class="layer-toggle">
-            <label><span>الطرق</span><input type="checkbox" id="chkRoads" checked></label>
-            <label><span>البلوكات</span><input type="checkbox" id="chkBlocks" checked></label>
-        </div>
-
-        <div class="legend">
-            <div class="legend-title">📋 حالات التقدم:</div>
-            <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
-                <label>جاري التنفيذ <div class="legend-color color-ongoing"></div></label>
+    <!-- TOP PANEL: الإجماليات -->
+    <div class="top-panel">
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-label">ردم الطرق الإجمالي</div>
+                <div class="stat-value" id="rFillTotal">0</div>
             </div>
-            <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
-                <label>متاح للتنفيذ <div class="legend-color color-available"></div></label>
+            <div class="stat-item">
+                <div class="stat-label">قطع الطرق الإجمالي</div>
+                <div class="stat-value" id="rCutTotal">0</div>
             </div>
-            <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
-                <label>غير متاح <div class="legend-color color-unavailable"></div></label>
+            <div class="stat-item">
+                <div class="stat-label">ردم الطرق المنفذ</div>
+                <div class="stat-value" id="rFillDone">0</div>
             </div>
-            <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
-                <label>تم الانتهاء <div class="legend-color color-completed"></div></label>
+            <div class="stat-item">
+                <div class="stat-label">قطع الطرق المنفذ</div>
+                <div class="stat-value" id="rCutDone">0</div>
             </div>
-            <div class="legend-item">
-                <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
-                <label>متوقف <div class="legend-color color-stopped"></div></label>
+            <div class="stat-item">
+                <div class="stat-label">ردم البلوكات الإجمالي</div>
+                <div class="stat-value" id="bFillTotal">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">قطع البلوكات الإجمالي</div>
+                <div class="stat-value" id="bCutTotal">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">ردم البلوكات المنفذ</div>
+                <div class="stat-value" id="bFillDone">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">قطع البلوكات المنفذ</div>
+                <div class="stat-value" id="bCutDone">0</div>
             </div>
         </div>
     </div>
 
-    <div class="search-box search-box-roads" id="roadsSearchBox">
-        <input type="text" id="roadsSearchInput" placeholder="ابحث عن طريق...">
-        <div class="search-dropdown" id="roadsSearchDropdown"></div>
+    <!-- SEARCH PANEL -->
+    <div class="search-panel">
+        <div class="search-box-wrapper">
+            <input type="text" class="search-input" id="searchInput" placeholder="ابحث عن طريق أو بلوك...">
+            <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
     </div>
 
-    <div class="search-box search-box-blocks" id="blocksSearchBox">
-        <input type="text" id="blocksSearchInput" placeholder="ابحث عن بلوك...">
-        <div class="search-dropdown" id="blocksSearchDropdown"></div>
-    </div>
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        <!-- MAP -->
+        <div id="map"></div>
 
-    <div id="map"></div>
+        <!-- RIGHT SIDEBAR -->
+        <div class="right-sidebar">
+            <!-- ROADS MENU -->
+            <div class="sidebar-section">
+                <div class="section-title">📍 الطرق</div>
+                <div class="dropdown-menu">
+                    <button class="dropdown-toggle" id="roadsToggle">اختر نوع الطريق</button>
+                    <div class="dropdown-content" id="roadsContent">
+                        <div class="dropdown-item" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA">الردم</div>
+                        <div class="dropdown-item" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY">القطع</div>
+                        <div class="dropdown-item" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI">الأساس الحصوي</div>
+                        <div class="dropdown-item" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q">طبقة التشرب</div>
+                        <div class="dropdown-item" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y">الأسفلت</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLOCKS MENU -->
+            <div class="sidebar-section">
+                <div class="section-title">🏗️ البلوكات</div>
+                <div class="dropdown-menu">
+                    <button class="dropdown-toggle" id="blocksToggle">اختر نوع البلوك</button>
+                    <div class="dropdown-content" id="blocksContent">
+                        <div class="dropdown-item" data-block-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0">الردم</div>
+                        <div class="dropdown-item" data-block-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM">القطع</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEGEND -->
+            <div class="sidebar-section legend">
+                <div class="legend-title">📋 حالات التقدم:</div>
+                <div class="legend-item">
+                    <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
+                    <label>جاري التنفيذ</label>
+                    <div class="legend-color color-ongoing"></div>
+                </div>
+                <div class="legend-item">
+                    <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
+                    <label>متاح للتنفيذ</label>
+                    <div class="legend-color color-available"></div>
+                </div>
+                <div class="legend-item">
+                    <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
+                    <label>غير متاح</label>
+                    <div class="legend-color color-unavailable"></div>
+                </div>
+                <div class="legend-item">
+                    <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
+                    <label>تم الانتهاء</label>
+                    <div class="legend-color color-completed"></div>
+                </div>
+                <div class="legend-item">
+                    <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
+                    <label>متوقف</label>
+                    <div class="legend-color color-stopped"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        let map, roadsLayer, blocksLayer;
-        let roadsData = {}, blocksData = {};
-        let roadsFeatures = {}, blocksFeatures = {};
-        let selectedRoadsStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
-        let selectedBlocksStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
+        let map, currentLayer;
+        let allData = {};
+        let allFeatures = {};
+        let selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
+        let currentSheetId = null;
+        let currentType = null; // 'road' or 'block'
+        let equipmentData = {};
 
         const statuses = [
-            { label: "جاري التنفيذ", value: "جاري", color: "#4caf50", class: "ongoing" },
-            { label: "متاح للتنفيذ", value: "متاح", color: "#2196f3", class: "available" },
-            { label: "غير متاح", value: "غير متاح", color: "#ff9800", class: "unavailable" },
-            { label: "تم الانتهاء", value: "تم الانتهاء", color: "#9c27b0", class: "completed" },
-            { label: "متوقف", value: "متوقف", color: "#f44336", class: "stopped" }
+            { value: "جاري", color: "#4caf50", class: "ongoing" },
+            { value: "متاح", color: "#2196f3", class: "available" },
+            { value: "غير متاح", color: "#ff9800", class: "unavailable" },
+            { value: "تم الانتهاء", color: "#9c27b0", class: "completed" },
+            { value: "متوقف", color: "#f44336", class: "stopped" }
         ];
 
         const labelsAR = {
             "ID": "معرف",
             "ROAD NAME": "اسم الطريق",
             "BLOCK NAME": "اسم البلوك",
-            "FILL-TOTAL-QTY": "كمية الردم الإجمالية",
-            "CUT-TOTAL-QTY": "كمية القطع الإجمالية",
-            "FILL-DONE-QTY": "كمية الردم المنفذة",
-            "CUT-DONE-QTY": "كمية القطع المنفذة",
-            "FILL-REMANING-QTY": "كمية الردم المتبقية",
-            "CUT-REMANING-QTY": "كمية القطع المتبقية",
+            "TOTAL-QTY": "الكمية الإجمالية",
+            "DONE-QTY": "الكمية المنفذة",
+            "REMANING-QTY": "الكمية المتبقية",
             "STATUS": "الحالة",
             "CONTRACTOR": "المقاول",
-            "EQUPIMENTS": "المعدات"
+            "EQUIPMENT": "المعدات"
         };
+
+        const roadSheets = {
+            "1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA": "الردم",
+            "11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY": "القطع",
+            "1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI": "الأساس الحصوي",
+            "1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q": "طبقة التشرب",
+            "1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y": "الأسفلت"
+        };
+
+        const blockSheets = {
+            "1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0": "الردم",
+            "11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM": "القطع"
+        };
+
+        const equipmentSheetId = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
 
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -910,14 +731,12 @@
         }
 
         function getStatusColor(status) {
-            status = (status || "").trim().toLowerCase();
-            const found = statuses.find(s => s.value.toLowerCase() === status);
+            const found = statuses.find(s => s.value.toLowerCase() === (status || "").trim().toLowerCase());
             return found ? found.color : "#9e9e9e";
         }
 
         function getStatusClass(status) {
-            status = (status || "").trim().toLowerCase();
-            const found = statuses.find(s => s.value.toLowerCase() === status);
+            const found = statuses.find(s => s.value.toLowerCase() === (status || "").trim().toLowerCase());
             return found ? found.class : "";
         }
 
@@ -935,68 +754,105 @@
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
             }).addTo(map);
-            showAlert("✅ تم تحميل الخريطة", "success");
         }
 
-        function loadSheetCSV(sheetId, sheetName, cb) {
-            const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${sheetName}`;
+        function loadEquipmentData() {
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${equipmentSheetId}/export?format=csv&gid=0`;
+            fetch(csvUrl)
+                .then(r => r.text())
+                .then(csv => {
+                    const lines = csv.split('\n').filter(line => line.trim());
+                    const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+                    const idIndex = headers.findIndex(h => h === 'ID');
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim());
+                        if (!values[idIndex]) continue;
+                        const id = values[idIndex];
+                        equipmentData[id] = values[values.length - 1] || "غير محدد";
+                    }
+                })
+                .catch(e => console.error("خطأ في تحميل المعدات:", e));
+        }
+
+        function loadSheetCSV(sheetId, cb) {
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
             
             fetch(csvUrl)
                 .then(r => r.text())
                 .then(csv => {
-                    try {
-                        let d = {};
-                        const lines = csv.split('\n').filter(line => line.trim());
-                        
-                        if (lines.length === 0) {
-                            showAlert("❌ الشيت فارغ أو خطأ في الاتصال", "error");
-                            return;
-                        }
-
-                        const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
-                        const idIndex = headers.findIndex(h => h === 'ID');
-                        
-                        if (idIndex === -1) {
-                            showAlert("❌ لا يوجد عمود ID في الشيت", "error");
-                            return;
-                        }
-
-                        for (let i = 1; i < lines.length; i++) {
-                            const values = lines[i].split(',').map(v => v.trim());
-                            if (!values[idIndex]) continue;
-
-                            const id = values[idIndex];
-                            d[id] = {};
-
-                            headers.forEach((header, idx) => {
-                                d[id][header] = values[idx] || "";
-                            });
-                        }
-
-                        cb(d);
-                    } catch (error) {
-                        console.error("خطأ:", error);
-                        showAlert("❌ خطأ في معالجة البيانات", "error");
+                    let data = {};
+                    const lines = csv.split('\n').filter(line => line.trim());
+                    
+                    if (lines.length === 0) {
+                        showAlert("❌ الشيت فارغ أو خطأ في الاتصال", "error");
+                        return;
                     }
+
+                    const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+                    const idIndex = headers.findIndex(h => h === 'ID');
+                    
+                    if (idIndex === -1) {
+                        showAlert("❌ لا يوجد عمود ID", "error");
+                        return;
+                    }
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim());
+                        if (!values[idIndex]) continue;
+
+                        const id = values[idIndex];
+                        data[id] = {};
+                        headers.forEach((header, idx) => {
+                            data[id][header] = values[idx] || "";
+                        });
+                    }
+
+                    cb(data);
                 })
                 .catch(error => {
                     console.error("خطأ:", error);
-                    showAlert("❌ خطأ في سحب البيانات من Google Sheets", "error");
+                    showAlert("❌ خطأ في سحب البيانات", "error");
                 });
         }
 
-        function updateLayerColors(layer, data, type) {
-            const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
-            
+        function updateStats(data) {
+            let rFillT = 0, rCutT = 0, rFillD = 0, rCutD = 0;
+            let bFillT = 0, bCutT = 0, bFillD = 0, bCutD = 0;
+
+            Object.values(data).forEach(row => {
+                const status = (row["STATUS"] || "").trim().toLowerCase();
+                const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+                
+                if (isSelected) {
+                    if (currentType === "road") {
+                        rFillT += num(row["TOTAL-QTY"] || 0);
+                        rFillD += num(row["DONE-QTY"] || 0);
+                    } else {
+                        bFillT += num(row["TOTAL-QTY"] || 0);
+                        bFillD += num(row["DONE-QTY"] || 0);
+                    }
+                }
+            });
+
+            if (currentType === "road") {
+                document.getElementById("rFillTotal").textContent = formatNumber(rFillT);
+                document.getElementById("rFillDone").textContent = formatNumber(rFillD);
+            } else {
+                document.getElementById("bFillTotal").textContent = formatNumber(bFillT);
+                document.getElementById("bFillDone").textContent = formatNumber(bFillD);
+            }
+        }
+
+        function updateLayerColors(layer, data) {
             layer.eachLayer(feature => {
-                const properties = feature.feature.properties;
-                const row = data[properties.ID];
+                const row = data[feature.feature.properties.ID];
                 if (!row) return;
 
-                const status = row["STATUS"].trim().toLowerCase();
+                const status = (row["STATUS"] || "").trim().toLowerCase();
                 const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
                 const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                const opacity = isSelected ? 0.5 : 0.2;
+                const opacity = isSelected ? 0.6 : 0.2;
                 
                 feature.setStyle({
                     color: color,
@@ -1007,72 +863,42 @@
             });
         }
 
-        function updateDashboard(data, type) {
-            const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
-            let fT = 0, cT = 0, fD = 0, cD = 0, fR = 0, cR = 0;
+        function loadLayer(sheetId, type) {
+            currentSheetId = sheetId;
+            currentType = type;
 
-            Object.values(data).forEach(v => {
-                const status = (v["STATUS"] || "").trim().toLowerCase();
-                const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
+            loadSheetCSV(sheetId, data => {
+                allData = data;
+                updateStats(data);
+
+                const geoJsonFile = type === "road" ? "ROADS.geojson" : "BLOCKS.geojson";
                 
-                if (isSelected) {
-                    fT += num(v["FILL-TOTAL-QTY"]);
-                    cT += num(v["CUT-TOTAL-QTY"]);
-                    fD += num(v["FILL-DONE-QTY"]);
-                    cD += num(v["CUT-DONE-QTY"]);
-                    fR += num(v["FILL-REMANING-QTY"]);
-                    cR += num(v["CUT-REMANING-QTY"]);
-                }
-            });
-
-            if (type === "roads") {
-                document.getElementById("rFillT").textContent = formatNumber(fT);
-                document.getElementById("rCutT").textContent = formatNumber(cT);
-                document.getElementById("rFillD").textContent = formatNumber(fD);
-                document.getElementById("rCutD").textContent = formatNumber(cD);
-                document.getElementById("rFillR").textContent = formatNumber(fR);
-                document.getElementById("rCutR").textContent = formatNumber(cR);
-            } else {
-                document.getElementById("bFillT").textContent = formatNumber(fT);
-                document.getElementById("bCutT").textContent = formatNumber(cT);
-                document.getElementById("bFillD").textContent = formatNumber(fD);
-                document.getElementById("bCutD").textContent = formatNumber(cD);
-                document.getElementById("bFillR").textContent = formatNumber(fR);
-                document.getElementById("bCutR").textContent = formatNumber(cR);
-            }
-        }
-
-        function loadRoads() {
-            loadSheetCSV("1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA", "0", data => {
-                roadsData = data;
-                updateDashboard(data, "roads");
-
-                fetch("ROADS.geojson")
+                fetch(geoJsonFile)
                     .then(r => r.json())
                     .then(g => {
-                        if (roadsLayer) map.removeLayer(roadsLayer);
+                        if (currentLayer) map.removeLayer(currentLayer);
                         
-                        roadsLayer = L.geoJSON(g, {
+                        currentLayer = L.geoJSON(g, {
                             onEachFeature: (f, l) => {
-                                let row = data[f.properties.ID];
+                                const id = f.properties.ID;
+                                const row = data[id];
                                 if (!row) return;
 
-                                const status = (row["STATUS"] || "").trim().toLowerCase();
-                                const isSelected = selectedRoadsStatuses.some(s => s.toLowerCase() === status);
-                                
-                                roadsFeatures[row["ROAD NAME"]] = l;
+                                const name = row[type === "road" ? "ROAD NAME" : "BLOCK NAME"];
+                                allFeatures[name] = l;
 
-                                const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                                const opacity = isSelected ? 0.5 : 0.2;
+                                const status = (row["STATUS"] || "").trim().toLowerCase();
+                                const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
                                 
                                 l.setStyle({
-                                    color: color,
-                                    fillColor: color,
-                                    fillOpacity: opacity,
+                                    color: isSelected ? getStatusColor(row["STATUS"]) : "#cccccc",
+                                    fillColor: isSelected ? getStatusColor(row["STATUS"]) : "#cccccc",
+                                    fillOpacity: isSelected ? 0.6 : 0.2,
                                     weight: isSelected ? 2 : 1
                                 });
 
-                                let html = `<div class="popup-card"><div class="popup-header"><div class="title-main">مشروع ولي العهد</div><div class="title-sub">بيانات الطريق</div></div><div class="popup-body">`;
+                                let html = `<div class="popup-card"><div class="popup-header"><div class="popup-title">مشروع ولي العهد</div><div class="popup-subtitle">بيانات ${type === "road" ? "الطريق" : "البلوك"}</div></div><div class="popup-body">`;
+                                
                                 Object.keys(row).forEach(k => {
                                     if (k === "ID") return;
                                     const isStatus = k === "STATUS";
@@ -1080,78 +906,25 @@
                                     const value = isStatus ? row[k] : formatNumber(row[k]);
                                     html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div class="popup-value ${statusClass}">${value}</div></div>`;
                                 });
+
+                                // إضافة المعدات إن وجدت
+                                const equipment = equipmentData[id] || "غير محدد";
+                                html += `<div class="popup-row"><div class="popup-label">المعدات</div><div class="popup-value">${equipment}</div></div>`;
+
                                 l.bindPopup(html + "</div></div>");
                                 l.on('click', () => l.openPopup());
                             }
                         });
 
-                        if (document.getElementById("chkRoads").checked) {
-                            roadsLayer.addTo(map);
-                        }
+                        currentLayer.addTo(map);
                     })
-                    .catch(e => console.error("خطأ في تحميل ROADS.geojson:", e));
+                    .catch(e => console.error(`خطأ في تحميل ${geoJsonFile}:`, e));
             });
         }
 
-        function loadBlocks() {
-            loadSheetCSV("1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0", "0", data => {
-                blocksData = data;
-                updateDashboard(data, "blocks");
-
-                fetch("BLOCKS.geojson")
-                    .then(r => r.json())
-                    .then(g => {
-                        if (blocksLayer) map.removeLayer(blocksLayer);
-                        
-                        blocksLayer = L.geoJSON(g, {
-                            onEachFeature: (f, l) => {
-                                let row = data[f.properties.ID];
-                                if (!row) return;
-
-                                const status = (row["STATUS"] || "").trim().toLowerCase();
-                                const isSelected = selectedBlocksStatuses.some(s => s.toLowerCase() === status);
-                                
-                                blocksFeatures[row["BLOCK NAME"]] = l;
-
-                                const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                                const opacity = isSelected ? 0.5 : 0.2;
-                                
-                                l.setStyle({
-                                    color: color,
-                                    fillColor: color,
-                                    fillOpacity: opacity,
-                                    weight: isSelected ? 2 : 1
-                                });
-
-                                let html = `<div class="popup-card"><div class="popup-header"><div class="title-main">مشروع ولي العهد</div><div class="title-sub">بيانات البلوك</div></div><div class="popup-body">`;
-                                Object.keys(row).forEach(k => {
-                                    if (k === "ID") return;
-                                    const isStatus = k === "STATUS";
-                                    const statusClass = isStatus ? `status ${getStatusClass(row[k])}` : "";
-                                    const value = isStatus ? row[k] : formatNumber(row[k]);
-                                    html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div class="popup-value ${statusClass}">${value}</div></div>`;
-                                });
-                                l.bindPopup(html + "</div></div>");
-                                l.on('click', () => l.openPopup());
-                            }
-                        });
-
-                        if (document.getElementById("chkBlocks").checked) {
-                            blocksLayer.addTo(map);
-                        }
-                    })
-                    .catch(e => console.error("خطأ في تحميل BLOCKS.geojson:", e));
-            });
-        }
-
-        function updateSearchDropdown(type) {
-            const data = type === "roads" ? roadsData : blocksData;
-            const selectedStatuses = type === "roads" ? selectedRoadsStatuses : selectedBlocksStatuses;
-            const dropdownId = type === "roads" ? "roadsSearchDropdown" : "blocksSearchDropdown";
-            const inputId = type === "roads" ? "roadsSearchInput" : "blocksSearchInput";
-            const nameKey = type === "roads" ? "ROAD NAME" : "BLOCK NAME";
-            const dropdown = document.getElementById(dropdownId);
-            const input = document.getElementById(inputId);
+        function updateSearchDropdown() {
+            const dropdown = document.getElementById("searchDropdown");
+            const input = document.getElementById("searchInput");
             const searchValue = input.value.trim().toLowerCase();
 
             dropdown.innerHTML = "";
@@ -1161,7 +934,8 @@
                 return;
             }
 
-            const filtered = Object.values(data).filter(item => {
+            const filtered = Object.values(allData).filter(item => {
+                const nameKey = currentType === "road" ? "ROAD NAME" : "BLOCK NAME";
                 const name = (item[nameKey] || "").toString().trim().toLowerCase();
                 const status = (item["STATUS"] || "").trim().toLowerCase();
                 const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
@@ -1169,30 +943,30 @@
             });
 
             if (filtered.length === 0) {
-                dropdown.innerHTML = "<div style='padding: 8px; color: #999; font-size: 12px;'>لم يتم العثور على نتائج</div>";
+                dropdown.innerHTML = "<div style='padding: 10px; text-align: right; color: #999;'>لم يتم العثور على نتائج</div>";
                 dropdown.classList.add("active");
                 return;
             }
 
             filtered.forEach(item => {
+                const nameKey = currentType === "road" ? "ROAD NAME" : "BLOCK NAME";
                 const name = item[nameKey];
                 const status = item["STATUS"];
+                const typeText = currentType === "road" ? "طريق" : "بلوك";
+                
                 const div = document.createElement("div");
                 div.className = "search-item";
 
-                const nameSpan = document.createElement("span");
-                nameSpan.textContent = name;
-
-                const statusSpan = document.createElement("span");
-                statusSpan.className = "search-item-status";
-                statusSpan.textContent = status;
-                statusSpan.style.background = getStatusColor(status);
-
-                div.appendChild(nameSpan);
-                div.appendChild(statusSpan);
+                div.innerHTML = `
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="search-item-type">${typeText}</div>
+                        <div class="search-item-status" style="background: ${getStatusColor(status)}">${status}</div>
+                    </div>
+                    <div class="search-item-name">${name}</div>
+                `;
 
                 div.addEventListener("click", () => {
-                    const layer = type === "roads" ? roadsFeatures[name] : blocksFeatures[name];
+                    const layer = allFeatures[name];
                     if (layer) {
                         map.fitBounds(layer.getBounds());
                         layer.openPopup();
@@ -1207,20 +981,39 @@
             dropdown.classList.add("active");
         }
 
-        document.getElementById("chkRoads").addEventListener("change", function() {
-            if (roadsLayer) {
-                this.checked ? map.addLayer(roadsLayer) : map.removeLayer(roadsLayer);
-            }
-            document.getElementById("roadsDash").classList.toggle("hidden", !this.checked);
-            document.getElementById("roadsSearchBox").classList.toggle("hidden", !this.checked);
+        // Event Listeners
+        document.getElementById("roadsToggle").addEventListener("click", function() {
+            this.classList.toggle("active");
+            document.getElementById("roadsContent").classList.toggle("active");
         });
 
-        document.getElementById("chkBlocks").addEventListener("change", function() {
-            if (blocksLayer) {
-                this.checked ? map.addLayer(blocksLayer) : map.removeLayer(blocksLayer);
-            }
-            document.getElementById("blocksDash").classList.toggle("hidden", !this.checked);
-            document.getElementById("blocksSearchBox").classList.toggle("hidden", !this.checked);
+        document.getElementById("blocksToggle").addEventListener("click", function() {
+            this.classList.toggle("active");
+            document.getElementById("blocksContent").classList.toggle("active");
+        });
+
+        document.querySelectorAll("[data-road-type]").forEach(item => {
+            item.addEventListener("click", function() {
+                const sheetId = this.dataset.roadType;
+                document.getElementById("roadsToggle").textContent = this.textContent;
+                document.getElementById("roadsContent").classList.remove("active");
+                document.getElementById("roadsToggle").classList.remove("active");
+                document.querySelectorAll("[data-road-type]").forEach(el => el.classList.remove("active"));
+                this.classList.add("active");
+                loadLayer(sheetId, "road");
+            });
+        });
+
+        document.querySelectorAll("[data-block-type]").forEach(item => {
+            item.addEventListener("click", function() {
+                const sheetId = this.dataset.blockType;
+                document.getElementById("blocksToggle").textContent = this.textContent;
+                document.getElementById("blocksContent").classList.remove("active");
+                document.getElementById("blocksToggle").classList.remove("active");
+                document.querySelectorAll("[data-block-type]").forEach(el => el.classList.remove("active"));
+                this.classList.add("active");
+                loadLayer(sheetId, "block");
+            });
         });
 
         document.querySelectorAll(".status-checkbox").forEach(checkbox => {
@@ -1228,38 +1021,30 @@
                 const status = this.dataset.status;
                 
                 if (this.checked) {
-                    if (!selectedRoadsStatuses.includes(status)) selectedRoadsStatuses.push(status);
-                    if (!selectedBlocksStatuses.includes(status)) selectedBlocksStatuses.push(status);
+                    if (!selectedStatuses.includes(status)) selectedStatuses.push(status);
                 } else {
-                    selectedRoadsStatuses = selectedRoadsStatuses.filter(s => s !== status);
-                    selectedBlocksStatuses = selectedBlocksStatuses.filter(s => s !== status);
+                    selectedStatuses = selectedStatuses.filter(s => s !== status);
                 }
                 
-                if (roadsLayer && roadsData) {
-                    updateLayerColors(roadsLayer, roadsData, "roads");
-                    updateDashboard(roadsData, "roads");
-                }
-                if (blocksLayer && blocksData) {
-                    updateLayerColors(blocksLayer, blocksData, "blocks");
-                    updateDashboard(blocksData, "blocks");
+                if (currentLayer && allData) {
+                    updateLayerColors(currentLayer, allData);
+                    updateStats(allData);
                 }
             });
         });
 
-        document.getElementById("roadsSearchInput").addEventListener("input", () => updateSearchDropdown("roads"));
-        document.getElementById("blocksSearchInput").addEventListener("input", () => updateSearchDropdown("blocks"));
+        document.getElementById("searchInput").addEventListener("input", updateSearchDropdown);
 
         document.addEventListener("click", (e) => {
-            if (!e.target.closest(".search-box")) {
-                document.getElementById("roadsSearchDropdown").classList.remove("active");
-                document.getElementById("blocksSearchDropdown").classList.remove("active");
+            if (!e.target.closest(".search-box-wrapper")) {
+                document.getElementById("searchDropdown").classList.remove("active");
             }
         });
 
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
-            loadRoads();
-            loadBlocks();
+            loadEquipmentData();
+            showAlert("✅ جاهز - اختر نوع من القائمة الجانبية", "success");
         });
     </script>
 
