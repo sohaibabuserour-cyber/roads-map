@@ -285,7 +285,6 @@
             flex: 1;
             width: 100%;
             height: auto;
-            min-height: 0;
             z-index: 10;
         }
 
@@ -719,12 +718,12 @@
 
             .left-section {
                 width: 100%;
-                min-height: 0
+                height: 60%;
             }
 
             .right-sidebar {
                 width: 100%;
-                height: auto;
+                height: 40%;
                 border-left: none;
                 border-top: 2px solid #e0e0e0;
                 flex-direction: row;
@@ -781,7 +780,7 @@
 
             .sum-bar {
                 width: 70%;
-                height: auto: 0%;
+                height: 100%;
                 padding: 12px;
                 gap: 0;
             }
@@ -840,27 +839,27 @@
 
         @media (max-width: 480px) {
             .top-bars {
-                height: auto;
+                height: 45%;
                 flex-direction: column;
                 overflow: visible;
             }
 
             .sum-bar {
                 width: 100%;
-                height: auto;
+                height: 60%;
                 padding: 10px;
             }
 
             .search-bar {
                 width: 100%;
-                height: auto;
+                height: 40%;
                 flex-direction: row;
                 padding: 8px;
                 gap: 8px;
             }
 
             .right-sidebar {
-                height: auto;
+                height: 35%;
             }
 
             .sidebar-section {
@@ -1134,20 +1133,9 @@
             document.body.appendChild(alert);
             setTimeout(() => alert.remove(), 3000);
         }
-function setMapBounds() {
-    const bounds = [
-        [21.2799972, 39.6874136], // SW
-        [21.3067229, 39.7212058]  // NE
-    ];
-
-    map.fitBounds(bounds);
-    map.setMaxBounds(bounds);
-}
 
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
-            setMapBounds()
-
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
@@ -1372,7 +1360,7 @@ function setMapBounds() {
                         layer.addTo(map);
                     })
                     .catch(e => console.error(`خطأ في تحميل ${geoJsonFile}:`, e));
-setMapBounds()
+
                 updateStats();
             });
         }
@@ -1393,7 +1381,6 @@ setMapBounds()
                     delete selectedLandSheets[sheetId];
                 }
             }
-            setMapBounds()
             updateStats();
         }
 
