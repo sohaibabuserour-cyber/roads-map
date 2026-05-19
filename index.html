@@ -33,7 +33,7 @@
             overflow: hidden;
         }
 
-        /* ===== LEFT SECTION (85% width) ===== */
+        /* ===== LEFT SECTION (80% width) ===== */
         .left-section {
             width: 80%;
             display: flex;
@@ -42,10 +42,9 @@
             overflow: hidden;
         }
 
-        /* ===== TOP BARS SECTION (35% height) ===== */
+        /* ===== TOP BARS SECTION ===== */
         .top-bars {
             width: 100%;
-            
             display: flex;
             flex-direction: column;
             gap: 0;
@@ -56,10 +55,9 @@
             z-index: 100;
         }
 
-        /* ===== SUM BAR (70% of top-bars) ===== */
+        /* ===== SUM BAR ===== */
         .sum-bar {
             width: 100%;
-            
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
             color: white;
             padding: 16px;
@@ -72,18 +70,9 @@
             overflow-y: hidden;
         }
 
-        .sum-bar::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .sum-bar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .sum-bar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 10px;
-        }
+        .sum-bar::-webkit-scrollbar { height: 4px; }
+        .sum-bar::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
+        .sum-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 10px; }
 
         .stats-wrapper {
             display: flex;
@@ -99,7 +88,7 @@
             flex-shrink: 0;
             min-width: 280px;
             padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.1);
             border-radius: 8px;
             backdrop-filter: blur(10px);
         }
@@ -110,7 +99,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             opacity: 0.9;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            border-bottom: 2px solid rgba(255,255,255,0.3);
             padding-bottom: 6px;
         }
 
@@ -150,13 +139,12 @@
             line-height: 1.2;
         }
 
-        /* ===== SEARCH BAR (30% of top-bars) ===== */
+        /* ===== SEARCH BAR ===== */
         .search-bar {
             width: 100%;
-           
             background: white;
             padding: 10px 16px;
-            box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.05);
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -197,13 +185,11 @@
             background: #fafafa;
         }
 
-        .search-input::placeholder {
-            color: #999;
-        }
+        .search-input::placeholder { color: #999; }
 
         .search-input:focus {
             border-color: #7a3fa0;
-            box-shadow: 0 0 8px rgba(122, 63, 160, 0.15);
+            box-shadow: 0 0 8px rgba(122,63,160,0.15);
             background: white;
         }
 
@@ -216,24 +202,20 @@
             overflow-y: auto;
             z-index: 5000;
             display: none;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
             min-width: 200px;
         }
 
         .search-dropdown.active {
             display: block;
-            animation: slideDown 0.2s ease-out;
+            /* FIX: renamed animation to avoid conflict with alert's slideDown */
+            animation: dropdownSlideDown 0.2s ease-out;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* FIX: renamed keyframe to dropdownSlideDown (was conflicting with alert's slideDown) */
+        @keyframes dropdownSlideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .search-item {
@@ -247,9 +229,7 @@
             gap: 10px;
         }
 
-        .search-item:hover {
-            background: rgba(122, 63, 160, 0.05);
-        }
+        .search-item:hover { background: rgba(122,63,160,0.05); }
 
         .search-item-name {
             flex: 1;
@@ -280,7 +260,7 @@
             flex-shrink: 0;
         }
 
-        /* ===== MAP (65% height) ===== */
+        /* ===== MAP ===== */
         #map {
             flex: 1;
             width: 100%;
@@ -288,20 +268,19 @@
             z-index: 10;
         }
 
-        /* ===== RIGHT SIDEBAR (15% width, 100% height) ===== */
+        /* ===== RIGHT SIDEBAR (20% width) ===== */
         .right-sidebar {
             width: 20%;
             height: 100%;
             background: white;
             border-left: 2px solid #e0e0e0;
-            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+            box-shadow: -4px 0 12px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
             z-index: 1000;
             overflow: hidden;
         }
 
-        /* ===== ITEMS SECTION HEADER ===== */
         .items-section-header {
             padding: 12px 14px;
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
@@ -316,7 +295,7 @@
             text-align: right;
         }
 
-        /* ===== ITEMS SECTION (البنود) ===== */
+        /* ===== ITEMS SECTION ===== */
         .items-section {
             flex: 1;
             overflow-y: auto;
@@ -324,27 +303,16 @@
             padding: 0;
         }
 
-        .items-section::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .items-section::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .items-section::-webkit-scrollbar-thumb {
-            background: #7a3fa0;
-            border-radius: 10px;
-        }
+        .items-section::-webkit-scrollbar { width: 5px; }
+        .items-section::-webkit-scrollbar-track { background: #f1f1f1; }
+        .items-section::-webkit-scrollbar-thumb { background: #7a3fa0; border-radius: 10px; }
 
         .sidebar-section {
             padding: 12px;
             border-bottom: 1px solid #e8e8e8;
         }
 
-        .sidebar-section:last-of-type {
-            border-bottom: none;
-        }
+        .sidebar-section:last-of-type { border-bottom: none; }
 
         .section-title {
             font-size: 13px;
@@ -374,31 +342,23 @@
             flex-shrink: 0;
         }
 
-        .expand-btn:hover {
-            transform: scale(1.1);
-        }
+        .expand-btn:hover { transform: scale(1.1); }
+        .expand-btn.active { transform: rotate(45deg); }
 
-        .expand-btn.active {
-            transform: rotate(45deg);
-        }
-
-        /* ===== DROPDOWN ITEMS ===== */
         .dropdown-items {
             display: none;
             flex-direction: column;
             gap: 6px;
         }
 
-        .dropdown-items.active {
-            display: flex;
-        }
+        .dropdown-items.active { display: flex; }
 
         .dropdown-item {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 7px 8px;
-            background: linear-gradient(90deg, rgba(122, 63, 160, 0.05) 0%, transparent 100%);
+            background: linear-gradient(90deg, rgba(122,63,160,0.05) 0%, transparent 100%);
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -406,7 +366,7 @@
         }
 
         .dropdown-item:hover {
-            background: linear-gradient(90deg, rgba(122, 63, 160, 0.1) 0%, transparent 100%);
+            background: linear-gradient(90deg, rgba(122,63,160,0.1) 0%, transparent 100%);
             border-color: #7a3fa0;
         }
 
@@ -428,11 +388,11 @@
         }
 
         .dropdown-item.selected {
-            background: linear-gradient(90deg, rgba(122, 63, 160, 0.15) 0%, transparent 100%);
+            background: linear-gradient(90deg, rgba(122,63,160,0.15) 0%, transparent 100%);
             border-color: #7a3fa0;
         }
 
-        /* ===== LEGEND SECTION (حالات التقدم) ===== */
+        /* ===== LEGEND SECTION ===== */
         .legend-section {
             flex-shrink: 0;
             padding: 12px;
@@ -442,22 +402,11 @@
             overflow-y: auto;
         }
 
-        .legend-section::-webkit-scrollbar {
-            width: 4px;
-        }
+        .legend-section::-webkit-scrollbar { width: 4px; }
+        .legend-section::-webkit-scrollbar-track { background: transparent; }
+        .legend-section::-webkit-scrollbar-thumb { background: #7a3fa0; border-radius: 10px; }
 
-        .legend-section::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .legend-section::-webkit-scrollbar-thumb {
-            background: #7a3fa0;
-            border-radius: 10px;
-        }
-
-        .legend {
-            text-align: right;
-        }
+        .legend { text-align: right; }
 
         .legend-title {
             font-size: 12px;
@@ -484,13 +433,8 @@
             gap: 6px;
         }
 
-        .legend-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .legend-item:hover {
-            background: rgba(122, 63, 160, 0.08);
-        }
+        .legend-item:last-child { margin-bottom: 0; }
+        .legend-item:hover { background: rgba(122,63,160,0.08); }
 
         .legend-item input[type="checkbox"] {
             width: 14px;
@@ -508,11 +452,11 @@
             flex-shrink: 0;
         }
 
-        .color-ongoing { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
-        .color-available { background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%); }
-        .color-unavailable { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
-        .color-completed { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
-        .color-stopped { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
+        .color-ongoing    { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
+        .color-available  { background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%); }
+        .color-unavailable{ background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
+        .color-completed  { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
+        .color-stopped    { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
 
         /* ===== POPUP ===== */
         .popup-card {
@@ -521,19 +465,13 @@
             border-radius: 14px;
             overflow: hidden;
             background: white;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
             animation: popupSlideIn 0.3s ease-out;
         }
 
         @keyframes popupSlideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: scale(0.95); }
+            to   { opacity: 1; transform: scale(1); }
         }
 
         .popup-header {
@@ -541,30 +479,12 @@
             color: white;
             padding: 14px;
             text-align: center;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid rgba(255,255,255,0.2);
         }
 
-        .popup-title {
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-
-        .popup-subtitle {
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 4px;
-            opacity: 0.9;
-        }
-
-        .popup-type {
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 6px;
-            opacity: 0.8;
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
-            padding-top: 6px;
-        }
+        .popup-title    { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+        .popup-subtitle { font-size: 16px; font-weight: 600; margin-top: 4px; opacity: 0.9; }
+        .popup-type     { font-size: 16px; font-weight: 600; margin-top: 6px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 6px; }
 
         .popup-body {
             padding: 16px;
@@ -582,9 +502,7 @@
             align-items: center;
         }
 
-        .popup-row:last-child {
-            border-bottom: none;
-        }
+        .popup-row:last-child { border-bottom: none; }
 
         .popup-label {
             color: #7a3fa0;
@@ -611,12 +529,13 @@
             background: #7a3fa0;
         }
 
-        .popup-value.status.ongoing { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
-        .popup-value.status.available { background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%); }
-        .popup-value.status.unavailable { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
-        .popup-value.status.completed { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
-        .popup-value.status.stopped { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
+        .popup-value.status.ongoing    { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
+        .popup-value.status.available  { background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%); }
+        .popup-value.status.unavailable{ background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
+        .popup-value.status.completed  { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
+        .popup-value.status.stopped    { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
 
+        /* ===== ALERT ===== */
         .alert {
             position: fixed;
             top: 80px;
@@ -627,100 +546,44 @@
             z-index: 3000;
             font-weight: 600;
             font-size: 13px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            animation: slideDown 0.3s ease-out;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            /* FIX: renamed animation to alertSlideDown (was conflicting with dropdown's slideDown) */
+            animation: alertSlideDown 0.3s ease-out;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
+        /* FIX: renamed keyframe to alertSlideDown */
+        @keyframes alertSlideDown {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
-        .alert-error { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); color: white; }
+        .alert-error   { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); color: white; }
         .alert-success { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 1200px) {
-            .left-section {
-                width: 80%;
-            }
-
-            .right-sidebar {
-                width: 20%;
-            }
-
-            .stats-group {
-                min-width: 250px;
-                padding: 10px 14px;
-                gap: 6px;
-            }
-
-            .stat-row {
-                gap: 15px;
-            }
-
-            .stat-value {
-                font-size: 16px;
-            }
-
-            .search-box-wrapper {
-                width: 28%;
-            }
+            .left-section  { width: 80%; }
+            .right-sidebar { width: 20%; }
+            .stats-group   { min-width: 250px; padding: 10px 14px; gap: 6px; }
+            .stat-row      { gap: 15px; }
+            .stat-value    { font-size: 16px; }
+            .search-box-wrapper { width: 28%; }
         }
 
         @media (max-width: 1024px) {
-            .left-section {
-                width: 78%;
-            }
-
-            .right-sidebar {
-                width: 22%;
-            }
-
-            .stats-group {
-                min-width: 220px;
-                padding: 9px 12px;
-                gap: 5px;
-            }
-
-            .stat-row {
-                gap: 12px;
-            }
-
-            .stat-item {
-                gap: 2px;
-            }
-
-            .stat-value {
-                font-size: 15px;
-            }
-
-            .stats-group-title {
-                font-size: 12px;
-            }
-
-            .search-box-wrapper {
-                width: 30%;
-                min-width: 160px;
-            }
+            .left-section  { width: 78%; }
+            .right-sidebar { width: 22%; }
+            .stats-group   { min-width: 220px; padding: 9px 12px; gap: 5px; }
+            .stat-row      { gap: 12px; }
+            .stat-item     { gap: 2px; }
+            .stat-value    { font-size: 15px; }
+            .stats-group-title  { font-size: 12px; }
+            .search-box-wrapper { width: 30%; min-width: 160px; }
         }
 
         @media (max-width: 768px) {
-            .layout-container {
-                flex-direction: column;
-            }
-
-            .left-section {
-                width: 100%;
-                height: 60%;
-            }
-
+            .layout-container { flex-direction: column; }
+            .left-section  { width: 100%; height: 60%; }
             .right-sidebar {
                 width: 100%;
                 height: 40%;
@@ -730,11 +593,7 @@
                 overflow-x: auto;
                 overflow-y: hidden;
             }
-
-            .items-section-header {
-                display: none;
-            }
-
+            .items-section-header { display: none; }
             .items-section {
                 display: flex;
                 gap: 10px;
@@ -744,12 +603,7 @@
                 flex-direction: row;
                 padding: 0 6px;
             }
-
-            .items-section::-webkit-scrollbar {
-                height: 4px;
-                width: auto;
-            }
-
+            .items-section::-webkit-scrollbar { height: 4px; width: auto; }
             .sidebar-section {
                 flex-shrink: 0;
                 min-width: 170px;
@@ -757,7 +611,6 @@
                 border-bottom: none;
                 padding: 10px;
             }
-
             .legend-section {
                 flex-shrink: 0;
                 min-width: 190px;
@@ -767,24 +620,13 @@
                 padding: 10px;
                 overflow-y: auto;
             }
-
-            #map {
-                height: 100%;
-            }
-
+            #map { height: 100%; }
             .top-bars {
                 height: 40%;
                 flex-direction: row;
                 overflow: visible;
             }
-
-            .sum-bar {
-                width: 70%;
-                height: 100%;
-                padding: 12px;
-                gap: 0;
-            }
-
+            .sum-bar { width: 70%; height: 100%; padding: 12px; gap: 0; }
             .search-bar {
                 width: 30%;
                 height: 100%;
@@ -793,141 +635,46 @@
                 padding: 8px 10px;
                 gap: 6px;
             }
-
-            .search-bar-label {
-                display: none;
-            }
-
-            .search-box-wrapper {
-                width: 100%;
-                min-width: auto;
-                max-width: none;
-            }
-
-            .search-input {
-                padding: 6px 10px;
-                font-size: 12px;
-            }
-
-            .stats-wrapper {
-                gap: 15px;
-            }
-
-            .stats-group {
-                min-width: 200px;
-                padding: 8px 10px;
-                gap: 4px;
-            }
-
-            .stat-row {
-                gap: 10px;
-            }
-
-            .stat-value {
-                font-size: 14px;
-            }
-
-            .stats-group-title {
-                font-size: 11px;
-                padding-bottom: 4px;
-            }
-
-            .stat-label {
-                font-size: 10px;
-            }
+            .search-bar-label  { display: none; }
+            .search-box-wrapper{ width: 100%; min-width: auto; max-width: none; }
+            .search-input      { padding: 6px 10px; font-size: 12px; }
+            .stats-wrapper     { gap: 15px; }
+            .stats-group       { min-width: 200px; padding: 8px 10px; gap: 4px; }
+            .stat-row          { gap: 10px; }
+            .stat-value        { font-size: 14px; }
+            .stats-group-title { font-size: 11px; padding-bottom: 4px; }
+            .stat-label        { font-size: 10px; }
         }
 
         @media (max-width: 480px) {
-            .top-bars {
-                height: 45%;
-                flex-direction: column;
-                overflow: visible;
-            }
-
-            .sum-bar {
-                width: 100%;
-                height: 60%;
-                padding: 10px;
-            }
-
-            .search-bar {
-                width: 100%;
-                height: 40%;
-                flex-direction: row;
-                padding: 8px;
-                gap: 8px;
-            }
-
-            .right-sidebar {
-                height: 35%;
-            }
-
-            .sidebar-section {
-                min-width: 150px;
-                padding: 8px;
-            }
-
-            .legend-section {
-                min-width: 160px;
-                padding: 8px;
-            }
-
-            .stat-value {
-                font-size: 12px;
-            }
-
-            .search-input {
-                font-size: 11px;
-                padding: 5px 8px;
-            }
-
-            .stats-group {
-                min-width: 160px;
-                padding: 7px 8px;
-                gap: 3px;
-            }
-
-            .stats-group-title {
-                font-size: 10px;
-            }
-
-            .stat-row {
-                gap: 8px;
-            }
-
-            .stat-item {
-                gap: 1px;
-            }
-
-            .section-title {
-                font-size: 11px;
-            }
-
-            .expand-btn {
-                width: 20px;
-                height: 20px;
-                font-size: 13px;
-            }
-
-            .search-box-wrapper {
-                width: 100%;
-            }
+            .top-bars { height: 45%; flex-direction: column; overflow: visible; }
+            .sum-bar  { width: 100%; height: 60%; padding: 10px; }
+            .search-bar { width: 100%; height: 40%; flex-direction: row; padding: 8px; gap: 8px; }
+            .right-sidebar { height: 35%; }
+            .sidebar-section { min-width: 150px; padding: 8px; }
+            .legend-section  { min-width: 160px; padding: 8px; }
+            .stat-value      { font-size: 12px; }
+            .search-input    { font-size: 11px; padding: 5px 8px; }
+            .stats-group     { min-width: 160px; padding: 7px 8px; gap: 3px; }
+            .stats-group-title { font-size: 10px; }
+            .stat-row        { gap: 8px; }
+            .stat-item       { gap: 1px; }
+            .section-title   { font-size: 11px; }
+            .expand-btn      { width: 20px; height: 20px; font-size: 13px; }
+            .search-box-wrapper { width: 100%; }
         }
     </style>
 </head>
 
 <body>
 
-    <!-- LAYOUT CONTAINER -->
     <div class="layout-container">
-        <!-- LEFT SECTION: Map and Top Bars -->
+        <!-- LEFT SECTION -->
         <div class="left-section">
-            <!-- TOP BARS: Sum Bar + Search Bar -->
             <div class="top-bars">
                 <!-- SUM BAR -->
                 <div class="sum-bar">
                     <div class="stats-wrapper">
-                        <!-- ROADS STATS -->
                         <div class="stats-group">
                             <div class="stats-group-title">📍 الطرق</div>
                             <div class="stats-group-type" id="roadsType">-</div>
@@ -947,7 +694,6 @@
                             </div>
                         </div>
 
-                        <!-- LANDS STATS -->
                         <div class="stats-group">
                             <div class="stats-group-title">🏗️ قطع الأراضي</div>
                             <div class="stats-group-type" id="landsType">-</div>
@@ -985,12 +731,10 @@
 
         <!-- RIGHT SIDEBAR -->
         <div class="right-sidebar">
-            <!-- ITEMS SECTION HEADER -->
             <div class="items-section-header">
                 <div class="items-header-title">📋 البنود</div>
             </div>
 
-            <!-- ITEMS SECTION (البنود) -->
             <div class="items-section">
                 <!-- ROADS MENU -->
                 <div class="sidebar-section">
@@ -1000,23 +744,33 @@
                     </div>
                     <div class="dropdown-items" id="roadsItems">
                         <div class="dropdown-item">
-                            <input type="checkbox" name="roads-check" id="road-fill" data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA" data-road-name="الردم">
+                            <input type="checkbox" name="roads-check" id="road-fill"
+                                data-road-type="1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA"
+                                data-road-name="الردم">
                             <label for="road-fill">الردم</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" name="roads-check" id="road-cut" data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY" data-road-name="القطع">
+                            <input type="checkbox" name="roads-check" id="road-cut"
+                                data-road-type="11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY"
+                                data-road-name="القطع">
                             <label for="road-cut">القطع</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" name="roads-check" id="road-gravel" data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI" data-road-name="الأساس الحصوي">
+                            <input type="checkbox" name="roads-check" id="road-gravel"
+                                data-road-type="1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI"
+                                data-road-name="الأساس الحصوي">
                             <label for="road-gravel">الأساس الحصوي</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" name="roads-check" id="road-tack" data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q" data-road-name="طبقة التشرب">
+                            <input type="checkbox" name="roads-check" id="road-tack"
+                                data-road-type="1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q"
+                                data-road-name="طبقة التشرب">
                             <label for="road-tack">طبقة التشرب</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" name="roads-check" id="road-asphalt" data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y" data-road-name="الأسفلت">
+                            <input type="checkbox" name="roads-check" id="road-asphalt"
+                                data-road-type="1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y"
+                                data-road-name="الأسفلت">
                             <label for="road-asphalt">الأسفلت</label>
                         </div>
                     </div>
@@ -1030,18 +784,22 @@
                     </div>
                     <div class="dropdown-items" id="landsItems">
                         <div class="dropdown-item">
-                            <input type="checkbox" name="lands-check" id="land-fill" data-land-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0" data-land-name="الردم">
+                            <input type="checkbox" name="lands-check" id="land-fill"
+                                data-land-type="1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0"
+                                data-land-name="الردم">
                             <label for="land-fill">الردم</label>
                         </div>
                         <div class="dropdown-item">
-                            <input type="checkbox" name="lands-check" id="land-cut" data-land-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM" data-land-name="القطع">
+                            <input type="checkbox" name="lands-check" id="land-cut"
+                                data-land-type="11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM"
+                                data-land-name="القطع">
                             <label for="land-cut">القطع</label>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- LEGEND SECTION (حالات التقدم) -->
+            <!-- LEGEND SECTION -->
             <div class="legend-section">
                 <div class="legend">
                     <div class="legend-title">📋 الحالات:</div>
@@ -1076,6 +834,7 @@
     </div>
 
     <script>
+        // ===== STATE =====
         let map, roadLayers = {}, landLayers = {};
         let roadsData = {}, landsData = {};
         let allFeatures = {};
@@ -1087,42 +846,51 @@
         let landsExpanded = false;
 
         const statuses = [
-            { value: "جاري", color: "#4caf50", class: "ongoing" },
-            { value: "متاح", color: "#2196f3", class: "available" },
-            { value: "غير متاح", color: "#ff9800", class: "unavailable" },
-            { value: "تم الانتهاء", color: "#9c27b0", class: "completed" },
-            { value: "متوقف", color: "#f44336", class: "stopped" }
+            { value: "جاري",       color: "#4caf50", class: "ongoing"     },
+            { value: "متاح",       color: "#2196f3", class: "available"   },
+            { value: "غير متاح",   color: "#ff9800", class: "unavailable" },
+            { value: "تم الانتهاء",color: "#9c27b0", class: "completed"   },
+            { value: "متوقف",      color: "#f44336", class: "stopped"     }
         ];
 
         const labelsAR = {
-            "ID": "معرف",
-            "ROAD NAME": "اسم الطريق",
-            "BLOCK NAME": "اسم قطعة الأرض",
-            "TOTAL-QTY": "الكمية الإجمالية",
-            "DONE-QTY": "الكمية المنفذة",
+            "ID"          : "معرف",
+            "ROAD NAME"   : "اسم الطريق",
+            "BLOCK NAME"  : "اسم قطعة الأرض",
+            "TOTAL-QTY"   : "الكمية الإجمالية",
+            "DONE-QTY"    : "الكمية المنفذة",
             "REMANING-QTY": "الكمية المتبقية",
-            "STATUS": "الحالة",
-            "CONTRACTOR": "المقاول",
-            "EQUIPMENT": "المعدات"
+            "STATUS"      : "الحالة",
+            "CONTRACTOR"  : "المقاول",
+            "EQUIPMENT"   : "المعدات"
         };
 
         const equipmentSheetId = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
 
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        // ===== HELPERS =====
+
+        function formatNumber(val) {
+            // FIX: only format if the value is actually numeric; otherwise return as-is
+            const n = parseFloat(val);
+            if (isNaN(n)) return val || "";
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
         function num(v) {
-            return !isNaN(v) && v !== "" ? Number(v) : 0;
+            return (!isNaN(v) && v !== "") ? Number(v) : 0;
         }
 
         function getStatusColor(status) {
-            const found = statuses.find(s => s.value.toLowerCase() === (status || "").trim().toLowerCase());
+            const found = statuses.find(s =>
+                s.value.toLowerCase() === (status || "").trim().toLowerCase()
+            );
             return found ? found.color : "#9e9e9e";
         }
 
         function getStatusClass(status) {
-            const found = statuses.find(s => s.value.toLowerCase() === (status || "").trim().toLowerCase());
+            const found = statuses.find(s =>
+                s.value.toLowerCase() === (status || "").trim().toLowerCase()
+            );
             return found ? found.class : "";
         }
 
@@ -1134,6 +902,8 @@
             setTimeout(() => alert.remove(), 3000);
         }
 
+        // ===== MAP =====
+
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1141,6 +911,8 @@
                 attribution: '© OpenStreetMap'
             }).addTo(map);
         }
+
+        // ===== EQUIPMENT =====
 
         function loadEquipmentData() {
             const csvUrl = `https://docs.google.com/spreadsheets/d/${equipmentSheetId}/export?format=csv&gid=0`;
@@ -1150,26 +922,29 @@
                     const lines = csv.split('\n').filter(line => line.trim());
                     const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
                     const idIndex = headers.findIndex(h => h === 'ID');
-                    
+                    if (idIndex === -1) return;
+
                     for (let i = 1; i < lines.length; i++) {
                         const values = lines[i].split(',').map(v => v.trim());
                         if (!values[idIndex]) continue;
                         const id = values[idIndex];
+                        // FIX: safely get last column; avoid out-of-bounds
                         equipmentData[id] = values[values.length - 1] || "غير محدد";
                     }
                 })
                 .catch(e => console.error("خطأ في تحميل المعدات:", e));
         }
 
+        // ===== CSV LOADER =====
+
         function loadSheetCSV(sheetId, cb) {
             const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-            
             fetch(csvUrl)
                 .then(r => r.text())
                 .then(csv => {
-                    let data = {};
+                    const data = {};
                     const lines = csv.split('\n').filter(line => line.trim());
-                    
+
                     if (lines.length === 0) {
                         showAlert("❌ الشيت فارغ أو خطأ في الاتصال", "error");
                         return;
@@ -1177,7 +952,7 @@
 
                     const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
                     const idIndex = headers.findIndex(h => h === 'ID');
-                    
+
                     if (idIndex === -1) {
                         showAlert("❌ لا يوجد عمود ID", "error");
                         return;
@@ -1186,7 +961,6 @@
                     for (let i = 1; i < lines.length; i++) {
                         const values = lines[i].split(',').map(v => v.trim());
                         if (!values[idIndex]) continue;
-
                         const id = values[idIndex];
                         data[id] = {};
                         headers.forEach((header, idx) => {
@@ -1202,151 +976,147 @@
                 });
         }
 
+        // ===== STATS =====
+
         function updateStats() {
             let rTotal = 0, rDone = 0;
             let lTotal = 0, lDone = 0;
-            let roadTypeNames = [];
-            let landTypeNames = [];
+            const roadTypeNames = [];
+            const landTypeNames = [];
 
             Object.entries(selectedRoadSheets).forEach(([sheetId, typeName]) => {
-                if (roadsData[sheetId]) {
-                    roadTypeNames.push(typeName);
-                    Object.values(roadsData[sheetId]).forEach(row => {
-                        const status = (row["STATUS"] || "").trim().toLowerCase();
-                        const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                        
-                        if (isSelected) {
-                            rTotal += num(row["TOTAL-QTY"] || 0);
-                            rDone += num(row["DONE-QTY"] || 0);
-                        }
-                    });
-                }
+                if (!roadsData[sheetId]) return;
+                roadTypeNames.push(typeName);
+                Object.values(roadsData[sheetId]).forEach(row => {
+                    const status = (row["STATUS"] || "").trim().toLowerCase();
+                    if (selectedStatuses.some(s => s.toLowerCase() === status)) {
+                        rTotal += num(row["TOTAL-QTY"]);
+                        rDone  += num(row["DONE-QTY"]);
+                    }
+                });
             });
 
             Object.entries(selectedLandSheets).forEach(([sheetId, typeName]) => {
-                if (landsData[sheetId]) {
-                    landTypeNames.push(typeName);
-                    Object.values(landsData[sheetId]).forEach(row => {
-                        const status = (row["STATUS"] || "").trim().toLowerCase();
-                        const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                        
-                        if (isSelected) {
-                            lTotal += num(row["TOTAL-QTY"] || 0);
-                            lDone += num(row["DONE-QTY"] || 0);
-                        }
-                    });
-                }
+                if (!landsData[sheetId]) return;
+                landTypeNames.push(typeName);
+                Object.values(landsData[sheetId]).forEach(row => {
+                    const status = (row["STATUS"] || "").trim().toLowerCase();
+                    if (selectedStatuses.some(s => s.toLowerCase() === status)) {
+                        lTotal += num(row["TOTAL-QTY"]);
+                        lDone  += num(row["DONE-QTY"]);
+                    }
+                });
             });
 
-            document.getElementById("rTotal").textContent = formatNumber(rTotal);
-            document.getElementById("rDone").textContent = formatNumber(rDone);
+            document.getElementById("rTotal").textContent     = formatNumber(rTotal);
+            document.getElementById("rDone").textContent      = formatNumber(rDone);
             document.getElementById("rRemaining").textContent = formatNumber(rTotal - rDone);
-            document.getElementById("roadsType").textContent = roadTypeNames.length > 0 ? roadTypeNames.join(" + ") : "-";
+            document.getElementById("roadsType").textContent  = roadTypeNames.length > 0 ? roadTypeNames.join(" + ") : "-";
 
-            document.getElementById("lTotal").textContent = formatNumber(lTotal);
-            document.getElementById("lDone").textContent = formatNumber(lDone);
+            document.getElementById("lTotal").textContent     = formatNumber(lTotal);
+            document.getElementById("lDone").textContent      = formatNumber(lDone);
             document.getElementById("lRemaining").textContent = formatNumber(lTotal - lDone);
-            document.getElementById("landsType").textContent = landTypeNames.length > 0 ? landTypeNames.join(" + ") : "-";
+            document.getElementById("landsType").textContent  = landTypeNames.length > 0 ? landTypeNames.join(" + ") : "-";
+        }
+
+        // ===== LAYER COLORS =====
+
+        function applyFeatureStyle(feature, data) {
+            const row = data[feature.feature.properties.ID];
+            if (!row) return;
+            const status      = (row["STATUS"] || "").trim().toLowerCase();
+            const isSelected  = selectedStatuses.some(s => s.toLowerCase() === status);
+            const color       = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
+            feature.setStyle({
+                color       : color,
+                fillColor   : color,
+                fillOpacity : isSelected ? 0.6 : 0.2,
+                weight      : isSelected ? 2 : 1
+            });
         }
 
         function updateLayerColors() {
             Object.keys(roadLayers).forEach(sheetId => {
                 const layer = roadLayers[sheetId];
-                const data = roadsData[sheetId];
-                
+                const data  = roadsData[sheetId];
                 if (!layer || !data) return;
-
-                layer.eachLayer(feature => {
-                    const row = data[feature.feature.properties.ID];
-                    if (!row) return;
-
-                    const status = (row["STATUS"] || "").trim().toLowerCase();
-                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                    const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                    const opacity = isSelected ? 0.6 : 0.2;
-                    
-                    feature.setStyle({
-                        color: color,
-                        fillColor: color,
-                        fillOpacity: opacity,
-                        weight: isSelected ? 2 : 1
-                    });
-                });
+                layer.eachLayer(f => applyFeatureStyle(f, data));
             });
 
             Object.keys(landLayers).forEach(sheetId => {
                 const layer = landLayers[sheetId];
-                const data = landsData[sheetId];
-                
+                const data  = landsData[sheetId];
                 if (!layer || !data) return;
-
-                layer.eachLayer(feature => {
-                    const row = data[feature.feature.properties.ID];
-                    if (!row) return;
-
-                    const status = (row["STATUS"] || "").trim().toLowerCase();
-                    const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                    const color = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                    const opacity = isSelected ? 0.6 : 0.2;
-                    
-                    feature.setStyle({
-                        color: color,
-                        fillColor: color,
-                        fillOpacity: opacity,
-                        weight: isSelected ? 2 : 1
-                    });
-                });
+                layer.eachLayer(f => applyFeatureStyle(f, data));
             });
         }
+
+        // ===== LOAD / REMOVE LAYER =====
 
         function loadLayer(sheetId, type, typeName) {
             loadSheetCSV(sheetId, data => {
                 if (type === "road") {
-                    roadsData[sheetId] = data;
+                    roadsData[sheetId]       = data;
                     selectedRoadSheets[sheetId] = typeName;
                 } else {
-                    landsData[sheetId] = data;
+                    landsData[sheetId]       = data;
                     selectedLandSheets[sheetId] = typeName;
                 }
 
                 const geoJsonFile = type === "road" ? "ROADS.geojson" : "BLOCKS.geojson";
-                
+
                 fetch(geoJsonFile)
                     .then(r => r.json())
                     .then(g => {
                         const layer = L.geoJSON(g, {
                             onEachFeature: (f, l) => {
-                                const id = f.properties.ID;
+                                const id  = f.properties.ID;
                                 const row = data[id];
                                 if (!row) return;
 
-                                const name = row[type === "road" ? "ROAD NAME" : "BLOCK NAME"];
+                                const nameKey = type === "road" ? "ROAD NAME" : "BLOCK NAME";
+                                const name    = row[nameKey];
                                 allFeatures[name] = l;
 
-                                const status = (row["STATUS"] || "").trim().toLowerCase();
+                                // Apply initial style
+                                const status     = (row["STATUS"] || "").trim().toLowerCase();
                                 const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                                
+                                const color      = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
                                 l.setStyle({
-                                    color: isSelected ? getStatusColor(row["STATUS"]) : "#cccccc",
-                                    fillColor: isSelected ? getStatusColor(row["STATUS"]) : "#cccccc",
+                                    color      : color,
+                                    fillColor  : color,
                                     fillOpacity: isSelected ? 0.6 : 0.2,
-                                    weight: isSelected ? 2 : 1
+                                    weight     : isSelected ? 2 : 1
                                 });
 
-                                let html = `<div class="popup-card"><div class="popup-header"><div class="popup-title">مشروع ولي العهد</div><div class="popup-subtitle">${typeName}</div></div><div class="popup-body">`;
-                                
+                                // Build popup HTML
+                                let html = `<div class="popup-card">
+                                    <div class="popup-header">
+                                        <div class="popup-title">مشروع ولي العهد</div>
+                                        <div class="popup-subtitle">${typeName}</div>
+                                    </div>
+                                    <div class="popup-body">`;
+
                                 Object.keys(row).forEach(k => {
                                     if (k === "ID") return;
-                                    const isStatus = k === "STATUS";
+                                    const isStatus   = k === "STATUS";
                                     const statusClass = isStatus ? `status ${getStatusClass(row[k])}` : "";
-                                    const value = isStatus ? row[k] : formatNumber(row[k]);
-                                    html += `<div class="popup-row"><div class="popup-label">${labelsAR[k] || k}</div><div class="popup-value ${statusClass}">${value}</div></div>`;
+                                    // FIX: only formatNumber on non-status fields; status is plain text
+                                    const value      = isStatus ? row[k] : formatNumber(row[k]);
+                                    html += `<div class="popup-row">
+                                        <div class="popup-label">${labelsAR[k] || k}</div>
+                                        <div class="popup-value ${statusClass}">${value}</div>
+                                    </div>`;
                                 });
 
                                 const equipment = equipmentData[id] || "غير محدد";
-                                html += `<div class="popup-row"><div class="popup-label">المعدات</div><div class="popup-value">${equipment}</div></div>`;
+                                html += `<div class="popup-row">
+                                    <div class="popup-label">المعدات</div>
+                                    <div class="popup-value">${equipment}</div>
+                                </div>`;
+                                html += `</div></div>`;
 
-                                l.bindPopup(html + "</div></div>");
+                                l.bindPopup(html);
                                 l.on('click', () => l.openPopup());
                             }
                         });
@@ -1358,10 +1128,12 @@
                         }
 
                         layer.addTo(map);
+                        updateStats();
                     })
                     .catch(e => console.error(`خطأ في تحميل ${geoJsonFile}:`, e));
 
-                updateStats();
+                // FIX: moved updateStats() inside the geojson .then() so it runs
+                // after the layer is actually registered (not before)
             });
         }
 
@@ -1384,9 +1156,11 @@
             updateStats();
         }
 
+        // ===== SEARCH =====
+
         function updateSearchDropdown() {
-            const dropdown = document.getElementById("searchDropdown");
-            const input = document.getElementById("searchInput");
+            const dropdown   = document.getElementById("searchDropdown");
+            const input      = document.getElementById("searchInput");
             const searchValue = input.value.trim().toLowerCase();
 
             dropdown.innerHTML = "";
@@ -1396,99 +1170,94 @@
                 return;
             }
 
-            let results = [];
+            const results = [];
 
-            Object.entries(roadsData).forEach(([sheetId, data]) => {
+            Object.values(roadsData).forEach(data => {
                 Object.values(data).forEach(item => {
-                    const name = (item["ROAD NAME"] || "").toString().trim().toLowerCase();
-                    const status = (item["STATUS"] || "").trim().toLowerCase();
+                    const name   = (item["ROAD NAME"] || "").toString().trim().toLowerCase();
+                    const status = (item["STATUS"]    || "").trim().toLowerCase();
                     const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
                     if (name.includes(searchValue) && isStatusSelected) {
                         results.push({
-                            name: item["ROAD NAME"],
-                            type: "طريق",
+                            name  : item["ROAD NAME"],
+                            type  : "طريق",
                             status: item["STATUS"],
-                            id: item["ID"],
-                            layer: item["ROAD NAME"]
+                            layer : item["ROAD NAME"]
                         });
                     }
                 });
             });
 
-            Object.entries(landsData).forEach(([sheetId, data]) => {
+            Object.values(landsData).forEach(data => {
                 Object.values(data).forEach(item => {
-                    const name = (item["BLOCK NAME"] || "").toString().trim().toLowerCase();
-                    const status = (item["STATUS"] || "").trim().toLowerCase();
+                    const name   = (item["BLOCK NAME"] || "").toString().trim().toLowerCase();
+                    const status = (item["STATUS"]     || "").trim().toLowerCase();
                     const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
                     if (name.includes(searchValue) && isStatusSelected) {
                         results.push({
-                            name: item["BLOCK NAME"],
-                            type: "قطعة أرض",
+                            name  : item["BLOCK NAME"],
+                            type  : "قطعة أرض",
                             status: item["STATUS"],
-                            id: item["ID"],
-                            layer: item["BLOCK NAME"]
+                            layer : item["BLOCK NAME"]
                         });
                     }
                 });
             });
 
             if (results.length === 0) {
-                dropdown.innerHTML = "<div style='padding: 10px; text-align: right; color: #999;'>لم يتم العثور على نتائج</div>";
+                dropdown.innerHTML = "<div style='padding:10px;text-align:right;color:#999'>لم يتم العثور على نتائج</div>";
                 dropdown.classList.add("active");
-                return;
+            } else {
+                results.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "search-item";
+                    div.innerHTML = `
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <div class="search-item-type">${item.type}</div>
+                            <div class="search-item-status" style="background:${getStatusColor(item.status)}">${item.status}</div>
+                        </div>
+                        <div class="search-item-name">${item.name}</div>
+                    `;
+                    div.addEventListener("click", () => {
+                        const layer = allFeatures[item.layer];
+                        if (layer) {
+                            map.fitBounds(layer.getBounds());
+                            layer.openPopup();
+                            input.value = "";
+                            dropdown.classList.remove("active");
+                        }
+                    });
+                    dropdown.appendChild(div);
+                });
+                dropdown.classList.add("active");
             }
 
-            results.forEach(item => {
-                const div = document.createElement("div");
-                div.className = "search-item";
-
-                div.innerHTML = `
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <div class="search-item-type">${item.type}</div>
-                        <div class="search-item-status" style="background: ${getStatusColor(item.status)}">${item.status}</div>
-                    </div>
-                    <div class="search-item-name">${item.name}</div>
-                `;
-
-                div.addEventListener("click", () => {
-                    const layer = allFeatures[item.layer];
-                    if (layer) {
-                        map.fitBounds(layer.getBounds());
-                        layer.openPopup();
-                        input.value = "";
-                        dropdown.classList.remove("active");
-                    }
-                });
-
-                dropdown.appendChild(div);
-            });
-
-            dropdown.classList.add("active");
-            
-            // تحديد موضع الـ dropdown بشكل صحيح
+            // Position dropdown under input
             const searchBox = document.querySelector('.search-box-wrapper');
             const rect = searchBox.getBoundingClientRect();
-            dropdown.style.position = 'fixed';
-            dropdown.style.top = (rect.bottom) + 'px';
+            dropdown.style.top   = rect.bottom + 'px';
             dropdown.style.right = (window.innerWidth - rect.right) + 'px';
             dropdown.style.width = rect.width + 'px';
         }
 
-        document.getElementById("roadsExpandBtn").addEventListener("click", function() {
+        // ===== EVENT LISTENERS =====
+
+        document.getElementById("roadsExpandBtn").addEventListener("click", function () {
             roadsExpanded = !roadsExpanded;
             this.classList.toggle("active");
             document.getElementById("roadsItems").classList.toggle("active");
         });
 
-        document.getElementById("landsExpandBtn").addEventListener("click", function() {
+        document.getElementById("landsExpandBtn").addEventListener("click", function () {
             landsExpanded = !landsExpanded;
             this.classList.toggle("active");
             document.getElementById("landsItems").classList.toggle("active");
         });
 
         document.querySelectorAll("input[name='roads-check']").forEach(checkbox => {
-            checkbox.addEventListener("change", function() {
+            checkbox.addEventListener("change", function () {
                 if (this.checked) {
+                    // Uncheck all other road checkboxes
                     document.querySelectorAll("input[name='roads-check']").forEach(cb => {
                         if (cb !== this) {
                             cb.checked = false;
@@ -1496,11 +1265,8 @@
                             removeLayer(cb.dataset.roadType, "road");
                         }
                     });
-                    
-                    const sheetId = this.dataset.roadType;
-                    const typeName = this.dataset.roadName;
                     this.closest(".dropdown-item").classList.add("selected");
-                    loadLayer(sheetId, "road", typeName);
+                    loadLayer(this.dataset.roadType, "road", this.dataset.roadName);
                 } else {
                     this.closest(".dropdown-item").classList.remove("selected");
                     removeLayer(this.dataset.roadType, "road");
@@ -1509,8 +1275,9 @@
         });
 
         document.querySelectorAll("input[name='lands-check']").forEach(checkbox => {
-            checkbox.addEventListener("change", function() {
+            checkbox.addEventListener("change", function () {
                 if (this.checked) {
+                    // Uncheck all other land checkboxes
                     document.querySelectorAll("input[name='lands-check']").forEach(cb => {
                         if (cb !== this) {
                             cb.checked = false;
@@ -1518,11 +1285,8 @@
                             removeLayer(cb.dataset.landType, "land");
                         }
                     });
-                    
-                    const sheetId = this.dataset.landType;
-                    const typeName = this.dataset.landName;
                     this.closest(".dropdown-item").classList.add("selected");
-                    loadLayer(sheetId, "land", typeName);
+                    loadLayer(this.dataset.landType, "land", this.dataset.landName);
                 } else {
                     this.closest(".dropdown-item").classList.remove("selected");
                     removeLayer(this.dataset.landType, "land");
@@ -1531,15 +1295,13 @@
         });
 
         document.querySelectorAll(".status-checkbox").forEach(checkbox => {
-            checkbox.addEventListener("change", function() {
+            checkbox.addEventListener("change", function () {
                 const status = this.dataset.status;
-                
                 if (this.checked) {
                     if (!selectedStatuses.includes(status)) selectedStatuses.push(status);
                 } else {
                     selectedStatuses = selectedStatuses.filter(s => s !== status);
                 }
-                
                 updateLayerColors();
                 updateStats();
             });
@@ -1547,22 +1309,26 @@
 
         document.getElementById("searchInput").addEventListener("input", updateSearchDropdown);
 
-        document.addEventListener("click", (e) => {
+        document.addEventListener("click", e => {
             if (!e.target.closest(".search-box-wrapper")) {
                 document.getElementById("searchDropdown").classList.remove("active");
             }
         });
 
+        // ===== INIT =====
+        // FIX: all event listeners are attached in DOMContentLoaded
+        // to guarantee the DOM is ready before querySelector/getElementById calls
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
             loadEquipmentData();
-            
+
+            // Trigger default road selection (القطع)
             const defaultRoadCheckbox = document.getElementById("road-cut");
             if (defaultRoadCheckbox) {
                 defaultRoadCheckbox.checked = true;
                 defaultRoadCheckbox.dispatchEvent(new Event('change'));
             }
-            
+
             showAlert("✅ جاهز - اختر بند واحد من الطرق وبند واحد من قطع الأراضي أو لا تختر شيء", "success");
         });
     </script>
