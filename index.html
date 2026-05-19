@@ -149,7 +149,8 @@
             flex-shrink: 0;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
+            /* FIX: start from left (opposite side from stats) */
+            justify-content: flex-start;
             gap: 12px;
             position: relative;
             z-index: 101;
@@ -165,9 +166,9 @@
 
         .search-box-wrapper {
             position: relative;
-            width: 25%;
-            min-width: 180px;
-            max-width: 350px;
+            width: 30%;
+            min-width: 200px;
+            max-width: 400px;
             display: flex;
             align-items: center;
             z-index: 101;
@@ -194,28 +195,27 @@
             background: white;
         }
 
+        /* FIX: dropdown uses position:fixed and JS sets exact coords */
         .search-dropdown {
             position: fixed;
             background: white;
             border: none;
-            border-radius: 0 0 6px 6px;
+            border-radius: 0 0 8px 8px;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 5000;
+            z-index: 9999;
             display: none;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-            min-width: 200px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            border-top: 2px solid #7a3fa0;
         }
 
         .search-dropdown.active {
             display: block;
-            /* FIX: renamed animation to avoid conflict with alert's slideDown */
             animation: dropdownSlideDown 0.2s ease-out;
         }
 
-        /* FIX: renamed keyframe to dropdownSlideDown (was conflicting with alert's slideDown) */
         @keyframes dropdownSlideDown {
-            from { opacity: 0; transform: translateY(-8px); }
+            from { opacity: 0; transform: translateY(-6px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
@@ -311,6 +311,8 @@
         .sidebar-section {
             padding: 12px;
             border-bottom: 1px solid #e8e8e8;
+            /* needed so absolute dropdown-items are relative to this in mobile */
+            position: relative;
         }
 
         .sidebar-section:last-of-type { border-bottom: none; }
@@ -399,8 +401,8 @@
             padding: 12px;
             background: #f9f9f9;
             border-top: 2px solid #e0e0e0;
-            max-height: 220px;
-            overflow-y: auto;
+            /* height fits content — no fixed max-height in desktop either */
+            overflow-y: visible;
         }
 
         .legend-section::-webkit-scrollbar { width: 4px; }
@@ -420,37 +422,56 @@
             border-bottom: 2px solid #e0e0e0;
         }
 
+        /* FIX: each legend-item is a row: color box + label + checkbox stacked vertically */
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-size: 11px;
             color: #333;
             cursor: pointer;
-            padding: 5px 6px;
+            padding: 4px 6px;
             border-radius: 5px;
             transition: all 0.2s ease;
-            justify-content: flex-end;
+            /* right to left: checkbox | label | color box */
+            flex-direction: row;
+            justify-content: flex-start;
             gap: 6px;
         }
 
         .legend-item:last-child { margin-bottom: 0; }
         .legend-item:hover { background: rgba(122,63,160,0.08); }
 
+        /* checkbox on the far right */
         .legend-item input[type="checkbox"] {
             width: 14px;
             height: 14px;
             cursor: pointer;
             accent-color: #7a3fa0;
-            margin-left: 6px;
+            flex-shrink: 0;
+            order: 3;
+            margin: 0;
         }
 
+        /* label in the middle */
+        .legend-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 11px;
+            color: #333;
+            font-weight: 500;
+            text-align: right;
+            order: 2;
+        }
+
+        /* color box on the far left */
         .legend-color {
             width: 12px;
             height: 12px;
             border-radius: 3px;
             border: 1px solid #ccc;
             flex-shrink: 0;
+            order: 1;
         }
 
         .color-ongoing    { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
@@ -585,35 +606,31 @@
         @media (max-width: 768px) {
             .layout-container { flex-direction: column; }
 
-            /* left-section fills remaining space after sidebar */
             .left-section  { width: 100%; flex: 1; min-height: 0; }
 
-            /* top-bars: always column, shrinks to fit content */
             .top-bars {
-                flex-direction: column; /* search always below stats */
-                height: auto;           /* fit content, no fixed height */
+                flex-direction: column;
+                height: auto;
                 flex-shrink: 0;
             }
 
-            /* sum-bar: full width, height fits content */
             .sum-bar {
                 width: 100%;
                 height: auto;
                 padding: 12px;
             }
 
-            /* search-bar: full width, height fits content */
             .search-bar {
                 width: 100%;
                 height: auto;
                 flex-direction: row;
-                justify-content: flex-end;
+                justify-content: flex-start;
                 padding: 8px 12px;
                 gap: 8px;
             }
 
             .search-bar-label  { display: none; }
-            .search-box-wrapper{ width: 60%; min-width: auto; max-width: none; }
+            .search-box-wrapper{ width: 55%; min-width: auto; max-width: none; }
             .search-input      { padding: 6px 10px; font-size: 12px; }
 
             .stats-wrapper     { gap: 15px; }
@@ -625,30 +642,28 @@
 
             #map { flex: 1; height: auto; min-height: 0; }
 
-            /* sidebar: fits its content height exactly */
+            /* sidebar fits content height */
             .right-sidebar {
                 width: 100%;
-                height: auto;        /* fit content */
+                height: auto;
                 flex-shrink: 0;
                 border-left: none;
                 border-top: 2px solid #e0e0e0;
                 flex-direction: row;
                 overflow-x: auto;
-                overflow-y: hidden;
+                overflow-y: visible;
             }
 
             .items-section-header { display: none; }
 
-            /* items-section: horizontal scroll row */
             .items-section {
                 display: flex;
                 gap: 0;
                 overflow-x: auto;
-                overflow-y: hidden;
+                overflow-y: visible;
                 border-bottom: none;
                 flex-direction: row;
                 padding: 0;
-                /* height fits tallest item inside */
                 height: auto;
                 flex-shrink: 0;
                 flex: 1;
@@ -657,36 +672,52 @@
 
             .sidebar-section {
                 flex-shrink: 0;
-                min-width: 170px;
+                min-width: 160px;
                 border-right: 1px solid #e8e8e8;
                 border-bottom: none;
                 padding: 10px;
-                /* height fits its own content */
                 height: auto;
+                /* FIX: position relative so absolute children anchor here */
+                position: relative;
+                overflow: visible;
             }
 
-            /* legend: fits content height, no max-height overflow */
+            /* FIX: in mobile, dropdown-items float absolutely so they don't
+               push the sidebar frame up when expanded */
+            .dropdown-items {
+                position: absolute;
+                top: 100%;
+                right: 0;
+                left: 0;
+                background: white;
+                border: 1px solid #e0e0e0;
+                border-top: none;
+                border-radius: 0 0 8px 8px;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+                z-index: 2000;
+                padding: 6px;
+                gap: 5px;
+            }
+
             .legend-section {
                 flex-shrink: 0;
-                min-width: 190px;
+                min-width: 170px;
                 border-top: none;
                 border-left: 1px solid #e0e0e0;
-                height: auto;       /* fit content — no extra space below متوقف */
-                max-height: none;   /* remove the fixed max-height */
+                height: auto;
+                max-height: none;
                 padding: 10px;
                 overflow-y: visible;
             }
         }
 
         @media (max-width: 480px) {
-            /* top-bars always column, fits content */
             .top-bars       { flex-direction: column; height: auto; }
             .sum-bar        { width: 100%; height: auto; padding: 10px; }
             .search-bar     { width: 100%; height: auto; flex-direction: row; padding: 8px; gap: 8px; }
-
             .right-sidebar  { height: auto; flex-shrink: 0; }
-            .sidebar-section { min-width: 150px; padding: 8px; }
-            .legend-section  { min-width: 160px; padding: 8px; height: auto; max-height: none; }
+            .sidebar-section { min-width: 140px; padding: 8px; }
+            .legend-section  { min-width: 150px; padding: 8px; height: auto; max-height: none; }
             .stat-value      { font-size: 12px; }
             .search-input    { font-size: 11px; padding: 5px 8px; }
             .stats-group     { min-width: 160px; padding: 7px 8px; gap: 3px; }
@@ -695,7 +726,7 @@
             .stat-item       { gap: 1px; }
             .section-title   { font-size: 11px; }
             .expand-btn      { width: 20px; height: 20px; font-size: 13px; }
-            .search-box-wrapper { width: 70%; }
+            .search-box-wrapper { width: 65%; }
         }
     </style>
 </head>
@@ -838,29 +869,29 @@
                 <div class="legend">
                     <div class="legend-title">📋 الحالات:</div>
                     <div class="legend-item">
-                        <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
-                        <label>جاري التنفيذ</label>
                         <div class="legend-color color-ongoing"></div>
+                        <label>جاري التنفيذ</label>
+                        <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
                     </div>
                     <div class="legend-item">
-                        <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
-                        <label>متاح للتنفيذ</label>
                         <div class="legend-color color-available"></div>
+                        <label>متاح للتنفيذ</label>
+                        <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
                     </div>
                     <div class="legend-item">
-                        <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
-                        <label>غير متاح</label>
                         <div class="legend-color color-unavailable"></div>
+                        <label>غير متاح</label>
+                        <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
                     </div>
                     <div class="legend-item">
-                        <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
-                        <label>تم الانتهاء</label>
                         <div class="legend-color color-completed"></div>
+                        <label>تم الانتهاء</label>
+                        <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
                     </div>
                     <div class="legend-item">
-                        <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
-                        <label>متوقف</label>
                         <div class="legend-color color-stopped"></div>
+                        <label>متوقف</label>
+                        <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
                     </div>
                 </div>
             </div>
@@ -1192,6 +1223,18 @@
 
         // ===== SEARCH =====
 
+        function positionDropdown() {
+            const dropdown = document.getElementById("searchDropdown");
+            const searchBox = document.querySelector('.search-box-wrapper');
+            if (!searchBox || !dropdown.classList.contains("active")) return;
+            const rect = searchBox.getBoundingClientRect();
+            dropdown.style.top    = rect.bottom + 'px';
+            dropdown.style.left   = rect.left + 'px';
+            dropdown.style.width  = rect.width + 'px';
+            // clear right in case it was set before
+            dropdown.style.right  = 'auto';
+        }
+
         function updateSearchDropdown() {
             const dropdown   = document.getElementById("searchDropdown");
             const input      = document.getElementById("searchInput");
@@ -1239,14 +1282,13 @@
             });
 
             if (results.length === 0) {
-                dropdown.innerHTML = "<div style='padding:10px;text-align:right;color:#999'>لم يتم العثور على نتائج</div>";
-                dropdown.classList.add("active");
+                dropdown.innerHTML = "<div style='padding:10px;text-align:right;color:#999;font-size:12px'>لم يتم العثور على نتائج</div>";
             } else {
                 results.forEach(item => {
                     const div = document.createElement("div");
                     div.className = "search-item";
                     div.innerHTML = `
-                        <div style="display:flex;gap:8px;align-items:center;">
+                        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
                             <div class="search-item-type">${item.type}</div>
                             <div class="search-item-status" style="background:${getStatusColor(item.status)}">${item.status}</div>
                         </div>
@@ -1263,15 +1305,11 @@
                     });
                     dropdown.appendChild(div);
                 });
-                dropdown.classList.add("active");
             }
 
-            // Position dropdown under input
-            const searchBox = document.querySelector('.search-box-wrapper');
-            const rect = searchBox.getBoundingClientRect();
-            dropdown.style.top   = rect.bottom + 'px';
-            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
-            dropdown.style.width = rect.width + 'px';
+            dropdown.classList.add("active");
+            // Position AFTER adding to DOM so dimensions are known
+            positionDropdown();
         }
 
         // ===== EVENT LISTENERS =====
@@ -1342,6 +1380,9 @@
         });
 
         document.getElementById("searchInput").addEventListener("input", updateSearchDropdown);
+
+        // Reposition dropdown on window resize (orientation change on mobile etc.)
+        window.addEventListener("resize", positionDropdown);
 
         document.addEventListener("click", e => {
             if (!e.target.closest(".search-box-wrapper")) {
