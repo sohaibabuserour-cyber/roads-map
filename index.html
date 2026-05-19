@@ -1133,17 +1133,20 @@
             document.body.appendChild(alert);
             setTimeout(() => alert.remove(), 3000);
         }
-
-        function initMap() {
-            map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
-            
-const bounds = [
+function setMapBounds() {
+    const bounds = [
         [21.2799972, 39.6874136], // SW
         [21.3067229, 39.7212058]  // NE
     ];
 
     map.fitBounds(bounds);
-map.setMaxBounds(bounds);
+    map.setMaxBounds(bounds);
+}
+
+        function initMap() {
+            map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
+            setMapBounds()
+
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
@@ -1368,7 +1371,7 @@ map.setMaxBounds(bounds);
                         layer.addTo(map);
                     })
                     .catch(e => console.error(`خطأ في تحميل ${geoJsonFile}:`, e));
-
+setMapBounds()
                 updateStats();
             });
         }
@@ -1389,6 +1392,7 @@ map.setMaxBounds(bounds);
                     delete selectedLandSheets[sheetId];
                 }
             }
+            setMapBounds()
             updateStats();
         }
 
