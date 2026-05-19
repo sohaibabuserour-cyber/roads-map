@@ -1107,26 +1107,7 @@
         };
 
         const equipmentSheetId = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
-function zoomToAllLayers() {
-    let layers = [];
 
-    Object.values(roadLayers).forEach(l => {
-        if (l) layers.push(l);
-    });
-
-    Object.values(landLayers).forEach(l => {
-        if (l) layers.push(l);
-    });
-
-    if (layers.length === 0) return;
-
-    const group = L.featureGroup(layers);
-
-    map.fitBounds(group.getBounds(), {
-        padding: [0, 0],
-        maxZoom: 40
-    });
-}
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
@@ -1377,11 +1358,6 @@ function zoomToAllLayers() {
                         }
 
                         layer.addTo(map);
-                        
-setTimeout(() => {
-        zoomToAllLayers();
-    }, 100)
-
                     })
                     .catch(e => console.error(`خطأ في تحميل ${geoJsonFile}:`, e));
 
@@ -1404,11 +1380,6 @@ setTimeout(() => {
                     delete landsData[sheetId];
                     delete selectedLandSheets[sheetId];
                 }
-                
-setTimeout(() => {
-        zoomToAllLayers();
-    }, 100);
-
             }
             updateStats();
         }
@@ -1591,7 +1562,6 @@ setTimeout(() => {
                 defaultRoadCheckbox.checked = true;
                 defaultRoadCheckbox.dispatchEvent(new Event('change'));
             }
-            
             
             showAlert("✅ جاهز - اختر بند واحد من الطرق وبند واحد من قطع الأراضي أو لا تختر شيء", "success");
         });
