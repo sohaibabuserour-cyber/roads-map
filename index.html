@@ -208,7 +208,7 @@
         }
 
         .search-dropdown {
-            position: fixed;
+            position: relative;
             background: white;
             border: none;
             border-radius: 0 0 6px 6px;
@@ -1465,13 +1465,7 @@
 
             dropdown.classList.add("active");
             
-            // تحديد موضع الـ dropdown بشكل صحيح
-            const searchBox = document.querySelector('.search-box-wrapper');
-            const rect = searchBox.getBoundingClientRect();
-            dropdown.style.position = 'fixed';
-            dropdown.style.top = (rect.bottom) + 'px';
-            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
-            dropdown.style.width = rect.width + 'px';
+           
         }
 
         document.getElementById("roadsExpandBtn").addEventListener("click", function() {
