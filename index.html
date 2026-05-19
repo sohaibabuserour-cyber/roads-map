@@ -24,91 +24,177 @@
             height: 100vh;
         }
 
-        /* ===== TOP PANEL (إجماليات) ===== */
-        .top-panel {
+        /* ===== MAIN LAYOUT ===== */
+        .layout-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        /* ===== LEFT SECTION (85% width) ===== */
+        .left-section {
+            width: 85%;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        /* ===== TOP BARS SECTION (35% height) ===== */
+        .top-bars {
+            width: 100%;
+            height: 35%;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex-shrink: 0;
+            background: white;
+            overflow: visible;
+            position: relative;
+            z-index: 100;
+        }
+
+        /* ===== SUM BAR (70% of top-bars) ===== */
+        .sum-bar {
+            width: 100%;
+            height: 70%;
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
             color: white;
-            padding: 14px 16px;
+            padding: 16px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .sum-bar::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .sum-bar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sum-bar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
         }
 
         .stats-wrapper {
             display: flex;
-            gap: 40px;
-            flex-wrap: wrap;
+            gap: 30px;
+            flex-wrap: nowrap;
+            min-width: min-content;
         }
 
         .stats-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            flex-shrink: 0;
+            min-width: 280px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
         }
 
         .stats-group-title {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            opacity: 0.95;
+            opacity: 0.9;
             border-bottom: 2px solid rgba(255, 255, 255, 0.3);
             padding-bottom: 6px;
         }
 
         .stats-group-type {
-            font-size: 14px;
+            font-size: 12px;
             opacity: 0.85;
             font-weight: 500;
             margin-top: 2px;
+            height: 18px;
         }
 
         .stat-row {
             display: flex;
-            gap: 16px;
+            gap: 20px;
             align-items: center;
         }
 
         .stat-item {
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 4px;
+            text-align: center;
         }
 
         .stat-label {
-            font-size: 14px;
-            opacity: 0.85;
+            font-size: 11px;
+            opacity: 0.8;
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         .stat-value {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 700;
             color: #ffd700;
+            line-height: 1.2;
         }
 
-        /* ===== SEARCH PANEL ===== */
-        .search-panel {
+        /* ===== SEARCH BAR (30% of top-bars) ===== */
+        .search-bar {
+            width: 100%;
+            height: 30%;
             background: white;
             padding: 10px 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.05);
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            position: relative;
+            z-index: 101;
+        }
+
+        .search-bar-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            opacity: 0.7;
+            white-space: nowrap;
         }
 
         .search-box-wrapper {
             position: relative;
-            max-width: 25%;
+            width: 25%;
+            min-width: 180px;
+            max-width: 350px;
+            display: flex;
+            align-items: center;
+            z-index: 101;
         }
 
         .search-input {
             width: 100%;
-            padding: 10px 14px;
-            font-size: 14px;
-            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 6px;
             border: 1.5px solid #e0e0e0;
             outline: none;
             transition: all 0.3s ease;
             font-family: inherit;
             color: #333;
+            background: #fafafa;
         }
 
         .search-input::placeholder {
@@ -117,24 +203,21 @@
 
         .search-input:focus {
             border-color: #7a3fa0;
-            box-shadow: 0 0 10px rgba(122, 63, 160, 0.2);
-            background: #f9f9f9;
+            box-shadow: 0 0 8px rgba(122, 63, 160, 0.15);
+            background: white;
         }
 
         .search-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            left: 0;
+            position: fixed;
             background: white;
             border: none;
-            border-radius: 0 0 8px 8px;
+            border-radius: 0 0 6px 6px;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 3000;
+            z-index: 5000;
             display: none;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-            margin-top: 2px;
+            min-width: 200px;
         }
 
         .search-dropdown.active {
@@ -154,7 +237,7 @@
         }
 
         .search-item {
-            padding: 12px 14px;
+            padding: 10px 12px;
             border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -166,7 +249,6 @@
 
         .search-item:hover {
             background: rgba(122, 63, 160, 0.05);
-            padding-left: 16px;
         }
 
         .search-item-name {
@@ -174,10 +256,11 @@
             text-align: right;
             font-weight: 500;
             color: #333;
+            font-size: 13px;
         }
 
         .search-item-type {
-            font-size: 11px;
+            font-size: 10px;
             padding: 3px 8px;
             background: #7a3fa0;
             color: white;
@@ -197,26 +280,20 @@
             flex-shrink: 0;
         }
 
-        /* ===== MAIN CONTAINER ===== */
-        .main-container {
-            display: flex;
-            flex: 1;
-            gap: 0;
-            border-top: 3px solid #e0e0e0;
-            overflow: hidden;
-        }
-
+        /* ===== MAP (65% height) ===== */
         #map {
             flex: 1;
             width: 100%;
-            height: 100%;
+            height: 65%;
+            z-index: 10;
         }
 
-        /* ===== RIGHT SIDEBAR ===== */
+        /* ===== RIGHT SIDEBAR (15% width, 100% height) ===== */
         .right-sidebar {
-            width: 280px;
+            width: 15%;
+            height: 100%;
             background: white;
-            border-left: 1px solid #e0e0e0;
+            border-left: 2px solid #e0e0e0;
             box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
@@ -226,16 +303,16 @@
 
         /* ===== ITEMS SECTION HEADER ===== */
         .items-section-header {
-            padding: 16px;
-            background: white;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
             border-bottom: 2px solid #e0e0e0;
             flex-shrink: 0;
         }
 
         .items-header-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
-            color: #333;
+            color: white;
             text-align: right;
         }
 
@@ -248,7 +325,7 @@
         }
 
         .items-section::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
 
         .items-section::-webkit-scrollbar-track {
@@ -261,7 +338,7 @@
         }
 
         .sidebar-section {
-            padding: 16px;
+            padding: 12px;
             border-bottom: 1px solid #e8e8e8;
         }
 
@@ -270,10 +347,10 @@
         }
 
         .section-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #333;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             text-align: right;
             display: flex;
             align-items: center;
@@ -285,11 +362,11 @@
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
             color: white;
             border: none;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -309,7 +386,7 @@
         .dropdown-items {
             display: none;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .dropdown-items.active {
@@ -319,10 +396,10 @@
         .dropdown-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
+            gap: 8px;
+            padding: 7px 8px;
             background: linear-gradient(90deg, rgba(122, 63, 160, 0.05) 0%, transparent 100%);
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
             transition: all 0.2s ease;
             border: 1px solid #e0e0e0;
@@ -334,8 +411,8 @@
         }
 
         .dropdown-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             cursor: pointer;
             accent-color: #7a3fa0;
             flex-shrink: 0;
@@ -344,7 +421,7 @@
         .dropdown-item label {
             flex: 1;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             color: #333;
             font-weight: 500;
             text-align: right;
@@ -358,10 +435,10 @@
         /* ===== LEGEND SECTION (حالات التقدم) ===== */
         .legend-section {
             flex-shrink: 0;
-            padding: 16px;
+            padding: 12px;
             background: #f9f9f9;
             border-top: 2px solid #e0e0e0;
-            max-height: 280px;
+            max-height: 220px;
             overflow-y: auto;
         }
 
@@ -383,28 +460,28 @@
         }
 
         .legend-title {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: 600;
             color: #7a3fa0;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
             border-bottom: 2px solid #e0e0e0;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
-            font-size: 12px;
+            margin-bottom: 6px;
+            font-size: 11px;
             color: #333;
             cursor: pointer;
-            padding: 6px 8px;
-            border-radius: 6px;
+            padding: 5px 6px;
+            border-radius: 5px;
             transition: all 0.2s ease;
             justify-content: flex-end;
-            gap: 8px;
+            gap: 6px;
         }
 
         .legend-item:last-child {
@@ -413,21 +490,20 @@
 
         .legend-item:hover {
             background: rgba(122, 63, 160, 0.08);
-            padding-right: 12px;
         }
 
         .legend-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             cursor: pointer;
             accent-color: #7a3fa0;
-            margin-left: 8px;
+            margin-left: 6px;
         }
 
         .legend-color {
-            width: 14px;
-            height: 14px;
-            border-radius: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
             border: 1px solid #ccc;
             flex-shrink: 0;
         }
@@ -570,23 +646,86 @@
         .alert-success { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; }
 
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 1024px) {
+        @media (max-width: 1200px) {
+            .left-section {
+                width: 80%;
+            }
+
             .right-sidebar {
-                width: 250px;
+                width: 20%;
+            }
+
+            .stats-group {
+                min-width: 250px;
+                padding: 10px 14px;
+                gap: 6px;
+            }
+
+            .stat-row {
+                gap: 15px;
+            }
+
+            .stat-value {
+                font-size: 16px;
+            }
+
+            .search-box-wrapper {
+                width: 28%;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .left-section {
+                width: 78%;
+            }
+
+            .right-sidebar {
+                width: 22%;
+            }
+
+            .stats-group {
+                min-width: 220px;
+                padding: 9px 12px;
+                gap: 5px;
+            }
+
+            .stat-row {
+                gap: 12px;
+            }
+
+            .stat-item {
+                gap: 2px;
+            }
+
+            .stat-value {
+                font-size: 15px;
+            }
+
+            .stats-group-title {
+                font-size: 12px;
+            }
+
+            .search-box-wrapper {
+                width: 30%;
+                min-width: 160px;
             }
         }
 
         @media (max-width: 768px) {
-            .main-container {
+            .layout-container {
                 flex-direction: column;
+            }
+
+            .left-section {
+                width: 100%;
+                height: 60%;
             }
 
             .right-sidebar {
                 width: 100%;
-                height: auto;
+                height: 40%;
                 border-left: none;
-                border-top: 1px solid #e0e0e0;
-                max-height: 40vh;
+                border-top: 2px solid #e0e0e0;
                 flex-direction: row;
                 overflow-x: auto;
                 overflow-y: hidden;
@@ -598,12 +737,12 @@
 
             .items-section {
                 display: flex;
-                gap: 12px;
+                gap: 10px;
                 overflow-x: auto;
                 overflow-y: hidden;
                 border-bottom: none;
                 flex-direction: row;
-                padding: 0 8px;
+                padding: 0 6px;
             }
 
             .items-section::-webkit-scrollbar {
@@ -613,47 +752,124 @@
 
             .sidebar-section {
                 flex-shrink: 0;
-                min-width: 180px;
+                min-width: 170px;
                 border-right: 1px solid #e8e8e8;
                 border-bottom: none;
-                padding: 12px;
+                padding: 10px;
             }
 
             .legend-section {
                 flex-shrink: 0;
-                min-width: 200px;
+                min-width: 190px;
                 border-top: none;
                 border-left: 1px solid #e0e0e0;
                 max-height: 100%;
-                padding: 12px;
+                padding: 10px;
+                overflow-y: auto;
             }
 
             #map {
                 height: 100%;
             }
 
+            .top-bars {
+                height: 40%;
+                flex-direction: row;
+                overflow: visible;
+            }
+
+            .sum-bar {
+                width: 70%;
+                height: 100%;
+                padding: 12px;
+                gap: 0;
+            }
+
+            .search-bar {
+                width: 30%;
+                height: 100%;
+                flex-direction: column;
+                justify-content: center;
+                padding: 8px 10px;
+                gap: 6px;
+            }
+
+            .search-bar-label {
+                display: none;
+            }
+
+            .search-box-wrapper {
+                width: 100%;
+                min-width: auto;
+                max-width: none;
+            }
+
+            .search-input {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
             .stats-wrapper {
-                gap: 12px;
+                gap: 15px;
+            }
+
+            .stats-group {
+                min-width: 200px;
+                padding: 8px 10px;
+                gap: 4px;
+            }
+
+            .stat-row {
+                gap: 10px;
             }
 
             .stat-value {
                 font-size: 14px;
             }
+
+            .stats-group-title {
+                font-size: 11px;
+                padding-bottom: 4px;
+            }
+
+            .stat-label {
+                font-size: 10px;
+            }
         }
 
         @media (max-width: 480px) {
+            .top-bars {
+                height: 45%;
+                flex-direction: column;
+                overflow: visible;
+            }
+
+            .sum-bar {
+                width: 100%;
+                height: 60%;
+                padding: 10px;
+            }
+
+            .search-bar {
+                width: 100%;
+                height: 40%;
+                flex-direction: row;
+                padding: 8px;
+                gap: 8px;
+            }
+
             .right-sidebar {
-                max-height: 35vh;
+                height: 35%;
             }
 
             .sidebar-section {
-                min-width: 160px;
-                padding: 10px;
+                min-width: 150px;
+                padding: 8px;
             }
 
             .legend-section {
-                min-width: 170px;
-                padding: 10px;
+                min-width: 160px;
+                padding: 8px;
             }
 
             .stat-value {
@@ -661,16 +877,40 @@
             }
 
             .search-input {
-                font-size: 13px;
-                padding: 8px 12px;
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+
+            .stats-group {
+                min-width: 160px;
+                padding: 7px 8px;
+                gap: 3px;
             }
 
             .stats-group-title {
-                font-size: 11px;
+                font-size: 10px;
+            }
+
+            .stat-row {
+                gap: 8px;
+            }
+
+            .stat-item {
+                gap: 1px;
             }
 
             .section-title {
-                font-size: 12px;
+                font-size: 11px;
+            }
+
+            .expand-btn {
+                width: 20px;
+                height: 20px;
+                font-size: 13px;
+            }
+
+            .search-box-wrapper {
+                width: 100%;
             }
         }
     </style>
@@ -678,63 +918,70 @@
 
 <body>
 
-    <!-- TOP PANEL: الإجماليات -->
-    <div class="top-panel">
-        <div class="stats-wrapper">
-            <!-- ROADS STATS -->
-            <div class="stats-group">
-                <div class="stats-group-title">📍 الطرق</div>
-                <div class="stats-group-type" id="roadsType">-</div>
-                <div class="stat-row">
-                    <div class="stat-item">
-                        <div class="stat-label">الإجمالي</div>
-                        <div class="stat-value" id="rTotal">0</div>
+    <!-- LAYOUT CONTAINER -->
+    <div class="layout-container">
+        <!-- LEFT SECTION: Map and Top Bars -->
+        <div class="left-section">
+            <!-- TOP BARS: Sum Bar + Search Bar -->
+            <div class="top-bars">
+                <!-- SUM BAR -->
+                <div class="sum-bar">
+                    <div class="stats-wrapper">
+                        <!-- ROADS STATS -->
+                        <div class="stats-group">
+                            <div class="stats-group-title">📍 الطرق</div>
+                            <div class="stats-group-type" id="roadsType">-</div>
+                            <div class="stat-row">
+                                <div class="stat-item">
+                                    <div class="stat-label">الإجمالي</div>
+                                    <div class="stat-value" id="rTotal">0</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">المنفذ</div>
+                                    <div class="stat-value" id="rDone">0</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">المتبقي</div>
+                                    <div class="stat-value" id="rRemaining">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LANDS STATS -->
+                        <div class="stats-group">
+                            <div class="stats-group-title">🏗️ قطع الأراضي</div>
+                            <div class="stats-group-type" id="landsType">-</div>
+                            <div class="stat-row">
+                                <div class="stat-item">
+                                    <div class="stat-label">الإجمالي</div>
+                                    <div class="stat-value" id="lTotal">0</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">المنفذ</div>
+                                    <div class="stat-value" id="lDone">0</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">المتبقي</div>
+                                    <div class="stat-value" id="lRemaining">0</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <div class="stat-label">المنفذ</div>
-                        <div class="stat-value" id="rDone">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">المتبقي</div>
-                        <div class="stat-value" id="rRemaining">0</div>
+                </div>
+
+                <!-- SEARCH BAR -->
+                <div class="search-bar">
+                    <div class="search-bar-label">🔍</div>
+                    <div class="search-box-wrapper">
+                        <input type="text" class="search-input" id="searchInput" placeholder="ابحث......">
+                        <div class="search-dropdown" id="searchDropdown"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- LANDS STATS -->
-            <div class="stats-group">
-                <div class="stats-group-title">🏗️ قطع الأراضي</div>
-                <div class="stats-group-type" id="landsType">-</div>
-                <div class="stat-row">
-                    <div class="stat-item">
-                        <div class="stat-label">الإجمالي</div>
-                        <div class="stat-value" id="lTotal">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">المنفذ</div>
-                        <div class="stat-value" id="lDone">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">المتبقي</div>
-                        <div class="stat-value" id="lRemaining">0</div>
-                    </div>
-                </div>
-            </div>
+            <!-- MAP -->
+            <div id="map"></div>
         </div>
-    </div>
-
-    <!-- SEARCH PANEL -->
-    <div class="search-panel">
-        <div class="search-box-wrapper">
-            <input type="text" class="search-input" id="searchInput" placeholder="ابحث......">
-            <div class="search-dropdown" id="searchDropdown"></div>
-        </div>
-    </div>
-
-    <!-- MAIN CONTAINER -->
-    <div class="main-container">
-        <!-- MAP -->
-        <div id="map"></div>
 
         <!-- RIGHT SIDEBAR -->
         <div class="right-sidebar">
@@ -794,10 +1041,10 @@
                 </div>
             </div>
 
-            <!-- LEGEND SECTION (حالات التقدم - ثابت) -->
+            <!-- LEGEND SECTION (حالات التقدم) -->
             <div class="legend-section">
                 <div class="legend">
-                    <div class="legend-title">📋 حالات التقدم:</div>
+                    <div class="legend-title">📋 الحالات:</div>
                     <div class="legend-item">
                         <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
                         <label>جاري التنفيذ</label>
@@ -961,7 +1208,6 @@
             let roadTypeNames = [];
             let landTypeNames = [];
 
-            // حساب إجماليات الطرق
             Object.entries(selectedRoadSheets).forEach(([sheetId, typeName]) => {
                 if (roadsData[sheetId]) {
                     roadTypeNames.push(typeName);
@@ -977,7 +1223,6 @@
                 }
             });
 
-            // حساب إجماليات قطع الأراضي
             Object.entries(selectedLandSheets).forEach(([sheetId, typeName]) => {
                 if (landsData[sheetId]) {
                     landTypeNames.push(typeName);
@@ -1005,7 +1250,6 @@
         }
 
         function updateLayerColors() {
-            // تحديث الطبقات المرئية
             Object.keys(roadLayers).forEach(sheetId => {
                 const layer = roadLayers[sheetId];
                 const data = roadsData[sheetId];
@@ -1154,7 +1398,6 @@
 
             let results = [];
 
-            // البحث في الطرق
             Object.entries(roadsData).forEach(([sheetId, data]) => {
                 Object.values(data).forEach(item => {
                     const name = (item["ROAD NAME"] || "").toString().trim().toLowerCase();
@@ -1172,7 +1415,6 @@
                 });
             });
 
-            // البحث في قطع الأراضي
             Object.entries(landsData).forEach(([sheetId, data]) => {
                 Object.values(data).forEach(item => {
                     const name = (item["BLOCK NAME"] || "").toString().trim().toLowerCase();
@@ -1222,9 +1464,16 @@
             });
 
             dropdown.classList.add("active");
+            
+            // تحديد موضع الـ dropdown بشكل صحيح
+            const searchBox = document.querySelector('.search-box-wrapper');
+            const rect = searchBox.getBoundingClientRect();
+            dropdown.style.position = 'fixed';
+            dropdown.style.top = (rect.bottom) + 'px';
+            dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+            dropdown.style.width = rect.width + 'px';
         }
 
-        // Event Listeners
         document.getElementById("roadsExpandBtn").addEventListener("click", function() {
             roadsExpanded = !roadsExpanded;
             this.classList.toggle("active");
@@ -1237,54 +1486,44 @@
             document.getElementById("landsItems").classList.toggle("active");
         });
 
-        // معالجات Checkboxes للطرق - اختيار واحد فقط (مثل Radio لكن يمكن إلغاء التحديد)
         document.querySelectorAll("input[name='roads-check']").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
                 if (this.checked) {
-                    // فك تحديد باقي الـ checkboxes
                     document.querySelectorAll("input[name='roads-check']").forEach(cb => {
                         if (cb !== this) {
                             cb.checked = false;
                             cb.closest(".dropdown-item").classList.remove("selected");
-                            // إزالة الطبقة المرتبطة
                             removeLayer(cb.dataset.roadType, "road");
                         }
                     });
                     
-                    // تحميل الطبقة الجديدة
                     const sheetId = this.dataset.roadType;
                     const typeName = this.dataset.roadName;
                     this.closest(".dropdown-item").classList.add("selected");
                     loadLayer(sheetId, "road", typeName);
                 } else {
-                    // إزالة الطبقة عند إلغاء التحديد
                     this.closest(".dropdown-item").classList.remove("selected");
                     removeLayer(this.dataset.roadType, "road");
                 }
             });
         });
 
-        // معالجات Checkboxes لقطع الأراضي - اختيار واحد فقط (مثل Radio لكن يمكن إلغاء التحديد)
         document.querySelectorAll("input[name='lands-check']").forEach(checkbox => {
             checkbox.addEventListener("change", function() {
                 if (this.checked) {
-                    // فك تحديد باقي الـ checkboxes
                     document.querySelectorAll("input[name='lands-check']").forEach(cb => {
                         if (cb !== this) {
                             cb.checked = false;
                             cb.closest(".dropdown-item").classList.remove("selected");
-                            // إزالة الطبقة المرتبطة
                             removeLayer(cb.dataset.landType, "land");
                         }
                     });
                     
-                    // تحميل الطبقة الجديدة
                     const sheetId = this.dataset.landType;
                     const typeName = this.dataset.landName;
                     this.closest(".dropdown-item").classList.add("selected");
                     loadLayer(sheetId, "land", typeName);
                 } else {
-                    // إزالة الطبقة عند إلغاء التحديد
                     this.closest(".dropdown-item").classList.remove("selected");
                     removeLayer(this.dataset.landType, "land");
                 }
@@ -1314,19 +1553,17 @@
             }
         });
 
-        // تحميل Default: "القطع" من الطرق تلقائياً عند البداية
         document.addEventListener("DOMContentLoaded", () => {
             initMap();
             loadEquipmentData();
             
-            // تحديد "القطع" كـ default
             const defaultRoadCheckbox = document.getElementById("road-cut");
             if (defaultRoadCheckbox) {
                 defaultRoadCheckbox.checked = true;
                 defaultRoadCheckbox.dispatchEvent(new Event('change'));
             }
             
-            showAlert("✅ جاهز - اختر بند واحد من الطرق وبند واحد من قطع الأراضي أو لا تختار شيء", "success");
+            showAlert("✅ جاهز - اختر بند واحد من الطرق وبند واحد من قطع الأراضي أو لا تختر شيء", "success");
         });
     </script>
 
