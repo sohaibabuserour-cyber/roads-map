@@ -1136,6 +1136,14 @@
 
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
+            
+const bounds = [
+        [21.2799972, 39.6874136], // SW
+        [21.3067229, 39.7212058]  // NE
+    ];
+
+    map.fitBounds(bounds);
+map.setMaxBounds(bounds);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
