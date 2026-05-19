@@ -1358,6 +1358,7 @@
                         }
 
                         layer.addTo(map);
+                        zoomToAllLayers();
                     })
                     .catch(e => console.error(`خطأ في تحميل ${geoJsonFile}:`, e));
 
@@ -1562,6 +1563,24 @@
                 defaultRoadCheckbox.checked = true;
                 defaultRoadCheckbox.dispatchEvent(new Event('change'));
             }
+            function zoomToAllLayers() {
+    let allLayers = L.featureGroup();
+
+    Object.values(roadLayers).forEach(layer => {
+        allLayers.addLayer(layer);
+    });
+
+    Object.values(landLayers).forEach(layer => {
+        allLayers.addLayer(layer);
+    });
+
+    if (allLayers.getLayers().length > 0) {
+        map.fitBounds(allLayers.getBounds(), {
+            padding: [20, 20],   // مسافة من الأطراف
+            maxZoom: 18          // يمنع الزوم زيادة زيادة
+        });
+    }
+}
             
             showAlert("✅ جاهز - اختر بند واحد من الطرق وبند واحد من قطع الأراضي أو لا تختر شيء", "success");
         });
