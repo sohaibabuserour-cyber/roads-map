@@ -1001,6 +1001,11 @@
     </div>
 
     <script>
+        // ===== STORAGE KEYS =====
+        const STORAGE_CATEGORIES_KEY = 'mapCategories';
+        const STORAGE_SELECTED_ITEMS_KEY = 'mapSelectedItems';
+        const STORAGE_SELECTED_STATUSES_KEY = 'mapSelectedStatuses';
+
         // ===== STATE =====
         let map, allLayers = {};
         let allData = {};
@@ -1031,6 +1036,49 @@
         };
 
         const equipmentSheetId = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
+
+        // ===== LOCAL STORAGE FUNCTIONS =====
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_CATEGORIES_KEY, JSON.stringify(categories));
+            localStorage.setItem(STORAGE_SELECTED_ITEMS_KEY, JSON.stringify(selectedItems));
+            localStorage.setItem(STORAGE_SELECTED_STATUSES_KEY, JSON.stringify(selectedStatuses));
+            console.log("✅ تم حفظ البيانات في LocalStorage");
+        }
+
+        function loadFromStorage() {
+            const savedCategories = localStorage.getItem(STORAGE_CATEGORIES_KEY);
+            const savedSelectedItems = localStorage.getItem(STORAGE_SELECTED_ITEMS_KEY);
+            const savedSelectedStatuses = localStorage.getItem(STORAGE_SELECTED_STATUSES_KEY);
+
+            if (savedCategories) {
+                categories = JSON.parse(savedCategories);
+                console.log("✅ تم تحميل البنود من LocalStorage", categories);
+            }
+
+            if (savedSelectedItems) {
+                selectedItems = JSON.parse(savedSelectedItems);
+                console.log("✅ تم تحميل العناصر المختارة من LocalStorage");
+            }
+
+            if (savedSelectedStatuses) {
+                selectedStatuses = JSON.parse(savedSelectedStatuses);
+                console.log("✅ تم تحميل الحالات المختارة من LocalStorage");
+            }
+        }
+
+        function clearAllStorage() {
+            if (confirm("هل تريد حذف جميع البيانات المحفوظة؟")) {
+                localStorage.removeItem(STORAGE_CATEGORIES_KEY);
+                localStorage.removeItem(STORAGE_SELECTED_ITEMS_KEY);
+                localStorage.removeItem(STORAGE_SELECTED_STATUSES_KEY);
+                categories = [];
+                selectedItems = {};
+                selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
+                renderItems();
+                updateStats();
+                showAlert("✅ تم حذف جميع البيانات", "success");
+            }
+        }
 
         // ===== HELPERS =====
         function formatNumber(val) {
@@ -1415,6 +1463,8 @@
                             this.closest(".dropdown-item").classList.remove("selected");
                             removeLayer(sheetId);
                         }
+
+                        saveToStorage();
                     });
                 });
             });
@@ -1451,6 +1501,7 @@
             renderItems();
             updateCategorySelect();
             closeAddCategoryModal();
+            saveToStorage();
             showAlert("✅ تمت إضافة البند الرئيسي", "success");
         }
 
@@ -1508,6 +1559,7 @@
             cat.subitems.push(newSubitem);
             renderItems();
             closeAddSubitemModal();
+            saveToStorage();
             showAlert("✅ تمت إضافة البند الفرعي", "success");
         }
 
@@ -1524,6 +1576,7 @@
                 renderItems();
                 updateCategorySelect();
                 updateStats();
+                saveToStorage();
                 showAlert("✅ تم حذف البند", "success");
             }
         }
@@ -1543,6 +1596,7 @@
                 }
                 updateLayerColors();
                 updateStats();
+                saveToStorage();
             });
         });
 
@@ -1559,11 +1613,31 @@
 
         // ===== INIT =====
         document.addEventListener("DOMContentLoaded", () => {
+            // تحميل البيانات من LocalStorage أولاً
+            loadFromStorage();
+
             initMap();
             loadEquipmentData();
             renderItems();
             updateCategorySelect();
-            showAlert("✅ جاهز - اضغط على الأزرار لإضافة بنود جديدة", "success");
+
+            // إعادة تحميل البنود المختارة
+            categories.forEach(cat => {
+                cat.subitems.forEach(sub => {
+                    if (selectedItems[sub.id]) {
+                        loadLayer(sub.sheetId, sub.name, sub.geoJsonFile);
+                    }
+                });
+            });
+
+            // تحديث الحالات المختارة في الـ Legend
+            document.querySelectorAll(".status-checkbox").forEach(checkbox => {
+                const status = checkbox.dataset.status;
+                checkbox.checked = selectedStatuses.includes(status);
+            });
+
+            updateStats();
+            showAlert("✅ تم تحميل البيانات المحفوظة بنجاح", "success");
         });
     </script>
 
