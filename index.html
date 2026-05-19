@@ -299,7 +299,8 @@
         /* ===== ITEMS SECTION ===== */
         .items-section {
             flex: 1;
-            overflow-y: auto;
+            overflow-y: visible;
+            overflow-x: hidden;
             border-bottom: 2px solid #e0e0e0;
             padding: 0;
         }
@@ -311,8 +312,8 @@
         .sidebar-section {
             padding: 12px;
             border-bottom: 1px solid #e8e8e8;
-            /* needed so absolute dropdown-items are relative to this in mobile */
             position: relative;
+            overflow: visible;
         }
 
         .sidebar-section:last-of-type { border-bottom: none; }
@@ -352,6 +353,18 @@
             display: none;
             flex-direction: column;
             gap: 6px;
+            /* always float — never push siblings */
+            position: absolute;
+            top: calc(100% - 1px)
+            right: 0;
+            left: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.13);
+            z-index: 3000;
+            padding: 6px;
         }
 
         .dropdown-items.active { display: flex; }
@@ -677,26 +690,8 @@
                 border-bottom: none;
                 padding: 10px;
                 height: auto;
-                /* FIX: position relative so absolute children anchor here */
                 position: relative;
                 overflow: visible;
-            }
-
-            /* FIX: in mobile, dropdown-items float absolutely so they don't
-               push the sidebar frame up when expanded */
-            .dropdown-items {
-                position: absolute;
-                top: 100%;
-                right: 0;
-                left: 0;
-                background: white;
-                border: 1px solid #e0e0e0;
-                border-top: none;
-                border-radius: 0 0 8px 8px;
-                box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-                z-index: 2000;
-                padding: 6px;
-                gap: 5px;
             }
 
             .legend-section {
