@@ -40,13 +40,14 @@
             flex-direction: column;
             gap: 0;
             overflow: hidden;
+            min-height: 0;
         }
 
         /* ===== TOP BARS SECTION ===== */
         .top-bars {
             width: 100%;
             display: flex;
-            flex-direction: column;
+            flex-direction: column; /* ALWAYS column — search always below stats */
             gap: 0;
             flex-shrink: 0;
             background: white;
@@ -583,76 +584,109 @@
 
         @media (max-width: 768px) {
             .layout-container { flex-direction: column; }
-            .left-section  { width: 100%; height: 60%; }
-            .right-sidebar {
-                width: 100%;
-                height: 40%;
-                border-left: none;
-                border-top: 2px solid #e0e0e0;
-                flex-direction: row;
-                overflow-x: auto;
-                overflow-y: hidden;
-            }
-            .items-section-header { display: none; }
-            .items-section {
-                display: flex;
-                gap: 10px;
-                overflow-x: auto;
-                overflow-y: hidden;
-                border-bottom: none;
-                flex-direction: row;
-                padding: 0 6px;
-            }
-            .items-section::-webkit-scrollbar { height: 4px; width: auto; }
-            .sidebar-section {
-                flex-shrink: 0;
-                min-width: 170px;
-                border-right: 1px solid #e8e8e8;
-                border-bottom: none;
-                padding: 10px;
-            }
-            .legend-section {
-                flex-shrink: 0;
-                min-width: 190px;
-                border-top: none;
-                border-left: 1px solid #e0e0e0;
-                max-height: 100%;
-                padding: 10px;
-                overflow-y: auto;
-            }
-            #map { height: 100%; }
+
+            /* left-section fills remaining space after sidebar */
+            .left-section  { width: 100%; flex: 1; min-height: 0; }
+
+            /* top-bars: always column, shrinks to fit content */
             .top-bars {
-                height: 40%;
-                flex-direction: row;
-                overflow: visible;
+                flex-direction: column; /* search always below stats */
+                height: auto;           /* fit content, no fixed height */
+                flex-shrink: 0;
             }
-            .sum-bar { width: 70%; height: 100%; padding: 12px; gap: 0; }
+
+            /* sum-bar: full width, height fits content */
+            .sum-bar {
+                width: 100%;
+                height: auto;
+                padding: 12px;
+            }
+
+            /* search-bar: full width, height fits content */
             .search-bar {
-                width: 30%;
-                height: 100%;
-                flex-direction: column;
-                justify-content: center;
-                padding: 8px 10px;
-                gap: 6px;
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                justify-content: flex-end;
+                padding: 8px 12px;
+                gap: 8px;
             }
+
             .search-bar-label  { display: none; }
-            .search-box-wrapper{ width: 100%; min-width: auto; max-width: none; }
+            .search-box-wrapper{ width: 60%; min-width: auto; max-width: none; }
             .search-input      { padding: 6px 10px; font-size: 12px; }
+
             .stats-wrapper     { gap: 15px; }
             .stats-group       { min-width: 200px; padding: 8px 10px; gap: 4px; }
             .stat-row          { gap: 10px; }
             .stat-value        { font-size: 14px; }
             .stats-group-title { font-size: 11px; padding-bottom: 4px; }
             .stat-label        { font-size: 10px; }
+
+            #map { flex: 1; height: auto; min-height: 0; }
+
+            /* sidebar: fits its content height exactly */
+            .right-sidebar {
+                width: 100%;
+                height: auto;        /* fit content */
+                flex-shrink: 0;
+                border-left: none;
+                border-top: 2px solid #e0e0e0;
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+
+            .items-section-header { display: none; }
+
+            /* items-section: horizontal scroll row */
+            .items-section {
+                display: flex;
+                gap: 0;
+                overflow-x: auto;
+                overflow-y: hidden;
+                border-bottom: none;
+                flex-direction: row;
+                padding: 0;
+                /* height fits tallest item inside */
+                height: auto;
+                flex-shrink: 0;
+                flex: 1;
+            }
+            .items-section::-webkit-scrollbar { height: 4px; width: auto; }
+
+            .sidebar-section {
+                flex-shrink: 0;
+                min-width: 170px;
+                border-right: 1px solid #e8e8e8;
+                border-bottom: none;
+                padding: 10px;
+                /* height fits its own content */
+                height: auto;
+            }
+
+            /* legend: fits content height, no max-height overflow */
+            .legend-section {
+                flex-shrink: 0;
+                min-width: 190px;
+                border-top: none;
+                border-left: 1px solid #e0e0e0;
+                height: auto;       /* fit content — no extra space below متوقف */
+                max-height: none;   /* remove the fixed max-height */
+                padding: 10px;
+                overflow-y: visible;
+            }
         }
 
         @media (max-width: 480px) {
-            .top-bars { height: 45%; flex-direction: column; overflow: visible; }
-            .sum-bar  { width: 100%; height: 60%; padding: 10px; }
-            .search-bar { width: 100%; height: 40%; flex-direction: row; padding: 8px; gap: 8px; }
-            .right-sidebar { height: 35%; }
+            /* top-bars always column, fits content */
+            .top-bars       { flex-direction: column; height: auto; }
+            .sum-bar        { width: 100%; height: auto; padding: 10px; }
+            .search-bar     { width: 100%; height: auto; flex-direction: row; padding: 8px; gap: 8px; }
+
+            .right-sidebar  { height: auto; flex-shrink: 0; }
             .sidebar-section { min-width: 150px; padding: 8px; }
-            .legend-section  { min-width: 160px; padding: 8px; }
+            .legend-section  { min-width: 160px; padding: 8px; height: auto; max-height: none; }
             .stat-value      { font-size: 12px; }
             .search-input    { font-size: 11px; padding: 5px 8px; }
             .stats-group     { min-width: 160px; padding: 7px 8px; gap: 3px; }
@@ -661,7 +695,7 @@
             .stat-item       { gap: 1px; }
             .section-title   { font-size: 11px; }
             .expand-btn      { width: 20px; height: 20px; font-size: 13px; }
-            .search-box-wrapper { width: 100%; }
+            .search-box-wrapper { width: 70%; }
         }
     </style>
 </head>
