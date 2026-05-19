@@ -1123,8 +1123,8 @@ function zoomToAllLayers() {
     const group = L.featureGroup(layers);
 
     map.fitBounds(group.getBounds(), {
-        padding: [50, 50],
-        maxZoom: 18
+        padding: [0, 0],
+        maxZoom: 20
     });
 }
         function formatNumber(num) {
