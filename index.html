@@ -24,6 +24,7 @@
             height: 100vh;
         }
 
+        /* ===== MAIN LAYOUT ===== */
         .layout-container {
             display: flex;
             width: 100%;
@@ -32,6 +33,7 @@
             overflow: hidden;
         }
 
+        /* ===== LEFT SECTION (80% width) ===== */
         .left-section {
             width: 80%;
             display: flex;
@@ -41,6 +43,7 @@
             min-height: 0;
         }
 
+        /* ===== TOP BARS SECTION ===== */
         .top-bars {
             width: 100%;
             display: flex;
@@ -53,6 +56,7 @@
             z-index: 100;
         }
 
+        /* ===== SUM BAR ===== */
         .sum-bar {
             width: 100%;
             background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
@@ -136,6 +140,7 @@
             line-height: 1.2;
         }
 
+        /* ===== SEARCH BAR ===== */
         .search-bar {
             width: 100%;
             background: white;
@@ -190,10 +195,7 @@
         }
 
         .search-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+            position: fixed;
             background: white;
             border: none;
             border-radius: 0 0 8px 8px;
@@ -203,7 +205,6 @@
             display: none;
             box-shadow: 0 8px 24px rgba(0,0,0,0.18);
             border-top: 2px solid #7a3fa0;
-            margin-top: 2px;
         }
 
         .search-dropdown.active {
@@ -258,6 +259,7 @@
             flex-shrink: 0;
         }
 
+        /* ===== MAP ===== */
         #map {
             flex: 1;
             width: 100%;
@@ -265,6 +267,7 @@
             z-index: 10;
         }
 
+        /* ===== RIGHT SIDEBAR (20% width) ===== */
         .right-sidebar {
             width: 20%;
             height: 100%;
@@ -296,7 +299,7 @@
             flex: 1;
         }
 
-        .add-category-btn {
+        .add-btn {
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.4);
             color: white;
@@ -309,11 +312,12 @@
             flex-shrink: 0;
         }
 
-        .add-category-btn:hover {
+        .add-btn:hover {
             background: rgba(255,255,255,0.3);
             border-color: rgba(255,255,255,0.6);
         }
 
+        /* ===== ITEMS SECTION ===== */
         .items-section {
             flex: 1;
             overflow-y: auto;
@@ -326,15 +330,15 @@
         .items-section::-webkit-scrollbar-track { background: #f1f1f1; }
         .items-section::-webkit-scrollbar-thumb { background: #7a3fa0; border-radius: 10px; }
 
-        .category-section {
+        .sidebar-section {
             padding: 12px;
             border-bottom: 1px solid #e8e8e8;
             position: relative;
         }
 
-        .category-section:last-of-type { border-bottom: none; }
+        .sidebar-section:last-of-type { border-bottom: none; }
 
-        .category-title {
+        .section-title {
             font-size: 13px;
             font-weight: 600;
             color: #333;
@@ -344,14 +348,6 @@
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-        }
-
-        .category-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            flex: 1;
         }
 
         .expand-btn {
@@ -373,7 +369,7 @@
         .expand-btn:hover { transform: scale(1.1); }
         .expand-btn.active { transform: rotate(45deg); }
 
-        .delete-category-btn {
+        .delete-btn {
             background: #ff6b6b;
             color: white;
             border: none;
@@ -390,11 +386,11 @@
             opacity: 0;
         }
 
-        .category-section:hover .delete-category-btn {
+        .sidebar-section:hover .delete-btn {
             opacity: 1;
         }
 
-        .delete-category-btn:hover {
+        .delete-btn:hover {
             background: #ff5252;
             transform: scale(1.1);
         }
@@ -446,13 +442,13 @@
             border-color: #7a3fa0;
         }
 
+        /* ===== LEGEND SECTION ===== */
         .legend-section {
             flex-shrink: 0;
             padding: 12px;
             background: #f9f9f9;
             border-top: 2px solid #e0e0e0;
-            overflow-y: auto;
-            max-height: 30%;
+            overflow-y: visible;
         }
 
         .legend-section::-webkit-scrollbar { width: 4px; }
@@ -525,6 +521,7 @@
         .color-completed  { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
         .color-stopped    { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
 
+        /* ===== POPUP ===== */
         .popup-card {
             width: 95vw;
             max-width: 300px;
@@ -550,6 +547,7 @@
 
         .popup-title    { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
         .popup-subtitle { font-size: 16px; font-weight: 600; margin-top: 4px; opacity: 0.9; }
+        .popup-type     { font-size: 16px; font-weight: 600; margin-top: 6px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 6px; }
 
         .popup-body {
             padding: 16px;
@@ -600,6 +598,7 @@
         .popup-value.status.completed  { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
         .popup-value.status.stopped    { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
 
+        /* ===== ALERT ===== */
         .alert {
             position: fixed;
             top: 80px;
@@ -684,84 +683,19 @@
             color: #333;
         }
 
-        .form-group input, .form-group textarea {
+        .form-group input, .form-group select {
             padding: 10px 12px;
             border: 1.5px solid #e0e0e0;
             border-radius: 6px;
             font-size: 13px;
             font-family: inherit;
             transition: all 0.2s ease;
-            resize: vertical;
         }
 
-        .form-group input:focus, .form-group textarea:focus {
+        .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: #7a3fa0;
             box-shadow: 0 0 8px rgba(122,63,160,0.15);
-        }
-
-        .subitems-container {
-            background: #f5f5f5;
-            padding: 12px;
-            border-radius: 6px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .subitem-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            background: white;
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .subitem-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .subitem-input {
-            flex: 1;
-            padding: 6px 8px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        .subitem-delete-btn {
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-
-        .subitem-delete-btn:hover {
-            background: #ff5252;
-        }
-
-        .add-subitem-btn {
-            background: #7a3fa0;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .add-subitem-btn:hover {
-            background: #6a2f8f;
         }
 
         .modal-footer {
@@ -800,11 +734,143 @@
             background: #d0d0d0;
         }
 
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .left-section  { width: 80%; }
+            .right-sidebar { width: 20%; }
+            .stats-group   { min-width: 250px; padding: 10px 14px; gap: 6px; }
+            .stat-row      { gap: 15px; }
+            .stat-value    { font-size: 16px; }
+            .search-box-wrapper { width: 28%; }
+        }
+
+        @media (max-width: 1024px) {
+            .left-section  { width: 78%; }
+            .right-sidebar { width: 22%; }
+            .stats-group   { min-width: 220px; padding: 9px 12px; gap: 5px; }
+            .stat-row      { gap: 12px; }
+            .stat-item     { gap: 2px; }
+            .stat-value    { font-size: 15px; }
+            .stats-group-title  { font-size: 12px; }
+            .search-box-wrapper { width: 30%; min-width: 160px; }
+        }
+
         @media (max-width: 768px) {
-            .left-section  { width: 100%; height: 60vh; flex: 0 0 60vh; }
-            .right-sidebar { width: 100%; height: 40vh; flex: 0 0 40vh; }
-            .items-section-header { flex-direction: column; gap: 6px; }
-            .add-category-btn { width: 100%; }
+            .layout-container { flex-direction: column; }
+
+            .left-section  { width: 100%; flex: 1; min-height: 0; }
+
+            .top-bars {
+                flex-direction: column;
+                height: auto;
+                flex-shrink: 0;
+            }
+
+            .sum-bar {
+                width: 100%;
+                height: auto;
+                padding: 12px;
+            }
+
+            .search-bar {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                justify-content: flex-start;
+                padding: 8px 12px;
+                gap: 8px;
+            }
+
+            .search-bar-label  { display: none; }
+            .search-box-wrapper{ width: 55%; min-width: auto; max-width: none; }
+            .search-input      { padding: 6px 10px; font-size: 12px; }
+
+            .stats-wrapper     { gap: 15px; }
+            .stats-group       { min-width: 200px; padding: 8px 10px; gap: 4px; }
+            .stat-row          { gap: 10px; }
+            .stat-value        { font-size: 14px; }
+            .stats-group-title { font-size: 11px; padding-bottom: 4px; }
+            .stat-label        { font-size: 10px; }
+
+            #map { flex: 1; height: auto; min-height: 0; }
+
+            .right-sidebar {
+                width: 100%;
+                height: auto;
+                flex-shrink: 0;
+                border-left: none;
+                border-top: 2px solid #e0e0e0;
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: visible;
+            }
+
+            .items-section-header { 
+                flex-direction: row;
+                padding: 8px 12px;
+                gap: 6px;
+            }
+
+            .add-btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            .items-section {
+                display: flex;
+                gap: 0;
+                overflow-x: auto;
+                overflow-y: visible;
+                border-bottom: none;
+                flex-direction: row;
+                padding: 0;
+                height: auto;
+                flex-shrink: 0;
+                flex: 1;
+            }
+            .items-section::-webkit-scrollbar { height: 4px; width: auto; }
+
+            .sidebar-section {
+                flex-shrink: 0;
+                min-width: 160px;
+                border-right: 1px solid #e8e8e8;
+                border-bottom: none;
+                padding: 10px;
+                height: auto;
+                position: relative;
+                overflow: visible;
+            }
+
+            .legend-section {
+                flex-shrink: 0;
+                min-width: 170px;
+                border-top: none;
+                border-left: 1px solid #e0e0e0;
+                height: auto;
+                max-height: none;
+                padding: 10px;
+                overflow-y: visible;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .top-bars       { flex-direction: column; height: auto; }
+            .sum-bar        { width: 100%; height: auto; padding: 10px; }
+            .search-bar     { width: 100%; height: auto; flex-direction: row; padding: 8px; gap: 8px; }
+            .right-sidebar  { height: auto; flex-shrink: 0; }
+            .sidebar-section { min-width: 140px; padding: 8px; }
+            .legend-section  { min-width: 150px; padding: 8px; height: auto; max-height: none; }
+            .stat-value      { font-size: 12px; }
+            .search-input    { font-size: 11px; padding: 5px 8px; }
+            .stats-group     { min-width: 160px; padding: 7px 8px; gap: 3px; }
+            .stats-group-title { font-size: 10px; }
+            .stat-row        { gap: 8px; }
+            .stat-item       { gap: 1px; }
+            .section-title   { font-size: 11px; }
+            .expand-btn      { width: 20px; height: 20px; font-size: 13px; }
+            .search-box-wrapper { width: 65%; }
+            .items-section-header { flex-direction: column; padding: 8px; }
+            .add-btn { width: 100%; }
         }
     </style>
 </head>
@@ -812,14 +878,17 @@
 <body>
 
     <div class="layout-container">
+        <!-- LEFT SECTION -->
         <div class="left-section">
             <div class="top-bars">
+                <!-- SUM BAR -->
                 <div class="sum-bar">
                     <div class="stats-wrapper" id="statsWrapper">
-                        <!-- الإحصائيات ستضاف هنا تلقائياً -->
+                        <!-- الإحصائيات تظهر هنا تلقائياً -->
                     </div>
                 </div>
 
+                <!-- SEARCH BAR -->
                 <div class="search-bar">
                     <div class="search-bar-label">🔍</div>
                     <div class="search-box-wrapper">
@@ -829,19 +898,23 @@
                 </div>
             </div>
 
+            <!-- MAP -->
             <div id="map"></div>
         </div>
 
+        <!-- RIGHT SIDEBAR -->
         <div class="right-sidebar">
             <div class="items-section-header">
-                <button class="add-category-btn" id="addCategoryBtn">+ إضافة بند</button>
+                <button class="add-btn" id="addCategoryBtn">+ إضافة بند رئيسي</button>
+                <button class="add-btn" id="addSubitemBtn">+ إضافة فرعي</button>
                 <div class="items-header-title">📋 البنود</div>
             </div>
 
             <div class="items-section" id="itemsSection">
-                <!-- البنود ستضاف هنا تلقائياً -->
+                <!-- البنود تظهر هنا تلقائياً -->
             </div>
 
+            <!-- LEGEND SECTION -->
             <div class="legend-section">
                 <div class="legend">
                     <div class="legend-title">📋 الحالات:</div>
@@ -875,7 +948,7 @@
         </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- MODAL ADD CATEGORY -->
     <div class="modal" id="addCategoryModal">
         <div class="modal-content">
             <div class="modal-header">إضافة بند رئيسي جديد</div>
@@ -885,30 +958,44 @@
                     <input type="text" id="categoryName" placeholder="مثال: الطرق، قطع الأراضي">
                 </div>
                 <div class="form-group">
-                    <label>رمز البند (Emoji)</label>
+                    <label>الرمز (Emoji)</label>
                     <input type="text" id="categoryEmoji" placeholder="مثال: 📍" maxlength="3" value="📍">
-                </div>
-                <div class="form-group">
-                    <label>ملف GeoJSON (للخريطة)</label>
-                    <input type="text" id="categoryGeoJson" placeholder="مثال: ROADS.geojson">
-                </div>
-
-                <div class="form-group">
-                    <label>البنود الفرعية</label>
-                    <textarea id="categoryDescription" rows="2" placeholder="وصف أو ملاحظات (اختياري)"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>البنود الفرعية (أضف بند فرعي لكل Google Sheet)</label>
-                    <div class="subitems-container" id="subitemsContainer">
-                        <!-- البنود الفرعية ستضاف هنا -->
-                    </div>
-                    <button class="add-subitem-btn" onclick="addSubitemInput()">+ إضافة بند فرعي</button>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeAddCategoryModal()">إلغاء</button>
                 <button class="btn btn-primary" onclick="addNewCategory()">إضافة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ADD SUBITEM -->
+    <div class="modal" id="addSubitemModal">
+        <div class="modal-content">
+            <div class="modal-header">إضافة بند فرعي جديد</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>اختر البند الرئيسي</label>
+                    <select id="selectCategory">
+                        <option value="">-- اختر --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>اسم البند الفرعي</label>
+                    <input type="text" id="subitemName" placeholder="مثال: الردم، القطع">
+                </div>
+                <div class="form-group">
+                    <label>رابط Google Sheet</label>
+                    <input type="text" id="subitemSheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
+                </div>
+                <div class="form-group">
+                    <label>ملف GeoJSON</label>
+                    <input type="text" id="subitemGeoJson" placeholder="ROADS.geojson">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddSubitemModal()">إلغاء</button>
+                <button class="btn btn-primary" onclick="addNewSubitem()">إضافة</button>
             </div>
         </div>
     </div>
@@ -922,7 +1009,6 @@
         let selectedItems = {};
         let equipmentData = {};
         let categories = [];
-        let currentSubitems = [];
 
         const statuses = [
             { value: "جاري",       color: "#4caf50", class: "ongoing"     },
@@ -986,6 +1072,17 @@
         function extractSheetIdFromUrl(url) {
             const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
             return match ? match[1] : null;
+        }
+
+        function positionDropdown() {
+            const dropdown = document.getElementById("searchDropdown");
+            const searchBox = document.querySelector('.search-box-wrapper');
+            if (!searchBox || !dropdown.classList.contains("active")) return;
+            const rect = searchBox.getBoundingClientRect();
+            dropdown.style.top    = rect.bottom + 'px';
+            dropdown.style.left   = rect.left + 'px';
+            dropdown.style.width  = rect.width + 'px';
+            dropdown.style.right  = 'auto';
         }
 
         // ===== MAP =====
@@ -1068,8 +1165,8 @@
                 const subitems = cat.subitems.filter(sub => selectedItems[sub.id]);
 
                 subitems.forEach(sub => {
-                    if (allData[sub.id]) {
-                        Object.values(allData[sub.id]).forEach(row => {
+                    if (allData[sub.sheetId]) {
+                        Object.values(allData[sub.sheetId]).forEach(row => {
                             const status = (row["STATUS"] || "").trim().toLowerCase();
                             if (selectedStatuses.some(s => s.toLowerCase() === status)) {
                                 total += num(row["TOTAL-QTY"]);
@@ -1128,9 +1225,9 @@
         }
 
         // ===== LOAD / REMOVE LAYER =====
-        function loadLayer(itemId, subitemName, geoJsonFile) {
-            loadSheetCSV(itemId, data => {
-                allData[itemId] = data;
+        function loadLayer(sheetId, subitemName, geoJsonFile) {
+            loadSheetCSV(sheetId, data => {
+                allData[sheetId] = data;
 
                 fetch(geoJsonFile)
                     .then(r => r.json())
@@ -1142,7 +1239,7 @@
                                 if (!row) return;
 
                                 const name = row["ROAD NAME"] || row["BLOCK NAME"] || row["NAME"] || "بدون اسم";
-                                allFeatures[`${itemId}-${name}`] = l;
+                                allFeatures[`${sheetId}-${name}`] = l;
 
                                 const status     = (row["STATUS"] || "").trim().toLowerCase();
                                 const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
@@ -1184,7 +1281,7 @@
                             }
                         });
 
-                        allLayers[itemId] = layer;
+                        allLayers[sheetId] = layer;
                         layer.addTo(map);
                         updateStats();
                     })
@@ -1192,12 +1289,11 @@
             });
         }
 
-        function removeLayer(itemId) {
-            if (allLayers[itemId]) {
-                map.removeLayer(allLayers[itemId]);
-                delete allLayers[itemId];
-                delete allData[itemId];
-                delete selectedItems[itemId];
+        function removeLayer(sheetId) {
+            if (allLayers[sheetId]) {
+                map.removeLayer(allLayers[sheetId]);
+                delete allLayers[sheetId];
+                delete allData[sheetId];
             }
             updateStats();
         }
@@ -1262,6 +1358,7 @@
             }
 
             dropdown.classList.add("active");
+            positionDropdown();
         }
 
         // ===== RENDER ITEMS =====
@@ -1271,14 +1368,12 @@
 
             categories.forEach(cat => {
                 const categorySection = document.createElement("div");
-                categorySection.className = "category-section";
+                categorySection.className = "sidebar-section";
                 categorySection.innerHTML = `
-                    <div class="category-title">
-                        <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
-                            <button class="expand-btn" data-cat-id="${cat.id}">+</button>
-                            <span>${cat.emoji} ${cat.name}</span>
-                        </div>
-                        <button class="delete-category-btn" data-cat-id="${cat.id}" onclick="deleteCategory('${cat.id}')">✕</button>
+                    <div class="section-title">
+                        <button class="expand-btn" data-cat-id="${cat.id}">+</button>
+                        <span>${cat.emoji} ${cat.name}</span>
+                        <button class="delete-btn" onclick="deleteCategory('${cat.id}')">✕</button>
                     </div>
                     <div class="dropdown-items" data-cat-id="${cat.id}">
                         ${cat.subitems.map(sub => `
@@ -1297,19 +1392,17 @@
                 `;
                 itemsSection.appendChild(categorySection);
 
-                // Add expand button listener
                 categorySection.querySelector(".expand-btn").addEventListener("click", function() {
                     this.classList.toggle("active");
                     categorySection.querySelector(".dropdown-items").classList.toggle("active");
                 });
 
-                // Add checkbox listeners
                 categorySection.querySelectorAll(".subitem-check").forEach(checkbox => {
                     checkbox.addEventListener("change", function() {
                         const subitemId = this.dataset.subitemId;
-                        const catId = this.dataset.catId;
                         const sheetId = this.dataset.sheetId;
                         const geoJsonFile = this.dataset.geojson;
+                        const catId = this.dataset.catId;
                         const cat = categories.find(c => c.id === catId);
                         const subitem = cat.subitems.find(s => s.id === subitemId);
 
@@ -1318,6 +1411,7 @@
                             this.closest(".dropdown-item").classList.add("selected");
                             loadLayer(sheetId, subitem.name, geoJsonFile);
                         } else {
+                            delete selectedItems[subitemId];
                             this.closest(".dropdown-item").classList.remove("selected");
                             removeLayer(sheetId);
                         }
@@ -1326,120 +1420,109 @@
             });
         }
 
-        // ===== MODAL =====
+        // ===== MODAL FUNCTIONS =====
         function openAddCategoryModal() {
-            currentSubitems = [];
             document.getElementById("categoryName").value = "";
             document.getElementById("categoryEmoji").value = "📍";
-            document.getElementById("categoryGeoJson").value = "";
-            document.getElementById("categoryDescription").value = "";
-            renderSubitemsContainer();
-            addSubitemInput();
             document.getElementById("addCategoryModal").classList.add("active");
         }
 
         function closeAddCategoryModal() {
             document.getElementById("addCategoryModal").classList.remove("active");
-            currentSubitems = [];
-        }
-
-        function addSubitemInput() {
-            currentSubitems.push({
-                id: generateId(),
-                name: "",
-                sheetUrl: "",
-                sheetId: ""
-            });
-            renderSubitemsContainer();
-        }
-
-        function renderSubitemsContainer() {
-            const container = document.getElementById("subitemsContainer");
-            container.innerHTML = currentSubitems.map((sub, idx) => `
-                <div class="subitem-row">
-                    <input type="text" 
-                        placeholder="اسم البند الفرعي (مثال: الردم، القطع)"
-                        class="subitem-input subitem-name"
-                        value="${sub.name}"
-                        data-idx="${idx}">
-                    <input type="text" 
-                        placeholder="رابط Google Sheet"
-                        class="subitem-input subitem-url"
-                        value="${sub.sheetUrl}"
-                        data-idx="${idx}"
-                        style="flex: 1.5;">
-                    <button class="subitem-delete-btn" onclick="deleteSubitem(${idx})">حذف</button>
-                </div>
-            `).join('');
-
-            // Add listeners
-            container.querySelectorAll(".subitem-name").forEach(input => {
-                input.addEventListener("input", function() {
-                    currentSubitems[this.dataset.idx].name = this.value;
-                });
-            });
-
-            container.querySelectorAll(".subitem-url").forEach(input => {
-                input.addEventListener("input", function() {
-                    currentSubitems[this.dataset.idx].sheetUrl = this.value;
-                    const sheetId = extractSheetIdFromUrl(this.value);
-                    currentSubitems[this.dataset.idx].sheetId = sheetId;
-                });
-            });
-        }
-
-        function deleteSubitem(idx) {
-            currentSubitems.splice(idx, 1);
-            renderSubitemsContainer();
         }
 
         function addNewCategory() {
             const name = document.getElementById("categoryName").value.trim();
             const emoji = document.getElementById("categoryEmoji").value.trim();
-            const geoJson = document.getElementById("categoryGeoJson").value.trim();
 
-            if (!name || !geoJson || currentSubitems.length === 0) {
-                showAlert("❌ يرجى ملء جميع الحقول والبنود الفرعية", "error");
+            if (!name) {
+                showAlert("❌ يرجى إدخال اسم البند الرئيسي", "error");
                 return;
-            }
-
-            // تحقق من أن جميع البنود الفرعية لها بيانات
-            for (let sub of currentSubitems) {
-                if (!sub.name.trim() || !sub.sheetId) {
-                    showAlert("❌ يرجى ملء جميع البنود الفرعية مع رابط صحيح", "error");
-                    return;
-                }
             }
 
             const newCategory = {
                 id: generateId(),
                 name: name,
-                emoji: emoji,
-                geoJsonFile: geoJson,
-                subitems: currentSubitems.map(sub => ({
-                    id: sub.id,
-                    name: sub.name,
-                    sheetId: sub.sheetId,
-                    geoJsonFile: geoJson
-                }))
+                emoji: emoji || "📍",
+                subitems: []
             };
 
             categories.push(newCategory);
             renderItems();
+            updateCategorySelect();
             closeAddCategoryModal();
-            showAlert("✅ تمت إضافة البند الجديد مع " + currentSubitems.length + " بند فرعي", "success");
+            showAlert("✅ تمت إضافة البند الرئيسي", "success");
+        }
+
+        function openAddSubitemModal() {
+            if (categories.length === 0) {
+                showAlert("❌ يرجى إضافة بند رئيسي أولاً", "error");
+                return;
+            }
+            document.getElementById("subitemName").value = "";
+            document.getElementById("subitemSheetUrl").value = "";
+            document.getElementById("subitemGeoJson").value = "";
+            document.getElementById("addSubitemModal").classList.add("active");
+        }
+
+        function closeAddSubitemModal() {
+            document.getElementById("addSubitemModal").classList.remove("active");
+        }
+
+        function updateCategorySelect() {
+            const select = document.getElementById("selectCategory");
+            select.innerHTML = '<option value="">-- اختر --</option>';
+            categories.forEach(cat => {
+                const option = document.createElement("option");
+                option.value = cat.id;
+                option.textContent = cat.name;
+                select.appendChild(option);
+            });
+        }
+
+        function addNewSubitem() {
+            const catId = document.getElementById("selectCategory").value;
+            const subitemName = document.getElementById("subitemName").value.trim();
+            const sheetUrl = document.getElementById("subitemSheetUrl").value.trim();
+            const geoJsonFile = document.getElementById("subitemGeoJson").value.trim();
+
+            if (!catId || !subitemName || !sheetUrl || !geoJsonFile) {
+                showAlert("❌ يرجى ملء جميع الحقول", "error");
+                return;
+            }
+
+            const sheetId = extractSheetIdFromUrl(sheetUrl);
+            if (!sheetId) {
+                showAlert("❌ رابط Google Sheet غير صحيح", "error");
+                return;
+            }
+
+            const cat = categories.find(c => c.id === catId);
+            const newSubitem = {
+                id: generateId(),
+                name: subitemName,
+                sheetId: sheetId,
+                geoJsonFile: geoJsonFile
+            };
+
+            cat.subitems.push(newSubitem);
+            renderItems();
+            closeAddSubitemModal();
+            showAlert("✅ تمت إضافة البند الفرعي", "success");
         }
 
         function deleteCategory(catId) {
             const cat = categories.find(c => c.id === catId);
             if (!cat) return;
 
-            if (confirm(`هل تريد حذف البند: ${cat.name}؟`)) {
+            if (confirm(`هل تريد حذف "${cat.name}"؟`)) {
                 cat.subitems.forEach(sub => {
+                    delete selectedItems[sub.id];
                     removeLayer(sub.sheetId);
                 });
                 categories = categories.filter(c => c.id !== catId);
                 renderItems();
+                updateCategorySelect();
                 updateStats();
                 showAlert("✅ تم حذف البند", "success");
             }
@@ -1447,6 +1530,7 @@
 
         // ===== EVENT LISTENERS =====
         document.getElementById("addCategoryBtn").addEventListener("click", openAddCategoryModal);
+        document.getElementById("addSubitemBtn").addEventListener("click", openAddSubitemModal);
         document.getElementById("searchInput").addEventListener("input", updateSearchDropdown);
 
         document.querySelectorAll(".status-checkbox").forEach(checkbox => {
@@ -1470,6 +1554,7 @@
 
         window.addEventListener("resize", () => {
             if (map) map.invalidateSize();
+            positionDropdown();
         });
 
         // ===== INIT =====
@@ -1477,7 +1562,8 @@
             initMap();
             loadEquipmentData();
             renderItems();
-            showAlert("✅ جاهز - اضغط على 'إضافة بند' لإضافة بنود جديدة", "success");
+            updateCategorySelect();
+            showAlert("✅ جاهز - اضغط على الأزرار لإضافة بنود جديدة", "success");
         });
     </script>
 
