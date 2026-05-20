@@ -1475,7 +1475,7 @@
                 <span class="coords-label">إحداثيات افتراضية:</span>
                 <input type="text" class="coords-input" id="defLat" placeholder="عرض" value="21.292">
                 <input type="text" class="coords-input" id="defLng" placeholder="طول" value="39.71">
-                <input type="text" class="coords-input" id="defZoom" placeholder="تكبير" value="15" style="width:50px">
+                <input type="text" class="coords-input" id="defZoom" placeholder="تكبير" value="14" style="width:50px">
                 <button class="coords-btn" onclick="saveDefaultCoords()">✓</button>
             </div>
 
@@ -1605,7 +1605,7 @@ let allLayers      = {};   // sheetId → Leaflet GeoJSON layer
 let allData        = {};   // sheetId → { id: rowObj }
 let allFeatures    = {};   // `${sheetId}-${name}` → Leaflet layer
 let equipmentData  = {};
-let defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 15 };
+let defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 14 };
 let notifications  = [];   // { title, time }
 
 /* ====================================================
