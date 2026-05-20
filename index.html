@@ -2530,52 +2530,67 @@ function renderContractorList() {
 
 /* ── handle contractor checkbox toggle ── */
 function handleContractorCheckbox(cb) {
-    const filterKey      = cb.dataset.filterKey;
-    const sheetId        = cb.dataset.sheet;
-    const geoFile        = cb.dataset.geo;
-    const catId          = cb.dataset.catId;
-    const subId          = cb.dataset.subId;
-    const contractorName = cb.dataset.contractor;
+    const filterKey = cb.dataset.filterKey; // "sheetId|contractorName"
+    const sheetId   = cb.dataset.sheet;
+    const geoFile   = cb.dataset.geo;
+    const catId     = cb.dataset.catId;
+    const subId     = cb.dataset.subId;
 
     if (cb.checked) {
-        // ── إلغاء كل الاختيارات الأخرى في البنود (sidebar + layers) ──
-        // نحتفظ فقط بالـ sheetId الخاص بهذا الـ checkbox
-        const allSubIds = categories.flatMap(c => c.subitems.map(s => s.id));
-        allSubIds.forEach(sid => {
-            if (sid !== subId && selectedItems[sid]) {
-                const sub = categories.flatMap(c => c.subitems).find(s => s.id === sid);
-                if (sub) removeLayer(sub.sheetId);
-                delete selectedItems[sid];
+        // ── القاعدة: نفس البند الفرعي (نفس sheetId) مسموح عند أي مقاول ──
+        // ── بند فرعي مختلف (شيت مختلف) → ألغِ فلاتر المقاولين على الشيتات الأخرى وأزل طبقاتها ──
+        const sheetsToRemove = new Set();
+        [...activeContractorFilter].forEach(k => {
+            const kSheet = k.split('|')[0];
+            if (kSheet !== sheetId) sheetsToRemove.add(kSheet);
+        });
+
+        sheetsToRemove.forEach(sid => {
+            // أزل فلاتر المقاولين لهذا الشيت
+            [...activeContractorFilter].forEach(k => {
+                if (k.startsWith(sid + '|')) activeContractorFilter.delete(k);
+            });
+            // أزل الطبقة فقط إذا لم تكن محددة في الـ sidebar
+            const sidebarSub = categories.flatMap(c => c.subitems).find(s => s.sheetId === sid);
+            const usedBySidebar = sidebarSub && !!selectedItems[sidebarSub.id];
+            if (!usedBySidebar && allLayers[sid]) {
+                map.removeLayer(allLayers[sid]);
+                delete allLayers[sid];
+                delete allData[sid];
             }
         });
 
+        // أضف الفلتر الجديد
         activeContractorFilter.add(filterKey);
 
-        // تحميل الطبقة إذا لم تكن محملة
+        // حمّل الطبقة إذا لم تكن موجودة
         if (!allLayers[sheetId]) {
             const sub = categories.flatMap(c => c.subitems).find(s => s.id === subId);
             if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
         } else {
             applyContractorFilter();
         }
-        // مزامنة selectedItems مع الـ sidebar
-        selectedItems[subId] = true;
+
     } else {
         activeContractorFilter.delete(filterKey);
-        // هل لا يزال هناك فلتر مقاول آخر يستخدم نفس الشيت؟
-        const stillNeeded = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
-        if (!stillNeeded) {
-            delete selectedItems[subId];
-            if (!selectedItems[subId]) {
-                removeLayer(sheetId);
-            }
+
+        // هل لا يزال هناك مقاول آخر على نفس الشيت؟
+        const stillUsedByContractor = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
+        // هل الشيت محدد من الـ sidebar؟
+        const sidebarSub    = categories.flatMap(c => c.subitems).find(s => s.id === subId);
+        const usedBySidebar = sidebarSub && !!selectedItems[sidebarSub.id];
+
+        if (!stillUsedByContractor && !usedBySidebar && allLayers[sheetId]) {
+            // لا أحد يحتاجها — أزلها
+            map.removeLayer(allLayers[sheetId]);
+            delete allLayers[sheetId];
+            delete allData[sheetId];
         } else {
             applyContractorFilter();
         }
     }
 
-    renderItems();
-    renderNavTabs();
+    // الـ sidebar مستقل — لا تعديل على selectedItems أو renderItems
     updateStats();
     syncContractorCheckboxes();
 }
