@@ -485,12 +485,6 @@
             text-align: right;
         }
 
-        .notif-item-time {
-            font-size: 11px;
-            color: var(--text-soft);
-            text-align: right;
-        }
-
         .notif-empty {
             padding: 20px;
             text-align: center;
@@ -1686,7 +1680,6 @@ let allData        = {};   // sheetId → { id: rowObj }
 let allFeatures    = {};   // `${sheetId}-${name}` → Leaflet layer
 let equipmentData  = {};
 let defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 14 };
-let notifications  = [];   // { title, time }
 
 /* ====================================================
    HELPERS
@@ -2192,66 +2185,51 @@ function loadEquipmentData() {
 }
 
 /* ====================================================
-   NOTIFICATIONS — last update per sheet
+   NOTIFICATIONS — from dedicated sheet (column A, each row = one notification)
    ==================================================== */
 
-async function getControlSheetData(sheetId) {
-    // Fetch the CONTROL sheet (sheet named "CONTROL") from the spreadsheet
-    // Google Sheets export by sheet name: use the range parameter
-    try {
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=CONTROL&range=A1:A2`;
-        const r = await fetch(url + "&t=" + Date.now());
-        if (!r.ok) throw new Error("fetch fail");
-        const text = await r.text();
-        // CSV: two rows, one column each
-        const lines = text.split('\n').map(l => l.replace(/^"|"$/g, '').trim()).filter(Boolean);
-        const sheetName = lines[0] || "";
-        const timeStr   = lines[1] || "";
-        return { sheetName, timeStr };
-    } catch(e) {
-        return null;
-    }
-}
+const NOTIFICATIONS_SHEET_ID = "1AV4umnW_s_bUOIrLBQouCsoAmPJI4yV3aOfPhKfM9C8";
 
 async function loadNotifications() {
-    notifications = [];
     const badge = document.getElementById("notifBadge");
     const list  = document.getElementById("notifList");
 
     list.innerHTML = '<div class="notif-empty">جاري التحميل...</div>';
 
-    const allSubs = [];
-    categories.forEach(cat => cat.subitems.forEach(sub => allSubs.push({ ...sub })));
+    try {
+        const url = `https://docs.google.com/spreadsheets/d/${NOTIFICATIONS_SHEET_ID}/export?format=csv&gid=0`;
+        const r   = await fetch(url);
+        if (!r.ok) throw new Error("fetch failed");
+        const csv = await r.text();
 
-    if (!allSubs.length) {
-        list.innerHTML = '<div class="notif-empty">لا توجد بنود مضافة بعد</div>';
-        badge.style.display = 'none';
-        return;
-    }
+        const lines = csv.split('\n').map(l => l.trim()).filter(l => l);
+        // Skip header row, read column A (first column) of each remaining row
+        const items = lines.slice(1).map(line => {
+            // Handle quoted CSV fields
+            const firstVal = line.startsWith('"')
+                ? line.slice(1, line.indexOf('"', 1))
+                : line.split(',')[0];
+            return firstVal.trim();
+        }).filter(v => v);
 
-    for (const sub of allSubs) {
-        const ctrl = await getControlSheetData(sub.sheetId);
-        if (ctrl && ctrl.timeStr) {
-            notifications.push({
-                title: `🔔 ${ctrl.sheetName || sub.name}`,
-                time : ctrl.timeStr
-            });
-        } else {
-            notifications.push({
-                title: `📋 ${sub.name}`,
-                time : "لا يوجد تحديث مسجّل بعد"
-            });
+        if (!items.length) {
+            list.innerHTML = '<div class="notif-empty">لا توجد إشعارات</div>';
+            badge.style.display = 'none';
+            return;
         }
+
+        badge.style.display = 'flex';
+        badge.textContent = items.length;
+        list.innerHTML = items.map(text => `
+            <div class="notif-item">
+                <div class="notif-item-title">${text}</div>
+            </div>`).join('');
+
+    } catch(e) {
+        console.warn("Notifications load failed:", e);
+        list.innerHTML = '<div class="notif-empty">تعذر تحميل الإشعارات</div>';
+        badge.style.display = 'none';
     }
-
-    badge.style.display = 'flex';
-    badge.textContent = notifications.length;
-
-    list.innerHTML = notifications.map(n => `
-        <div class="notif-item">
-            <div class="notif-item-title">${n.title}</div>
-            <div class="notif-item-time">📅 ${n.time}</div>
-        </div>`).join('');
 }
 
 /* ====================================================
@@ -2481,7 +2459,6 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
                 }
 
                 updateStats();
-                loadNotifications();
             });
         })
         .catch(e => { console.error(e); showAlert("❌ خطأ في تحميل البيانات"); });
