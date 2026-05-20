@@ -1488,6 +1488,21 @@
             font-size: 12px;
         }
 
+        .c-cat-group {
+            margin-bottom: 4px;
+        }
+
+        .c-cat-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--purple);
+            padding: 4px 6px 2px;
+            border-bottom: 1px solid rgba(106,45,145,0.15);
+            margin-bottom: 3px;
+            text-align: right;
+            letter-spacing: 0.3px;
+        }
+
         @media (max-width: 768px) {
             .main-content { flex-direction: column; }
             .left-section  { flex: 1; }
@@ -2334,72 +2349,68 @@ function loadEquipmentData() {
 }
 
 /* ====================================================
-   CONTRACTOR PANEL — collect unique contractors from allData
+   CONTRACTOR PANEL
+   contractorMap: contractorName → [ { catId, catName, catEmoji, subId, subName, sheetId, geoJsonFile } ]
+   activeContractorFilter: Set of "sheetId|contractorName" — drives gray-out logic
    ==================================================== */
 
-/* contractorMap: name → [ { catId, subId, subName, sheetId, geoJsonFile } ] */
-let contractorMap = {};
+let contractorMap         = {};
+let activeContractorFilter = new Set(); // "sheetId|contractorName"
 
+/* ── fetch one subitem's contractors (uses cached allData if available) ── */
 async function fetchSheetContractors(sub) {
-    // If already loaded in allData use it, otherwise fetch fresh
+    const cat = categories.find(c => c.subitems.some(s => s.id === sub.id));
+
+    const addEntry = (cname) => {
+        if (!contractorMap[cname]) contractorMap[cname] = [];
+        if (!contractorMap[cname].find(e => e.subId === sub.id)) {
+            contractorMap[cname].push({
+                catId       : cat ? cat.id    : "",
+                catName     : cat ? cat.name  : "",
+                catEmoji    : cat ? cat.emoji : "📍",
+                catOrder    : categories.indexOf(cat),
+                subId       : sub.id,
+                subName     : sub.name,
+                sheetId     : sub.sheetId,
+                geoJsonFile : sub.geoJsonFile
+            });
+        }
+    };
+
     if (allData[sub.sheetId]) {
-        const rows = Object.values(allData[sub.sheetId]);
-        rows.forEach(row => {
+        Object.values(allData[sub.sheetId]).forEach(row => {
             const cname = (row["CONTRACTOR"] || "").trim();
-            if (!cname) return;
-            if (!contractorMap[cname]) contractorMap[cname] = [];
-            // Avoid duplicate sub entries
-            if (!contractorMap[cname].find(e => e.subId === sub.id)) {
-                const cat = categories.find(c => c.subitems.some(s => s.id === sub.id));
-                contractorMap[cname].push({
-                    catId: cat ? cat.id : "",
-                    subId: sub.id,
-                    subName: sub.name,
-                    sheetId: sub.sheetId,
-                    geoJsonFile: sub.geoJsonFile
-                });
-            }
+            if (cname) addEntry(cname);
         });
         return;
     }
-    // Fetch CSV silently
+
     try {
-        const url = `https://docs.google.com/spreadsheets/d/${sub.sheetId}/export?format=csv&gid=0`;
-        const r   = await fetch(url);
+        const url  = `https://docs.google.com/spreadsheets/d/${sub.sheetId}/export?format=csv&gid=0`;
+        const r    = await fetch(url);
         if (!r.ok) return;
-        const csv = await r.text();
+        const csv  = await r.text();
         if (csv.trim().startsWith('<')) return;
         const lines   = csv.split('\n').filter(l => l.trim());
         if (!lines.length) return;
         const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
         const cIdx    = headers.findIndex(h => h === 'CONTRACTOR');
         if (cIdx === -1) return;
-        const cat = categories.find(c => c.subitems.some(s => s.id === sub.id));
         for (let i = 1; i < lines.length; i++) {
             const vals  = lines[i].split(',').map(v => v.trim());
             const cname = (vals[cIdx] || "").trim();
-            if (!cname) continue;
-            if (!contractorMap[cname]) contractorMap[cname] = [];
-            if (!contractorMap[cname].find(e => e.subId === sub.id)) {
-                contractorMap[cname].push({
-                    catId: cat ? cat.id : "",
-                    subId: sub.id,
-                    subName: sub.name,
-                    sheetId: sub.sheetId,
-                    geoJsonFile: sub.geoJsonFile
-                });
-            }
+            if (cname) addEntry(cname);
         }
     } catch(e) { console.warn("contractor fetch failed:", sub.name, e); }
 }
 
+/* ── build & render the full contractor panel ── */
 async function buildContractorPanel() {
     const list = document.getElementById("contractorList");
     if (!list) return;
 
     list.innerHTML = '<div class="contractor-empty">⏳ جاري التحميل...</div>';
 
-    // Reset and refetch from ALL subitems across all categories
     contractorMap = {};
     const allSubs = [];
     categories.forEach(cat => cat.subitems.forEach(sub => allSubs.push(sub)));
@@ -2419,21 +2430,43 @@ async function buildContractorPanel() {
     }
 
     list.innerHTML = names.map(name => {
-        const subs = contractorMap[name];
-        const subsHTML = subs.map(s => {
-            const checked = selectedItems[s.subId] ? 'checked' : '';
-            return `
-            <div class="contractor-subitem">
-                <input type="checkbox" class="contractor-cb"
-                    data-cat-id="${s.catId}"
-                    data-sub-id="${s.subId}"
-                    data-sheet="${s.sheetId}"
-                    data-geo="${s.geoJsonFile}"
-                    ${checked}
-                    onclick="event.stopPropagation()">
-                <label>${s.subName}</label>
-            </div>`;
-        }).join('');
+        // Sort subitems: by category order first, then subitem order within category
+        const subs = [...contractorMap[name]].sort((a, b) => {
+            if (a.catOrder !== b.catOrder) return a.catOrder - b.catOrder;
+            const cat = categories.find(c => c.id === a.catId);
+            if (!cat) return 0;
+            return cat.subitems.findIndex(s => s.id === a.subId) -
+                   cat.subitems.findIndex(s => s.id === b.subId);
+        });
+
+        // Group by category
+        const byCategory = {};
+        subs.forEach(s => {
+            if (!byCategory[s.catId]) byCategory[s.catId] = { label: `${s.catEmoji} ${s.catName}`, items: [] };
+            byCategory[s.catId].items.push(s);
+        });
+
+        const subsHTML = Object.values(byCategory).map(group => `
+            <div class="c-cat-group">
+                <div class="c-cat-label">${group.label}</div>
+                ${group.items.map(s => {
+                    const filterKey = s.sheetId + '|' + name;
+                    const checked   = activeContractorFilter.has(filterKey) ? 'checked' : '';
+                    return `
+                    <div class="contractor-subitem">
+                        <input type="checkbox" class="contractor-cb"
+                            data-cat-id="${s.catId}"
+                            data-sub-id="${s.subId}"
+                            data-sheet="${s.sheetId}"
+                            data-geo="${s.geoJsonFile}"
+                            data-contractor="${name}"
+                            data-filter-key="${filterKey}"
+                            ${checked}
+                            onclick="event.stopPropagation()">
+                        <label>${s.subName}</label>
+                    </div>`;
+                }).join('')}
+            </div>`).join('');
 
         return `
         <div class="contractor-item">
@@ -2453,29 +2486,96 @@ async function buildContractorPanel() {
     // Bind checkbox events
     list.querySelectorAll('.contractor-cb').forEach(cb => {
         cb.addEventListener('change', function() {
-            handleSubitemToggle(
-                this.dataset.catId,
-                this.dataset.subId,
-                this.dataset.sheet,
-                this.dataset.geo,
-                this.checked
-            );
-            // Sync checkboxes in contractor panel after toggle
-            syncContractorCheckboxes();
+            handleContractorCheckbox(this);
         });
     });
 }
 
+/* ── handle contractor checkbox toggle ── */
+function handleContractorCheckbox(cb) {
+    const filterKey      = cb.dataset.filterKey;
+    const sheetId        = cb.dataset.sheet;
+    const geoFile        = cb.dataset.geo;
+    const catId          = cb.dataset.catId;
+    const subId          = cb.dataset.subId;
+    const contractorName = cb.dataset.contractor;
+
+    if (cb.checked) {
+        activeContractorFilter.add(filterKey);
+        // Ensure the layer is loaded (load if not already)
+        if (!allLayers[sheetId]) {
+            const sub = categories.flatMap(c => c.subitems).find(s => s.id === subId);
+            if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
+        } else {
+            applyContractorFilter();
+        }
+        // Also mark selectedItems so sidebar stays in sync
+        selectedItems[subId] = true;
+    } else {
+        activeContractorFilter.delete(filterKey);
+        // Check if any other contractor filter still uses this sheet
+        const stillNeeded = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
+        if (!stillNeeded) {
+            // Remove filter AND unselect from sidebar only if no contractor filter left for this sheet
+            delete selectedItems[subId];
+            // But keep layer on map if still in selectedItems from sidebar
+            if (!selectedItems[subId]) {
+                removeLayer(sheetId);
+            }
+        } else {
+            applyContractorFilter();
+        }
+    }
+
+    renderItems();
+    renderNavTabs();
+    updateStats();
+    syncContractorCheckboxes();
+}
+
+/* ── apply gray-out: highlight only features whose CONTRACTOR matches active filters ── */
+function applyContractorFilter() {
+    if (!activeContractorFilter.size) {
+        // No contractor filter active — restore normal status-based colors
+        refreshLayerColors();
+        return;
+    }
+
+    Object.entries(allLayers).forEach(([sheetId, layer]) => {
+        if (!layer || !allData[sheetId]) return;
+
+        // Which contractors are active for this sheet?
+        const activeForSheet = [...activeContractorFilter]
+            .filter(k => k.startsWith(sheetId + '|'))
+            .map(k => k.split('|')[1].trim().toLowerCase());
+
+        layer.eachLayer(f => {
+            const row        = allData[sheetId][f.feature.properties.ID];
+            if (!row) return;
+            const featureCon = (row["CONTRACTOR"] || "").trim().toLowerCase();
+            const match      = activeForSheet.length === 0 ||
+                               activeForSheet.includes(featureCon);
+
+            if (match) {
+                f.setStyle(featureStyle(row));
+                f.setZIndexOffset && f.setZIndexOffset(100);
+            } else {
+                f.setStyle({ color: '#aaaaaa', fillColor: '#cccccc', fillOpacity: 0.18, weight: 1 });
+            }
+        });
+    });
+}
+
+/* ── keep contractor checkboxes in sync with selectedItems ── */
 function syncContractorCheckboxes() {
     document.querySelectorAll('.contractor-cb').forEach(cb => {
-        cb.checked = !!selectedItems[cb.dataset.subId];
+        cb.checked = activeContractorFilter.has(cb.dataset.filterKey);
     });
 }
 
 function toggleContractor(el) {
     const subitems = el.nextElementSibling;
-    const isOpen = subitems.classList.contains('active');
-    // Close all open
+    const isOpen   = subitems.classList.contains('active');
     document.querySelectorAll('.contractor-name.open').forEach(e => {
         e.classList.remove('open');
         e.nextElementSibling.classList.remove('active');
@@ -2659,13 +2759,17 @@ function featureStyle(row) {
 }
 
 function refreshLayerColors() {
-    Object.entries(allLayers).forEach(([sheetId, layer]) => {
-        if (!layer || !allData[sheetId]) return;
-        layer.eachLayer(f => {
-            const row = allData[sheetId][f.feature.properties.ID];
-            if (row) f.setStyle(featureStyle(row));
+    if (activeContractorFilter && activeContractorFilter.size > 0) {
+        applyContractorFilter();
+    } else {
+        Object.entries(allLayers).forEach(([sheetId, layer]) => {
+            if (!layer || !allData[sheetId]) return;
+            layer.eachLayer(f => {
+                const row = allData[sheetId][f.feature.properties.ID];
+                if (row) f.setStyle(featureStyle(row));
+            });
         });
-    });
+    }
 }
 
 /* ====================================================
@@ -2770,6 +2874,10 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
                 }
 
                 updateStats();
+                // Apply contractor filter if one is active, otherwise normal colors
+                if (activeContractorFilter && activeContractorFilter.size > 0) {
+                    applyContractorFilter();
+                }
                 buildContractorPanel();
             });
         })
@@ -2779,6 +2887,10 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
 function removeLayer(sheetId) {
     if (allLayers[sheetId]) { map.removeLayer(allLayers[sheetId]); delete allLayers[sheetId]; }
     delete allData[sheetId];
+    // Remove any contractor filters for this sheet
+    if (activeContractorFilter) {
+        [...activeContractorFilter].forEach(k => { if (k.startsWith(sheetId + '|')) activeContractorFilter.delete(k); });
+    }
     updateStats();
     buildContractorPanel();
 }
@@ -2868,6 +2980,11 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
     } else {
         delete selectedItems[subId];
         removeLayer(sheetId);
+    }
+
+    // If no contractor filter active, restore normal colors
+    if (activeContractorFilter && activeContractorFilter.size === 0) {
+        refreshLayerColors();
     }
 
     // Sync sidebar + contractor checkboxes
