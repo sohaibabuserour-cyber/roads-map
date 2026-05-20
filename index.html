@@ -1597,7 +1597,7 @@
 
             <!-- Contractor button -->
             <div style="position:relative">
-                <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel');buildContractorPanel();" title="المقاولون">👷</div>
+                <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel')" title="المقاولون">👷</div>
                 <div class="contractor-panel" id="contractorPanel">
                     <div class="contractor-panel-header">👷 المقاولون</div>
                     <div class="contractor-list" id="contractorList">
@@ -2151,6 +2151,10 @@ async function enterApp() {
 
     // Load notifications (sheet last-updated info)
     loadNotifications();
+
+    // سحب بيانات المقاولين مرة واحدة عند بدء التطبيق
+    contractorsLoaded = false;
+    buildContractorPanel();
 }
 
 function updateUserUI() {
@@ -2190,6 +2194,7 @@ function doLogout() {
     Object.values(allLayers).forEach(l => { if (map) map.removeLayer(l); });
     allLayers = {}; allData = {}; allFeatures = {};
     selectedItems = {};
+    contractorMap = {}; contractorsLoaded = false; activeContractorFilter = new Set();
     document.getElementById("mainApp").classList.remove("visible");
     document.getElementById("loginScreen").style.display = "flex";
     document.getElementById("loginEmail").value    = "";
@@ -2373,6 +2378,7 @@ function loadEquipmentData() {
 
 let contractorMap         = {};
 let activeContractorFilter = new Set(); // "sheetId|contractorName"
+let contractorsLoaded     = false; // ← flag: سحب المقاولين مرة واحدة فقط
 
 /* ── fetch one subitem's contractors (uses cached allData if available) ── */
 async function fetchSheetContractors(sub) {
@@ -2422,9 +2428,15 @@ async function fetchSheetContractors(sub) {
 }
 
 /* ── build & render the full contractor panel ── */
-async function buildContractorPanel() {
+async function buildContractorPanel({ forceRefresh = false } = {}) {
     const list = document.getElementById("contractorList");
     if (!list) return;
+
+    // إذا البيانات محملة مسبقاً وما في طلب إعادة تحميل، اكتفِ بإعادة الرسم فقط
+    if (contractorsLoaded && !forceRefresh) {
+        renderContractorList();
+        return;
+    }
 
     list.innerHTML = '<div class="contractor-empty">⏳ جاري التحميل...</div>';
 
@@ -2438,6 +2450,14 @@ async function buildContractorPanel() {
     }
 
     await Promise.all(allSubs.map(sub => fetchSheetContractors(sub)));
+    contractorsLoaded = true;
+    renderContractorList();
+}
+
+/* ── render contractor list HTML (no fetch) ── */
+function renderContractorList() {
+    const list = document.getElementById("contractorList");
+    if (!list) return;
 
     const names = Object.keys(contractorMap).sort((a,b) => a.localeCompare(b, 'ar'));
 
@@ -2518,24 +2538,34 @@ function handleContractorCheckbox(cb) {
     const contractorName = cb.dataset.contractor;
 
     if (cb.checked) {
+        // ── إلغاء كل الاختيارات الأخرى في البنود (sidebar + layers) ──
+        // نحتفظ فقط بالـ sheetId الخاص بهذا الـ checkbox
+        const allSubIds = categories.flatMap(c => c.subitems.map(s => s.id));
+        allSubIds.forEach(sid => {
+            if (sid !== subId && selectedItems[sid]) {
+                const sub = categories.flatMap(c => c.subitems).find(s => s.id === sid);
+                if (sub) removeLayer(sub.sheetId);
+                delete selectedItems[sid];
+            }
+        });
+
         activeContractorFilter.add(filterKey);
-        // Ensure the layer is loaded (load if not already)
+
+        // تحميل الطبقة إذا لم تكن محملة
         if (!allLayers[sheetId]) {
             const sub = categories.flatMap(c => c.subitems).find(s => s.id === subId);
             if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
         } else {
             applyContractorFilter();
         }
-        // Also mark selectedItems so sidebar stays in sync
+        // مزامنة selectedItems مع الـ sidebar
         selectedItems[subId] = true;
     } else {
         activeContractorFilter.delete(filterKey);
-        // Check if any other contractor filter still uses this sheet
+        // هل لا يزال هناك فلتر مقاول آخر يستخدم نفس الشيت؟
         const stillNeeded = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
         if (!stillNeeded) {
-            // Remove filter AND unselect from sidebar only if no contractor filter left for this sheet
             delete selectedItems[subId];
-            // But keep layer on map if still in selectedItems from sidebar
             if (!selectedItems[subId]) {
                 removeLayer(sheetId);
             }
@@ -2958,7 +2988,8 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
                 if (activeContractorFilter && activeContractorFilter.size > 0) {
                     applyContractorFilter();
                 }
-                buildContractorPanel();
+                // إعادة بناء قائمة المقاولين بعد تحميل بيانات جديدة
+                buildContractorPanel({ forceRefresh: true });
             });
         })
         .catch(e => { console.error(e); showAlert("❌ خطأ في تحميل البيانات"); });
@@ -2972,7 +3003,7 @@ function removeLayer(sheetId) {
         [...activeContractorFilter].forEach(k => { if (k.startsWith(sheetId + '|')) activeContractorFilter.delete(k); });
     }
     updateStats();
-    buildContractorPanel();
+    renderContractorList();
 }
 
 /* ====================================================
