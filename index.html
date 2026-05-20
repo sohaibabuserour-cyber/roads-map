@@ -304,7 +304,7 @@
         }
 
         .nav-logo img {
-            height: 38px;
+            height: 46px;
             width: auto;
             object-fit: contain;
             filter: drop-shadow(0 0 8px rgba(245,200,66,0.4));
@@ -357,7 +357,7 @@
             position: absolute;
             top: 100%;
             right: 0;
-            min-width: 180px;
+            min-width: 200px;
             background: white;
             border-radius: 0 0 10px 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -366,12 +366,14 @@
             z-index: 9999;
             border-top: 2px solid var(--purple);
             overflow: hidden;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .nav-tab:hover .tab-sub-dropdown { display: flex; }
 
         .tab-sub-item {
-            padding: 9px 14px;
+            padding: 10px 14px;
             font-size: 12px;
             font-weight: 600;
             color: var(--text);
@@ -381,14 +383,27 @@
             gap: 8px;
             transition: background 0.15s ease;
             border-bottom: 1px solid #f0f0f0;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
         }
 
         .tab-sub-item:last-child { border-bottom: none; }
         .tab-sub-item:hover { background: rgba(106,45,145,0.07); }
 
+        .tab-sub-item label {
+            flex: 1;
+            cursor: pointer;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
         .tab-sub-item input[type="checkbox"] {
             accent-color: var(--purple);
             flex-shrink: 0;
+            width: 14px;
+            height: 14px;
         }
 
         /* Right side of nav */
@@ -483,6 +498,81 @@
             color: var(--text-soft);
             font-size: 12px;
         }
+
+        /* Coords panel in nav */
+        .coords-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 260px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            z-index: 9999;
+            overflow: hidden;
+            display: none;
+        }
+
+        .coords-panel.active { display: block; animation: dropFade 0.2s ease-out; }
+
+        .coords-panel-header {
+            background: var(--sidebar-hdr-bg);
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .coords-panel-body {
+            padding: 12px 14px;
+        }
+
+        .coords-panel-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .coords-panel-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .coords-panel-input {
+            flex: 1;
+            padding: 6px 9px;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            text-align: center;
+            outline: none;
+            color: var(--text);
+            background: var(--white);
+        }
+
+        .coords-panel-input:focus { border-color: var(--purple); }
+
+        .coords-panel-btn {
+            width: 100%;
+            padding: 8px;
+            background: var(--sidebar-hdr-bg);
+            border: none;
+            border-radius: 7px;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: opacity 0.2s;
+        }
+
+        .coords-panel-btn:hover { opacity: 0.85; }
 
         /* Theme panel */
         .theme-panel {
@@ -703,15 +793,28 @@
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
             display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .stats-row {
+            display: flex;
             align-items: center;
             padding: 8px 14px;
             gap: 10px;
             overflow-x: auto;
-            z-index: 100;
         }
 
-        .stats-search-bar::-webkit-scrollbar { height: 3px; }
-        .stats-search-bar::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+        .stats-row::-webkit-scrollbar { height: 3px; }
+        .stats-row::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        .search-row {
+            padding: 6px 14px;
+            border-top: 1px solid var(--border);
+            background: #fafafa;
+            display: flex;
+            align-items: center;
+        }
 
         .stats-wrapper {
             display: flex;
@@ -765,9 +868,9 @@
             transition: all 0.3s ease;
             font-family: 'Cairo', sans-serif;
             color: var(--text);
-            background: #fafafa;
+            background: white;
             text-align: right;
-            width: 220px;
+            width: 100%;
         }
 
         .search-input::placeholder { color: #bbb; }
@@ -1409,6 +1512,29 @@
                 </div>
             </div>
 
+            <!-- Default Coordinates button (admin) -->
+            <div style="position:relative" class="admin-only" id="coordsBtnWrap">
+                <div class="nav-icon-btn" id="coordsBtn" onclick="togglePanel('coordsPanel')" title="الإحداثيات الافتراضية">📍</div>
+                <div class="coords-panel" id="coordsPanel">
+                    <div class="coords-panel-header">📍 الإحداثيات الافتراضية</div>
+                    <div class="coords-panel-body">
+                        <div class="coords-panel-row">
+                            <span class="coords-panel-label">خط العرض</span>
+                            <input type="text" class="coords-panel-input" id="defLat2" placeholder="21.292">
+                        </div>
+                        <div class="coords-panel-row">
+                            <span class="coords-panel-label">خط الطول</span>
+                            <input type="text" class="coords-panel-input" id="defLng2" placeholder="39.71">
+                        </div>
+                        <div class="coords-panel-row">
+                            <span class="coords-panel-label">التكبير</span>
+                            <input type="text" class="coords-panel-input" id="defZoom2" placeholder="14">
+                        </div>
+                        <button class="coords-panel-btn" onclick="saveDefaultCoordsNav()">✓ حفظ وتطبيق على الجميع</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- User chip + dropdown -->
             <div class="user-menu-wrap" id="userMenuWrap">
                 <div class="user-chip" onclick="togglePanel('userDropdown')">
@@ -1448,11 +1574,15 @@
 
             <!-- STATS + SEARCH BAR -->
             <div class="stats-search-bar">
-                <div class="stats-wrapper" id="statsWrapper"></div>
-                <div class="search-wrap">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم...">
-                    <div class="search-dropdown" id="searchDropdown"></div>
+                <div class="stats-row">
+                    <div class="stats-wrapper" id="statsWrapper"></div>
+                </div>
+                <div class="search-row">
+                    <div class="search-wrap" style="flex:1;position:relative">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم...">
+                        <div class="search-dropdown" id="searchDropdown"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1652,14 +1782,14 @@ function togglePanel(id) {
     const panel = document.getElementById(id);
     const isOpen = panel.classList.contains("active");
     // Close all panels first
-    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel').forEach(p => p.classList.remove('active'));
     if (!isOpen) panel.classList.add("active");
 }
 
 // Close panels when clicking outside
 document.addEventListener("click", e => {
     if (!e.target.closest('.nav-right')) {
-        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel').forEach(p => p.classList.remove('active'));
     }
     if (!e.target.closest('.search-wrap')) {
         document.getElementById("searchDropdown").classList.remove("active");
@@ -1906,6 +2036,9 @@ function updateUserUI() {
         document.getElementById("defLat").value  = defaultCoords.lat;
         document.getElementById("defLng").value  = defaultCoords.lng;
         document.getElementById("defZoom").value = defaultCoords.zoom;
+        const l2 = document.getElementById("defLat2"); if(l2) l2.value = defaultCoords.lat;
+        const g2 = document.getElementById("defLng2"); if(g2) g2.value = defaultCoords.lng;
+        const z2 = document.getElementById("defZoom2"); if(z2) z2.value = defaultCoords.zoom;
     }
 }
 
@@ -1924,6 +2057,27 @@ function doLogout() {
     document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown').forEach(p => p.classList.remove('active'));
 }
 
+// Apps Script Web App URL for writing back to the Users sheet.
+// Admin must deploy an Apps Script with doPost(e) that handles: action, email, name, password, avatar.
+// Leave empty string if not configured — changes will only persist in session.
+const APPS_SCRIPT_URL = ""; // e.g. "https://script.google.com/macros/s/YOUR_ID/exec"
+
+async function writeUserToSheet(payload) {
+    if (!APPS_SCRIPT_URL) return false;
+    try {
+        const r = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const json = await r.json();
+        return json.success === true;
+    } catch(e) {
+        console.warn("Apps Script write failed:", e);
+        return false;
+    }
+}
+
 /* ====================================================
    USER PROFILE EDIT
    ==================================================== */
@@ -1932,17 +2086,28 @@ function triggerAvatarUpload() {
     document.getElementById("avatarFileInput").click();
 }
 
-function handleAvatarUpload(e) {
+async function handleAvatarUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => {
-        currentUser.avatar = ev.target.result;
+    reader.onload = async ev => {
+        const base64 = ev.target.result;
+        currentUser.avatar = base64;
         updateUserUI();
         saveSession(currentUser);
-        // Note: saving avatar to sheet requires Sheets API/Apps Script.
-        // Here we store it in session; admin would need to update the sheet manually.
-        showAlert("✅ تم تحديث الصورة في الجلسة الحالية", "success");
+
+        // Try to persist to sheet
+        const ok = await writeUserToSheet({
+            action: "updateUser",
+            email: currentUser.email,
+            avatar: base64
+        });
+
+        if (ok) {
+            showAlert("✅ تم حفظ الصورة في الشيت", "success");
+        } else {
+            showAlert("✅ الصورة محفوظة في الجلسة. لحفظها دائماً افعل خطوة ربط Apps Script", "success");
+        }
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -1954,18 +2119,21 @@ async function saveUserProfile() {
 
     if (!newName) { showAlert("❌ يرجى إدخال الاسم"); return; }
 
-    // Update local state
     currentUser.name = newName;
     saveSession(currentUser);
     updateUserUI();
 
-    // Try to update Google Sheet via Apps Script / direct approach
-    // Since we can't write to Sheets directly from client-side JS without OAuth,
-    // we'll show guidance. The update is saved in session and persists on reload.
-    if (newPass) {
-        showAlert("✅ تم حفظ الاسم. لتغيير الباسورد يجب التعديل في الشيت مباشرة", "success");
+    const payload = { action: "updateUser", email: currentUser.email, name: newName };
+    if (newPass) payload.password = newPass;
+
+    const ok = await writeUserToSheet(payload);
+
+    if (ok) {
+        showAlert("✅ تم حفظ التغييرات في الشيت", "success");
+    } else if (newPass) {
+        showAlert("✅ تم حفظ الاسم في الجلسة. لتغيير الباسورد: افعل ربط Apps Script أو عدّل في الشيت مباشرة", "success");
     } else {
-        showAlert("✅ تم حفظ التغييرات", "success");
+        showAlert("✅ تم حفظ الاسم", "success");
     }
 
     document.getElementById("userDropdown").classList.remove("active");
@@ -2007,7 +2175,28 @@ function saveDefaultCoords() {
     defaultCoords = { lat, lng, zoom };
     localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
     if (map) map.setView([lat, lng], zoom);
-    showAlert("✅ تم حفظ الإحداثيات الافتراضية", "success");
+    syncCoordsInputs();
+    showAlert("✅ تم حفظ الإحداثيات — اضغط ⬇ لتصدير categories.json ليتشاركها الجميع", "success");
+}
+
+function saveDefaultCoordsNav() {
+    const lat  = parseFloat(document.getElementById("defLat2").value);
+    const lng  = parseFloat(document.getElementById("defLng2").value);
+    const zoom = parseInt(document.getElementById("defZoom2").value);
+    if (isNaN(lat) || isNaN(lng) || isNaN(zoom)) { showAlert("❌ أدخل إحداثيات صحيحة"); return; }
+    defaultCoords = { lat, lng, zoom };
+    localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
+    if (map) map.setView([lat, lng], zoom);
+    syncCoordsInputs();
+    document.getElementById("coordsPanel").classList.remove("active");
+    showAlert("✅ تم حفظ الإحداثيات — اضغط ⬇ في البنود لتصدير categories.json ليتشاركها الجميع", "success");
+}
+
+function syncCoordsInputs() {
+    // Sync all coords inputs
+    ["defLat","defLat2"].forEach(id => { const el = document.getElementById(id); if(el) el.value = defaultCoords.lat; });
+    ["defLng","defLng2"].forEach(id => { const el = document.getElementById(id); if(el) el.value = defaultCoords.lng; });
+    ["defZoom","defZoom2"].forEach(id => { const el = document.getElementById(id); if(el) el.value = defaultCoords.zoom; });
 }
 
 /* ====================================================
@@ -2033,45 +2222,49 @@ function loadEquipmentData() {
    NOTIFICATIONS — last update per sheet
    ==================================================== */
 
+async function getSheetLastModified(sheetId) {
+    // Use the Sheets RSS/Atom feed which contains an "updated" timestamp
+    try {
+        const rssUrl = `https://spreadsheets.google.com/feeds/list/${sheetId}/1/public/full?alt=json`;
+        const r = await fetch(rssUrl);
+        if (!r.ok) throw new Error("rss fail");
+        const json = await r.json();
+        const updated = json.feed?.updated?.$t || "";
+        if (updated) return new Date(updated);
+    } catch(e) {}
+    return null;
+}
+
 async function loadNotifications() {
     notifications = [];
     const badge = document.getElementById("notifBadge");
     const list  = document.getElementById("notifList");
 
-    // For each active subitem, check the sheet for the most recent row timestamp
-    const activeSubs = [];
-    categories.forEach(cat => {
-        cat.subitems.forEach(sub => {
-            if (allData[sub.sheetId]) activeSubs.push(sub);
-        });
-    });
+    list.innerHTML = '<div class="notif-empty">جاري التحميل...</div>';
 
-    if (!activeSubs.length) {
-        list.innerHTML = '<div class="notif-empty">لا توجد إشعارات — قم بتحميل بيانات أولاً</div>';
+    const allSubs = [];
+    categories.forEach(cat => cat.subitems.forEach(sub => allSubs.push(sub)));
+
+    if (!allSubs.length) {
+        list.innerHTML = '<div class="notif-empty">لا توجد بنود مضافة بعد</div>';
+        badge.style.display = 'none';
         return;
     }
 
-    list.innerHTML = '<div class="notif-empty">جاري التحميل...</div>';
-
-    for (const sub of activeSubs) {
-        try {
-            // Fetch the sheet to get last modified via metadata hack using RSS
-            const rssUrl = `https://spreadsheets.google.com/feeds/list/${sub.sheetId}/1/public/full?alt=json`;
-            const r = await fetch(rssUrl);
-            const json = await r.json();
-            const updated = json.feed?.updated?.$t || "";
-            if (updated) {
-                const d = new Date(updated);
-                notifications.push({
-                    title: `آخر تحديث: ${sub.name}`,
-                    time: d.toLocaleString('ar-SA', { dateStyle:'short', timeStyle:'short' })
-                });
-            }
-        } catch(e) {
-            // Fallback: just show a generic message
+    for (const sub of allSubs) {
+        const date = await getSheetLastModified(sub.sheetId);
+        if (date) {
             notifications.push({
-                title: `بيانات محملة: ${sub.name}`,
-                time: new Date().toLocaleString('ar-SA', { dateStyle:'short', timeStyle:'short' })
+                title: `آخر تعديل: ${sub.name}`,
+                time: date.toLocaleString('ar-SA', { dateStyle:'medium', timeStyle:'short' }),
+                loaded: !!allData[sub.sheetId]
+            });
+        } else {
+            // Fallback
+            notifications.push({
+                title: `بيانات: ${sub.name}`,
+                time: allData[sub.sheetId] ? "محملة ✓" : "لم تُحمَّل بعد",
+                loaded: !!allData[sub.sheetId]
             });
         }
     }
@@ -2101,6 +2294,12 @@ async function loadCategoriesConfig() {
         if (!r.ok) throw new Error("not found");
         const data = await r.json();
         categories = Array.isArray(data) ? data : (data.categories || []);
+        // Load defaultCoords from config if present (shared across all users)
+        if (!Array.isArray(data) && data.defaultCoords) {
+            defaultCoords = data.defaultCoords;
+            // Also store locally
+            localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
+        }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
         categories = [];
@@ -2113,13 +2312,13 @@ async function loadCategoriesConfig() {
    ==================================================== */
 
 function exportConfig() {
-    const payload = JSON.stringify(categories, null, 2);
+    const payload = JSON.stringify({ categories, defaultCoords }, null, 2);
     const blob    = new Blob([payload], { type: "application/json" });
     const link    = document.createElement("a");
     link.href     = URL.createObjectURL(blob);
     link.download = "categories.json";
     link.click();
-    showAlert("✅ تم تحميل categories.json", "success");
+    showAlert("✅ تم تحميل categories.json (يتضمن الإحداثيات الافتراضية)", "success");
 }
 
 function importConfig(e) {
@@ -2131,6 +2330,13 @@ function importConfig(e) {
             const data = JSON.parse(ev.target.result);
             categories = Array.isArray(data) ? data : (data.categories || []);
             categories.forEach(c => { if (!c.subitems) c.subitems = []; if (!c.id) c.id = uid(); });
+            // Import defaultCoords if present
+            if (!Array.isArray(data) && data.defaultCoords) {
+                defaultCoords = data.defaultCoords;
+                localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
+                if (map) map.setView([defaultCoords.lat, defaultCoords.lng], defaultCoords.zoom);
+                syncCoordsInputs();
+            }
             renderItems();
             renderNavTabs();
             updateStats();
@@ -2338,7 +2544,7 @@ function renderNavTabs() {
             <span>${cat.emoji} ${cat.name}</span>
             <div class="tab-sub-dropdown" id="tabDrop_${cat.id}">
                 ${cat.subitems.map(sub => `
-                    <div class="tab-sub-item" data-sub-id="${sub.id}" data-cat-id="${cat.id}" data-sheet="${sub.sheetId}" data-geo="${sub.geoJsonFile}">
+                    <div class="tab-sub-item" data-sub-id="${sub.id}" data-cat-id="${cat.id}">
                         <input type="checkbox" id="tabcb_${sub.id}"
                             data-sub-id="${sub.id}"
                             data-cat-id="${cat.id}"
@@ -2347,7 +2553,7 @@ function renderNavTabs() {
                             ${selectedItems[sub.id] ? 'checked' : ''}>
                         <label for="tabcb_${sub.id}">${sub.name}</label>
                     </div>`).join('')}
-                ${!cat.subitems.length ? '<div style="padding:10px;color:#aaa;font-size:11px;text-align:center">لا توجد بنود فرعية</div>' : ''}
+                ${!cat.subitems.length ? '<div style="padding:12px;color:#aaa;font-size:11px;text-align:center">لا توجد بنود فرعية</div>' : ''}
             </div>`;
 
         tabsEl.appendChild(tab);
