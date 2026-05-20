@@ -2195,17 +2195,22 @@ function loadEquipmentData() {
    NOTIFICATIONS — last update per sheet
    ==================================================== */
 
-async function getSheetLastModified(sheetId) {
-    // Use the Sheets RSS/Atom feed which contains an "updated" timestamp
+async function getControlSheetData(sheetId) {
+    // Fetch the CONTROL sheet (sheet named "CONTROL") from the spreadsheet
+    // Google Sheets export by sheet name: use the range parameter
     try {
-        const rssUrl = `https://spreadsheets.google.com/feeds/list/${sheetId}/1/public/full?alt=json`;
-        const r = await fetch(rssUrl);
-        if (!r.ok) throw new Error("rss fail");
-        const json = await r.json();
-        const updated = json.feed?.updated?.$t || "";
-        if (updated) return new Date(updated);
-    } catch(e) {}
-    return null;
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=CONTROL&range=A1:A2`;
+        const r = await fetch(url + "&t=" + Date.now());
+        if (!r.ok) throw new Error("fetch fail");
+        const text = await r.text();
+        // CSV: two rows, one column each
+        const lines = text.split('\n').map(l => l.replace(/^"|"$/g, '').trim()).filter(Boolean);
+        const sheetName = lines[0] || "";
+        const timeStr   = lines[1] || "";
+        return { sheetName, timeStr };
+    } catch(e) {
+        return null;
+    }
 }
 
 async function loadNotifications() {
@@ -2216,7 +2221,7 @@ async function loadNotifications() {
     list.innerHTML = '<div class="notif-empty">جاري التحميل...</div>';
 
     const allSubs = [];
-    categories.forEach(cat => cat.subitems.forEach(sub => allSubs.push(sub)));
+    categories.forEach(cat => cat.subitems.forEach(sub => allSubs.push({ ...sub })));
 
     if (!allSubs.length) {
         list.innerHTML = '<div class="notif-empty">لا توجد بنود مضافة بعد</div>';
@@ -2225,31 +2230,23 @@ async function loadNotifications() {
     }
 
     for (const sub of allSubs) {
-        const date = await getSheetLastModified(sub.sheetId);
-        if (date) {
+        const ctrl = await getControlSheetData(sub.sheetId);
+        if (ctrl && ctrl.timeStr) {
             notifications.push({
-                title: `آخر تعديل: ${sub.name}`,
-                time: date.toLocaleString('ar-SA', { dateStyle:'medium', timeStyle:'short' }),
-                loaded: !!allData[sub.sheetId]
+                title: `🔔 ${ctrl.sheetName || sub.name}`,
+                time : ctrl.timeStr
             });
         } else {
-            // Fallback
             notifications.push({
-                title: `بيانات: ${sub.name}`,
-                time: allData[sub.sheetId] ? "محملة ✓" : "لم تُحمَّل بعد",
-                loaded: !!allData[sub.sheetId]
+                title: `📋 ${sub.name}`,
+                time : "لا يوجد تحديث مسجّل بعد"
             });
         }
     }
 
-    if (!notifications.length) {
-        list.innerHTML = '<div class="notif-empty">لا توجد إشعارات</div>';
-        badge.style.display = 'none';
-        return;
-    }
-
     badge.style.display = 'flex';
     badge.textContent = notifications.length;
+
     list.innerHTML = notifications.map(n => `
         <div class="notif-item">
             <div class="notif-item-title">${n.title}</div>
