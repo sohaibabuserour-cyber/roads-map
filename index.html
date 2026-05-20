@@ -3,402 +3,572 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>الخريطة التفاعلية مشروع ولي العهد</title>
+    <title>الخريطة التفاعلية - مشروع ولي العهد</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --purple:      #6a2d91;
+            --purple-mid:  #8b44b8;
+            --purple-light:#b47fd4;
+            --gold:        #f5c842;
+            --bg:          #f0edf5;
+            --white:       #ffffff;
+            --border:      #d8cfe8;
+            --text:        #2a1a40;
+            --text-soft:   #7a6590;
+            --green:       #3aaa5c;
+            --blue:        #2196f3;
+            --orange:      #ff9800;
+            --red:         #f44336;
+            --violet:      #9c27b0;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
             height: 100vh;
+            overflow: hidden;
+            color: var(--text);
         }
 
-        /* ===== MAIN LAYOUT ===== */
-        .layout-container {
+        /* ========== LOGIN SCREEN ========== */
+        #loginScreen {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: linear-gradient(135deg, #1a0a2e 0%, #3d1060 50%, #1a0a2e 100%);
             display: flex;
-            width: 100%;
-            height: 100%;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
             gap: 0;
+        }
+
+        .login-bg-pattern {
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(106,45,145,0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139,68,184,0.3) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(245,200,66,0.05) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .login-box {
+            position: relative;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 40px 48px;
+            width: 380px;
+            max-width: 95vw;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            animation: loginFadeIn 0.6s ease-out;
+        }
+
+        @keyframes loginFadeIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .login-logo .crown {
+            font-size: 44px;
+            display: block;
+            filter: drop-shadow(0 0 20px rgba(245,200,66,0.6));
+            animation: crownPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes crownPulse {
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(245,200,66,0.5)); }
+            50%       { filter: drop-shadow(0 0 30px rgba(245,200,66,0.9)); }
+        }
+
+        .login-logo h1 {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--gold);
+            margin-top: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .login-logo p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 4px;
+        }
+
+        .form-field {
+            margin-bottom: 16px;
+        }
+
+        .form-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 7px;
+            letter-spacing: 0.3px;
+        }
+
+        .form-field input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            color: white;
+            outline: none;
+            transition: all 0.3s ease;
+            text-align: right;
+        }
+
+        .form-field input::placeholder { color: rgba(255,255,255,0.3); }
+
+        .form-field input:focus {
+            border-color: var(--gold);
+            background: rgba(255,255,255,0.12);
+            box-shadow: 0 0 0 3px rgba(245,200,66,0.15);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+            position: relative;
             overflow: hidden;
         }
 
-        /* ===== LEFT SECTION (80% width) ===== */
+        .login-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(106,45,145,0.5); }
+        .login-btn:hover::after { opacity: 1; }
+        .login-btn:active { transform: translateY(0); }
+
+        .login-error {
+            background: rgba(244,67,54,0.15);
+            border: 1px solid rgba(244,67,54,0.4);
+            color: #ff8a80;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 14px;
+            display: none;
+        }
+
+        .login-loading {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .login-loading .dot {
+            display: inline-block;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--gold);
+            margin: 0 3px;
+            animation: dotBounce 1.2s ease-in-out infinite;
+        }
+
+        .login-loading .dot:nth-child(2) { animation-delay: 0.2s; }
+        .login-loading .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotBounce {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* ========== MAIN APP (hidden until login) ========== */
+        #mainApp {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            flex-direction: row;
+        }
+
+        #mainApp.visible { display: flex; }
+
+        /* ========== LEFT SECTION ========== */
         .left-section {
             width: 80%;
             display: flex;
             flex-direction: column;
-            gap: 0;
             overflow: hidden;
             min-height: 0;
         }
 
-        /* ===== TOP BARS SECTION ===== */
+        /* ========== TOP BARS ========== */
         .top-bars {
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 0;
             flex-shrink: 0;
             background: white;
-            overflow: visible;
             position: relative;
             z-index: 100;
         }
 
-        /* ===== SUM BAR ===== */
+        /* ========== SUM BAR ========== */
         .sum-bar {
             width: 100%;
-            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
             color: white;
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            flex-shrink: 0;
+            padding: 14px 18px;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
             overflow-x: auto;
             overflow-y: hidden;
+            gap: 0;
         }
 
-        .sum-bar::-webkit-scrollbar { height: 4px; }
+        .sum-bar::-webkit-scrollbar { height: 3px; }
         .sum-bar::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
         .sum-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 10px; }
 
+        /* user badge left side */
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-left: 18px;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .user-badge-avatar {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: var(--purple);
+        }
+
+        .user-badge-name { font-size: 11px; font-weight: 600; color: white; white-space: nowrap; }
+        .user-badge-role { font-size: 9px; color: rgba(255,255,255,0.6); white-space: nowrap; }
+
+        .logout-btn {
+            background: rgba(244,67,54,0.2);
+            border: 1px solid rgba(244,67,54,0.4);
+            color: #ff8a80;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .logout-btn:hover { background: rgba(244,67,54,0.35); }
+
         .stats-wrapper {
             display: flex;
-            gap: 30px;
+            gap: 16px;
             flex-wrap: nowrap;
             min-width: min-content;
+            flex: 1;
         }
 
         .stats-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             flex-shrink: 0;
-            min-width: 280px;
-            padding: 12px 16px;
+            min-width: 240px;
+            padding: 10px 14px;
             background: rgba(255,255,255,0.1);
             border-radius: 8px;
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
         }
 
         .stats-group-title {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            opacity: 0.9;
-            border-bottom: 2px solid rgba(255,255,255,0.3);
-            padding-bottom: 6px;
-        }
-
-        .stats-group-type {
             font-size: 12px;
-            opacity: 0.85;
-            font-weight: 500;
-            margin-top: 2px;
-            height: 18px;
-        }
-
-        .stat-row {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            opacity: 0.8;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .stat-value {
-            font-size: 18px;
             font-weight: 700;
-            color: #ffd700;
-            line-height: 1.2;
+            opacity: 0.9;
+            border-bottom: 1px solid rgba(255,255,255,0.25);
+            padding-bottom: 5px;
         }
 
-        /* ===== SEARCH BAR ===== */
+        .stats-group-type { font-size: 11px; opacity: 0.75; font-weight: 600; min-height: 16px; }
+
+        .stat-row { display: flex; gap: 16px; align-items: center; }
+
+        .stat-item { display: flex; flex-direction: column; gap: 3px; text-align: center; }
+
+        .stat-label { font-size: 10px; opacity: 0.75; font-weight: 600; }
+
+        .stat-value { font-size: 16px; font-weight: 700; color: var(--gold); line-height: 1.2; }
+
+        /* ========== SEARCH BAR ========== */
         .search-bar {
             width: 100%;
             background: white;
-            padding: 10px 16px;
-            box-shadow: inset 0 -1px 0 rgba(0,0,0,0.05);
+            padding: 9px 16px;
+            border-bottom: 1px solid var(--border);
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 12px;
+            gap: 10px;
             position: relative;
             z-index: 101;
         }
 
-        .search-bar-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #333;
-            opacity: 0.7;
-            white-space: nowrap;
-        }
+        .search-icon { font-size: 16px; opacity: 0.5; flex-shrink: 0; }
 
         .search-box-wrapper {
             position: relative;
             width: 30%;
             min-width: 200px;
             max-width: 400px;
-            display: flex;
-            align-items: center;
-            z-index: 101;
         }
 
         .search-input {
             width: 100%;
-            padding: 8px 12px;
+            padding: 7px 12px;
             font-size: 13px;
             border-radius: 6px;
-            border: 1.5px solid #e0e0e0;
+            border: 1.5px solid var(--border);
             outline: none;
             transition: all 0.3s ease;
-            font-family: inherit;
-            color: #333;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
             background: #fafafa;
+            text-align: right;
         }
 
-        .search-input::placeholder { color: #999; }
+        .search-input::placeholder { color: #bbb; }
 
         .search-input:focus {
-            border-color: #7a3fa0;
-            box-shadow: 0 0 8px rgba(122,63,160,0.15);
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(106,45,145,0.1);
             background: white;
         }
 
         .search-dropdown {
             position: fixed;
             background: white;
-            border: none;
             border-radius: 0 0 8px 8px;
-            max-height: 300px;
+            max-height: 280px;
             overflow-y: auto;
             z-index: 9999;
             display: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-            border-top: 2px solid #7a3fa0;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+            border-top: 2px solid var(--purple);
         }
 
-        .search-dropdown.active {
-            display: block;
-            animation: dropdownSlideDown 0.2s ease-out;
-        }
+        .search-dropdown.active { display: block; animation: dropFade 0.2s ease-out; }
 
-        @keyframes dropdownSlideDown {
+        @keyframes dropFade {
             from { opacity: 0; transform: translateY(-6px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
         .search-item {
-            padding: 10px 12px;
+            padding: 9px 12px;
             border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background 0.15s ease;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .search-item:hover { background: rgba(122,63,160,0.05); }
+        .search-item:hover { background: rgba(106,45,145,0.05); }
+        .search-item:last-child { border-bottom: none; }
 
-        .search-item-name {
-            flex: 1;
-            text-align: right;
-            font-weight: 500;
-            color: #333;
-            font-size: 13px;
-        }
+        .search-item-name { flex: 1; text-align: right; font-weight: 600; color: var(--text); font-size: 12px; }
 
-        .search-item-type {
+        .search-badge {
             font-size: 10px;
-            padding: 3px 8px;
-            background: #7a3fa0;
-            color: white;
+            padding: 2px 7px;
             border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
+            font-weight: 700;
             flex-shrink: 0;
-        }
-
-        .search-item-status {
-            font-size: 10px;
-            padding: 3px 8px;
             color: white;
-            border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
-            flex-shrink: 0;
         }
 
-        /* ===== MAP ===== */
-        #map {
-            flex: 1;
-            width: 100%;
-            height: auto;
-            z-index: 10;
-        }
+        /* ========== MAP ========== */
+        #map { flex: 1; width: 100%; min-height: 0; z-index: 10; }
 
-        /* ===== RIGHT SIDEBAR (20% width) ===== */
+        /* ========== RIGHT SIDEBAR ========== */
         .right-sidebar {
             width: 20%;
             height: 100%;
             background: white;
-            border-left: 2px solid #e0e0e0;
-            box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+            border-right: 2px solid var(--border);
+            box-shadow: 4px 0 16px rgba(106,45,145,0.08);
             display: flex;
             flex-direction: column;
             z-index: 1000;
             overflow: hidden;
         }
 
-        .items-section-header {
+        .sidebar-header {
             padding: 12px 14px;
-            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
-            border-bottom: 2px solid #e0e0e0;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
             flex-shrink: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .items-header-title {
-            font-size: 14px;
-            font-weight: 600;
+        .sidebar-header-title {
+            font-size: 13px;
+            font-weight: 700;
             color: white;
-            text-align: right;
-            flex: 1;
         }
 
-        .add-btn {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.4);
+        /* admin-only buttons */
+        .admin-btns {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .hdr-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
             color: white;
-            padding: 6px 12px;
+            padding: 5px 9px;
             border-radius: 5px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
             transition: all 0.2s ease;
-            flex-shrink: 0;
+            white-space: nowrap;
         }
 
-        .add-btn:hover {
-            background: rgba(255,255,255,0.3);
-            border-color: rgba(255,255,255,0.6);
+        .hdr-btn:hover { background: rgba(255,255,255,0.28); }
+
+        .hdr-btn.export-btn {
+            background: rgba(245,200,66,0.2);
+            border-color: rgba(245,200,66,0.5);
+            color: var(--gold);
         }
 
-        /* ===== ITEMS SECTION ===== */
+        .hdr-btn.export-btn:hover { background: rgba(245,200,66,0.35); }
+
+        /* ========== ITEMS SECTION ========== */
         .items-section {
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            border-bottom: 2px solid #e0e0e0;
-            padding: 0;
+            border-bottom: 2px solid var(--border);
         }
 
-        .items-section::-webkit-scrollbar { width: 5px; }
-        .items-section::-webkit-scrollbar-track { background: #f1f1f1; }
-        .items-section::-webkit-scrollbar-thumb { background: #7a3fa0; border-radius: 10px; }
+        .items-section::-webkit-scrollbar { width: 4px; }
+        .items-section::-webkit-scrollbar-track { background: #f5f5f5; }
+        .items-section::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
 
         .sidebar-section {
-            padding: 12px;
-            border-bottom: 1px solid #e8e8e8;
+            border-bottom: 1px solid var(--border);
             position: relative;
         }
 
         .sidebar-section:last-of-type { border-bottom: none; }
 
         .section-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-            text-align: right;
+            padding: 10px 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s ease;
+        }
+
+        .section-title:hover { background: rgba(106,45,145,0.04); }
+
+        .section-title-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            flex: 1;
+            text-align: right;
         }
 
         .expand-btn {
-            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
+            background: var(--purple);
             color: white;
             border: none;
-            width: 22px;
-            height: 22px;
+            width: 20px; height: 20px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.3s ease;
             flex-shrink: 0;
         }
 
-        .expand-btn:hover { transform: scale(1.1); }
         .expand-btn.active { transform: rotate(45deg); }
 
-        .delete-btn {
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            width: 20px;
-            height: 20px;
+        .del-cat-btn {
+            background: rgba(244,67,54,0.1);
+            border: 1px solid rgba(244,67,54,0.3);
+            color: #e53935;
+            width: 20px; height: 20px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
+            font-size: 11px;
+            display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
+            transition: all 0.2s ease;
             opacity: 0;
         }
 
-        .sidebar-section:hover .delete-btn {
-            opacity: 1;
-        }
-
-        .delete-btn:hover {
-            background: #ff5252;
-            transform: scale(1.1);
-        }
+        .sidebar-section:hover .del-cat-btn { opacity: 1; }
+        .del-cat-btn:hover { background: rgba(244,67,54,0.2); }
 
         .dropdown-items {
             display: none;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
+            padding: 0 10px 10px;
         }
 
         .dropdown-items.active { display: flex; }
@@ -406,25 +576,23 @@
         .dropdown-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 7px 8px;
-            background: linear-gradient(90deg, rgba(122,63,160,0.05) 0%, transparent 100%);
-            border-radius: 5px;
+            gap: 7px;
+            padding: 6px 8px;
+            background: rgba(106,45,145,0.04);
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid #e0e0e0;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
         }
 
-        .dropdown-item:hover {
-            background: linear-gradient(90deg, rgba(122,63,160,0.1) 0%, transparent 100%);
-            border-color: #7a3fa0;
-        }
+        .dropdown-item:hover { background: rgba(106,45,145,0.08); border-color: rgba(106,45,145,0.2); }
+
+        .dropdown-item.selected { background: rgba(106,45,145,0.12); border-color: var(--purple-light); }
 
         .dropdown-item input[type="checkbox"] {
-            width: 14px;
-            height: 14px;
+            width: 13px; height: 13px;
             cursor: pointer;
-            accent-color: #7a3fa0;
+            accent-color: var(--purple);
             flex-shrink: 0;
         }
 
@@ -432,1214 +600,1189 @@
             flex: 1;
             cursor: pointer;
             font-size: 12px;
-            color: #333;
-            font-weight: 500;
+            color: var(--text);
+            font-weight: 600;
             text-align: right;
         }
 
-        .dropdown-item.selected {
-            background: linear-gradient(90deg, rgba(122,63,160,0.15) 0%, transparent 100%);
-            border-color: #7a3fa0;
+        .del-sub-btn {
+            background: rgba(244,67,54,0.1);
+            border: none;
+            color: #e53935;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: all 0.2s ease;
         }
 
-        /* ===== LEGEND SECTION ===== */
+        .dropdown-item:hover .del-sub-btn { opacity: 1; }
+        .del-sub-btn:hover { background: rgba(244,67,54,0.25); }
+
+        /* add subitem row */
+        .add-sub-row {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: 1.5px dashed rgba(106,45,145,0.35);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: var(--purple);
+            font-size: 11px;
+            font-weight: 700;
+            justify-content: center;
+        }
+
+        .add-sub-row:hover { background: rgba(106,45,145,0.07); border-color: var(--purple); }
+
+        /* show add-sub-row only for admin */
+        body.is-admin .add-sub-row { display: flex; }
+        body.is-admin .del-cat-btn { /* shown on hover via CSS above */ }
+
+        /* hide admin controls for non-admin */
+        body:not(.is-admin) .admin-only { display: none !important; }
+
+        /* ========== LEGEND ========== */
         .legend-section {
             flex-shrink: 0;
-            padding: 12px;
-            background: #f9f9f9;
-            border-top: 2px solid #e0e0e0;
-            overflow-y: visible;
+            padding: 10px 12px;
+            background: #fafafa;
+            border-top: 2px solid var(--border);
         }
 
-        .legend-section::-webkit-scrollbar { width: 4px; }
-        .legend-section::-webkit-scrollbar-track { background: transparent; }
-        .legend-section::-webkit-scrollbar-thumb { background: #7a3fa0; border-radius: 10px; }
-
-        .legend { text-align: right; }
-
         .legend-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #7a3fa0;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            margin-bottom: 8px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #e0e0e0;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--purple);
+            margin-bottom: 7px;
+            padding-bottom: 5px;
+            border-bottom: 1.5px solid var(--border);
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 4px;
-            font-size: 11px;
-            color: #333;
-            cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 5px;
-            transition: all 0.2s ease;
-            flex-direction: row;
-            justify-content: flex-start;
             gap: 6px;
+            margin-bottom: 4px;
+            padding: 3px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.15s ease;
         }
 
         .legend-item:last-child { margin-bottom: 0; }
-        .legend-item:hover { background: rgba(122,63,160,0.08); }
-
-        .legend-item input[type="checkbox"] {
-            width: 14px;
-            height: 14px;
-            cursor: pointer;
-            accent-color: #7a3fa0;
-            flex-shrink: 0;
-            order: 3;
-            margin: 0;
-        }
-
-        .legend-item label {
-            flex: 1;
-            cursor: pointer;
-            font-size: 11px;
-            color: #333;
-            font-weight: 500;
-            text-align: right;
-            order: 2;
-        }
+        .legend-item:hover { background: rgba(106,45,145,0.06); }
 
         .legend-color {
-            width: 12px;
-            height: 12px;
+            width: 11px; height: 11px;
             border-radius: 3px;
-            border: 1px solid #ccc;
+            border: 1px solid rgba(0,0,0,0.1);
             flex-shrink: 0;
-            order: 1;
         }
 
-        .color-ongoing    { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
-        .color-available  { background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%); }
-        .color-unavailable{ background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
-        .color-completed  { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
-        .color-stopped    { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
+        .legend-label { flex: 1; font-size: 11px; font-weight: 600; color: var(--text); text-align: right; cursor: pointer; }
 
-        /* ===== POPUP ===== */
+        .legend-item input[type="checkbox"] {
+            width: 13px; height: 13px;
+            cursor: pointer;
+            accent-color: var(--purple);
+            flex-shrink: 0;
+        }
+
+        .color-ongoing     { background: var(--green); }
+        .color-available   { background: var(--blue); }
+        .color-unavailable { background: var(--orange); }
+        .color-completed   { background: var(--violet); }
+        .color-stopped     { background: var(--red); }
+
+        /* ========== POPUP ========== */
         .popup-card {
-            width: 95vw;
-            max-width: 300px;
-            border-radius: 14px;
+            width: min(300px, 90vw);
+            border-radius: 12px;
             overflow: hidden;
             background: white;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-            animation: popupSlideIn 0.3s ease-out;
-        }
-
-        @keyframes popupSlideIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to   { opacity: 1; transform: scale(1); }
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
         }
 
         .popup-header {
-            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
             color: white;
-            padding: 14px;
+            padding: 12px 14px;
             text-align: center;
-            border-bottom: 2px solid rgba(255,255,255,0.2);
         }
 
-        .popup-title    { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
-        .popup-subtitle { font-size: 16px; font-weight: 600; margin-top: 4px; opacity: 0.9; }
-        .popup-type     { font-size: 16px; font-weight: 600; margin-top: 6px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 6px; }
+        .popup-title    { font-size: 15px; font-weight: 900; }
+        .popup-subtitle { font-size: 13px; font-weight: 600; opacity: 0.85; margin-top: 2px; }
 
-        .popup-body {
-            padding: 16px;
-            max-height: 50vh;
-            overflow-y: auto;
-            font-size: 14px;
-        }
+        .popup-body { padding: 12px 14px; max-height: 50vh; overflow-y: auto; }
 
         .popup-row {
-            padding: 8px 0;
+            padding: 7px 0;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
-            border-bottom: 1px solid #e8e8e8;
+            border-bottom: 1px solid #f0f0f0;
             align-items: center;
         }
 
         .popup-row:last-child { border-bottom: none; }
 
-        .popup-label {
-            color: #7a3fa0;
-            font-weight: 600;
-            font-size: 16px;
-            text-align: right;
-        }
-
-        .popup-value {
-            font-weight: 600;
-            color: #333;
-            text-align: left;
-            word-break: break-word;
-        }
+        .popup-label { color: var(--purple); font-weight: 700; font-size: 12px; text-align: right; }
+        .popup-value { font-weight: 600; color: var(--text); font-size: 12px; text-align: left; word-break: break-word; }
 
         .popup-value.status {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 6px;
+            padding: 3px 8px;
+            border-radius: 5px;
             color: white;
-            font-size: 16px;
-            font-weight: 600;
-            text-transform: uppercase;
-            background: #7a3fa0;
+            font-size: 11px;
+            font-weight: 700;
         }
 
-        .popup-value.status.ongoing    { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
-        .popup-value.status.available  { background: linear-gradient(135deg, #2196f3 0%, #1e88e5 100%); }
-        .popup-value.status.unavailable{ background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
-        .popup-value.status.completed  { background: linear-gradient(135deg, #9c27b0 0%, #8e24aa 100%); }
-        .popup-value.status.stopped    { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
+        .popup-value.status.ongoing     { background: var(--green); }
+        .popup-value.status.available   { background: var(--blue); }
+        .popup-value.status.unavailable { background: var(--orange); }
+        .popup-value.status.completed   { background: var(--violet); }
+        .popup-value.status.stopped     { background: var(--red); }
 
-        /* ===== ALERT ===== */
+        /* ========== ALERT ========== */
         .alert {
             position: fixed;
-            top: 80px;
+            top: 70px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 20px;
-            border-radius: 10px;
-            z-index: 3000;
-            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 99998;
+            font-weight: 700;
             font-size: 13px;
             box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-            animation: alertSlideDown 0.3s ease-out;
+            animation: alertPop 0.3s ease-out;
+            white-space: nowrap;
         }
 
-        @keyframes alertSlideDown {
-            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        @keyframes alertPop {
+            from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
             to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
-        .alert-error   { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); color: white; }
-        .alert-success { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; }
+        .alert-error   { background: var(--red); color: white; }
+        .alert-success { background: var(--green); color: white; }
 
-        /* ===== MODAL ===== */
+        /* ========== MODAL ========== */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 10000;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 50000;
             align-items: center;
             justify-content: center;
         }
 
-        .modal.active {
-            display: flex;
-        }
+        .modal.active { display: flex; }
 
-        .modal-content {
+        .modal-box {
             background: white;
-            border-radius: 12px;
-            padding: 24px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-            animation: modalSlideIn 0.3s ease-out;
+            border-radius: 14px;
+            padding: 28px;
+            width: min(480px, 92vw);
+            box-shadow: 0 16px 50px rgba(0,0,0,0.3);
+            animation: modalPop 0.3s ease-out;
             max-height: 90vh;
             overflow-y: auto;
         }
 
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: scale(0.9); }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.92); }
             to   { opacity: 1; transform: scale(1); }
         }
 
-        .modal-header {
-            font-size: 18px;
+        .modal-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 18px;
+            text-align: right;
+        }
+
+        .modal-field {
+            margin-bottom: 14px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 12px;
             font-weight: 700;
-            color: #333;
-            margin-bottom: 16px;
+            color: var(--text-soft);
+            margin-bottom: 6px;
             text-align: right;
         }
 
-        .modal-body {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            text-align: right;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input, .form-group select {
+        .modal-field input,
+        .modal-field select {
+            width: 100%;
             padding: 10px 12px;
-            border: 1.5px solid #e0e0e0;
-            border-radius: 6px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
             font-size: 13px;
-            font-family: inherit;
-            transition: all 0.2s ease;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            text-align: right;
+            outline: none;
+            transition: border-color 0.2s ease;
         }
 
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: #7a3fa0;
-            box-shadow: 0 0 8px rgba(122,63,160,0.15);
+        .modal-field input:focus,
+        .modal-field select:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(106,45,145,0.1);
         }
 
         .modal-footer {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             margin-top: 20px;
-            justify-content: flex-end;
+            justify-content: flex-start;
         }
 
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 6px;
-            font-weight: 600;
+            border-radius: 7px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 13px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #7a3fa0 0%, #9b59b6 100%);
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
             color: white;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(122,63,160,0.3);
-        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(106,45,145,0.35); }
 
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-        }
+        .btn-secondary { background: #ededf0; color: var(--text); }
+        .btn-secondary:hover { background: #e0e0e5; }
 
-        .btn-secondary:hover {
-            background: #d0d0d0;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 1200px) {
-            .left-section  { width: 80%; }
-            .right-sidebar { width: 20%; }
-            .stats-group   { min-width: 250px; padding: 10px 14px; gap: 6px; }
-            .stat-row      { gap: 15px; }
-            .stat-value    { font-size: 16px; }
-            .search-box-wrapper { width: 28%; }
-        }
-
+        /* ========== RESPONSIVE ========== */
         @media (max-width: 1024px) {
             .left-section  { width: 78%; }
             .right-sidebar { width: 22%; }
-            .stats-group   { min-width: 220px; padding: 9px 12px; gap: 5px; }
-            .stat-row      { gap: 12px; }
-            .stat-item     { gap: 2px; }
-            .stat-value    { font-size: 15px; }
-            .stats-group-title  { font-size: 12px; }
-            .search-box-wrapper { width: 30%; min-width: 160px; }
         }
 
         @media (max-width: 768px) {
-            .layout-container { flex-direction: column; }
-
+            #mainApp { flex-direction: column; }
             .left-section  { width: 100%; flex: 1; min-height: 0; }
-
-            .top-bars {
-                flex-direction: column;
-                height: auto;
-                flex-shrink: 0;
-            }
-
-            .sum-bar {
-                width: 100%;
-                height: auto;
-                padding: 12px;
-            }
-
-            .search-bar {
-                width: 100%;
-                height: auto;
-                flex-direction: row;
-                justify-content: flex-start;
-                padding: 8px 12px;
-                gap: 8px;
-            }
-
-            .search-bar-label  { display: none; }
-            .search-box-wrapper{ width: 55%; min-width: auto; max-width: none; }
-            .search-input      { padding: 6px 10px; font-size: 12px; }
-
-            .stats-wrapper     { gap: 15px; }
-            .stats-group       { min-width: 200px; padding: 8px 10px; gap: 4px; }
-            .stat-row          { gap: 10px; }
-            .stat-value        { font-size: 14px; }
-            .stats-group-title { font-size: 11px; padding-bottom: 4px; }
-            .stat-label        { font-size: 10px; }
-
-            #map { flex: 1; height: auto; min-height: 0; }
-
             .right-sidebar {
-                width: 100%;
-                height: auto;
-                flex-shrink: 0;
-                border-left: none;
-                border-top: 2px solid #e0e0e0;
-                flex-direction: row;
-                overflow-x: auto;
-                overflow-y: visible;
+                width: 100%; height: auto; flex-shrink: 0;
+                border-right: none; border-top: 2px solid var(--border);
+                flex-direction: row; overflow-x: auto;
             }
-
-            .items-section-header { 
-                flex-direction: row;
-                padding: 8px 12px;
-                gap: 6px;
-            }
-
-            .add-btn {
-                padding: 4px 8px;
-                font-size: 11px;
-            }
-
-            .items-section {
-                display: flex;
-                gap: 0;
-                overflow-x: auto;
-                overflow-y: visible;
-                border-bottom: none;
-                flex-direction: row;
-                padding: 0;
-                height: auto;
-                flex-shrink: 0;
-                flex: 1;
-            }
-            .items-section::-webkit-scrollbar { height: 4px; width: auto; }
-
-            .sidebar-section {
-                flex-shrink: 0;
-                min-width: 160px;
-                border-right: 1px solid #e8e8e8;
-                border-bottom: none;
-                padding: 10px;
-                height: auto;
-                position: relative;
-                overflow: visible;
-            }
-
-            .legend-section {
-                flex-shrink: 0;
-                min-width: 170px;
-                border-top: none;
-                border-left: 1px solid #e0e0e0;
-                height: auto;
-                max-height: none;
-                padding: 10px;
-                overflow-y: visible;
-            }
+            .sidebar-header { flex-shrink: 0; flex-direction: column; gap: 6px; padding: 8px 10px; }
+            .items-section { display: flex; flex-direction: row; overflow-x: auto; overflow-y: visible; border-bottom: none; }
+            .sidebar-section { flex-shrink: 0; min-width: 150px; border-right: 1px solid var(--border); border-bottom: none; }
+            .legend-section { flex-shrink: 0; min-width: 160px; border-top: none; border-right: 1px solid var(--border); }
+            .sum-bar { padding: 10px 12px; }
+            .stats-group { min-width: 200px; }
         }
 
         @media (max-width: 480px) {
-            .top-bars       { flex-direction: column; height: auto; }
-            .sum-bar        { width: 100%; height: auto; padding: 10px; }
-            .search-bar     { width: 100%; height: auto; flex-direction: row; padding: 8px; gap: 8px; }
-            .right-sidebar  { height: auto; flex-shrink: 0; }
-            .sidebar-section { min-width: 140px; padding: 8px; }
-            .legend-section  { min-width: 150px; padding: 8px; height: auto; max-height: none; }
-            .stat-value      { font-size: 12px; }
-            .search-input    { font-size: 11px; padding: 5px 8px; }
-            .stats-group     { min-width: 160px; padding: 7px 8px; gap: 3px; }
-            .stats-group-title { font-size: 10px; }
-            .stat-row        { gap: 8px; }
-            .stat-item       { gap: 1px; }
-            .section-title   { font-size: 11px; }
-            .expand-btn      { width: 20px; height: 20px; font-size: 13px; }
-            .search-box-wrapper { width: 65%; }
-            .items-section-header { flex-direction: column; padding: 8px; }
-            .add-btn { width: 100%; }
+            .stats-group { min-width: 170px; }
+            .stat-value  { font-size: 13px; }
+            .search-box-wrapper { width: 60%; }
         }
     </style>
 </head>
-
 <body>
 
-    <div class="layout-container">
-        <!-- LEFT SECTION -->
-        <div class="left-section">
-            <div class="top-bars">
-                <!-- SUM BAR -->
-                <div class="sum-bar">
-                    <div class="stats-wrapper" id="statsWrapper">
-                        <!-- الإحصائيات تظهر هنا تلقائياً -->
-                    </div>
-                </div>
-
-                <!-- SEARCH BAR -->
-                <div class="search-bar">
-                    <div class="search-bar-label">🔍</div>
-                    <div class="search-box-wrapper">
-                        <input type="text" class="search-input" id="searchInput" placeholder="ابحث......">
-                        <div class="search-dropdown" id="searchDropdown"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MAP -->
-            <div id="map"></div>
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div id="loginScreen">
+    <div class="login-bg-pattern"></div>
+    <div class="login-box">
+        <div class="login-logo">
+            <span class="crown">👑</span>
+            <h1>مشروع ولي العهد</h1>
+            <p>الخريطة التفاعلية لمتابعة التنفيذ</p>
         </div>
 
-        <!-- RIGHT SIDEBAR -->
-        <div class="right-sidebar">
-            <div class="items-section-header">
-                <button class="add-btn" id="addCategoryBtn">+ إضافة بند رئيسي</button>
-                <button class="add-btn" id="addSubitemBtn">+ إضافة فرعي</button>
-                <div class="items-header-title">📋 البنود</div>
-            </div>
+        <div class="form-field">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="loginEmail" placeholder="example@email.com" autocomplete="username">
+        </div>
 
-            <div class="items-section" id="itemsSection">
-                <!-- البنود تظهر هنا تلقائياً -->
-            </div>
+        <div class="form-field">
+            <label>كلمة المرور</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+        </div>
 
-            <!-- LEGEND SECTION -->
-            <div class="legend-section">
-                <div class="legend">
-                    <div class="legend-title">📋 الحالات:</div>
-                    <div class="legend-item">
-                        <div class="legend-color color-ongoing"></div>
-                        <label>جاري التنفيذ</label>
-                        <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color color-available"></div>
-                        <label>متاح للتنفيذ</label>
-                        <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color color-unavailable"></div>
-                        <label>غير متاح</label>
-                        <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color color-completed"></div>
-                        <label>تم الانتهاء</label>
-                        <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color color-stopped"></div>
-                        <label>متوقف</label>
-                        <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
+        <button class="login-btn" id="loginBtn" onclick="doLogin()">دخول</button>
+
+        <div class="login-error" id="loginError">بيانات الدخول غير صحيحة</div>
+
+        <div class="login-loading" id="loginLoading">
+            جاري التحقق
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MAIN APP ==================== -->
+<div id="mainApp">
+
+    <!-- LEFT SECTION -->
+    <div class="left-section">
+        <div class="top-bars">
+
+            <!-- SUM BAR -->
+            <div class="sum-bar">
+                <!-- User badge -->
+                <div class="user-badge" id="userBadge">
+                    <div class="user-badge-avatar" id="userAvatar">؟</div>
+                    <div>
+                        <div class="user-badge-name" id="userDisplayName">-</div>
+                        <div class="user-badge-role" id="userRoleLabel">-</div>
                     </div>
                 </div>
+                <button class="logout-btn" onclick="doLogout()">خروج</button>
+
+                <div class="stats-wrapper" id="statsWrapper">
+                    <!-- dynamic stats cards -->
+                </div>
+            </div>
+
+            <!-- SEARCH BAR -->
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <div class="search-box-wrapper">
+                    <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم...">
+                    <div class="search-dropdown" id="searchDropdown"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="right-sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-header-title">📋 البنود</div>
+            <div class="admin-btns admin-only">
+                <button class="hdr-btn export-btn" onclick="exportConfig()" title="تحميل الإعدادات">⬇ تحميل</button>
+                <button class="hdr-btn" onclick="openAddCategoryModal()" title="إضافة بند">+ بند</button>
+                <button class="hdr-btn" onclick="openAddSubitemModal()" title="إضافة فرعي">+ فرعي</button>
+            </div>
+        </div>
+
+        <div class="items-section" id="itemsSection"></div>
+
+        <div class="legend-section">
+            <div class="legend-title">📋 حالات التنفيذ</div>
+            <div class="legend-item">
+                <div class="legend-color color-ongoing"></div>
+                <label class="legend-label">جاري التنفيذ</label>
+                <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color color-available"></div>
+                <label class="legend-label">متاح للتنفيذ</label>
+                <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color color-unavailable"></div>
+                <label class="legend-label">غير متاح</label>
+                <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color color-completed"></div>
+                <label class="legend-label">تم الانتهاء</label>
+                <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color color-stopped"></div>
+                <label class="legend-label">متوقف</label>
+                <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- MODAL ADD CATEGORY -->
-    <div class="modal" id="addCategoryModal">
-        <div class="modal-content">
-            <div class="modal-header">إضافة بند رئيسي جديد</div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>اسم البند الرئيسي</label>
-                    <input type="text" id="categoryName" placeholder="مثال: الطرق، قطع الأراضي">
-                </div>
-                <div class="form-group">
-                    <label>الرمز (Emoji)</label>
-                    <input type="text" id="categoryEmoji" placeholder="مثال: 📍" maxlength="3" value="📍">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeAddCategoryModal()">إلغاء</button>
-                <button class="btn btn-primary" onclick="addNewCategory()">إضافة</button>
-            </div>
+<!-- MODAL: ADD CATEGORY -->
+<div class="modal" id="modalAddCategory">
+    <div class="modal-box">
+        <div class="modal-title">➕ إضافة بند رئيسي جديد</div>
+        <div class="modal-field">
+            <label>اسم البند</label>
+            <input type="text" id="inCatName" placeholder="مثال: الطرق">
+        </div>
+        <div class="modal-field">
+            <label>رمز (Emoji)</label>
+            <input type="text" id="inCatEmoji" placeholder="📍" maxlength="4" value="📍">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modalAddCategory')">إلغاء</button>
+            <button class="btn btn-primary" onclick="addCategory()">إضافة</button>
         </div>
     </div>
+</div>
 
-    <!-- MODAL ADD SUBITEM -->
-    <div class="modal" id="addSubitemModal">
-        <div class="modal-content">
-            <div class="modal-header">إضافة بند فرعي جديد</div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>اختر البند الرئيسي</label>
-                    <select id="selectCategory">
-                        <option value="">-- اختر --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>اسم البند الفرعي</label>
-                    <input type="text" id="subitemName" placeholder="مثال: الردم، القطع">
-                </div>
-                <div class="form-group">
-                    <label>رابط Google Sheet</label>
-                    <input type="text" id="subitemSheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
-                </div>
-                <div class="form-group">
-                    <label>ملف GeoJSON</label>
-                    <input type="text" id="subitemGeoJson" placeholder="ROADS.geojson">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeAddSubitemModal()">إلغاء</button>
-                <button class="btn btn-primary" onclick="addNewSubitem()">إضافة</button>
-            </div>
+<!-- MODAL: ADD SUBITEM -->
+<div class="modal" id="modalAddSubitem">
+    <div class="modal-box">
+        <div class="modal-title">➕ إضافة بند فرعي</div>
+        <div class="modal-field">
+            <label>البند الرئيسي</label>
+            <select id="inSubCat"><option value="">-- اختر --</option></select>
+        </div>
+        <div class="modal-field">
+            <label>اسم الفرعي</label>
+            <input type="text" id="inSubName" placeholder="مثال: الردم">
+        </div>
+        <div class="modal-field">
+            <label>رابط Google Sheet</label>
+            <input type="text" id="inSubSheet" placeholder="https://docs.google.com/spreadsheets/d/...">
+        </div>
+        <div class="modal-field">
+            <label>ملف GeoJSON</label>
+            <input type="text" id="inSubGeo" placeholder="ROADS.geojson">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modalAddSubitem')">إلغاء</button>
+            <button class="btn btn-primary" onclick="addSubitem()">إضافة</button>
         </div>
     </div>
+</div>
 
-    <script>
-        // ===== STORAGE KEYS =====
-        const STORAGE_CATEGORIES_KEY = 'mapCategories';
-        const STORAGE_SELECTED_ITEMS_KEY = 'mapSelectedItems';
-        const STORAGE_SELECTED_STATUSES_KEY = 'mapSelectedStatuses';
+<!-- HIDDEN file input for importing config -->
+<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importConfig(event)">
 
-        // ===== STATE =====
-        let map, allLayers = {};
-        let allData = {};
-        let allFeatures = {};
-        let selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
-        let selectedItems = {};
-        let equipmentData = {};
-        let categories = [];
+<script>
+/* ====================================================
+   CONSTANTS & STATE
+   ==================================================== */
 
-        const statuses = [
-            { value: "جاري",       color: "#4caf50", class: "ongoing"     },
-            { value: "متاح",       color: "#2196f3", class: "available"   },
-            { value: "غير متاح",   color: "#ff9800", class: "unavailable" },
-            { value: "تم الانتهاء",color: "#9c27b0", class: "completed"   },
-            { value: "متوقف",      color: "#f44336", class: "stopped"     }
-        ];
+const USERS_SHEET_ID = "1maViL4HSsI5XsjnAOGM-2D98g0Ow_pawZ-A_R_Y9I_0";
+const EQUIPMENT_SHEET_ID = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
+const CONFIG_FILE = "categories.json";   // loaded from same folder
 
-        const labelsAR = {
-            "ID"          : "معرف",
-            "ROAD NAME"   : "اسم الطريق",
-            "BLOCK NAME"  : "اسم قطعة الأرض",
-            "TOTAL-QTY"   : "الكمية الإجمالية",
-            "DONE-QTY"    : "الكمية المنفذة",
-            "REMANING-QTY": "الكمية المتبقية",
-            "STATUS"      : "الحالة",
-            "CONTRACTOR"  : "المقاول",
-            "EQUIPMENT"   : "المعدات"
+const STATUSES = [
+    { value: "جاري",        color: "#3aaa5c", cls: "ongoing"     },
+    { value: "متاح",        color: "#2196f3", cls: "available"   },
+    { value: "غير متاح",    color: "#ff9800", cls: "unavailable" },
+    { value: "تم الانتهاء", color: "#9c27b0", cls: "completed"   },
+    { value: "متوقف",       color: "#f44336", cls: "stopped"     }
+];
+
+const LABELS = {
+    "ID"           : "معرف",
+    "ROAD NAME"    : "اسم الطريق",
+    "BLOCK NAME"   : "اسم القطعة",
+    "TOTAL-QTY"    : "الإجمالي",
+    "DONE-QTY"     : "المنفذ",
+    "REMANING-QTY" : "المتبقي",
+    "STATUS"       : "الحالة",
+    "CONTRACTOR"   : "المقاول",
+    "EQUIPMENT"    : "المعدات"
+};
+
+// App state
+let map;
+let currentUser   = null;   // { email, name, role, isAdmin }
+let categories    = [];     // [{ id, name, emoji, subitems:[{id,name,sheetId,geoJsonFile}] }]
+let selectedItems = {};     // { subitemId: true }
+let selectedStatuses = ["جاري","متاح","غير متاح","تم الانتهاء","متوقف"];
+let allLayers     = {};     // sheetId → Leaflet GeoJSON layer
+let allData       = {};     // sheetId → { id: rowObj }
+let allFeatures   = {};     // `${sheetId}-${name}` → Leaflet layer
+let equipmentData = {};     // id → equipmentStr
+
+/* ====================================================
+   HELPERS
+   ==================================================== */
+
+function fmtNum(v) {
+    const n = parseFloat(v);
+    if (isNaN(n)) return v || "";
+    return n.toLocaleString('en-US');
+}
+
+function toNum(v) { return (!isNaN(v) && v !== "") ? Number(v) : 0; }
+
+function statusColor(s) {
+    const f = STATUSES.find(x => x.value.toLowerCase() === (s||"").trim().toLowerCase());
+    return f ? f.color : "#9e9e9e";
+}
+
+function statusCls(s) {
+    const f = STATUSES.find(x => x.value.toLowerCase() === (s||"").trim().toLowerCase());
+    return f ? f.cls : "";
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
+
+function sheetIdFromUrl(url) {
+    const m = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : url.trim();   // if user pastes the ID directly, use as-is
+}
+
+function showAlert(msg, type="error") {
+    const el = document.createElement("div");
+    el.className = `alert alert-${type}`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+function openModal(id)  { document.getElementById(id).classList.add("active"); }
+function closeModal(id) { document.getElementById(id).classList.remove("active"); }
+
+/* ====================================================
+   LOGIN — fetch users from Google Sheet
+   ==================================================== */
+
+async function fetchUsers() {
+    const url = `https://docs.google.com/spreadsheets/d/${USERS_SHEET_ID}/export?format=csv&gid=0`;
+    const r   = await fetch(url);
+    const csv = await r.text();
+    const lines   = csv.split('\n').filter(l => l.trim());
+    const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+    const users   = [];
+    for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim());
+        const obj  = {};
+        headers.forEach((h, idx) => { obj[h] = vals[idx] || ""; });
+        users.push(obj);
+    }
+    return users;
+    // Expected columns: EMAIL, PASSWORD, NAME, ROLE
+    // ROLE = 1 → admin (can add/delete items + export config)
+}
+
+async function doLogin() {
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const pass  = document.getElementById("loginPassword").value.trim();
+
+    if (!email || !pass) { showLoginError("يرجى إدخال البريد وكلمة المرور"); return; }
+
+    document.getElementById("loginLoading").style.display = "block";
+    document.getElementById("loginError").style.display   = "none";
+    document.getElementById("loginBtn").disabled = true;
+
+    try {
+        const users = await fetchUsers();
+        const found = users.find(u =>
+            u["EMAIL"]    && u["EMAIL"].toLowerCase()    === email &&
+            u["PASSWORD"] && u["PASSWORD"]               === pass
+        );
+
+        if (!found) {
+            showLoginError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+            return;
+        }
+
+        currentUser = {
+            email  : found["EMAIL"],
+            name   : found["NAME"]   || found["EMAIL"],
+            role   : found["ROLE"]   || "2",
+            isAdmin: (found["ROLE"]  || "").toString().trim() === "1"
         };
 
-        const equipmentSheetId = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
+        enterApp();
 
-        // ===== LOCAL STORAGE FUNCTIONS =====
-        function saveToStorage() {
-            localStorage.setItem(STORAGE_CATEGORIES_KEY, JSON.stringify(categories));
-            localStorage.setItem(STORAGE_SELECTED_ITEMS_KEY, JSON.stringify(selectedItems));
-            localStorage.setItem(STORAGE_SELECTED_STATUSES_KEY, JSON.stringify(selectedStatuses));
-            console.log("✅ تم حفظ البيانات في LocalStorage");
-        }
+    } catch(e) {
+        console.error(e);
+        showLoginError("خطأ في الاتصال - تأكد من إعدادات الشيت");
+    } finally {
+        document.getElementById("loginLoading").style.display = "none";
+        document.getElementById("loginBtn").disabled = false;
+    }
+}
 
-        function loadFromStorage() {
-            const savedCategories = localStorage.getItem(STORAGE_CATEGORIES_KEY);
-            const savedSelectedItems = localStorage.getItem(STORAGE_SELECTED_ITEMS_KEY);
-            const savedSelectedStatuses = localStorage.getItem(STORAGE_SELECTED_STATUSES_KEY);
+function showLoginError(msg) {
+    const el = document.getElementById("loginError");
+    el.textContent = msg;
+    el.style.display = "block";
+}
 
-            if (savedCategories) {
-                categories = JSON.parse(savedCategories);
-                console.log("✅ تم تحميل البنود من LocalStorage", categories);
+// Allow Enter key
+document.addEventListener("DOMContentLoaded", () => {
+    ["loginEmail","loginPassword"].forEach(id => {
+        document.getElementById(id).addEventListener("keydown", e => {
+            if (e.key === "Enter") doLogin();
+        });
+    });
+});
+
+/* ====================================================
+   ENTER / LEAVE APP
+   ==================================================== */
+
+async function enterApp() {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("mainApp").classList.add("visible");
+
+    // Show/hide admin controls
+    if (currentUser.isAdmin) {
+        document.body.classList.add("is-admin");
+    } else {
+        document.body.classList.remove("is-admin");
+    }
+
+    // Update user badge
+    document.getElementById("userAvatar").textContent      = currentUser.name.charAt(0);
+    document.getElementById("userDisplayName").textContent = currentUser.name;
+    document.getElementById("userRoleLabel").textContent   = currentUser.isAdmin ? "مدير النظام" : "مستخدم";
+
+    // Init map first
+    initMap();
+    loadEquipmentData();
+
+    // Load categories config
+    await loadCategoriesConfig();
+
+    // Restore selected statuses & items from sessionStorage (per-session only)
+    const savedSel = sessionStorage.getItem("selectedStatuses");
+    if (savedSel) selectedStatuses = JSON.parse(savedSel);
+
+    const savedItems = sessionStorage.getItem("selectedItems");
+    if (savedItems) selectedItems = JSON.parse(savedItems);
+
+    // Render UI
+    renderItems();
+
+    // Re-load previously selected layers
+    categories.forEach(cat => {
+        cat.subitems.forEach(sub => {
+            if (selectedItems[sub.id]) {
+                loadLayer(sub.sheetId, sub.name, sub.geoJsonFile);
             }
+        });
+    });
 
-            if (savedSelectedItems) {
-                selectedItems = JSON.parse(savedSelectedItems);
-                console.log("✅ تم تحميل العناصر المختارة من LocalStorage");
-            }
+    // Sync legend checkboxes
+    document.querySelectorAll(".status-checkbox").forEach(cb => {
+        cb.checked = selectedStatuses.includes(cb.dataset.status);
+    });
 
-            if (savedSelectedStatuses) {
-                selectedStatuses = JSON.parse(savedSelectedStatuses);
-                console.log("✅ تم تحميل الحالات المختارة من LocalStorage");
-            }
+    updateStats();
+    showAlert("✅ مرحباً " + currentUser.name, "success");
+}
+
+function doLogout() {
+    currentUser = null;
+    // Remove all map layers
+    Object.values(allLayers).forEach(l => { if (map) map.removeLayer(l); });
+    allLayers = {}; allData = {}; allFeatures = {};
+    selectedItems = {};
+
+    document.getElementById("mainApp").classList.remove("visible");
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("loginEmail").value    = "";
+    document.getElementById("loginPassword").value = "";
+    document.getElementById("loginError").style.display = "none";
+}
+
+/* ====================================================
+   MAP
+   ==================================================== */
+
+function initMap() {
+    if (map) { map.remove(); map = null; }
+    map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(map);
+}
+
+/* ====================================================
+   EQUIPMENT DATA
+   ==================================================== */
+
+function loadEquipmentData() {
+    const url = `https://docs.google.com/spreadsheets/d/${EQUIPMENT_SHEET_ID}/export?format=csv&gid=0`;
+    fetch(url).then(r => r.text()).then(csv => {
+        const lines   = csv.split('\n').filter(l => l.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+        const idIdx   = headers.findIndex(h => h === 'ID');
+        if (idIdx === -1) return;
+        for (let i = 1; i < lines.length; i++) {
+            const v = lines[i].split(',').map(x => x.trim());
+            if (!v[idIdx]) continue;
+            equipmentData[v[idIdx]] = v[v.length - 1] || "غير محدد";
         }
+    }).catch(e => console.warn("equipment load failed:", e));
+}
 
-        function clearAllStorage() {
-            if (confirm("هل تريد حذف جميع البيانات المحفوظة؟")) {
-                localStorage.removeItem(STORAGE_CATEGORIES_KEY);
-                localStorage.removeItem(STORAGE_SELECTED_ITEMS_KEY);
-                localStorage.removeItem(STORAGE_SELECTED_STATUSES_KEY);
-                categories = [];
-                selectedItems = {};
-                selectedStatuses = ["جاري", "متاح", "غير متاح", "تم الانتهاء", "متوقف"];
-                renderItems();
-                updateStats();
-                showAlert("✅ تم حذف جميع البيانات", "success");
-            }
+/* ====================================================
+   CATEGORIES CONFIG  (loaded from categories.json)
+   ==================================================== */
+
+async function loadCategoriesConfig() {
+    try {
+        const r = await fetch(CONFIG_FILE + "?t=" + Date.now());
+        if (!r.ok) throw new Error("not found");
+        const data = await r.json();
+        // Support both array directly and { categories: [...] }
+        categories = Array.isArray(data) ? data : (data.categories || []);
+    } catch(e) {
+        console.warn("categories.json not found or invalid — starting empty");
+        categories = [];
+    }
+    // Always ensure subitems array exists
+    categories.forEach(c => { if (!c.subitems) c.subitems = []; if (!c.id) c.id = uid(); });
+}
+
+/* ====================================================
+   EXPORT / IMPORT CONFIG
+   ==================================================== */
+
+function exportConfig() {
+    const payload = JSON.stringify(categories, null, 2);
+    const blob    = new Blob([payload], { type: "application/json" });
+    const link    = document.createElement("a");
+    link.href     = URL.createObjectURL(blob);
+    link.download = "categories.json";
+    link.click();
+    showAlert("✅ تم تحميل ملف categories.json — ارفعه مع ملفات المشروع", "success");
+}
+
+// (optional) import button — admin can load a previously exported file
+function importConfigTrigger() {
+    document.getElementById("importFileInput").click();
+}
+
+function importConfig(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        try {
+            const data = JSON.parse(ev.target.result);
+            categories = Array.isArray(data) ? data : (data.categories || []);
+            categories.forEach(c => { if (!c.subitems) c.subitems = []; if (!c.id) c.id = uid(); });
+            renderItems();
+            updateStats();
+            showAlert("✅ تم استيراد الإعدادات بنجاح", "success");
+        } catch {
+            showAlert("❌ الملف غير صالح", "error");
         }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+}
 
-        // ===== HELPERS =====
-        function formatNumber(val) {
-            const n = parseFloat(val);
-            if (isNaN(n)) return val || "";
-            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
+/* ====================================================
+   STATS BAR
+   ==================================================== */
 
-        function num(v) {
-            return (!isNaN(v) && v !== "") ? Number(v) : 0;
-        }
+function updateStats() {
+    const wrapper = document.getElementById("statsWrapper");
+    wrapper.innerHTML = "";
 
-        function getStatusColor(status) {
-            const found = statuses.find(s =>
-                s.value.toLowerCase() === (status || "").trim().toLowerCase()
-            );
-            return found ? found.color : "#9e9e9e";
-        }
+    categories.forEach(cat => {
+        const activeSubs = cat.subitems.filter(s => selectedItems[s.id] && allData[s.sheetId]);
+        if (activeSubs.length === 0) return;
 
-        function getStatusClass(status) {
-            const found = statuses.find(s =>
-                s.value.toLowerCase() === (status || "").trim().toLowerCase()
-            );
-            return found ? found.class : "";
-        }
-
-        function showAlert(message, type = "error") {
-            const alert = document.createElement("div");
-            alert.className = `alert alert-${type}`;
-            alert.textContent = message;
-            document.body.appendChild(alert);
-            setTimeout(() => alert.remove(), 3000);
-        }
-
-        function generateId() {
-            return Math.random().toString(36).substr(2, 9);
-        }
-
-        function extractSheetIdFromUrl(url) {
-            const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-            return match ? match[1] : null;
-        }
-
-        function positionDropdown() {
-            const dropdown = document.getElementById("searchDropdown");
-            const searchBox = document.querySelector('.search-box-wrapper');
-            if (!searchBox || !dropdown.classList.contains("active")) return;
-            const rect = searchBox.getBoundingClientRect();
-            dropdown.style.top    = rect.bottom + 'px';
-            dropdown.style.left   = rect.left + 'px';
-            dropdown.style.width  = rect.width + 'px';
-            dropdown.style.right  = 'auto';
-        }
-
-        // ===== MAP =====
-        function initMap() {
-            map = L.map('map', { zoomControl: false }).setView([21.3, 39.7], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-        }
-
-        // ===== EQUIPMENT =====
-        function loadEquipmentData() {
-            const csvUrl = `https://docs.google.com/spreadsheets/d/${equipmentSheetId}/export?format=csv&gid=0`;
-            fetch(csvUrl)
-                .then(r => r.text())
-                .then(csv => {
-                    const lines = csv.split('\n').filter(line => line.trim());
-                    const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
-                    const idIndex = headers.findIndex(h => h === 'ID');
-                    if (idIndex === -1) return;
-
-                    for (let i = 1; i < lines.length; i++) {
-                        const values = lines[i].split(',').map(v => v.trim());
-                        if (!values[idIndex]) continue;
-                        const id = values[idIndex];
-                        equipmentData[id] = values[values.length - 1] || "غير محدد";
-                    }
-                })
-                .catch(e => console.error("خطأ في تحميل المعدات:", e));
-        }
-
-        // ===== CSV LOADER =====
-        function loadSheetCSV(sheetId, cb) {
-            const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-            fetch(csvUrl)
-                .then(r => r.text())
-                .then(csv => {
-                    const data = {};
-                    const lines = csv.split('\n').filter(line => line.trim());
-
-                    if (lines.length === 0) {
-                        showAlert("❌ الشيت فارغ أو خطأ في الاتصال", "error");
-                        return;
-                    }
-
-                    const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
-                    const idIndex = headers.findIndex(h => h === 'ID');
-
-                    if (idIndex === -1) {
-                        showAlert("❌ لا يوجد عمود ID", "error");
-                        return;
-                    }
-
-                    for (let i = 1; i < lines.length; i++) {
-                        const values = lines[i].split(',').map(v => v.trim());
-                        if (!values[idIndex]) continue;
-                        const id = values[idIndex];
-                        data[id] = {};
-                        headers.forEach((header, idx) => {
-                            data[id][header] = values[idx] || "";
-                        });
-                    }
-
-                    cb(data);
-                })
-                .catch(error => {
-                    console.error("خطأ:", error);
-                    showAlert("❌ خطأ في سحب البيانات", "error");
-                });
-        }
-
-        // ===== STATS =====
-        function updateStats() {
-            const statsWrapper = document.getElementById("statsWrapper");
-            statsWrapper.innerHTML = "";
-
-            categories.forEach(cat => {
-                let total = 0, done = 0;
-                const subitems = cat.subitems.filter(sub => selectedItems[sub.id]);
-
-                subitems.forEach(sub => {
-                    if (allData[sub.sheetId]) {
-                        Object.values(allData[sub.sheetId]).forEach(row => {
-                            const status = (row["STATUS"] || "").trim().toLowerCase();
-                            if (selectedStatuses.some(s => s.toLowerCase() === status)) {
-                                total += num(row["TOTAL-QTY"]);
-                                done  += num(row["DONE-QTY"]);
-                            }
-                        });
-                    }
-                });
-
-                if (subitems.length > 0) {
-                    const statsGroup = document.createElement("div");
-                    statsGroup.className = "stats-group";
-                    statsGroup.innerHTML = `
-                        <div class="stats-group-title">${cat.emoji} ${cat.name}</div>
-                        <div class="stats-group-type">${subitems.map(s => s.name).join(" + ")}</div>
-                        <div class="stat-row">
-                            <div class="stat-item">
-                                <div class="stat-label">الإجمالي</div>
-                                <div class="stat-value">${formatNumber(total)}</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">المنفذ</div>
-                                <div class="stat-value">${formatNumber(done)}</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">المتبقي</div>
-                                <div class="stat-value">${formatNumber(total - done)}</div>
-                            </div>
-                        </div>
-                    `;
-                    statsWrapper.appendChild(statsGroup);
+        let total = 0, done = 0;
+        activeSubs.forEach(sub => {
+            Object.values(allData[sub.sheetId]).forEach(row => {
+                const st = (row["STATUS"]||"").trim().toLowerCase();
+                if (selectedStatuses.some(s => s.toLowerCase() === st)) {
+                    total += toNum(row["TOTAL-QTY"]);
+                    done  += toNum(row["DONE-QTY"]);
                 }
             });
-        }
+        });
 
-        // ===== LAYER COLORS =====
-        function applyFeatureStyle(feature, dataKey) {
-            const row = allData[dataKey][feature.feature.properties.ID];
-            if (!row) return;
-            const status      = (row["STATUS"] || "").trim().toLowerCase();
-            const isSelected  = selectedStatuses.some(s => s.toLowerCase() === status);
-            const color       = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-            feature.setStyle({
-                color       : color,
-                fillColor   : color,
-                fillOpacity : isSelected ? 0.6 : 0.2,
-                weight      : isSelected ? 2 : 1
-            });
-        }
+        const card = document.createElement("div");
+        card.className = "stats-group";
+        card.innerHTML = `
+            <div class="stats-group-title">${cat.emoji} ${cat.name}</div>
+            <div class="stats-group-type">${activeSubs.map(s=>s.name).join(" + ")}</div>
+            <div class="stat-row">
+                <div class="stat-item"><div class="stat-label">الإجمالي</div><div class="stat-value">${fmtNum(total)}</div></div>
+                <div class="stat-item"><div class="stat-label">المنفذ</div><div class="stat-value">${fmtNum(done)}</div></div>
+                <div class="stat-item"><div class="stat-label">المتبقي</div><div class="stat-value">${fmtNum(total-done)}</div></div>
+            </div>`;
+        wrapper.appendChild(card);
+    });
 
-        function updateLayerColors() {
-            Object.entries(allLayers).forEach(([key, layer]) => {
-                if (!layer || !allData[key]) return;
-                layer.eachLayer(f => applyFeatureStyle(f, key));
-            });
-        }
+    sessionStorage.setItem("selectedStatuses", JSON.stringify(selectedStatuses));
+    sessionStorage.setItem("selectedItems",    JSON.stringify(selectedItems));
+}
 
-        // ===== LOAD / REMOVE LAYER =====
-        function loadLayer(sheetId, subitemName, geoJsonFile) {
-            loadSheetCSV(sheetId, data => {
-                allData[sheetId] = data;
+/* ====================================================
+   LAYER STYLE
+   ==================================================== */
 
-                fetch(geoJsonFile)
-                    .then(r => r.json())
-                    .then(g => {
-                        const layer = L.geoJSON(g, {
-                            onEachFeature: (f, l) => {
-                                const id  = f.properties.ID;
-                                const row = data[id];
-                                if (!row) return;
+function featureStyle(row) {
+    const st  = (row["STATUS"]||"").trim().toLowerCase();
+    const ok  = selectedStatuses.some(s => s.toLowerCase() === st);
+    const col = ok ? statusColor(row["STATUS"]) : "#cccccc";
+    return { color: col, fillColor: col, fillOpacity: ok ? 0.6 : 0.15, weight: ok ? 2 : 1 };
+}
 
-                                const name = row["ROAD NAME"] || row["BLOCK NAME"] || row["NAME"] || "بدون اسم";
-                                allFeatures[`${sheetId}-${name}`] = l;
+function refreshLayerColors() {
+    Object.entries(allLayers).forEach(([sheetId, layer]) => {
+        if (!layer || !allData[sheetId]) return;
+        layer.eachLayer(f => {
+            const row = allData[sheetId][f.feature.properties.ID];
+            if (row) f.setStyle(featureStyle(row));
+        });
+    });
+}
 
-                                const status     = (row["STATUS"] || "").trim().toLowerCase();
-                                const isSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                                const color      = isSelected ? getStatusColor(row["STATUS"]) : "#cccccc";
-                                l.setStyle({
-                                    color      : color,
-                                    fillColor  : color,
-                                    fillOpacity: isSelected ? 0.6 : 0.2,
-                                    weight     : isSelected ? 2 : 1
-                                });
+/* ====================================================
+   LOAD / REMOVE LAYER
+   ==================================================== */
 
-                                let html = `<div class="popup-card">
-                                    <div class="popup-header">
-                                        <div class="popup-title">مشروع ولي العهد</div>
-                                        <div class="popup-subtitle">${subitemName}</div>
-                                    </div>
-                                    <div class="popup-body">`;
+function loadLayer(sheetId, subitemName, geoJsonFile) {
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
 
-                                Object.keys(row).forEach(k => {
-                                    if (k === "ID") return;
-                                    const isStatus   = k === "STATUS";
-                                    const statusClass = isStatus ? `status ${getStatusClass(row[k])}` : "";
-                                    const value      = isStatus ? row[k] : formatNumber(row[k]);
-                                    html += `<div class="popup-row">
-                                        <div class="popup-label">${labelsAR[k] || k}</div>
-                                        <div class="popup-value ${statusClass}">${value}</div>
-                                    </div>`;
-                                });
+    fetch(csvUrl)
+        .then(r => r.text())
+        .then(csv => {
+            const data  = {};
+            const lines = csv.split('\n').filter(l => l.trim());
+            if (!lines.length) return;
+            const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+            const idIdx   = headers.findIndex(h => h === 'ID');
+            if (idIdx === -1) { showAlert("❌ لا يوجد عمود ID في الشيت"); return; }
 
-                                const equipment = equipmentData[id] || "غير محدد";
-                                html += `<div class="popup-row">
-                                    <div class="popup-label">المعدات</div>
-                                    <div class="popup-value">${equipment}</div>
-                                </div>`;
-                                html += `</div></div>`;
-
-                                l.bindPopup(html);
-                                l.on('click', () => l.openPopup());
-                            }
-                        });
-
-                        allLayers[sheetId] = layer;
-                        layer.addTo(map);
-                        updateStats();
-                    })
-                    .catch(e => console.error(`خطأ في تحميل ${geoJsonFile}:`, e));
-            });
-        }
-
-        function removeLayer(sheetId) {
-            if (allLayers[sheetId]) {
-                map.removeLayer(allLayers[sheetId]);
-                delete allLayers[sheetId];
-                delete allData[sheetId];
-            }
-            updateStats();
-        }
-
-        // ===== SEARCH =====
-        function updateSearchDropdown() {
-            const dropdown   = document.getElementById("searchDropdown");
-            const input      = document.getElementById("searchInput");
-            const searchValue = input.value.trim().toLowerCase();
-
-            dropdown.innerHTML = "";
-
-            if (!searchValue) {
-                dropdown.classList.remove("active");
-                return;
+            for (let i = 1; i < lines.length; i++) {
+                const vals = lines[i].split(',').map(v => v.trim());
+                if (!vals[idIdx]) continue;
+                const id = vals[idIdx];
+                data[id] = {};
+                headers.forEach((h, idx) => { data[id][h] = vals[idx] || ""; });
             }
 
-            const results = [];
+            allData[sheetId] = data;
 
-            Object.entries(allData).forEach(([key, data]) => {
-                Object.values(data).forEach(item => {
-                    const name   = (item["ROAD NAME"] || item["BLOCK NAME"] || item["NAME"] || "").toString().trim().toLowerCase();
-                    const status = (item["STATUS"] || "").trim().toLowerCase();
-                    const isStatusSelected = selectedStatuses.some(s => s.toLowerCase() === status);
-                    if (name.includes(searchValue) && isStatusSelected) {
-                        const displayName = item["ROAD NAME"] || item["BLOCK NAME"] || item["NAME"] || "بدون اسم";
-                        results.push({
-                            name  : displayName,
-                            type  : "عنصر",
-                            status: item["STATUS"],
-                            key   : key,
-                            layer : `${key}-${displayName}`
+            return fetch(geoJsonFile + "?t=" + Date.now()).then(r => r.json()).then(geo => {
+                const layer = L.geoJSON(geo, {
+                    onEachFeature: (f, l) => {
+                        const id  = f.properties.ID;
+                        const row = data[id];
+                        if (!row) return;
+
+                        const nameKey = row["ROAD NAME"] ? "ROAD NAME" : row["BLOCK NAME"] ? "BLOCK NAME" : "NAME";
+                        const name    = row[nameKey] || "بدون اسم";
+                        allFeatures[`${sheetId}-${name}`] = l;
+
+                        l.setStyle(featureStyle(row));
+
+                        // Build popup
+                        let html = `<div class="popup-card"><div class="popup-header">
+                            <div class="popup-title">مشروع ولي العهد</div>
+                            <div class="popup-subtitle">${subitemName}</div>
+                        </div><div class="popup-body">`;
+
+                        Object.keys(row).forEach(k => {
+                            if (k === "ID") return;
+                            const isSt = k === "STATUS";
+                            const cls  = isSt ? `status ${statusCls(row[k])}` : "";
+                            const val  = isSt ? row[k] : fmtNum(row[k]);
+                            html += `<div class="popup-row">
+                                <div class="popup-label">${LABELS[k]||k}</div>
+                                <div class="popup-value ${cls}">${val}</div>
+                            </div>`;
                         });
+
+                        html += `<div class="popup-row">
+                            <div class="popup-label">المعدات</div>
+                            <div class="popup-value">${equipmentData[id]||"غير محدد"}</div>
+                        </div></div></div>`;
+
+                        l.bindPopup(html);
+                        l.on('click', () => l.openPopup());
                     }
                 });
-            });
 
-            if (results.length === 0) {
-                dropdown.innerHTML = "<div style='padding:10px;text-align:right;color:#999;font-size:12px'>لم يتم العثور على نتائج</div>";
-            } else {
-                results.forEach(item => {
-                    const div = document.createElement("div");
-                    div.className = "search-item";
-                    div.innerHTML = `
-                        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-                            <div class="search-item-type">${item.type}</div>
-                            <div class="search-item-status" style="background:${getStatusColor(item.status)}">${item.status}</div>
-                        </div>
-                        <div class="search-item-name">${item.name}</div>
-                    `;
-                    div.addEventListener("click", () => {
-                        const layer = allFeatures[item.layer];
-                        if (layer) {
-                            map.fitBounds(layer.getBounds());
-                            layer.openPopup();
-                            input.value = "";
-                            dropdown.classList.remove("active");
-                        }
-                    });
-                    dropdown.appendChild(div);
-                });
-            }
-
-            dropdown.classList.add("active");
-            positionDropdown();
-        }
-
-        // ===== RENDER ITEMS =====
-        function renderItems() {
-            const itemsSection = document.getElementById("itemsSection");
-            itemsSection.innerHTML = "";
-
-            categories.forEach(cat => {
-                const categorySection = document.createElement("div");
-                categorySection.className = "sidebar-section";
-                categorySection.innerHTML = `
-                    <div class="section-title">
-                        <button class="expand-btn" data-cat-id="${cat.id}">+</button>
-                        <span>${cat.emoji} ${cat.name}</span>
-                        <button class="delete-btn" onclick="deleteCategory('${cat.id}')">✕</button>
-                    </div>
-                    <div class="dropdown-items" data-cat-id="${cat.id}">
-                        ${cat.subitems.map(sub => `
-                            <div class="dropdown-item ${selectedItems[sub.id] ? 'selected' : ''}">
-                                <input type="checkbox" 
-                                    class="subitem-check" 
-                                    data-subitem-id="${sub.id}"
-                                    data-cat-id="${cat.id}"
-                                    data-sheet-id="${sub.sheetId}"
-                                    data-geojson="${sub.geoJsonFile}"
-                                    ${selectedItems[sub.id] ? 'checked' : ''}>
-                                <label>${sub.name}</label>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                itemsSection.appendChild(categorySection);
-
-                categorySection.querySelector(".expand-btn").addEventListener("click", function() {
-                    this.classList.toggle("active");
-                    categorySection.querySelector(".dropdown-items").classList.toggle("active");
-                });
-
-                categorySection.querySelectorAll(".subitem-check").forEach(checkbox => {
-                    checkbox.addEventListener("change", function() {
-                        const subitemId = this.dataset.subitemId;
-                        const sheetId = this.dataset.sheetId;
-                        const geoJsonFile = this.dataset.geojson;
-                        const catId = this.dataset.catId;
-                        const cat = categories.find(c => c.id === catId);
-                        const subitem = cat.subitems.find(s => s.id === subitemId);
-
-                        if (this.checked) {
-                            selectedItems[subitemId] = true;
-                            this.closest(".dropdown-item").classList.add("selected");
-                            loadLayer(sheetId, subitem.name, geoJsonFile);
-                        } else {
-                            delete selectedItems[subitemId];
-                            this.closest(".dropdown-item").classList.remove("selected");
-                            removeLayer(sheetId);
-                        }
-
-                        saveToStorage();
-                    });
-                });
-            });
-        }
-
-        // ===== MODAL FUNCTIONS =====
-        function openAddCategoryModal() {
-            document.getElementById("categoryName").value = "";
-            document.getElementById("categoryEmoji").value = "📍";
-            document.getElementById("addCategoryModal").classList.add("active");
-        }
-
-        function closeAddCategoryModal() {
-            document.getElementById("addCategoryModal").classList.remove("active");
-        }
-
-        function addNewCategory() {
-            const name = document.getElementById("categoryName").value.trim();
-            const emoji = document.getElementById("categoryEmoji").value.trim();
-
-            if (!name) {
-                showAlert("❌ يرجى إدخال اسم البند الرئيسي", "error");
-                return;
-            }
-
-            const newCategory = {
-                id: generateId(),
-                name: name,
-                emoji: emoji || "📍",
-                subitems: []
-            };
-
-            categories.push(newCategory);
-            renderItems();
-            updateCategorySelect();
-            closeAddCategoryModal();
-            saveToStorage();
-            showAlert("✅ تمت إضافة البند الرئيسي", "success");
-        }
-
-        function openAddSubitemModal() {
-            if (categories.length === 0) {
-                showAlert("❌ يرجى إضافة بند رئيسي أولاً", "error");
-                return;
-            }
-            document.getElementById("subitemName").value = "";
-            document.getElementById("subitemSheetUrl").value = "";
-            document.getElementById("subitemGeoJson").value = "";
-            document.getElementById("addSubitemModal").classList.add("active");
-        }
-
-        function closeAddSubitemModal() {
-            document.getElementById("addSubitemModal").classList.remove("active");
-        }
-
-        function updateCategorySelect() {
-            const select = document.getElementById("selectCategory");
-            select.innerHTML = '<option value="">-- اختر --</option>';
-            categories.forEach(cat => {
-                const option = document.createElement("option");
-                option.value = cat.id;
-                option.textContent = cat.name;
-                select.appendChild(option);
-            });
-        }
-
-        function addNewSubitem() {
-            const catId = document.getElementById("selectCategory").value;
-            const subitemName = document.getElementById("subitemName").value.trim();
-            const sheetUrl = document.getElementById("subitemSheetUrl").value.trim();
-            const geoJsonFile = document.getElementById("subitemGeoJson").value.trim();
-
-            if (!catId || !subitemName || !sheetUrl || !geoJsonFile) {
-                showAlert("❌ يرجى ملء جميع الحقول", "error");
-                return;
-            }
-
-            const sheetId = extractSheetIdFromUrl(sheetUrl);
-            if (!sheetId) {
-                showAlert("❌ رابط Google Sheet غير صحيح", "error");
-                return;
-            }
-
-            const cat = categories.find(c => c.id === catId);
-            const newSubitem = {
-                id: generateId(),
-                name: subitemName,
-                sheetId: sheetId,
-                geoJsonFile: geoJsonFile
-            };
-
-            cat.subitems.push(newSubitem);
-            renderItems();
-            closeAddSubitemModal();
-            saveToStorage();
-            showAlert("✅ تمت إضافة البند الفرعي", "success");
-        }
-
-        function deleteCategory(catId) {
-            const cat = categories.find(c => c.id === catId);
-            if (!cat) return;
-
-            if (confirm(`هل تريد حذف "${cat.name}"؟`)) {
-                cat.subitems.forEach(sub => {
-                    delete selectedItems[sub.id];
-                    removeLayer(sub.sheetId);
-                });
-                categories = categories.filter(c => c.id !== catId);
-                renderItems();
-                updateCategorySelect();
+                allLayers[sheetId] = layer;
+                layer.addTo(map);
                 updateStats();
-                saveToStorage();
-                showAlert("✅ تم حذف البند", "success");
-            }
-        }
+            });
+        })
+        .catch(e => { console.error(e); showAlert("❌ خطأ في تحميل البيانات"); });
+}
 
-        // ===== EVENT LISTENERS =====
-        document.getElementById("addCategoryBtn").addEventListener("click", openAddCategoryModal);
-        document.getElementById("addSubitemBtn").addEventListener("click", openAddSubitemModal);
-        document.getElementById("searchInput").addEventListener("input", updateSearchDropdown);
+function removeLayer(sheetId) {
+    if (allLayers[sheetId]) { map.removeLayer(allLayers[sheetId]); delete allLayers[sheetId]; }
+    delete allData[sheetId];
+    updateStats();
+}
 
-        document.querySelectorAll(".status-checkbox").forEach(checkbox => {
-            checkbox.addEventListener("change", function() {
-                const status = this.dataset.status;
+/* ====================================================
+   RENDER SIDEBAR ITEMS
+   ==================================================== */
+
+function renderItems() {
+    const section = document.getElementById("itemsSection");
+    section.innerHTML = "";
+
+    categories.forEach(cat => {
+        const div = document.createElement("div");
+        div.className = "sidebar-section";
+        div.dataset.catId = cat.id;
+
+        const isAdmin = currentUser && currentUser.isAdmin;
+
+        div.innerHTML = `
+            <div class="section-title">
+                <button class="expand-btn" data-cat="${cat.id}">+</button>
+                <span class="section-title-text">${cat.emoji} ${cat.name}</span>
+                ${isAdmin ? `<button class="del-cat-btn admin-only" onclick="deleteCategory('${cat.id}')">✕</button>` : ""}
+            </div>
+            <div class="dropdown-items" data-cat="${cat.id}">
+                ${cat.subitems.map(sub => `
+                    <div class="dropdown-item ${selectedItems[sub.id]?'selected':''}" data-sub="${sub.id}">
+                        <input type="checkbox" class="subitem-cb"
+                            data-sub-id="${sub.id}"
+                            data-cat-id="${cat.id}"
+                            data-sheet="${sub.sheetId}"
+                            data-geo="${sub.geoJsonFile}"
+                            ${selectedItems[sub.id]?'checked':''}>
+                        <label>${sub.name}</label>
+                        ${isAdmin ? `<button class="del-sub-btn admin-only" onclick="deleteSubitem('${cat.id}','${sub.id}')">✕</button>` : ""}
+                    </div>`).join('')}
+                ${isAdmin ? `<div class="add-sub-row admin-only" onclick="openAddSubitemModalFor('${cat.id}')">+ إضافة فرعي</div>` : ""}
+            </div>`;
+
+        section.appendChild(div);
+
+        // Expand toggle
+        div.querySelector(".expand-btn").addEventListener("click", function() {
+            this.classList.toggle("active");
+            div.querySelector(".dropdown-items").classList.toggle("active");
+        });
+
+        // Checkbox change
+        div.querySelectorAll(".subitem-cb").forEach(cb => {
+            cb.addEventListener("change", function() {
+                const subId    = this.dataset.subId;
+                const sheetId  = this.dataset.sheet;
+                const geoFile  = this.dataset.geo;
+                const cat      = categories.find(c => c.id === this.dataset.catId);
+                const sub      = cat && cat.subitems.find(s => s.id === subId);
+
                 if (this.checked) {
-                    if (!selectedStatuses.includes(status)) selectedStatuses.push(status);
+                    selectedItems[subId] = true;
+                    this.closest(".dropdown-item").classList.add("selected");
+                    if (sub) loadLayer(sheetId, sub.name, geoFile);
                 } else {
-                    selectedStatuses = selectedStatuses.filter(s => s !== status);
+                    delete selectedItems[subId];
+                    this.closest(".dropdown-item").classList.remove("selected");
+                    removeLayer(sheetId);
                 }
-                updateLayerColors();
                 updateStats();
-                saveToStorage();
             });
         });
+    });
 
-        document.addEventListener("click", e => {
-            if (!e.target.closest(".search-box-wrapper")) {
-                document.getElementById("searchDropdown").classList.remove("active");
+    // update category select in modal
+    const sel = document.getElementById("inSubCat");
+    if (sel) {
+        sel.innerHTML = '<option value="">-- اختر --</option>';
+        categories.forEach(c => {
+            const o = document.createElement("option");
+            o.value = c.id; o.textContent = c.name;
+            sel.appendChild(o);
+        });
+    }
+}
+
+/* ====================================================
+   ADD / DELETE — ADMIN ONLY
+   ==================================================== */
+
+function openAddCategoryModal() {
+    document.getElementById("inCatName").value  = "";
+    document.getElementById("inCatEmoji").value = "📍";
+    openModal("modalAddCategory");
+}
+
+function addCategory() {
+    const name  = document.getElementById("inCatName").value.trim();
+    const emoji = document.getElementById("inCatEmoji").value.trim() || "📍";
+    if (!name) { showAlert("❌ يرجى إدخال اسم البند"); return; }
+    categories.push({ id: uid(), name, emoji, subitems: [] });
+    renderItems();
+    closeModal("modalAddCategory");
+    showAlert("✅ تمت إضافة البند الرئيسي", "success");
+}
+
+let _addSubForCat = null;
+
+function openAddSubitemModal() {
+    _addSubForCat = null;
+    document.getElementById("inSubName").value  = "";
+    document.getElementById("inSubSheet").value = "";
+    document.getElementById("inSubGeo").value   = "";
+    const sel = document.getElementById("inSubCat");
+    sel.style.display = "block";
+    sel.value = "";
+    openModal("modalAddSubitem");
+}
+
+function openAddSubitemModalFor(catId) {
+    _addSubForCat = catId;
+    document.getElementById("inSubName").value  = "";
+    document.getElementById("inSubSheet").value = "";
+    document.getElementById("inSubGeo").value   = "";
+    const sel = document.getElementById("inSubCat");
+    sel.value = catId;
+    openModal("modalAddSubitem");
+}
+
+function addSubitem() {
+    const catId   = document.getElementById("inSubCat").value   || _addSubForCat;
+    const name    = document.getElementById("inSubName").value.trim();
+    const sheetRaw= document.getElementById("inSubSheet").value.trim();
+    const geo     = document.getElementById("inSubGeo").value.trim();
+
+    if (!catId || !name || !sheetRaw || !geo) { showAlert("❌ يرجى ملء جميع الحقول"); return; }
+
+    const sheetId = sheetIdFromUrl(sheetRaw);
+    if (!sheetId)  { showAlert("❌ رابط الشيت غير صحيح"); return; }
+
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) { showAlert("❌ البند غير موجود"); return; }
+
+    cat.subitems.push({ id: uid(), name, sheetId, geoJsonFile: geo });
+    renderItems();
+    closeModal("modalAddSubitem");
+    showAlert("✅ تمت إضافة البند الفرعي", "success");
+}
+
+function deleteCategory(catId) {
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return;
+    if (!confirm(`حذف "${cat.name}" وجميع بنوده الفرعية؟`)) return;
+    cat.subitems.forEach(sub => {
+        delete selectedItems[sub.id];
+        removeLayer(sub.sheetId);
+    });
+    categories = categories.filter(c => c.id !== catId);
+    renderItems();
+    updateStats();
+    showAlert("✅ تم الحذف", "success");
+}
+
+function deleteSubitem(catId, subId) {
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return;
+    const sub = cat.subitems.find(s => s.id === subId);
+    if (!sub) return;
+    if (!confirm(`حذف "${sub.name}"؟`)) return;
+    delete selectedItems[subId];
+    removeLayer(sub.sheetId);
+    cat.subitems = cat.subitems.filter(s => s.id !== subId);
+    renderItems();
+    updateStats();
+    showAlert("✅ تم الحذف", "success");
+}
+
+/* ====================================================
+   STATUS LEGEND CHECKBOXES
+   ==================================================== */
+
+document.querySelectorAll(".status-checkbox").forEach(cb => {
+    cb.addEventListener("change", function() {
+        const st = this.dataset.status;
+        if (this.checked) { if (!selectedStatuses.includes(st)) selectedStatuses.push(st); }
+        else              { selectedStatuses = selectedStatuses.filter(s => s !== st); }
+        refreshLayerColors();
+        updateStats();
+    });
+});
+
+/* ====================================================
+   SEARCH
+   ==================================================== */
+
+function positionDropdown() {
+    const dd  = document.getElementById("searchDropdown");
+    const box = document.querySelector(".search-box-wrapper");
+    if (!box || !dd.classList.contains("active")) return;
+    const r = box.getBoundingClientRect();
+    dd.style.top   = r.bottom + "px";
+    dd.style.left  = r.left   + "px";
+    dd.style.width = r.width  + "px";
+    dd.style.right = "auto";
+}
+
+function updateSearchDropdown() {
+    const dd    = document.getElementById("searchDropdown");
+    const input = document.getElementById("searchInput");
+    const q     = input.value.trim().toLowerCase();
+    dd.innerHTML = "";
+
+    if (!q) { dd.classList.remove("active"); return; }
+
+    const results = [];
+    Object.entries(allData).forEach(([sheetId, data]) => {
+        Object.values(data).forEach(row => {
+            const name = (row["ROAD NAME"]||row["BLOCK NAME"]||row["NAME"]||"").trim().toLowerCase();
+            const st   = (row["STATUS"]||"").trim().toLowerCase();
+            if (name.includes(q) && selectedStatuses.some(s => s.toLowerCase() === st)) {
+                const dispName = row["ROAD NAME"]||row["BLOCK NAME"]||row["NAME"]||"بدون اسم";
+                results.push({ name: dispName, status: row["STATUS"], key: `${sheetId}-${dispName}` });
             }
         });
+    });
 
-        window.addEventListener("resize", () => {
-            if (map) map.invalidateSize();
-            positionDropdown();
-        });
-
-        // ===== INIT =====
-        document.addEventListener("DOMContentLoaded", () => {
-            // تحميل البيانات من LocalStorage أولاً
-            loadFromStorage();
-
-            initMap();
-            loadEquipmentData();
-            renderItems();
-            updateCategorySelect();
-
-            // إعادة تحميل البنود المختارة
-            categories.forEach(cat => {
-                cat.subitems.forEach(sub => {
-                    if (selectedItems[sub.id]) {
-                        loadLayer(sub.sheetId, sub.name, sub.geoJsonFile);
-                    }
-                });
+    if (!results.length) {
+        dd.innerHTML = "<div style='padding:10px;text-align:right;color:#999;font-size:12px'>لا توجد نتائج</div>";
+    } else {
+        results.forEach(item => {
+            const el = document.createElement("div");
+            el.className = "search-item";
+            el.innerHTML = `
+                <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+                    <span class="search-badge" style="background:${statusColor(item.status)}">${item.status}</span>
+                </div>
+                <div class="search-item-name">${item.name}</div>`;
+            el.addEventListener("click", () => {
+                const layer = allFeatures[item.key];
+                if (layer) { map.fitBounds(layer.getBounds()); layer.openPopup(); }
+                input.value = "";
+                dd.classList.remove("active");
             });
-
-            // تحديث الحالات المختارة في الـ Legend
-            document.querySelectorAll(".status-checkbox").forEach(checkbox => {
-                const status = checkbox.dataset.status;
-                checkbox.checked = selectedStatuses.includes(status);
-            });
-
-            updateStats();
-            showAlert("✅ تم تحميل البيانات المحفوظة بنجاح", "success");
+            dd.appendChild(el);
         });
-    </script>
+    }
 
+    dd.classList.add("active");
+    positionDropdown();
+}
+
+document.getElementById("searchInput").addEventListener("input", updateSearchDropdown);
+window.addEventListener("resize", () => { if (map) map.invalidateSize(); positionDropdown(); });
+document.addEventListener("click", e => {
+    if (!e.target.closest(".search-box-wrapper")) {
+        document.getElementById("searchDropdown").classList.remove("active");
+    }
+});
+
+/* ====================================================
+   CLOSE MODALS ON BACKDROP CLICK
+   ==================================================== */
+
+document.querySelectorAll(".modal").forEach(m => {
+    m.addEventListener("click", e => {
+        if (e.target === m) m.classList.remove("active");
+    });
+});
+
+</script>
 </body>
 </html>
