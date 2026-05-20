@@ -321,7 +321,7 @@
             flex: 1;
             height: 100%;
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: visible;
             align-items: center;
         }
 
@@ -354,19 +354,18 @@
 
         /* Subitem tooltip/dropdown from tab */
         .nav-tab .tab-sub-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
+            position: fixed;
+            top: 52px;
             min-width: 200px;
             background: white;
             border-radius: 0 0 10px 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
             display: none;
             flex-direction: column;
-            z-index: 9999;
+            z-index: 99999;
             border-top: 2px solid var(--purple);
             overflow: hidden;
-            max-height: 300px;
+            max-height: 320px;
             overflow-y: auto;
         }
 
@@ -994,46 +993,6 @@
 
         .hdr-btn.export-btn:hover { background: rgba(245,200,66,0.35); }
 
-        /* Admin: default coords */
-        .admin-coords-bar {
-            padding: 6px 10px;
-            background: rgba(106,45,145,0.06);
-            border-bottom: 1px solid var(--border);
-            display: none;
-            gap: 4px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        body.is-admin .admin-coords-bar { display: flex; }
-
-        .coords-input {
-            width: 70px;
-            padding: 4px 6px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            font-size: 10px;
-            font-family: 'Cairo', sans-serif;
-            text-align: center;
-            outline: none;
-        }
-
-        .coords-input:focus { border-color: var(--purple); }
-
-        .coords-btn {
-            padding: 4px 8px;
-            background: var(--purple);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 10px;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .coords-label { font-size: 9px; color: var(--text-soft); font-weight: 600; }
-
         /* Items section */
         .items-section {
             flex: 1;
@@ -1600,15 +1559,6 @@
                 </div>
             </div>
 
-            <!-- Admin: default coordinates -->
-            <div class="admin-coords-bar admin-only">
-                <span class="coords-label">إحداثيات افتراضية:</span>
-                <input type="text" class="coords-input" id="defLat" placeholder="عرض" value="21.292">
-                <input type="text" class="coords-input" id="defLng" placeholder="طول" value="39.71">
-                <input type="text" class="coords-input" id="defZoom" placeholder="تكبير" value="14" style="width:50px">
-                <button class="coords-btn" onclick="saveDefaultCoords()">✓</button>
-            </div>
-
             <div class="items-section" id="itemsSection"></div>
 
             <div class="legend-section">
@@ -2031,11 +1981,8 @@ function updateUserUI() {
     document.getElementById("udNameInput").value     = currentUser.name;
     document.getElementById("udPassInput").value     = "";
 
-    // Default coords inputs
+    // Default coords inputs (nav panel only)
     if (defaultCoords) {
-        document.getElementById("defLat").value  = defaultCoords.lat;
-        document.getElementById("defLng").value  = defaultCoords.lng;
-        document.getElementById("defZoom").value = defaultCoords.zoom;
         const l2 = document.getElementById("defLat2"); if(l2) l2.value = defaultCoords.lat;
         const g2 = document.getElementById("defLng2"); if(g2) g2.value = defaultCoords.lng;
         const z2 = document.getElementById("defZoom2"); if(z2) z2.value = defaultCoords.zoom;
@@ -2167,18 +2114,6 @@ async function loadDefaultCoords() {
     }
 }
 
-function saveDefaultCoords() {
-    const lat  = parseFloat(document.getElementById("defLat").value);
-    const lng  = parseFloat(document.getElementById("defLng").value);
-    const zoom = parseInt(document.getElementById("defZoom").value);
-    if (isNaN(lat) || isNaN(lng) || isNaN(zoom)) { showAlert("❌ أدخل إحداثيات صحيحة"); return; }
-    defaultCoords = { lat, lng, zoom };
-    localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
-    if (map) map.setView([lat, lng], zoom);
-    syncCoordsInputs();
-    showAlert("✅ تم حفظ الإحداثيات — اضغط ⬇ لتصدير categories.json ليتشاركها الجميع", "success");
-}
-
 function saveDefaultCoordsNav() {
     const lat  = parseFloat(document.getElementById("defLat2").value);
     const lng  = parseFloat(document.getElementById("defLng2").value);
@@ -2193,10 +2128,9 @@ function saveDefaultCoordsNav() {
 }
 
 function syncCoordsInputs() {
-    // Sync all coords inputs
-    ["defLat","defLat2"].forEach(id => { const el = document.getElementById(id); if(el) el.value = defaultCoords.lat; });
-    ["defLng","defLng2"].forEach(id => { const el = document.getElementById(id); if(el) el.value = defaultCoords.lng; });
-    ["defZoom","defZoom2"].forEach(id => { const el = document.getElementById(id); if(el) el.value = defaultCoords.zoom; });
+    const l2 = document.getElementById("defLat2"); if(l2) l2.value = defaultCoords.lat;
+    const g2 = document.getElementById("defLng2"); if(g2) g2.value = defaultCoords.lng;
+    const z2 = document.getElementById("defZoom2"); if(z2) z2.value = defaultCoords.zoom;
 }
 
 /* ====================================================
@@ -2558,8 +2492,24 @@ function renderNavTabs() {
 
         tabsEl.appendChild(tab);
 
-        // Prevent dropdown from closing on internal clicks
+        // Position dropdown using fixed coords based on tab position
         const dd = tab.querySelector('.tab-sub-dropdown');
+
+        tab.addEventListener('mouseenter', () => {
+            const rect = tab.getBoundingClientRect();
+            dd.style.left = rect.left + 'px';
+            dd.style.right = 'auto';
+            // Make sure it doesn't overflow viewport on the right
+            setTimeout(() => {
+                const ddRect = dd.getBoundingClientRect();
+                if (ddRect.right > window.innerWidth - 8) {
+                    dd.style.left = 'auto';
+                    dd.style.right = (window.innerWidth - rect.right) + 'px';
+                }
+            }, 0);
+        });
+
+        // Prevent dropdown from closing on internal clicks
         dd.addEventListener('click', e => e.stopPropagation());
 
         // Handle checkbox changes in tab dropdown
