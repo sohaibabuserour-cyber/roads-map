@@ -1360,6 +1360,119 @@
         .btn-secondary:hover { background: #e0e0e5; }
 
         /* ========== RESPONSIVE ========== */
+
+        /* ========== CONTRACTOR PANEL ========== */
+        .contractor-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 280px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            z-index: 9999;
+            overflow: hidden;
+            display: none;
+            max-height: 400px;
+            flex-direction: column;
+        }
+
+        .contractor-panel.active { display: flex; animation: dropFade 0.2s ease-out; }
+
+        .contractor-panel-header {
+            background: var(--sidebar-hdr-bg);
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .contractor-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .contractor-list::-webkit-scrollbar { width: 4px; }
+        .contractor-list::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        .contractor-item {
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+        }
+
+        .contractor-item:last-child { border-bottom: none; }
+
+        .contractor-name {
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: background 0.15s;
+            user-select: none;
+        }
+
+        .contractor-name:hover { background: rgba(106,45,145,0.06); }
+        .contractor-name.open  { background: rgba(106,45,145,0.1); color: var(--purple); }
+
+        .contractor-name .c-arrow {
+            font-size: 10px;
+            opacity: 0.5;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .contractor-name.open .c-arrow { transform: rotate(90deg); opacity: 1; }
+
+        .contractor-subitems {
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            padding: 4px 10px 8px;
+            background: rgba(106,45,145,0.03);
+        }
+
+        .contractor-subitems.active { display: flex; }
+
+        .contractor-subitem {
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-soft);
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+
+        .contractor-subitem:hover { background: rgba(106,45,145,0.07); color: var(--purple); border-color: var(--purple-light); }
+
+        .contractor-count {
+            background: var(--purple);
+            color: white;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 6px;
+            flex-shrink: 0;
+        }
+
+        .contractor-empty {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-soft);
+            font-size: 12px;
+        }
+
         @media (max-width: 768px) {
             .main-content { flex-direction: column; }
             .left-section  { flex: 1; }
@@ -1373,7 +1486,7 @@
 
             /* ===== Mobile spacing: push down from top, up from bottom ===== */
             #mainApp {
-                padding-top: 20px;
+                padding-top: 10px;
                 padding-bottom: 24px;
             }
             .right-sidebar {
@@ -1434,6 +1547,17 @@
 
         <!-- Right side: notifications, themes, user -->
         <div class="nav-right">
+
+            <!-- Contractor button -->
+            <div style="position:relative">
+                <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel')" title="المقاولون">👷</div>
+                <div class="contractor-panel" id="contractorPanel">
+                    <div class="contractor-panel-header">👷 المقاولون</div>
+                    <div class="contractor-list" id="contractorList">
+                        <div class="contractor-empty">جاري التحميل...</div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Notification bell -->
             <div style="position:relative">
@@ -1735,14 +1859,14 @@ function togglePanel(id) {
     const panel = document.getElementById(id);
     const isOpen = panel.classList.contains("active");
     // Close all panels first
-    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel').forEach(p => p.classList.remove('active'));
     if (!isOpen) panel.classList.add("active");
 }
 
 // Close panels when clicking outside
 document.addEventListener("click", e => {
     if (!e.target.closest('.nav-right')) {
-        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel').forEach(p => p.classList.remove('active'));
     }
     if (!e.target.closest('.search-wrap')) {
         document.getElementById("searchDropdown").classList.remove("active");
@@ -2195,6 +2319,68 @@ function loadEquipmentData() {
 }
 
 /* ====================================================
+   CONTRACTOR PANEL — collect unique contractors from allData
+   ==================================================== */
+
+function buildContractorPanel() {
+    const list = document.getElementById("contractorList");
+    if (!list) return;
+
+    // Collect: contractorName → Set of subitem names
+    const contractorMap = {};
+
+    categories.forEach(cat => {
+        cat.subitems.forEach(sub => {
+            if (!allData[sub.sheetId]) return;
+            Object.values(allData[sub.sheetId]).forEach(row => {
+                const cname = (row["CONTRACTOR"] || "").trim();
+                if (!cname) return;
+                if (!contractorMap[cname]) contractorMap[cname] = new Set();
+                contractorMap[cname].add(sub.name);
+            });
+        });
+    });
+
+    const names = Object.keys(contractorMap).sort((a,b) => a.localeCompare(b, 'ar'));
+
+    if (!names.length) {
+        list.innerHTML = '<div class="contractor-empty">لا توجد بيانات مقاولين بعد<br><small>حمّل بنداً أولاً</small></div>';
+        return;
+    }
+
+    list.innerHTML = names.map(name => {
+        const subs = [...contractorMap[name]];
+        return `
+        <div class="contractor-item">
+            <div class="contractor-name" onclick="toggleContractor(this)">
+                <span>${name}</span>
+                <div style="display:flex;align-items:center;gap:5px">
+                    <span class="contractor-count">${subs.length}</span>
+                    <span class="c-arrow">◀</span>
+                </div>
+            </div>
+            <div class="contractor-subitems">
+                ${subs.map(s => `<div class="contractor-subitem">📌 ${s}</div>`).join('')}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function toggleContractor(el) {
+    const subitems = el.nextElementSibling;
+    const isOpen = subitems.classList.contains('active');
+    // Close all open
+    document.querySelectorAll('.contractor-name.open').forEach(e => {
+        e.classList.remove('open');
+        e.nextElementSibling.classList.remove('active');
+    });
+    if (!isOpen) {
+        el.classList.add('open');
+        subitems.classList.add('active');
+    }
+}
+
+/* ====================================================
    NOTIFICATIONS — from dedicated sheet (column A, each row = one notification)
    ==================================================== */
 
@@ -2478,6 +2664,7 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
                 }
 
                 updateStats();
+                buildContractorPanel();
             });
         })
         .catch(e => { console.error(e); showAlert("❌ خطأ في تحميل البيانات"); });
@@ -2487,6 +2674,7 @@ function removeLayer(sheetId) {
     if (allLayers[sheetId]) { map.removeLayer(allLayers[sheetId]); delete allLayers[sheetId]; }
     delete allData[sheetId];
     updateStats();
+    buildContractorPanel();
 }
 
 /* ====================================================
