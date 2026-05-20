@@ -1450,11 +1450,26 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             transition: all 0.15s;
         }
 
         .contractor-subitem:hover { background: rgba(106,45,145,0.07); color: var(--purple); border-color: var(--purple-light); }
+
+        .contractor-subitem label {
+            flex: 1;
+            cursor: pointer;
+            text-align: right;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .contractor-subitem input[type="checkbox"] {
+            width: 14px; height: 14px;
+            accent-color: var(--purple);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
 
         .contractor-count {
             background: var(--purple);
@@ -1550,7 +1565,7 @@
 
             <!-- Contractor button -->
             <div style="position:relative">
-                <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel')" title="المقاولون">👷</div>
+                <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel');buildContractorPanel();" title="المقاولون">👷</div>
                 <div class="contractor-panel" id="contractorPanel">
                     <div class="contractor-panel-header">👷 المقاولون</div>
                     <div class="contractor-list" id="contractorList">
@@ -2322,34 +2337,104 @@ function loadEquipmentData() {
    CONTRACTOR PANEL — collect unique contractors from allData
    ==================================================== */
 
-function buildContractorPanel() {
+/* contractorMap: name → [ { catId, subId, subName, sheetId, geoJsonFile } ] */
+let contractorMap = {};
+
+async function fetchSheetContractors(sub) {
+    // If already loaded in allData use it, otherwise fetch fresh
+    if (allData[sub.sheetId]) {
+        const rows = Object.values(allData[sub.sheetId]);
+        rows.forEach(row => {
+            const cname = (row["CONTRACTOR"] || "").trim();
+            if (!cname) return;
+            if (!contractorMap[cname]) contractorMap[cname] = [];
+            // Avoid duplicate sub entries
+            if (!contractorMap[cname].find(e => e.subId === sub.id)) {
+                const cat = categories.find(c => c.subitems.some(s => s.id === sub.id));
+                contractorMap[cname].push({
+                    catId: cat ? cat.id : "",
+                    subId: sub.id,
+                    subName: sub.name,
+                    sheetId: sub.sheetId,
+                    geoJsonFile: sub.geoJsonFile
+                });
+            }
+        });
+        return;
+    }
+    // Fetch CSV silently
+    try {
+        const url = `https://docs.google.com/spreadsheets/d/${sub.sheetId}/export?format=csv&gid=0`;
+        const r   = await fetch(url);
+        if (!r.ok) return;
+        const csv = await r.text();
+        if (csv.trim().startsWith('<')) return;
+        const lines   = csv.split('\n').filter(l => l.trim());
+        if (!lines.length) return;
+        const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+        const cIdx    = headers.findIndex(h => h === 'CONTRACTOR');
+        if (cIdx === -1) return;
+        const cat = categories.find(c => c.subitems.some(s => s.id === sub.id));
+        for (let i = 1; i < lines.length; i++) {
+            const vals  = lines[i].split(',').map(v => v.trim());
+            const cname = (vals[cIdx] || "").trim();
+            if (!cname) continue;
+            if (!contractorMap[cname]) contractorMap[cname] = [];
+            if (!contractorMap[cname].find(e => e.subId === sub.id)) {
+                contractorMap[cname].push({
+                    catId: cat ? cat.id : "",
+                    subId: sub.id,
+                    subName: sub.name,
+                    sheetId: sub.sheetId,
+                    geoJsonFile: sub.geoJsonFile
+                });
+            }
+        }
+    } catch(e) { console.warn("contractor fetch failed:", sub.name, e); }
+}
+
+async function buildContractorPanel() {
     const list = document.getElementById("contractorList");
     if (!list) return;
 
-    // Collect: contractorName → Set of subitem names
-    const contractorMap = {};
+    list.innerHTML = '<div class="contractor-empty">⏳ جاري التحميل...</div>';
 
-    categories.forEach(cat => {
-        cat.subitems.forEach(sub => {
-            if (!allData[sub.sheetId]) return;
-            Object.values(allData[sub.sheetId]).forEach(row => {
-                const cname = (row["CONTRACTOR"] || "").trim();
-                if (!cname) return;
-                if (!contractorMap[cname]) contractorMap[cname] = new Set();
-                contractorMap[cname].add(sub.name);
-            });
-        });
-    });
+    // Reset and refetch from ALL subitems across all categories
+    contractorMap = {};
+    const allSubs = [];
+    categories.forEach(cat => cat.subitems.forEach(sub => allSubs.push(sub)));
+
+    if (!allSubs.length) {
+        list.innerHTML = '<div class="contractor-empty">لا توجد بنود مضافة بعد</div>';
+        return;
+    }
+
+    await Promise.all(allSubs.map(sub => fetchSheetContractors(sub)));
 
     const names = Object.keys(contractorMap).sort((a,b) => a.localeCompare(b, 'ar'));
 
     if (!names.length) {
-        list.innerHTML = '<div class="contractor-empty">لا توجد بيانات مقاولين بعد<br><small>حمّل بنداً أولاً</small></div>';
+        list.innerHTML = '<div class="contractor-empty">لم يتم العثور على مقاولين</div>';
         return;
     }
 
     list.innerHTML = names.map(name => {
-        const subs = [...contractorMap[name]];
+        const subs = contractorMap[name];
+        const subsHTML = subs.map(s => {
+            const checked = selectedItems[s.subId] ? 'checked' : '';
+            return `
+            <div class="contractor-subitem">
+                <input type="checkbox" class="contractor-cb"
+                    data-cat-id="${s.catId}"
+                    data-sub-id="${s.subId}"
+                    data-sheet="${s.sheetId}"
+                    data-geo="${s.geoJsonFile}"
+                    ${checked}
+                    onclick="event.stopPropagation()">
+                <label>${s.subName}</label>
+            </div>`;
+        }).join('');
+
         return `
         <div class="contractor-item">
             <div class="contractor-name" onclick="toggleContractor(this)">
@@ -2360,10 +2445,31 @@ function buildContractorPanel() {
                 </div>
             </div>
             <div class="contractor-subitems">
-                ${subs.map(s => `<div class="contractor-subitem">📌 ${s}</div>`).join('')}
+                ${subsHTML}
             </div>
         </div>`;
     }).join('');
+
+    // Bind checkbox events
+    list.querySelectorAll('.contractor-cb').forEach(cb => {
+        cb.addEventListener('change', function() {
+            handleSubitemToggle(
+                this.dataset.catId,
+                this.dataset.subId,
+                this.dataset.sheet,
+                this.dataset.geo,
+                this.checked
+            );
+            // Sync checkboxes in contractor panel after toggle
+            syncContractorCheckboxes();
+        });
+    });
+}
+
+function syncContractorCheckboxes() {
+    document.querySelectorAll('.contractor-cb').forEach(cb => {
+        cb.checked = !!selectedItems[cb.dataset.subId];
+    });
 }
 
 function toggleContractor(el) {
@@ -2764,10 +2870,11 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
         removeLayer(sheetId);
     }
 
-    // Sync sidebar checkboxes
+    // Sync sidebar + contractor checkboxes
     renderItems();
     renderNavTabs();
     updateStats();
+    syncContractorCheckboxes();
 }
 
 /* ====================================================
