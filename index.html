@@ -1370,6 +1370,16 @@
             .stats-group { min-width: 180px; }
             .search-input { width: 160px; }
             .nav-tab .tab-sub-dropdown { right: auto; left: 0; }
+
+            /* ===== Mobile spacing: push down from top, up from bottom ===== */
+            #mainApp {
+                padding-top: 10px;
+                padding-bottom: 24px;
+            }
+            .right-sidebar {
+                padding-bottom: env(safe-area-inset-bottom, 20px);
+                margin-bottom: 8px;
+            }
         }
     </style>
 </head>
