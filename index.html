@@ -2198,18 +2198,27 @@ async function loadNotifications() {
 
     try {
         const url = `https://docs.google.com/spreadsheets/d/${NOTIFICATIONS_SHEET_ID}/export?format=csv&gid=0`;
-        const r   = await fetch(url);
-        if (!r.ok) throw new Error("fetch failed");
+        const r   = await fetch(url, { redirect: "follow" });
+
         const csv = await r.text();
 
+        // If the sheet is not public, Google returns an HTML login page
+        if (csv.trim().startsWith('<') || csv.includes('accounts.google.com')) {
+            list.innerHTML = '<div class="notif-empty">⚠️ الشيت يحتاج إعداد المشاركة العامة</div>';
+            badge.style.display = 'none';
+            return;
+        }
+
         const lines = csv.split('\n').map(l => l.trim()).filter(l => l);
-        // Skip header row, read column A (first column) of each remaining row
-        const items = lines.slice(1).map(line => {
-            // Handle quoted CSV fields
-            const firstVal = line.startsWith('"')
-                ? line.slice(1, line.indexOf('"', 1))
-                : line.split(',')[0];
-            return firstVal.trim();
+
+        // Read ALL rows from column A (no header skip — treat every row as a notification)
+        const items = lines.map(line => {
+            if (line.startsWith('"')) {
+                // Quoted field
+                const end = line.indexOf('"', 1);
+                return line.slice(1, end === -1 ? undefined : end).trim();
+            }
+            return line.split(',')[0].trim();
         }).filter(v => v);
 
         if (!items.length) {
