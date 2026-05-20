@@ -846,6 +846,23 @@
 
         .stat-value { font-size: 14px; font-weight: 700; color: var(--gold); line-height: 1.2; }
 
+        .stats-group-total {
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 0 1px rgba(245,200,66,0.25), 0 4px 14px rgba(245,200,66,0.15);
+            position: relative;
+        }
+
+        .stats-group-total::before {
+            content: "Σ";
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--gold);
+            opacity: 0.7;
+        }
+
         /* Search box */
         .search-wrap {
             flex-shrink: 0;
@@ -2710,37 +2727,100 @@ function importConfig(e) {
    STATS BAR
    ==================================================== */
 
+/* ── helper: calc totals for a subitem, respecting contractor filter & status filter ── */
+function calcSubTotals(sub) {
+    let total = 0, done = 0;
+    if (!allData[sub.sheetId]) return { total, done };
+
+    // Build set of active contractors for this sheet (if filter is on)
+    const filterOn = activeContractorFilter && activeContractorFilter.size > 0;
+    const activeContractorsForSheet = filterOn
+        ? [...activeContractorFilter]
+            .filter(k => k.startsWith(sub.sheetId + '|'))
+            .map(k => k.split('|')[1].trim().toLowerCase())
+        : null;
+
+    Object.values(allData[sub.sheetId]).forEach(row => {
+        // Status filter
+        const st = (row["STATUS"] || "").trim().toLowerCase();
+        if (!selectedStatuses.some(s => s.toLowerCase() === st)) return;
+
+        // Contractor filter — only count visible features
+        if (activeContractorsForSheet && activeContractorsForSheet.length > 0) {
+            const featureCon = (row["CONTRACTOR"] || "").trim().toLowerCase();
+            if (!activeContractorsForSheet.includes(featureCon)) return;
+        }
+
+        total += toNum(row["TOTAL-QTY"]);
+        done  += toNum(row["DONE-QTY"]);
+    });
+
+    return { total, done };
+}
+
+/* ── build one stat card element ── */
+function makeStatCard(title, subtitle, total, done, isTotal = false) {
+    const card = document.createElement("div");
+    card.className = "stats-group" + (isTotal ? " stats-group-total" : "");
+    card.innerHTML = `
+        <div class="stats-group-title">${title}</div>
+        <div class="stats-group-type">${subtitle}</div>
+        <div class="stat-row">
+            <div class="stat-item"><div class="stat-label">الإجمالي</div><div class="stat-value">${fmtNum(total)}</div></div>
+            <div class="stat-item"><div class="stat-label">المنفذ</div><div class="stat-value">${fmtNum(done)}</div></div>
+            <div class="stat-item"><div class="stat-label">المتبقي</div><div class="stat-value">${fmtNum(total - done)}</div></div>
+        </div>`;
+    return card;
+}
+
 function updateStats() {
     const wrapper = document.getElementById("statsWrapper");
     wrapper.innerHTML = "";
+
+    // Track sheetIds that appear in more than one category (shared subitems)
+    // sheetId → [ { cat, sub } ]
+    const sheetUsage = {};
+    categories.forEach(cat => {
+        cat.subitems.forEach(sub => {
+            if (!selectedItems[sub.id] || !allData[sub.sheetId]) return;
+            if (!sheetUsage[sub.sheetId]) sheetUsage[sub.sheetId] = [];
+            sheetUsage[sub.sheetId].push({ cat, sub });
+        });
+    });
+
+    // Per-category cards
+    const shownSubIds = new Set();
+    let grandTotal = 0, grandDone = 0;
+    let cardCount = 0;
 
     categories.forEach(cat => {
         const activeSubs = cat.subitems.filter(s => selectedItems[s.id] && allData[s.sheetId]);
         if (!activeSubs.length) return;
 
-        let total = 0, done = 0;
+        let catTotal = 0, catDone = 0;
         activeSubs.forEach(sub => {
-            Object.values(allData[sub.sheetId]).forEach(row => {
-                const st = (row["STATUS"]||"").trim().toLowerCase();
-                if (selectedStatuses.some(s => s.toLowerCase() === st)) {
-                    total += toNum(row["TOTAL-QTY"]);
-                    done  += toNum(row["DONE-QTY"]);
-                }
-            });
+            const { total, done } = calcSubTotals(sub);
+            catTotal += total;
+            catDone  += done;
+            shownSubIds.add(sub.sheetId);
         });
 
-        const card = document.createElement("div");
-        card.className = "stats-group";
-        card.innerHTML = `
-            <div class="stats-group-title">${cat.emoji} ${cat.name}</div>
-            <div class="stats-group-type">${activeSubs.map(s=>s.name).join(" + ")}</div>
-            <div class="stat-row">
-                <div class="stat-item"><div class="stat-label">الإجمالي</div><div class="stat-value">${fmtNum(total)}</div></div>
-                <div class="stat-item"><div class="stat-label">المنفذ</div><div class="stat-value">${fmtNum(done)}</div></div>
-                <div class="stat-item"><div class="stat-label">المتبقي</div><div class="stat-value">${fmtNum(total-done)}</div></div>
-            </div>`;
-        wrapper.appendChild(card);
+        wrapper.appendChild(makeStatCard(
+            `${cat.emoji} ${cat.name}`,
+            activeSubs.map(s => s.name).join(" + "),
+            catTotal, catDone
+        ));
+
+        grandTotal += catTotal;
+        grandDone  += catDone;
+        cardCount++;
     });
+
+    // Grand total card — only if more than one category card is shown
+    if (cardCount > 1) {
+        const totalCard = makeStatCard("📊 الإجمالي الكلي", "مجموع جميع البنود", grandTotal, grandDone, true);
+        wrapper.appendChild(totalCard);
+    }
 
     sessionStorage.setItem("selectedStatuses", JSON.stringify(selectedStatuses));
     sessionStorage.setItem("selectedItems",    JSON.stringify(selectedItems));
