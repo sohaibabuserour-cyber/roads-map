@@ -3157,7 +3157,7 @@ function makeStatCard(title, subtitle, total, done, isTotal = false) {
 }
 
 /* ── build contractors card for the active subitems ── */
-function makeContractorsCard(sheetIds) {
+function makeContractorsCard(sheetIds, subLabel = "البند المحدد") {
     const names = new Set();
     sheetIds.forEach(sid => {
         if (!allData[sid]) return;
@@ -3171,7 +3171,7 @@ function makeContractorsCard(sheetIds) {
     card.className = "stats-group stats-group-contractors";
     card.innerHTML = `
         <div class="stats-group-title">👷 المقاولون</div>
-        <div class="stats-group-type">العاملون في البند المحدد</div>
+        <div class="stats-group-type">العاملون في بند ${subLabel}</div>
         <div class="contractor-chips">
             ${[...names].sort((a,b) => a.localeCompare(b,'ar'))
                 .map(n => `<span class="contractor-chip">${n}</span>`).join('')}
@@ -3180,7 +3180,7 @@ function makeContractorsCard(sheetIds) {
 }
 
 /* ── build equipment card filtered by عمود البند ── */
-function makeEquipmentCard(sheetIds) {
+function makeEquipmentCard(sheetIds, subLabel = "البند المحدد") {
     if (!equipmentRawRows.length || !equipmentRawHeaders.length) return null;
 
     // الأعمدة المستثناة
@@ -3233,7 +3233,7 @@ function makeEquipmentCard(sheetIds) {
     card.className = "stats-group stats-group-equipment";
     card.innerHTML = `
         <div class="stats-group-title">🚜 المعدات</div>
-        <div class="stats-group-type">إجمالي المعدات في البند المحدد</div>
+        <div class="stats-group-type">إجمالي المعدات في بند ${subLabel}</div>
         <div class="equipment-chips">
             ${entries.map(([name, count]) =>
                 `<span class="equipment-chip">${name}<span class="equipment-chip-count">${fmtNum(count)}</span></span>`
@@ -3338,13 +3338,17 @@ function updateStats() {
 
         // Contractors card (أول كارت)
         if (activeSheetIds.length) {
-            const cCard = makeContractorsCard(activeSheetIds);
+            const activeNames = categories.flatMap(c => c.subitems)
+                .filter(s => selectedItems[s.id])
+                .map(s => s.name.trim());
+            const subLabel = activeNames.length ? activeNames.join(' و ') : "البند المحدد";
+
+            const cCard = makeContractorsCard(activeSheetIds, subLabel);
             if (cCard) wrapper.insertBefore(cCard, wrapper.firstChild);
 
             // Equipment card (بعد كارت المقاولين)
-            const eCard = makeEquipmentCard(activeSheetIds);
+            const eCard = makeEquipmentCard(activeSheetIds, subLabel);
             if (eCard) {
-                // أدرجه بعد كارت المقاولين (ثاني كارت)
                 const second = wrapper.children[1] || null;
                 wrapper.insertBefore(eCard, second);
             }
