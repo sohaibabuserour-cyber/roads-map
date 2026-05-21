@@ -887,6 +887,42 @@
             white-space: nowrap;
         }
 
+        /* ── Equipment stat card ── */
+        .stats-group-equipment {
+            background: linear-gradient(135deg, #0d3d5c 0%, #1a6b8a 100%);
+            border: 1.5px solid rgba(33,150,243,0.45);
+            min-width: 180px;
+        }
+
+        .equipment-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 3px;
+        }
+
+        .equipment-chip {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .equipment-chip-count {
+            background: rgba(255,255,255,0.25);
+            border-radius: 8px;
+            padding: 0px 4px;
+            font-size: 9px;
+            font-weight: 900;
+        }
+
         .stats-wrapper {
             display: flex;
             gap: 10px;
@@ -2618,12 +2654,15 @@ function buildEquipmentPanel() {
         return;
     }
 
-    // اكتشاف أعمدة المعدات: كل عمود يحتوي على أرقام وليس ID
-    // نفترض: كل عمود غير ID يمثل نوع معدة وقيمته = العدد
+    // اكتشاف أعمدة المعدات — استثناء ID وعمود البيان
+    const SKIP_COLS = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان']);
     const idCol = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
     const equipCols = equipmentRawHeaders
         .map((h, i) => ({ name: h, idx: i }))
-        .filter(c => c.idx !== idCol && c.name.trim() !== "");
+        .filter(c => c.idx !== idCol
+                  && c.name.trim() !== ""
+                  && !SKIP_COLS.has(c.name.trim())
+                  && !SKIP_COLS.has(c.name.trim().toUpperCase()));
 
     // مجموع كل عمود معدة
     const totals = {};
@@ -3115,7 +3154,6 @@ function makeStatCard(title, subtitle, total, done, isTotal = false) {
 
 /* ── build contractors card for the active subitems ── */
 function makeContractorsCard(sheetIds) {
-    // Collect unique contractors across all given sheetIds
     const names = new Set();
     sheetIds.forEach(sid => {
         if (!allData[sid]) return;
@@ -3124,9 +3162,7 @@ function makeContractorsCard(sheetIds) {
             if (c) names.add(c);
         });
     });
-
     if (!names.size) return null;
-
     const card = document.createElement("div");
     card.className = "stats-group stats-group-contractors";
     card.innerHTML = `
@@ -3135,6 +3171,52 @@ function makeContractorsCard(sheetIds) {
         <div class="contractor-chips">
             ${[...names].sort((a,b) => a.localeCompare(b,'ar'))
                 .map(n => `<span class="contractor-chip">${n}</span>`).join('')}
+        </div>`;
+    return card;
+}
+
+/* ── build equipment card for the active subitems (IDs → equipment totals) ── */
+function makeEquipmentCard(sheetIds) {
+    if (!equipmentRawRows.length || !equipmentRawHeaders.length) return null;
+
+    // Collect active IDs from all active sheets
+    const activeIds = new Set();
+    sheetIds.forEach(sid => {
+        if (!allData[sid]) return;
+        Object.keys(allData[sid]).forEach(id => activeIds.add(id));
+    });
+    if (!activeIds.size) return null;
+
+    // Columns to skip
+    const SKIP = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان']);
+
+    // Sum each equipment column for active IDs only
+    const idColUpper = 'ID';
+    const totals = {};
+    equipmentRawHeaders.forEach(h => {
+        const hUp = h.trim().toUpperCase();
+        if (!h.trim() || SKIP.has(hUp) || SKIP.has(h.trim())) return;
+        let sum = 0;
+        equipmentRawRows.forEach(row => {
+            if (!activeIds.has(row[idColUpper])) return;
+            const val = parseFloat(row[hUp] || 0);
+            if (!isNaN(val)) sum += val;
+        });
+        if (sum > 0) totals[h.trim()] = sum;
+    });
+
+    const entries = Object.entries(totals).sort((a,b) => b[1] - a[1]);
+    if (!entries.length) return null;
+
+    const card = document.createElement("div");
+    card.className = "stats-group stats-group-equipment";
+    card.innerHTML = `
+        <div class="stats-group-title">🚜 المعدات</div>
+        <div class="stats-group-type">إجمالي المعدات في البند المحدد</div>
+        <div class="equipment-chips">
+            ${entries.map(([name, count]) =>
+                `<span class="equipment-chip">${name}<span class="equipment-chip-count">${fmtNum(count)}</span></span>`
+            ).join('')}
         </div>`;
     return card;
 }
@@ -3237,6 +3319,14 @@ function updateStats() {
         if (activeSheetIds.length) {
             const cCard = makeContractorsCard(activeSheetIds);
             if (cCard) wrapper.insertBefore(cCard, wrapper.firstChild);
+
+            // Equipment card (بعد كارت المقاولين)
+            const eCard = makeEquipmentCard(activeSheetIds);
+            if (eCard) {
+                // أدرجه بعد كارت المقاولين (ثاني كارت)
+                const second = wrapper.children[1] || null;
+                wrapper.insertBefore(eCard, second);
+            }
         }
 
         if (cardCount > 1) {
