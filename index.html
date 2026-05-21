@@ -634,13 +634,15 @@
         .user-chip:hover { background: rgba(255,255,255,0.2); }
 
         .user-avatar {
-            width: 28px; height: 28px;
+            width: 38px; height: 38px;
             border-radius: 50%;
             background: var(--gold);
             display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: 700; color: #3d1060;
+            font-size: 15px; font-weight: 700; color: #3d1060;
             overflow: hidden;
             flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.35);
+            box-shadow: 0 0 0 2px rgba(245,200,66,0.4);
         }
 
         .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
@@ -669,16 +671,17 @@
         }
 
         .ud-avatar-wrap {
-            width: 52px; height: 52px;
+            width: 80px; height: 80px;
             border-radius: 50%;
             background: var(--gold);
             display: flex; align-items: center; justify-content: center;
-            font-size: 22px; font-weight: 700; color: #3d1060;
-            margin: 0 auto 6px;
+            font-size: 34px; font-weight: 700; color: #3d1060;
+            margin: 0 auto 8px;
             overflow: hidden;
             cursor: pointer;
-            border: 3px solid rgba(255,255,255,0.3);
+            border: 4px solid rgba(255,255,255,0.4);
             position: relative;
+            box-shadow: 0 0 0 3px rgba(245,200,66,0.5), 0 6px 20px rgba(0,0,0,0.3);
         }
 
         .ud-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
@@ -2537,8 +2540,15 @@ function handleContractorCheckbox(cb) {
     const subId     = cb.dataset.subId;
 
     if (cb.checked) {
-        // ── القاعدة: نفس البند الفرعي (نفس sheetId) مسموح عند أي مقاول ──
-        // ── بند فرعي مختلف (شيت مختلف) → ألغِ فلاتر المقاولين على الشيتات الأخرى وأزل طبقاتها ──
+        // 1. Clear ALL sidebar selections and remove their layers
+        const allSubItems = categories.flatMap(c => c.subitems);
+        Object.keys(selectedItems).forEach(sid => {
+            const s = allSubItems.find(x => x.id === sid);
+            if (s) removeLayer(s.sheetId);
+            delete selectedItems[sid];
+        });
+
+        // 2. Clear contractor filters for OTHER sheets (only one sheet allowed)
         const sheetsToRemove = new Set();
         [...activeContractorFilter].forEach(k => {
             const kSheet = k.split('|')[0];
@@ -2546,24 +2556,20 @@ function handleContractorCheckbox(cb) {
         });
 
         sheetsToRemove.forEach(sid => {
-            // أزل فلاتر المقاولين لهذا الشيت
             [...activeContractorFilter].forEach(k => {
                 if (k.startsWith(sid + '|')) activeContractorFilter.delete(k);
             });
-            // أزل الطبقة فقط إذا لم تكن محددة في الـ sidebar
-            const sidebarSub = categories.flatMap(c => c.subitems).find(s => s.sheetId === sid);
-            const usedBySidebar = sidebarSub && !!selectedItems[sidebarSub.id];
-            if (!usedBySidebar && allLayers[sid]) {
+            if (allLayers[sid]) {
                 map.removeLayer(allLayers[sid]);
                 delete allLayers[sid];
                 delete allData[sid];
             }
         });
 
-        // أضف الفلتر الجديد
+        // 3. Add new filter
         activeContractorFilter.add(filterKey);
 
-        // حمّل الطبقة إذا لم تكن موجودة
+        // 4. Load layer if not yet loaded
         if (!allLayers[sheetId]) {
             const sub = categories.flatMap(c => c.subitems).find(s => s.id === subId);
             if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
@@ -2574,14 +2580,9 @@ function handleContractorCheckbox(cb) {
     } else {
         activeContractorFilter.delete(filterKey);
 
-        // هل لا يزال هناك مقاول آخر على نفس الشيت؟
         const stillUsedByContractor = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
-        // هل الشيت محدد من الـ sidebar؟
-        const sidebarSub    = categories.flatMap(c => c.subitems).find(s => s.id === subId);
-        const usedBySidebar = sidebarSub && !!selectedItems[sidebarSub.id];
 
-        if (!stillUsedByContractor && !usedBySidebar && allLayers[sheetId]) {
-            // لا أحد يحتاجها — أزلها
+        if (!stillUsedByContractor && allLayers[sheetId]) {
             map.removeLayer(allLayers[sheetId]);
             delete allLayers[sheetId];
             delete allData[sheetId];
@@ -2590,7 +2591,8 @@ function handleContractorCheckbox(cb) {
         }
     }
 
-    // الـ sidebar مستقل — لا تعديل على selectedItems أو renderItems
+    renderItems();
+    renderNavTabs();
     updateStats();
     syncContractorCheckboxes();
 }
@@ -3086,34 +3088,37 @@ function renderNavTabs() {
     });
 }
 
-/* ONE SUBITEM PER CATEGORY rule enforced here */
+/* ONE SUBITEM GLOBALLY — selecting any subitem clears all others across all categories,
+   removes all other layers, and clears any contractor filter */
 function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
 
     if (checked) {
-        // Uncheck any other selected subitem in the same category
-        cat.subitems.forEach(s => {
-            if (s.id !== subId && selectedItems[s.id]) {
-                delete selectedItems[s.id];
-                removeLayer(s.sheetId);
-            }
+        // 1. Clear ALL contractor filters (sidebar takes priority over contractor panel)
+        activeContractorFilter.clear();
+
+        // 2. Remove every currently-loaded layer except the one we're about to load
+        const allSubItems = categories.flatMap(c => c.subitems);
+        Object.keys(selectedItems).forEach(sid => {
+            if (sid === subId) return;
+            const s = allSubItems.find(x => x.id === sid);
+            if (s) removeLayer(s.sheetId);
+            delete selectedItems[sid];
         });
-        // Now select this one
+
+        // 3. Select this subitem and load its layer
         selectedItems[subId] = true;
         const sub = cat.subitems.find(s => s.id === subId);
         if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
+
     } else {
+        // Unchecking — just remove this layer
         delete selectedItems[subId];
         removeLayer(sheetId);
     }
 
-    // If no contractor filter active, restore normal colors
-    if (activeContractorFilter && activeContractorFilter.size === 0) {
-        refreshLayerColors();
-    }
-
-    // Sync sidebar + contractor checkboxes
+    refreshLayerColors();
     renderItems();
     renderNavTabs();
     updateStats();
