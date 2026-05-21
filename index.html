@@ -810,6 +810,81 @@
             background: #fafafa;
             display: flex;
             align-items: center;
+            gap: 10px;
+        }
+
+        /* ── Progress Ring ── */
+        .progress-ring-wrap {
+            flex-shrink: 0;
+            display: none;
+            align-items: center;
+            gap: 7px;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
+            border-radius: 8px;
+            padding: 4px 10px 4px 8px;
+        }
+
+        .progress-ring-wrap.visible { display: flex; }
+
+        .progress-ring-svg { transform: rotate(-90deg); flex-shrink: 0; }
+
+        .progress-ring-circle-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.2);
+            stroke-width: 4;
+        }
+
+        .progress-ring-circle {
+            fill: none;
+            stroke: var(--gold);
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.6s ease;
+        }
+
+        .progress-ring-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.1;
+        }
+
+        .progress-ring-pct {
+            font-size: 14px;
+            font-weight: 900;
+            color: var(--gold);
+        }
+
+        .progress-ring-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.75);
+            white-space: nowrap;
+        }
+
+        /* ── Contractors stat card ── */
+        .stats-group-contractors {
+            background: linear-gradient(135deg, #1a4a2e 0%, #1e6b3a 100%);
+            border: 1.5px solid rgba(58,170,92,0.45);
+            min-width: 180px;
+        }
+
+        .contractor-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 3px;
+        }
+
+        .contractor-chip {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            white-space: nowrap;
         }
 
         .stats-wrapper {
@@ -1719,6 +1794,18 @@
                         <span class="search-icon">🔍</span>
                         <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم...">
                         <div class="search-dropdown" id="searchDropdown"></div>
+                    </div>
+                    <!-- Progress Ring -->
+                    <div class="progress-ring-wrap" id="progressRingWrap">
+                        <svg class="progress-ring-svg" width="38" height="38" viewBox="0 0 38 38">
+                            <circle class="progress-ring-circle-bg" cx="19" cy="19" r="15"/>
+                            <circle class="progress-ring-circle" id="progressRingCircle" cx="19" cy="19" r="15"
+                                stroke-dasharray="94.25" stroke-dashoffset="94.25"/>
+                        </svg>
+                        <div class="progress-ring-text">
+                            <span class="progress-ring-pct" id="progressRingPct">0%</span>
+                            <span class="progress-ring-label">نسبة التنفيذ</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2828,10 +2915,63 @@ function makeStatCard(title, subtitle, total, done, isTotal = false) {
     return card;
 }
 
+/* ── build contractors card for the active subitems ── */
+function makeContractorsCard(sheetIds) {
+    // Collect unique contractors across all given sheetIds
+    const names = new Set();
+    sheetIds.forEach(sid => {
+        if (!allData[sid]) return;
+        Object.values(allData[sid]).forEach(row => {
+            const c = (row["CONTRACTOR"] || "").trim();
+            if (c) names.add(c);
+        });
+    });
+
+    if (!names.size) return null;
+
+    const card = document.createElement("div");
+    card.className = "stats-group stats-group-contractors";
+    card.innerHTML = `
+        <div class="stats-group-title">👷 المقاولون</div>
+        <div class="stats-group-type">العاملون في البند المحدد</div>
+        <div class="contractor-chips">
+            ${[...names].sort((a,b) => a.localeCompare(b,'ar'))
+                .map(n => `<span class="contractor-chip">${n}</span>`).join('')}
+        </div>`;
+    return card;
+}
+
+/* ── update the progress ring in the search bar ── */
+function updateProgressRing(total, done) {
+    const wrap   = document.getElementById("progressRingWrap");
+    const circle = document.getElementById("progressRingCircle");
+    const pctEl  = document.getElementById("progressRingPct");
+
+    if (!wrap) return;
+
+    if (!total || total === 0) {
+        wrap.classList.remove("visible");
+        return;
+    }
+
+    const pct          = Math.min(100, Math.round((done / total) * 100));
+    const circumference = 94.25; // 2 * π * 15
+    const offset        = circumference - (pct / 100) * circumference;
+
+    wrap.classList.add("visible");
+    circle.style.strokeDashoffset = offset;
+    pctEl.textContent = pct + "%";
+
+    // Color: red < 30%, orange 30-70%, gold >= 70%
+    circle.style.stroke = pct < 30 ? "#f44336" : pct < 70 ? "#ff9800" : "var(--gold)";
+}
+
 function updateStats() {
     const wrapper = document.getElementById("statsWrapper");
     wrapper.innerHTML = "";
     const contractorMode = activeContractorFilter && activeContractorFilter.size > 0;
+
+    let grandTotal = 0, grandDone = 0, cardCount = 0;
 
     if (contractorMode) {
         const bySheet = {};
@@ -2842,7 +2982,8 @@ function updateStats() {
             if (!bySheet[sid]) bySheet[sid] = [];
             bySheet[sid].push(cname);
         });
-        let grandTotal = 0, grandDone = 0, cardCount = 0;
+
+        const contractorCards = [];
         Object.entries(bySheet).forEach(([sid, contractors]) => {
             if (!allData[sid]) return;
             let subLabel = sid, catLabel = "";
@@ -2863,17 +3004,20 @@ function updateStats() {
             const title = contractors.length === 1
                 ? ("👷 " + contractors[0])
                 : ("👷 " + contractors.length + " مقاولين");
-            wrapper.appendChild(makeStatCard(title, catLabel + " ← " + subLabel, total, done));
+            contractorCards.push({ el: makeStatCard(title, catLabel + " ← " + subLabel, total, done), total, done });
             grandTotal += total; grandDone += done; cardCount++;
         });
+
+        // Add all contractor cards first, then total
+        contractorCards.forEach(c => wrapper.appendChild(c.el));
         if (cardCount > 1) {
-            wrapper.appendChild(makeStatCard(
-                "📊 الإجمالي الكلي",
-                "مجموع المقاولين المحددين",
-                grandTotal, grandDone, true));
+            wrapper.appendChild(makeStatCard("📊 الإجمالي الكلي", "مجموع المقاولين المحددين", grandTotal, grandDone, true));
         }
+
     } else {
-        let grandTotal = 0, grandDone = 0, cardCount = 0;
+        // Collect all active sheetIds for contractors card
+        const activeSheetIds = [];
+
         categories.forEach(cat => {
             const activeSubs = cat.subitems.filter(s => selectedItems[s.id] && allData[s.sheetId]);
             if (!activeSubs.length) return;
@@ -2881,6 +3025,7 @@ function updateStats() {
             activeSubs.forEach(sub => {
                 const { total, done } = calcSubTotals(sub);
                 catTotal += total; catDone += done;
+                activeSheetIds.push(sub.sheetId);
             });
             wrapper.appendChild(makeStatCard(
                 cat.emoji + " " + cat.name,
@@ -2889,13 +3034,20 @@ function updateStats() {
             ));
             grandTotal += catTotal; grandDone += catDone; cardCount++;
         });
+
+        // Contractors card (before total)
+        if (activeSheetIds.length) {
+            const cCard = makeContractorsCard(activeSheetIds);
+            if (cCard) wrapper.appendChild(cCard);
+        }
+
         if (cardCount > 1) {
-            wrapper.appendChild(makeStatCard(
-                "📊 الإجمالي الكلي",
-                "مجموع جميع البنود",
-                grandTotal, grandDone, true));
+            wrapper.appendChild(makeStatCard("📊 الإجمالي الكلي", "مجموع جميع البنود", grandTotal, grandDone, true));
         }
     }
+
+    // Progress ring
+    updateProgressRing(grandTotal, grandDone);
 
     sessionStorage.setItem("selectedStatuses", JSON.stringify(selectedStatuses));
     sessionStorage.setItem("selectedItems",    JSON.stringify(selectedItems));
