@@ -3918,6 +3918,351 @@ document.querySelectorAll(".modal").forEach(m => {
     m.addEventListener("click", e => { if (e.target === m) m.classList.remove("active"); });
 });
 
+/* ====================================================
+   DRAG & DROP — ADMIN ONLY
+   Supports: Nav Tabs (categories), Sidebar Items (subitems within cat), Status Legend
+   ==================================================== */
+
+/* ── CSS for drag states (injected once) ── */
+(function injectDragCSS() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Drag handle indicator for admin */
+        body.is-admin .nav-tab          { cursor: grab; }
+        body.is-admin .sidebar-section  { cursor: grab; }
+        body.is-admin .dropdown-item    { cursor: grab; }
+        body.is-admin .legend-item      { cursor: grab; }
+
+        .drag-dragging {
+            opacity: 0.38;
+            transform: scale(0.97);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+        .drag-over-top {
+            border-top: 2.5px solid var(--gold) !important;
+        }
+        .drag-over-bottom {
+            border-bottom: 2.5px solid var(--gold) !important;
+        }
+        .drag-ghost {
+            position: fixed;
+            z-index: 999999;
+            pointer-events: none;
+            background: var(--white, white);
+            border: 2px solid var(--gold, #f5c842);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text, #2a1a40);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+            white-space: nowrap;
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0.92;
+        }
+        /* Drag handle icon shown on hover for admin */
+        body.is-admin .nav-tab::before,
+        body.is-admin .sidebar-section > .section-title::before,
+        body.is-admin .dropdown-item::before,
+        body.is-admin .legend-item::before {
+            content: '⠿';
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            margin-left: 4px;
+            color: var(--gold, #f5c842);
+            flex-shrink: 0;
+        }
+        body.is-admin .nav-tab:hover::before,
+        body.is-admin .sidebar-section:hover > .section-title::before,
+        body.is-admin .dropdown-item:hover::before,
+        body.is-admin .legend-item:hover::before {
+            opacity: 0.7;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+/* ── Ghost element ── */
+let dragGhost = null;
+
+function createGhost(text) {
+    removeGhost();
+    dragGhost = document.createElement('div');
+    dragGhost.className = 'drag-ghost';
+    dragGhost.textContent = text;
+    document.body.appendChild(dragGhost);
+}
+
+function moveGhost(x, y) {
+    if (!dragGhost) return;
+    dragGhost.style.left = (x + 16) + 'px';
+    dragGhost.style.top  = (y + 10) + 'px';
+}
+
+function removeGhost() {
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+}
+
+/* ── Generic drag-and-drop for an ordered list ──
+   items: array of DOM elements
+   getKey(el): returns unique key for the element
+   onReorder(newOrder): called with new ordered keys array
+*/
+function makeDraggable(items, getKey, onReorder, getLabel) {
+    if (!currentUser || !currentUser.isAdmin) return;
+
+    let draggingEl   = null;
+    let draggingKey  = null;
+    let overEl       = null;
+    let overPosition = null; // 'top' | 'bottom'
+
+    function clearOver() {
+        if (overEl) {
+            overEl.classList.remove('drag-over-top', 'drag-over-bottom');
+            overEl = null;
+        }
+    }
+
+    items.forEach(el => {
+        el.draggable = true;
+
+        el.addEventListener('dragstart', e => {
+            draggingEl  = el;
+            draggingKey = getKey(el);
+            el.classList.add('drag-dragging');
+            const label = getLabel ? getLabel(el) : (el.textContent.trim().slice(0, 30));
+            createGhost(label);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setDragImage(new Image(), 0, 0); // hide default ghost
+        });
+
+        el.addEventListener('drag', e => {
+            if (e.clientX || e.clientY) moveGhost(e.clientX, e.clientY);
+        });
+
+        el.addEventListener('dragend', () => {
+            draggingEl  = null;
+            draggingKey = null;
+            el.classList.remove('drag-dragging');
+            clearOver();
+            removeGhost();
+        });
+
+        el.addEventListener('dragover', e => {
+            e.preventDefault();
+            if (el === draggingEl) return;
+            const rect   = el.getBoundingClientRect();
+            const midY   = rect.top + rect.height / 2;
+            const newPos = e.clientY < midY ? 'top' : 'bottom';
+            if (overEl !== el || overPosition !== newPos) {
+                clearOver();
+                overEl       = el;
+                overPosition = newPos;
+                el.classList.add(newPos === 'top' ? 'drag-over-top' : 'drag-over-bottom');
+            }
+            e.dataTransfer.dropEffect = 'move';
+        });
+
+        el.addEventListener('dragleave', e => {
+            // Only clear if truly leaving this element (not entering a child)
+            if (!el.contains(e.relatedTarget)) clearOver();
+        });
+
+        el.addEventListener('drop', e => {
+            e.preventDefault();
+            if (!draggingKey || el === draggingEl) { clearOver(); return; }
+            const targetKey = getKey(el);
+            clearOver();
+
+            // Build new order
+            const keys    = items.map(i => getKey(i));
+            const fromIdx = keys.indexOf(draggingKey);
+            const toIdx   = keys.indexOf(targetKey);
+            if (fromIdx === -1 || toIdx === -1) return;
+
+            const newKeys = [...keys];
+            newKeys.splice(fromIdx, 1);
+            const insertAt = overPosition === 'top' ? toIdx : toIdx + 1;
+            const adjustedInsert = overPosition === 'top'
+                ? (fromIdx < toIdx ? toIdx - 1 : toIdx)
+                : (fromIdx < toIdx ? toIdx : toIdx + 1);
+            newKeys.splice(adjustedInsert, 0, draggingKey);
+
+            onReorder(newKeys);
+        });
+    });
+}
+
+/* ── 1. NAV TABS (category order) ── */
+function initNavTabsDrag() {
+    if (!currentUser || !currentUser.isAdmin) return;
+    const tabsEl = document.getElementById('navTabs');
+    if (!tabsEl) return;
+
+    const items = [...tabsEl.querySelectorAll('.nav-tab')];
+    makeDraggable(
+        items,
+        el => el.dataset.catId,
+        newCatIds => {
+            // Reorder categories array
+            categories = newCatIds
+                .map(id => categories.find(c => c.id === id))
+                .filter(Boolean);
+            // Append any categories not in tabs (safety)
+            categories.forEach(c => { if (!newCatIds.includes(c.id)) categories.push(c); });
+            renderNavTabs();
+            renderItems();
+            initNavTabsDrag();
+            showAlert('✅ تم ترتيب التبويبات — اضغط ⬇ لحفظ categories.json', 'success');
+        },
+        el => el.textContent.trim().slice(0, 40)
+    );
+}
+
+/* ── 2. SIDEBAR SECTIONS (category order, same as tabs) ── */
+function initSidebarSectionsDrag() {
+    if (!currentUser || !currentUser.isAdmin) return;
+    const section = document.getElementById('itemsSection');
+    if (!section) return;
+
+    const items = [...section.querySelectorAll('.sidebar-section')];
+    makeDraggable(
+        items,
+        el => el.dataset.catId,
+        newCatIds => {
+            categories = newCatIds
+                .map(id => categories.find(c => c.id === id))
+                .filter(Boolean);
+            renderItems();
+            renderNavTabs();
+            initSidebarSectionsDrag();
+            initSubitemsDrag();
+            showAlert('✅ تم ترتيب البنود الرئيسية', 'success');
+        },
+        el => el.querySelector('.section-title-text')?.textContent.trim().slice(0, 40) || ''
+    );
+}
+
+/* ── 3. SUBITEMS within each sidebar section ── */
+function initSubitemsDrag() {
+    if (!currentUser || !currentUser.isAdmin) return;
+    const section = document.getElementById('itemsSection');
+    if (!section) return;
+
+    section.querySelectorAll('.dropdown-items[data-cat]').forEach(container => {
+        const catId  = container.dataset.cat;
+        const cat    = categories.find(c => c.id === catId);
+        if (!cat) return;
+
+        // Only draggable subitem rows (not the add-sub-row)
+        const items = [...container.querySelectorAll('.dropdown-item[data-sub]')];
+        if (items.length < 2) return;
+
+        makeDraggable(
+            items,
+            el => el.dataset.sub,
+            newSubIds => {
+                cat.subitems = newSubIds
+                    .map(id => cat.subitems.find(s => s.id === id))
+                    .filter(Boolean);
+                renderItems();
+                renderNavTabs();
+                initSidebarSectionsDrag();
+                initSubitemsDrag();
+                showAlert('✅ تم ترتيب البنود الفرعية', 'success');
+            },
+            el => el.querySelector('label')?.textContent.trim().slice(0, 40) || ''
+        );
+    });
+}
+
+/* ── 4. STATUS LEGEND ── */
+function initLegendDrag() {
+    if (!currentUser || !currentUser.isAdmin) return;
+    const legend = document.querySelector('.legend-section');
+    if (!legend) return;
+
+    const items = [...legend.querySelectorAll('.legend-item')];
+    if (items.length < 2) return;
+
+    makeDraggable(
+        items,
+        el => el.querySelector('input[data-status]')?.dataset.status || '',
+        newStatuses => {
+            // Reorder the STATUSES array and the legend DOM
+            const validStatuses = newStatuses.filter(s => s);
+            const newOrder = validStatuses
+                .map(s => STATUSES.find(x => x.value === s))
+                .filter(Boolean);
+
+            // Rebuild STATUSES in place
+            STATUSES.length = 0;
+            newOrder.forEach(s => STATUSES.push(s));
+
+            // Reorder selectedStatuses to match
+            selectedStatuses = selectedStatuses.filter(s => STATUSES.some(x => x.value === s));
+
+            // Rebuild DOM order
+            const parent = items[0].parentNode;
+            validStatuses.forEach(sVal => {
+                const el = items.find(i => i.querySelector('input[data-status]')?.dataset.status === sVal);
+                if (el) parent.appendChild(el);
+            });
+
+            initLegendDrag();
+            showAlert('✅ تم ترتيب حالات التنفيذ', 'success');
+        },
+        el => el.querySelector('.legend-label')?.textContent.trim() || ''
+    );
+}
+
+/* ── Hook: patch renderItems and renderNavTabs to re-init drag after render ── */
+const _origRenderItems = renderItems;
+window.renderItems = function() {
+    _origRenderItems();
+    setTimeout(() => {
+        initSidebarSectionsDrag();
+        initSubitemsDrag();
+    }, 50);
+};
+
+const _origRenderNavTabs = renderNavTabs;
+window.renderNavTabs = function() {
+    _origRenderNavTabs();
+    setTimeout(() => { initNavTabsDrag(); }, 50);
+};
+
+/* ── Init legend drag once on load ── */
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => { initLegendDrag(); }, 800);
+});
+
+// Also hook enterApp to init legend drag after login
+const _origEnterApp = enterApp;
+// Legend drag is initialized after app renders via the DOMContentLoaded above,
+// but we also need it after dynamic enters — patch enterApp's tail:
+const _afterEnterApp = () => {
+    setTimeout(() => {
+        initNavTabsDrag();
+        initSidebarSectionsDrag();
+        initSubitemsDrag();
+        initLegendDrag();
+    }, 600);
+};
+
+// Patch enterApp by wrapping it
+(function() {
+    const orig = window.enterApp;
+    window.enterApp = async function() {
+        await orig.apply(this, arguments);
+        _afterEnterApp();
+    };
+})();
+
 </script>
 </body>
 </html>
