@@ -3136,7 +3136,10 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
     if (!cat) return;
 
     if (checked) {
-        // 1. وقف أي فلتر مقاول نشط وأزل طبقته إن لم تكن مستخدمة من السايدبار
+        // اسم البند الفرعي الجديد
+        const newSubName = cat.subitems.find(s => s.id === subId)?.name || "";
+
+        // 1. وقف أي فلتر مقاول نشط وأزل طبقته
         if (activeContractorFilter.size > 0) {
             const contractorSheets = new Set(
                 [...activeContractorFilter].map(k => k.split('|')[0])
@@ -3153,20 +3156,24 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
             });
         }
 
-        // 2. أزل أي بند فرعي محدد يتعارض مع الاختيار الجديد:
-        //    - نفس الشيت (مصدر بيانات واحد لا يظهر مرتين)
-        //    - أو نفس البند الرئيسي (قاعدة: بند فرعي واحد لكل بند رئيسي)
-        //    يُبقى: بنود من بنود رئيسية مختلفة ذات شيت مختلف
+        // 2. قواعد الإلغاء:
+        //    أزل البند المحدد إذا تحقق أي شرط:
+        //    أ) نفس البند الرئيسي  (قاعدة: بند فرعي واحد لكل بند رئيسي)
+        //    ب) نفس الشيت          (مصدر بيانات واحد لا يظهر مرتين)
+        //    ج) اسم البند الفرعي مختلف (يُسمح فقط بنفس الاسم في بنود رئيسية مختلفة)
+        //    يُبقى فقط: بند رئيسي مختلف + شيت مختلف + نفس اسم البند الفرعي
         const allSubItems = categories.flatMap(c => c.subitems);
         Object.keys(selectedItems).forEach(selSubId => {
             if (selSubId === subId) return;
             const selSub = allSubItems.find(s => s.id === selSubId);
             if (!selSub) { delete selectedItems[selSubId]; return; }
-            const sameCat   = selSub.id !== subId &&
-                              categories.find(c => c.id === catId)
-                                        .subitems.some(s => s.id === selSubId);
-            const sameSheet = selSub.sheetId === sheetId;
-            if (sameCat || sameSheet) {
+
+            const selCatId    = categories.find(c => c.subitems.some(s => s.id === selSubId))?.id;
+            const sameCat     = selCatId === catId;
+            const sameSheet   = selSub.sheetId === sheetId;
+            const diffName    = selSub.name !== newSubName;
+
+            if (sameCat || sameSheet || diffName) {
                 loadTokens[selSub.sheetId] = null;
                 if (allLayers[selSub.sheetId]) { map.removeLayer(allLayers[selSub.sheetId]); delete allLayers[selSub.sheetId]; }
                 delete allData[selSub.sheetId];
