@@ -2647,16 +2647,40 @@ function buildEquipmentPanel() {
         list.innerHTML = '<div class="equipment-empty">⏳ جاري التحميل...</div>';
         subEl.textContent = "";
         totalRow.style.display = "none";
-        // إعادة المحاولة بعد ثانية إن كان التحميل لم يكتمل بعد
-        setTimeout(() => {
-            if (equipmentRawRows.length) buildEquipmentPanel();
-        }, 1200);
+        setTimeout(() => { if (equipmentRawRows.length) buildEquipmentPanel(); }, 1200);
         return;
     }
 
-    // اكتشاف أعمدة المعدات — استثناء ID وعمود البيان
-    const SKIP_COLS = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان']);
-    const idCol = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
+    // الأعمدة المستثناة من العرض
+    const SKIP_COLS = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان', 'البند', 'ALBND', 'BAND', 'ITEM']);
+
+    // اسم البند الفرعي النشط حالياً (إن وُجد)
+    const activeSubNames = new Set(
+        categories.flatMap(c => c.subitems)
+            .filter(s => selectedItems[s.id])
+            .map(s => s.name.trim())
+    );
+
+    // فلترة الصفوف بعمود البند إن كان موجوداً وفيه قيمة
+    const bandColUp = equipmentRawHeaders.map(h => h.trim().toUpperCase())
+        .find(h => h === 'البند' || h === 'ALBND' || h === 'BAND' || h === 'ITEM' || h === 'البند'.toUpperCase());
+    // نبحث عن العمود الأصلي باسمه الحقيقي
+    const bandColOrig = equipmentRawHeaders.find(h => {
+        const u = h.trim().toUpperCase();
+        return u === 'البند' || u === 'BAND' || u === 'ALBND' || u === 'ITEM';
+    });
+
+    let rows = equipmentRawRows;
+    if (bandColOrig && activeSubNames.size) {
+        const bKey = bandColOrig.trim().toUpperCase();
+        rows = equipmentRawRows.filter(row => {
+            const val = (row[bKey] || "").trim();
+            if (!val) return true; // صف بدون قيمة في البند → يُدرج دائماً
+            return activeSubNames.has(val);
+        });
+    }
+
+    const idCol    = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
     const equipCols = equipmentRawHeaders
         .map((h, i) => ({ name: h, idx: i }))
         .filter(c => c.idx !== idCol
@@ -2668,8 +2692,8 @@ function buildEquipmentPanel() {
     const totals = {};
     equipCols.forEach(col => {
         let sum = 0;
-        equipmentRawRows.forEach(row => {
-            const val = parseFloat(row[col.name.toUpperCase()] || 0);
+        rows.forEach(row => {
+            const val = parseFloat(row[col.name.trim().toUpperCase()] || 0);
             if (!isNaN(val)) sum += val;
         });
         if (sum > 0) totals[col.name] = sum;
@@ -2685,7 +2709,8 @@ function buildEquipmentPanel() {
     }
 
     const grandTotal = entries.reduce((s, [,v]) => s + v, 0);
-    subEl.textContent = `${entries.length} نوع`;
+    const subLabel   = activeSubNames.size ? [...activeSubNames].join(' + ') : "جميع البنود";
+    subEl.textContent = `${entries.length} نوع — ${subLabel}`;
 
     list.innerHTML = entries.map(([name, count]) => `
         <div class="equipment-row">
@@ -3175,30 +3200,47 @@ function makeContractorsCard(sheetIds) {
     return card;
 }
 
-/* ── build equipment card for the active subitems (IDs → equipment totals) ── */
+/* ── build equipment card filtered by عمود البند ── */
 function makeEquipmentCard(sheetIds) {
     if (!equipmentRawRows.length || !equipmentRawHeaders.length) return null;
 
-    // Collect active IDs from all active sheets
-    const activeIds = new Set();
-    sheetIds.forEach(sid => {
-        if (!allData[sid]) return;
-        Object.keys(allData[sid]).forEach(id => activeIds.add(id));
+    // الأعمدة المستثناة
+    const SKIP = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان', 'البند', 'BAND', 'ALBND', 'ITEM']);
+
+    // اسم البند الفرعي النشط
+    const activeSubNames = new Set(
+        categories.flatMap(c => c.subitems)
+            .filter(s => selectedItems[s.id])
+            .map(s => s.name.trim())
+    );
+
+    // عمود البند
+    const bandColOrig = equipmentRawHeaders.find(h => {
+        const u = h.trim().toUpperCase();
+        return u === 'البند' || u === 'BAND' || u === 'ALBND' || u === 'ITEM';
     });
-    if (!activeIds.size) return null;
 
-    // Columns to skip
-    const SKIP = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان']);
+    // فلترة الصفوف
+    let rows = equipmentRawRows;
+    if (bandColOrig && activeSubNames.size) {
+        const bKey = bandColOrig.trim().toUpperCase();
+        rows = equipmentRawRows.filter(row => {
+            const val = (row[bKey] || "").trim();
+            if (!val) return false; // صف بدون بند → لا يُدرج في الكارت
+            return activeSubNames.has(val);
+        });
+    }
 
-    // Sum each equipment column for active IDs only
-    const idColUpper = 'ID';
+    if (!rows.length) return null;
+
+    // أعمدة المعدات
+    const idIdx = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
     const totals = {};
-    equipmentRawHeaders.forEach(h => {
+    equipmentRawHeaders.forEach((h, i) => {
         const hUp = h.trim().toUpperCase();
-        if (!h.trim() || SKIP.has(hUp) || SKIP.has(h.trim())) return;
+        if (i === idIdx || !h.trim() || SKIP.has(hUp) || SKIP.has(h.trim())) return;
         let sum = 0;
-        equipmentRawRows.forEach(row => {
-            if (!activeIds.has(row[idColUpper])) return;
+        rows.forEach(row => {
             const val = parseFloat(row[hUp] || 0);
             if (!isNaN(val)) sum += val;
         });
