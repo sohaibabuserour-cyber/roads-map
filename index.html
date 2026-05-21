@@ -902,25 +902,28 @@
         }
 
         .equipment-chip {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
             color: white;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 700;
-            padding: 2px 6px;
+            padding: 3px 5px 3px 2px;
             border-radius: 10px;
             white-space: nowrap;
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 4px;
         }
 
         .equipment-chip-count {
-            background: rgba(255,255,255,0.25);
+            background: var(--gold);
+            color: #1a0a2e;
             border-radius: 8px;
-            padding: 0px 4px;
-            font-size: 9px;
+            padding: 1px 7px;
+            font-size: 11px;
             font-weight: 900;
+            min-width: 22px;
+            text-align: center;
         }
 
         .stats-wrapper {
@@ -2654,31 +2657,8 @@ function buildEquipmentPanel() {
     // الأعمدة المستثناة من العرض
     const SKIP_COLS = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان', 'البند', 'ALBND', 'BAND', 'ITEM']);
 
-    // اسم البند الفرعي النشط حالياً (إن وُجد)
-    const activeSubNames = new Set(
-        categories.flatMap(c => c.subitems)
-            .filter(s => selectedItems[s.id])
-            .map(s => s.name.trim())
-    );
-
-    // فلترة الصفوف بعمود البند إن كان موجوداً وفيه قيمة
-    const bandColUp = equipmentRawHeaders.map(h => h.trim().toUpperCase())
-        .find(h => h === 'البند' || h === 'ALBND' || h === 'BAND' || h === 'ITEM' || h === 'البند'.toUpperCase());
-    // نبحث عن العمود الأصلي باسمه الحقيقي
-    const bandColOrig = equipmentRawHeaders.find(h => {
-        const u = h.trim().toUpperCase();
-        return u === 'البند' || u === 'BAND' || u === 'ALBND' || u === 'ITEM';
-    });
-
-    let rows = equipmentRawRows;
-    if (bandColOrig && activeSubNames.size) {
-        const bKey = bandColOrig.trim().toUpperCase();
-        rows = equipmentRawRows.filter(row => {
-            const val = (row[bKey] || "").trim();
-            if (!val) return true; // صف بدون قيمة في البند → يُدرج دائماً
-            return activeSubNames.has(val);
-        });
-    }
+    // التبويب يعرض كل المعدات بغض النظر عن البند المحدد
+    const rows = equipmentRawRows;
 
     const idCol    = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
     const equipCols = equipmentRawHeaders
@@ -2709,8 +2689,7 @@ function buildEquipmentPanel() {
     }
 
     const grandTotal = entries.reduce((s, [,v]) => s + v, 0);
-    const subLabel   = activeSubNames.size ? [...activeSubNames].join(' + ') : "جميع البنود";
-    subEl.textContent = `${entries.length} نوع — ${subLabel}`;
+    subEl.textContent = `${entries.length} نوع — إجمالي كل المعدات`;
 
     list.innerHTML = entries.map(([name, count]) => `
         <div class="equipment-row">
