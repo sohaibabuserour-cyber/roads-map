@@ -3136,10 +3136,7 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
     if (!cat) return;
 
     if (checked) {
-        // اسم البند الفرعي الجديد
-        const newSubName = cat.subitems.find(s => s.id === subId)?.name || "";
-
-        // 1. وقف أي فلتر مقاول نشط وأزل طبقته
+        // 1. وقف أي فلتر مقاول نشط وأزل طبقته إن لم تكن مستخدمة من السايدبار
         if (activeContractorFilter.size > 0) {
             const contractorSheets = new Set(
                 [...activeContractorFilter].map(k => k.split('|')[0])
@@ -3156,24 +3153,30 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
             });
         }
 
-        // 2. قواعد الإلغاء:
-        //    أزل البند المحدد إذا تحقق أي شرط:
-        //    أ) نفس البند الرئيسي  (قاعدة: بند فرعي واحد لكل بند رئيسي)
-        //    ب) نفس الشيت          (مصدر بيانات واحد لا يظهر مرتين)
-        //    ج) اسم البند الفرعي مختلف (يُسمح فقط بنفس الاسم في بنود رئيسية مختلفة)
-        //    يُبقى فقط: بند رئيسي مختلف + شيت مختلف + نفس اسم البند الفرعي
+        // 2. أزل أي بند فرعي محدد لا يستوفي شروط البقاء الثلاثة معاً:
+        //    يُبقى البند المحدد مسبقاً فقط إذا تحققت الثلاثة في آنٍ واحد:
+        //      ✅ بند رئيسي مختلف
+        //      ✅ شيت مختلف
+        //      ✅ نفس اسم البند الفرعي
+        //    وإلا يُحذف.
         const allSubItems = categories.flatMap(c => c.subitems);
+        const currentSub  = cat.subitems.find(s => s.id === subId);
+        const currentName = currentSub ? currentSub.name.trim() : "";
+
         Object.keys(selectedItems).forEach(selSubId => {
             if (selSubId === subId) return;
             const selSub = allSubItems.find(s => s.id === selSubId);
             if (!selSub) { delete selectedItems[selSubId]; return; }
 
-            const selCatId    = categories.find(c => c.subitems.some(s => s.id === selSubId))?.id;
-            const sameCat     = selCatId === catId;
-            const sameSheet   = selSub.sheetId === sheetId;
-            const diffName    = selSub.name !== newSubName;
+            const diffCat   = !categories.find(c => c.id === catId)
+                                          .subitems.some(s => s.id === selSubId);
+            const diffSheet = selSub.sheetId !== sheetId;
+            const sameName  = selSub.name.trim() === currentName;
 
-            if (sameCat || sameSheet || diffName) {
+            // يبقى فقط إذا اجتمعت الشروط الثلاثة
+            const keepIt = diffCat && diffSheet && sameName;
+
+            if (!keepIt) {
                 loadTokens[selSub.sheetId] = null;
                 if (allLayers[selSub.sheetId]) { map.removeLayer(allLayers[selSub.sheetId]); delete allLayers[selSub.sheetId]; }
                 delete allData[selSub.sheetId];
