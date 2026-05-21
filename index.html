@@ -2930,12 +2930,27 @@ function flashLayer(leafletLayer) {
    LOAD / REMOVE LAYER
    ==================================================== */
 
+// Per-sheetId load token — prevents stale async responses from adding old layers
+const loadTokens = {};
+
 function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
+    // Generate a unique token for THIS load request
+    const token = Date.now() + '_' + Math.random();
+    loadTokens[sheetId] = token;
+
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
 
     fetch(csvUrl)
         .then(r => r.text())
         .then(csv => {
+            // ── STALE CHECK 1: was a newer load started for this sheet? ──
+            if (loadTokens[sheetId] !== token) return;
+            // ── STALE CHECK 2: is this sheetId still wanted? ──
+            const isWanted = () =>
+                categories.flatMap(c => c.subitems).some(s => s.sheetId === sheetId && selectedItems[s.id])
+                || [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
+            if (!isWanted()) return;
+
             const data  = {};
             const lines = csv.split('\n').filter(l => l.trim());
             if (!lines.length) return;
@@ -2954,6 +2969,16 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
             allData[sheetId] = data;
 
             return fetch(geoJsonFile + "?t=" + Date.now()).then(r => r.json()).then(geo => {
+                // ── STALE CHECK 3: final guard before touching the map ──
+                if (loadTokens[sheetId] !== token) return;
+                if (!isWanted()) { delete allData[sheetId]; return; }
+
+                // If a previous layer for this sheet is still on the map, remove it first
+                if (allLayers[sheetId]) {
+                    map.removeLayer(allLayers[sheetId]);
+                    delete allLayers[sheetId];
+                }
+
                 const layer = L.geoJSON(geo, {
                     onEachFeature: (f, l) => {
                         const id      = f.properties.ID;
@@ -2995,17 +3020,14 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
                 allLayers[sheetId] = layer;
                 layer.addTo(map);
 
-                // Zoom to default coords (not to layer bounds) when a new layer is selected
                 if (defaultCoords) {
                     map.setView([defaultCoords.lat, defaultCoords.lng], defaultCoords.zoom);
                 }
 
                 updateStats();
-                // Apply contractor filter if one is active, otherwise normal colors
                 if (activeContractorFilter && activeContractorFilter.size > 0) {
                     applyContractorFilter();
                 }
-                // إعادة بناء قائمة المقاولين بعد تحميل بيانات جديدة
                 buildContractorPanel({ forceRefresh: true });
             });
         })
@@ -3013,9 +3035,10 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
 }
 
 function removeLayer(sheetId) {
+    // Invalidate any in-flight load for this sheet
+    loadTokens[sheetId] = null;
     if (allLayers[sheetId]) { map.removeLayer(allLayers[sheetId]); delete allLayers[sheetId]; }
     delete allData[sheetId];
-    // Remove any contractor filters for this sheet
     if (activeContractorFilter) {
         [...activeContractorFilter].forEach(k => { if (k.startsWith(sheetId + '|')) activeContractorFilter.delete(k); });
     }
