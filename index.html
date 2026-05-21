@@ -2533,43 +2533,43 @@ function renderContractorList() {
 
 /* ── handle contractor checkbox toggle ── */
 function handleContractorCheckbox(cb) {
-    const filterKey = cb.dataset.filterKey; // "sheetId|contractorName"
+    const filterKey = cb.dataset.filterKey;
     const sheetId   = cb.dataset.sheet;
     const geoFile   = cb.dataset.geo;
     const catId     = cb.dataset.catId;
     const subId     = cb.dataset.subId;
 
     if (cb.checked) {
-        // 1. Clear ALL sidebar selections and remove their layers
-        const allSubItems = categories.flatMap(c => c.subitems);
-        Object.keys(selectedItems).forEach(sid => {
-            const s = allSubItems.find(x => x.id === sid);
-            if (s) removeLayer(s.sheetId);
-            delete selectedItems[sid];
-        });
-
-        // 2. Clear contractor filters for OTHER sheets (only one sheet allowed)
-        const sheetsToRemove = new Set();
-        [...activeContractorFilter].forEach(k => {
-            const kSheet = k.split('|')[0];
-            if (kSheet !== sheetId) sheetsToRemove.add(kSheet);
-        });
-
-        sheetsToRemove.forEach(sid => {
-            [...activeContractorFilter].forEach(k => {
-                if (k.startsWith(sid + '|')) activeContractorFilter.delete(k);
-            });
-            if (allLayers[sid]) {
-                map.removeLayer(allLayers[sid]);
-                delete allLayers[sid];
-                delete allData[sid];
+        // 1. أزل جميع اختيارات السايدبار وطبقاتها
+        categories.flatMap(c => c.subitems).forEach(s => {
+            if (selectedItems[s.id]) {
+                loadTokens[s.sheetId] = null;
+                if (allLayers[s.sheetId]) { map.removeLayer(allLayers[s.sheetId]); delete allLayers[s.sheetId]; }
+                delete allData[s.sheetId];
+                delete selectedItems[s.id];
             }
         });
 
-        // 3. Add new filter
+        // 2. أزل فلاتر المقاولين للشيتات الأخرى فقط
+        //    (نفس الشيت = مسموح بأكثر من مقاول)
+        const otherSheets = new Set(
+            [...activeContractorFilter]
+                .map(k => k.split('|')[0])
+                .filter(sid => sid !== sheetId)
+        );
+        otherSheets.forEach(sid => {
+            [...activeContractorFilter].forEach(k => {
+                if (k.startsWith(sid + '|')) activeContractorFilter.delete(k);
+            });
+            loadTokens[sid] = null;
+            if (allLayers[sid]) { map.removeLayer(allLayers[sid]); delete allLayers[sid]; }
+            delete allData[sid];
+        });
+
+        // 3. أضف الفلتر الجديد
         activeContractorFilter.add(filterKey);
 
-        // 4. Load layer if not yet loaded
+        // 4. حمل الطبقة إذا لم تكن محملة
         if (!allLayers[sheetId]) {
             const sub = categories.flatMap(c => c.subitems).find(s => s.id === subId);
             if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
@@ -2579,12 +2579,10 @@ function handleContractorCheckbox(cb) {
 
     } else {
         activeContractorFilter.delete(filterKey);
-
-        const stillUsedByContractor = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
-
-        if (!stillUsedByContractor && allLayers[sheetId]) {
-            map.removeLayer(allLayers[sheetId]);
-            delete allLayers[sheetId];
+        const stillActive = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
+        if (!stillActive) {
+            loadTokens[sheetId] = null;
+            if (allLayers[sheetId]) { map.removeLayer(allLayers[sheetId]); delete allLayers[sheetId]; }
             delete allData[sheetId];
         } else {
             applyContractorFilter();
@@ -3138,30 +3136,55 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
     if (!cat) return;
 
     if (checked) {
-        // 1. Clear ALL contractor filters (sidebar takes priority over contractor panel)
-        activeContractorFilter.clear();
+        // 1. وقف أي فلتر مقاول نشط وأزل طبقته إن لم تكن مستخدمة من السايدبار
+        if (activeContractorFilter.size > 0) {
+            const contractorSheets = new Set(
+                [...activeContractorFilter].map(k => k.split('|')[0])
+            );
+            activeContractorFilter.clear();
+            contractorSheets.forEach(sid => {
+                const usedBySidebar = categories.flatMap(c => c.subitems)
+                    .some(s => s.sheetId === sid && selectedItems[s.id]);
+                if (!usedBySidebar) {
+                    loadTokens[sid] = null;
+                    if (allLayers[sid]) { map.removeLayer(allLayers[sid]); delete allLayers[sid]; }
+                    delete allData[sid];
+                }
+            });
+        }
 
-        // 2. Remove every currently-loaded layer except the one we're about to load
+        // 2. أزل أي بند فرعي محدد يتعارض مع الاختيار الجديد:
+        //    - نفس الشيت (مصدر بيانات واحد لا يظهر مرتين)
+        //    - أو نفس البند الرئيسي (قاعدة: بند فرعي واحد لكل بند رئيسي)
+        //    يُبقى: بنود من بنود رئيسية مختلفة ذات شيت مختلف
         const allSubItems = categories.flatMap(c => c.subitems);
-        Object.keys(selectedItems).forEach(sid => {
-            if (sid === subId) return;
-            const s = allSubItems.find(x => x.id === sid);
-            if (s) removeLayer(s.sheetId);
-            delete selectedItems[sid];
+        Object.keys(selectedItems).forEach(selSubId => {
+            if (selSubId === subId) return;
+            const selSub = allSubItems.find(s => s.id === selSubId);
+            if (!selSub) { delete selectedItems[selSubId]; return; }
+            const sameCat   = selSub.id !== subId &&
+                              categories.find(c => c.id === catId)
+                                        .subitems.some(s => s.id === selSubId);
+            const sameSheet = selSub.sheetId === sheetId;
+            if (sameCat || sameSheet) {
+                loadTokens[selSub.sheetId] = null;
+                if (allLayers[selSub.sheetId]) { map.removeLayer(allLayers[selSub.sheetId]); delete allLayers[selSub.sheetId]; }
+                delete allData[selSub.sheetId];
+                delete selectedItems[selSubId];
+            }
         });
 
-        // 3. Select this subitem and load its layer
+        // 3. اختر هذا البند وحمل طبقته
         selectedItems[subId] = true;
         const sub = cat.subitems.find(s => s.id === subId);
         if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
 
     } else {
-        // Unchecking — just remove this layer
         delete selectedItems[subId];
         removeLayer(sheetId);
+        refreshLayerColors();
     }
 
-    refreshLayerColors();
     renderItems();
     renderNavTabs();
     updateStats();
