@@ -1598,6 +1598,111 @@
             letter-spacing: 0.3px;
         }
 
+        /* ── Equipment Panel ── */
+        .equipment-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 260px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            z-index: 9999;
+            overflow: hidden;
+            display: none;
+            max-height: 420px;
+            flex-direction: column;
+        }
+
+        .equipment-panel.active { display: flex; animation: dropFade 0.2s ease-out; }
+
+        .equipment-panel-header {
+            background: linear-gradient(135deg, #1a4a2e 0%, #1e6b3a 100%);
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .equipment-panel-sub {
+            font-size: 10px;
+            opacity: 0.75;
+            font-weight: 600;
+        }
+
+        .equipment-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .equipment-list::-webkit-scrollbar { width: 4px; }
+        .equipment-list::-webkit-scrollbar-thumb { background: #5cc890; border-radius: 10px; }
+
+        .equipment-row {
+            padding: 9px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: background 0.15s;
+        }
+
+        .equipment-row:last-child { border-bottom: none; }
+        .equipment-row:hover { background: rgba(26,122,74,0.05); }
+
+        .equipment-row-name {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            text-align: right;
+        }
+
+        .equipment-row-count {
+            background: linear-gradient(135deg, #1a7a4a 0%, #27ae6a 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 9px;
+            flex-shrink: 0;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .equipment-empty {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-soft);
+            font-size: 12px;
+        }
+
+        .equipment-total-row {
+            background: linear-gradient(135deg, #1a4a2e 0%, #1e6b3a 100%);
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .equipment-total-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .equipment-total-val {
+            font-size: 13px;
+            font-weight: 900;
+            color: #7dffb3;
+        }
+
         @media (max-width: 768px) {
             .main-content { flex-direction: column; }
             .left-section  { flex: 1; }
@@ -1680,6 +1785,24 @@
                     <div class="contractor-panel-header">👷 المقاولون</div>
                     <div class="contractor-list" id="contractorList">
                         <div class="contractor-empty">جاري التحميل...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipment button -->
+            <div style="position:relative">
+                <div class="nav-icon-btn" id="equipmentBtn" onclick="togglePanel('equipmentPanel')" title="المعدات">🚜</div>
+                <div class="equipment-panel" id="equipmentPanel">
+                    <div class="equipment-panel-header">
+                        <span>🚜 المعدات</span>
+                        <span class="equipment-panel-sub" id="equipmentPanelSub">جاري التحميل...</span>
+                    </div>
+                    <div class="equipment-list" id="equipmentList">
+                        <div class="equipment-empty">جاري التحميل...</div>
+                    </div>
+                    <div class="equipment-total-row" id="equipmentTotalRow" style="display:none">
+                        <span class="equipment-total-label">إجمالي المعدات</span>
+                        <span class="equipment-total-val" id="equipmentTotalVal">0</span>
                     </div>
                 </div>
             </div>
@@ -1996,14 +2119,18 @@ function togglePanel(id) {
     const panel = document.getElementById(id);
     const isOpen = panel.classList.contains("active");
     // Close all panels first
-    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel').forEach(p => p.classList.remove('active'));
-    if (!isOpen) panel.classList.add("active");
+    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel').forEach(p => p.classList.remove('active'));
+    if (!isOpen) {
+        panel.classList.add("active");
+        // Load equipment data when panel opens
+        if (id === 'equipmentPanel') buildEquipmentPanel();
+    }
 }
 
 // Close panels when clicking outside
 document.addEventListener("click", e => {
     if (!e.target.closest('.nav-right')) {
-        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel').forEach(p => p.classList.remove('active'));
     }
     if (!e.target.closest('.search-wrap')) {
         document.getElementById("searchDropdown").classList.remove("active");
@@ -2445,19 +2572,90 @@ function syncCoordsInputs() {
    EQUIPMENT DATA
    ==================================================== */
 
+// equipmentData: id → last-column string (للـ popup)
+// equipmentRawRows: كل صفوف شيت المعدات كاملة (للتبويب)
+let equipmentRawRows    = [];
+let equipmentRawHeaders = [];
+
 function loadEquipmentData() {
     const url = `https://docs.google.com/spreadsheets/d/${EQUIPMENT_SHEET_ID}/export?format=csv&gid=0`;
     fetch(url).then(r => r.text()).then(csv => {
         const lines   = csv.split('\n').filter(l => l.trim());
-        const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+        if (!lines.length) return;
+        equipmentRawHeaders = lines[0].split(',').map(h => h.trim());
+        const headers = equipmentRawHeaders.map(h => h.toUpperCase());
         const idIdx   = headers.findIndex(h => h === 'ID');
-        if (idIdx === -1) return;
+        equipmentRawRows = [];
         for (let i = 1; i < lines.length; i++) {
             const v = lines[i].split(',').map(x => x.trim());
             if (!v[idIdx]) continue;
+            // للـ popup: آخر عمود
             equipmentData[v[idIdx]] = v[v.length - 1] || "غير محدد";
+            // للتبويب: كل الصف
+            const row = {};
+            headers.forEach((h, idx) => { row[h] = v[idx] || ""; });
+            equipmentRawRows.push(row);
         }
     }).catch(e => console.warn("equipment load failed:", e));
+}
+
+/* ── بناء تبويب المعدات: إجمالي عدد كل معدة ── */
+function buildEquipmentPanel() {
+    const list     = document.getElementById("equipmentList");
+    const subEl    = document.getElementById("equipmentPanelSub");
+    const totalRow = document.getElementById("equipmentTotalRow");
+    const totalVal = document.getElementById("equipmentTotalVal");
+    if (!list) return;
+
+    if (!equipmentRawRows.length) {
+        list.innerHTML = '<div class="equipment-empty">⏳ جاري التحميل...</div>';
+        subEl.textContent = "";
+        totalRow.style.display = "none";
+        // إعادة المحاولة بعد ثانية إن كان التحميل لم يكتمل بعد
+        setTimeout(() => {
+            if (equipmentRawRows.length) buildEquipmentPanel();
+        }, 1200);
+        return;
+    }
+
+    // اكتشاف أعمدة المعدات: كل عمود يحتوي على أرقام وليس ID
+    // نفترض: كل عمود غير ID يمثل نوع معدة وقيمته = العدد
+    const idCol = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
+    const equipCols = equipmentRawHeaders
+        .map((h, i) => ({ name: h, idx: i }))
+        .filter(c => c.idx !== idCol && c.name.trim() !== "");
+
+    // مجموع كل عمود معدة
+    const totals = {};
+    equipCols.forEach(col => {
+        let sum = 0;
+        equipmentRawRows.forEach(row => {
+            const val = parseFloat(row[col.name.toUpperCase()] || 0);
+            if (!isNaN(val)) sum += val;
+        });
+        if (sum > 0) totals[col.name] = sum;
+    });
+
+    const entries = Object.entries(totals).sort((a,b) => b[1] - a[1]);
+
+    if (!entries.length) {
+        list.innerHTML = '<div class="equipment-empty">لا توجد بيانات معدات</div>';
+        subEl.textContent = "";
+        totalRow.style.display = "none";
+        return;
+    }
+
+    const grandTotal = entries.reduce((s, [,v]) => s + v, 0);
+    subEl.textContent = `${entries.length} نوع`;
+
+    list.innerHTML = entries.map(([name, count]) => `
+        <div class="equipment-row">
+            <div class="equipment-row-name">${name}</div>
+            <div class="equipment-row-count">${fmtNum(count)}</div>
+        </div>`).join('');
+
+    totalRow.style.display = "flex";
+    totalVal.textContent = fmtNum(grandTotal);
 }
 
 /* ====================================================
@@ -3035,10 +3233,10 @@ function updateStats() {
             grandTotal += catTotal; grandDone += catDone; cardCount++;
         });
 
-        // Contractors card (before total)
+        // Contractors card (أول كارت)
         if (activeSheetIds.length) {
             const cCard = makeContractorsCard(activeSheetIds);
-            if (cCard) wrapper.appendChild(cCard);
+            if (cCard) wrapper.insertBefore(cCard, wrapper.firstChild);
         }
 
         if (cardCount > 1) {
