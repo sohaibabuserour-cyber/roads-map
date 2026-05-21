@@ -2823,50 +2823,70 @@ function makeStatCard(title, subtitle, total, done, isTotal = false) {
 function updateStats() {
     const wrapper = document.getElementById("statsWrapper");
     wrapper.innerHTML = "";
+    const contractorMode = activeContractorFilter && activeContractorFilter.size > 0;
 
-    // Track sheetIds that appear in more than one category (shared subitems)
-    // sheetId → [ { cat, sub } ]
-    const sheetUsage = {};
-    categories.forEach(cat => {
-        cat.subitems.forEach(sub => {
-            if (!selectedItems[sub.id] || !allData[sub.sheetId]) return;
-            if (!sheetUsage[sub.sheetId]) sheetUsage[sub.sheetId] = [];
-            sheetUsage[sub.sheetId].push({ cat, sub });
+    if (contractorMode) {
+        const bySheet = {};
+        [...activeContractorFilter].forEach(key => {
+            const pipeIdx = key.indexOf('|');
+            const sid   = key.slice(0, pipeIdx);
+            const cname = key.slice(pipeIdx + 1);
+            if (!bySheet[sid]) bySheet[sid] = [];
+            bySheet[sid].push(cname);
         });
-    });
-
-    // Per-category cards
-    const shownSubIds = new Set();
-    let grandTotal = 0, grandDone = 0;
-    let cardCount = 0;
-
-    categories.forEach(cat => {
-        const activeSubs = cat.subitems.filter(s => selectedItems[s.id] && allData[s.sheetId]);
-        if (!activeSubs.length) return;
-
-        let catTotal = 0, catDone = 0;
-        activeSubs.forEach(sub => {
-            const { total, done } = calcSubTotals(sub);
-            catTotal += total;
-            catDone  += done;
-            shownSubIds.add(sub.sheetId);
+        let grandTotal = 0, grandDone = 0, cardCount = 0;
+        Object.entries(bySheet).forEach(([sid, contractors]) => {
+            if (!allData[sid]) return;
+            let subLabel = sid, catLabel = "";
+            categories.forEach(cat => {
+                cat.subitems.forEach(sub => {
+                    if (sub.sheetId === sid) { subLabel = sub.name; catLabel = cat.emoji + " " + cat.name; }
+                });
+            });
+            let total = 0, done = 0;
+            const cLow = contractors.map(c => c.toLowerCase());
+            Object.values(allData[sid]).forEach(row => {
+                const st = (row["STATUS"] || "").trim().toLowerCase();
+                if (!selectedStatuses.some(s => s.toLowerCase() === st)) return;
+                if (!cLow.includes((row["CONTRACTOR"] || "").trim().toLowerCase())) return;
+                total += toNum(row["TOTAL-QTY"]);
+                done  += toNum(row["DONE-QTY"]);
+            });
+            const title = contractors.length === 1
+                ? ("👷 " + contractors[0])
+                : ("👷 " + contractors.length + " مقاولين");
+            wrapper.appendChild(makeStatCard(title, catLabel + " ← " + subLabel, total, done));
+            grandTotal += total; grandDone += done; cardCount++;
         });
-
-        wrapper.appendChild(makeStatCard(
-            `${cat.emoji} ${cat.name}`,
-            activeSubs.map(s => s.name).join(" + "),
-            catTotal, catDone
-        ));
-
-        grandTotal += catTotal;
-        grandDone  += catDone;
-        cardCount++;
-    });
-
-    // Grand total card — only if more than one category card is shown
-    if (cardCount > 1) {
-        const totalCard = makeStatCard("📊 الإجمالي الكلي", "مجموع جميع البنود", grandTotal, grandDone, true);
-        wrapper.appendChild(totalCard);
+        if (cardCount > 1) {
+            wrapper.appendChild(makeStatCard(
+                "📊 الإجمالي الكلي",
+                "مجموع المقاولين المحددين",
+                grandTotal, grandDone, true));
+        }
+    } else {
+        let grandTotal = 0, grandDone = 0, cardCount = 0;
+        categories.forEach(cat => {
+            const activeSubs = cat.subitems.filter(s => selectedItems[s.id] && allData[s.sheetId]);
+            if (!activeSubs.length) return;
+            let catTotal = 0, catDone = 0;
+            activeSubs.forEach(sub => {
+                const { total, done } = calcSubTotals(sub);
+                catTotal += total; catDone += done;
+            });
+            wrapper.appendChild(makeStatCard(
+                cat.emoji + " " + cat.name,
+                activeSubs.map(s => s.name).join(" + "),
+                catTotal, catDone
+            ));
+            grandTotal += catTotal; grandDone += catDone; cardCount++;
+        });
+        if (cardCount > 1) {
+            wrapper.appendChild(makeStatCard(
+                "📊 الإجمالي الكلي",
+                "مجموع جميع البنود",
+                grandTotal, grandDone, true));
+        }
     }
 
     sessionStorage.setItem("selectedStatuses", JSON.stringify(selectedStatuses));
