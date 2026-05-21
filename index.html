@@ -148,15 +148,15 @@
         }
 
         .login-logo img.logo-img {
-            width: 140px;
-            height: 140px;
+            width: 90px;
+            height: 90px;
             object-fit: contain;
             filter: drop-shadow(0 0 20px rgba(245,200,66,0.5));
             animation: crownPulse 2.5s ease-in-out infinite;
         }
 
         .login-logo .crown-fallback {
-            font-size: 72px;
+            font-size: 44px;
             display: block;
             filter: drop-shadow(0 0 20px rgba(245,200,66,0.6));
             animation: crownPulse 2.5s ease-in-out infinite;
@@ -304,14 +304,14 @@
         }
 
         .nav-logo img {
-            height: 60px;
+            height: 46px;
             width: auto;
             object-fit: contain;
             filter: drop-shadow(0 0 8px rgba(245,200,66,0.4));
         }
 
         .nav-logo .logo-fallback {
-            font-size: 36px;
+            font-size: 28px;
         }
 
         /* Tab navigation */
@@ -2194,7 +2194,7 @@ function doLogout() {
     Object.values(allLayers).forEach(l => { if (map) map.removeLayer(l); });
     allLayers = {}; allData = {}; allFeatures = {};
     selectedItems = {};
-    contractorMap = {}; contractorsLoaded = false; activeContractorFilter = new Set(); contractorActiveLayers = new Set();
+    contractorMap = {}; contractorsLoaded = false; activeContractorFilter = new Set();
     document.getElementById("mainApp").classList.remove("visible");
     document.getElementById("loginScreen").style.display = "flex";
     document.getElementById("loginEmail").value    = "";
@@ -2373,21 +2373,12 @@ function loadEquipmentData() {
 /* ====================================================
    CONTRACTOR PANEL
    contractorMap: contractorName → [ { catId, catName, catEmoji, subId, subName, sheetId, geoJsonFile } ]
-   
-   CONTRACTOR FILTER LOGIC (fully independent from sidebar):
-   - activeContractorFilter: Set of "sheetId|contractorName" keys
-   - Contractor checkboxes NEVER affect selectedItems (sidebar state)
-   - Contractor layer loading is tracked separately via contractorActiveLayers
-   - Same subName across different catIds/contractors → each is independent
-   - Rule: one subitem per catId in SIDEBAR only; contractors have own rule:
-     same sheetId can be selected by multiple contractors simultaneously,
-     but different sheetIds from the same catId are mutually exclusive per contractor
+   activeContractorFilter: Set of "sheetId|contractorName" — drives gray-out logic
    ==================================================== */
 
 let contractorMap         = {};
 let activeContractorFilter = new Set(); // "sheetId|contractorName"
-let contractorActiveLayers = new Set(); // sheetIds loaded exclusively by contractor panel (not sidebar)
-let contractorsLoaded     = false;
+let contractorsLoaded     = false; // ← flag: سحب المقاولين مرة واحدة فقط
 
 /* ── fetch one subitem's contractors (uses cached allData if available) ── */
 async function fetchSheetContractors(sub) {
@@ -2395,7 +2386,6 @@ async function fetchSheetContractors(sub) {
 
     const addEntry = (cname) => {
         if (!contractorMap[cname]) contractorMap[cname] = [];
-        // Allow same subName from different categories — use subId as unique key
         if (!contractorMap[cname].find(e => e.subId === sub.id)) {
             contractorMap[cname].push({
                 catId       : cat ? cat.id    : "",
@@ -2442,6 +2432,7 @@ async function buildContractorPanel({ forceRefresh = false } = {}) {
     const list = document.getElementById("contractorList");
     if (!list) return;
 
+    // إذا البيانات محملة مسبقاً وما في طلب إعادة تحميل، اكتفِ بإعادة الرسم فقط
     if (contractorsLoaded && !forceRefresh) {
         renderContractorList();
         return;
@@ -2476,6 +2467,7 @@ function renderContractorList() {
     }
 
     list.innerHTML = names.map(name => {
+        // Sort subitems: by category order first, then subitem order within category
         const subs = [...contractorMap[name]].sort((a, b) => {
             if (a.catOrder !== b.catOrder) return a.catOrder - b.catOrder;
             const cat = categories.find(c => c.id === a.catId);
@@ -2487,7 +2479,7 @@ function renderContractorList() {
         // Group by category
         const byCategory = {};
         subs.forEach(s => {
-            if (!byCategory[s.catId]) byCategory[s.catId] = { label: `${s.catEmoji} ${s.catName}`, catId: s.catId, items: [] };
+            if (!byCategory[s.catId]) byCategory[s.catId] = { label: `${s.catEmoji} ${s.catName}`, items: [] };
             byCategory[s.catId].items.push(s);
         });
 
@@ -2504,7 +2496,6 @@ function renderContractorList() {
                             data-sub-id="${s.subId}"
                             data-sheet="${s.sheetId}"
                             data-geo="${s.geoJsonFile}"
-                            data-sub-name="${s.subName}"
                             data-contractor="${name}"
                             data-filter-key="${filterKey}"
                             ${checked}
@@ -2537,57 +2528,45 @@ function renderContractorList() {
     });
 }
 
-/* ── handle contractor checkbox toggle ── 
-   Rules:
-   1. Contractor checkboxes are FULLY INDEPENDENT from sidebar selectedItems
-   2. Same sheetId → multiple contractors allowed simultaneously
-   3. Different sheetIds within same catId → only ONE allowed per catId in contractor panel
-      UNLESS the subitems share the same subName (considered the "same" subitem)
-   4. Sidebar layers are never removed by contractor actions
-*/
+/* ── handle contractor checkbox toggle ── */
 function handleContractorCheckbox(cb) {
-    const filterKey  = cb.dataset.filterKey; // "sheetId|contractorName"
-    const sheetId    = cb.dataset.sheet;
-    const geoFile    = cb.dataset.geo;
-    const catId      = cb.dataset.catId;
-    const subId      = cb.dataset.subId;
-    const subName    = cb.dataset.subName;
-    const contractor = cb.dataset.contractor;
+    const filterKey = cb.dataset.filterKey; // "sheetId|contractorName"
+    const sheetId   = cb.dataset.sheet;
+    const geoFile   = cb.dataset.geo;
+    const catId     = cb.dataset.catId;
+    const subId     = cb.dataset.subId;
 
     if (cb.checked) {
-        // Rule: within the same catId, only ONE sheetId allowed per contractor
-        // UNLESS the competing subitem has the same subName (they're the "same" logical item)
-        const cat = categories.find(c => c.id === catId);
-        if (cat) {
-            cat.subitems.forEach(s => {
-                if (s.id === subId || s.sheetId === sheetId) return; // same item
-                if (s.name === subName) return; // same name → allowed (different category instance)
-                // Different subitem in same category → deactivate its contractor filter for this contractor
-                const competingKey = s.sheetId + '|' + contractor;
-                if (activeContractorFilter.has(competingKey)) {
-                    activeContractorFilter.delete(competingKey);
-                    // Remove contractor-only layer if sidebar doesn't use it
-                    if (!_isSidebarUsingSheet(s.sheetId) && contractorActiveLayers.has(s.sheetId)) {
-                        if (!_isAnyContractorFilterOnSheet(s.sheetId)) {
-                            map.removeLayer(allLayers[s.sheetId]);
-                            delete allLayers[s.sheetId];
-                            delete allData[s.sheetId];
-                            contractorActiveLayers.delete(s.sheetId);
-                        }
-                    }
-                }
-            });
-        }
+        // ── القاعدة: نفس البند الفرعي (نفس sheetId) مسموح عند أي مقاول ──
+        // ── بند فرعي مختلف (شيت مختلف) → ألغِ فلاتر المقاولين على الشيتات الأخرى وأزل طبقاتها ──
+        const sheetsToRemove = new Set();
+        [...activeContractorFilter].forEach(k => {
+            const kSheet = k.split('|')[0];
+            if (kSheet !== sheetId) sheetsToRemove.add(kSheet);
+        });
 
+        sheetsToRemove.forEach(sid => {
+            // أزل فلاتر المقاولين لهذا الشيت
+            [...activeContractorFilter].forEach(k => {
+                if (k.startsWith(sid + '|')) activeContractorFilter.delete(k);
+            });
+            // أزل الطبقة فقط إذا لم تكن محددة في الـ sidebar
+            const sidebarSub = categories.flatMap(c => c.subitems).find(s => s.sheetId === sid);
+            const usedBySidebar = sidebarSub && !!selectedItems[sidebarSub.id];
+            if (!usedBySidebar && allLayers[sid]) {
+                map.removeLayer(allLayers[sid]);
+                delete allLayers[sid];
+                delete allData[sid];
+            }
+        });
+
+        // أضف الفلتر الجديد
         activeContractorFilter.add(filterKey);
 
-        // Load layer if not already loaded (either by sidebar or contractor)
+        // حمّل الطبقة إذا لم تكن موجودة
         if (!allLayers[sheetId]) {
             const sub = categories.flatMap(c => c.subitems).find(s => s.id === subId);
-            if (sub) {
-                contractorActiveLayers.add(sheetId);
-                loadLayer(sheetId, sub.name, geoFile, catId, /*contractorOnly=*/true);
-            }
+            if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
         } else {
             applyContractorFilter();
         }
@@ -2595,41 +2574,31 @@ function handleContractorCheckbox(cb) {
     } else {
         activeContractorFilter.delete(filterKey);
 
-        // Remove layer ONLY if:
-        // - No other contractor filter references this sheet
-        // - Sidebar is NOT using this sheet
-        // - It was loaded by contractor (not sidebar)
-        if (!_isAnyContractorFilterOnSheet(sheetId) &&
-            !_isSidebarUsingSheet(sheetId) &&
-            contractorActiveLayers.has(sheetId) &&
-            allLayers[sheetId]) {
+        // هل لا يزال هناك مقاول آخر على نفس الشيت؟
+        const stillUsedByContractor = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
+        // هل الشيت محدد من الـ sidebar؟
+        const sidebarSub    = categories.flatMap(c => c.subitems).find(s => s.id === subId);
+        const usedBySidebar = sidebarSub && !!selectedItems[sidebarSub.id];
+
+        if (!stillUsedByContractor && !usedBySidebar && allLayers[sheetId]) {
+            // لا أحد يحتاجها — أزلها
             map.removeLayer(allLayers[sheetId]);
             delete allLayers[sheetId];
             delete allData[sheetId];
-            contractorActiveLayers.delete(sheetId);
         } else {
             applyContractorFilter();
         }
     }
 
+    // الـ sidebar مستقل — لا تعديل على selectedItems أو renderItems
     updateStats();
     syncContractorCheckboxes();
-}
-
-/* helpers */
-function _isSidebarUsingSheet(sheetId) {
-    return categories.some(cat =>
-        cat.subitems.some(s => s.sheetId === sheetId && !!selectedItems[s.id])
-    );
-}
-
-function _isAnyContractorFilterOnSheet(sheetId) {
-    return [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
 }
 
 /* ── apply gray-out: highlight only features whose CONTRACTOR matches active filters ── */
 function applyContractorFilter() {
     if (!activeContractorFilter.size) {
+        // No contractor filter active — restore normal status-based colors
         refreshLayerColors();
         return;
     }
@@ -2637,6 +2606,7 @@ function applyContractorFilter() {
     Object.entries(allLayers).forEach(([sheetId, layer]) => {
         if (!layer || !allData[sheetId]) return;
 
+        // Which contractors are active for this sheet?
         const activeForSheet = [...activeContractorFilter]
             .filter(k => k.startsWith(sheetId + '|'))
             .map(k => k.split('|')[1].trim().toLowerCase());
@@ -2650,6 +2620,7 @@ function applyContractorFilter() {
 
             if (match) {
                 f.setStyle(featureStyle(row));
+                f.setZIndexOffset && f.setZIndexOffset(100);
             } else {
                 f.setStyle({ color: '#aaaaaa', fillColor: '#cccccc', fillOpacity: 0.18, weight: 1 });
             }
@@ -2657,7 +2628,7 @@ function applyContractorFilter() {
     });
 }
 
-/* ── keep contractor checkboxes in sync ── */
+/* ── keep contractor checkboxes in sync with selectedItems ── */
 function syncContractorCheckboxes() {
     document.querySelectorAll('.contractor-cb').forEach(cb => {
         cb.checked = activeContractorFilter.has(cb.dataset.filterKey);
@@ -2957,7 +2928,7 @@ function flashLayer(leafletLayer) {
    LOAD / REMOVE LAYER
    ==================================================== */
 
-function loadLayer(sheetId, subitemName, geoJsonFile, catId, contractorOnly = false) {
+function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
 
     fetch(csvUrl)
@@ -3022,16 +2993,17 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId, contractorOnly = fa
                 allLayers[sheetId] = layer;
                 layer.addTo(map);
 
+                // Zoom to default coords (not to layer bounds) when a new layer is selected
                 if (defaultCoords) {
                     map.setView([defaultCoords.lat, defaultCoords.lng], defaultCoords.zoom);
                 }
 
                 updateStats();
-                // Apply contractor filter if active, else normal colors
+                // Apply contractor filter if one is active, otherwise normal colors
                 if (activeContractorFilter && activeContractorFilter.size > 0) {
                     applyContractorFilter();
                 }
-                // Rebuild contractor panel after new data loaded
+                // إعادة بناء قائمة المقاولين بعد تحميل بيانات جديدة
                 buildContractorPanel({ forceRefresh: true });
             });
         })
@@ -3041,7 +3013,6 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId, contractorOnly = fa
 function removeLayer(sheetId) {
     if (allLayers[sheetId]) { map.removeLayer(allLayers[sheetId]); delete allLayers[sheetId]; }
     delete allData[sheetId];
-    contractorActiveLayers.delete(sheetId);
     // Remove any contractor filters for this sheet
     if (activeContractorFilter) {
         [...activeContractorFilter].forEach(k => { if (k.startsWith(sheetId + '|')) activeContractorFilter.delete(k); });
