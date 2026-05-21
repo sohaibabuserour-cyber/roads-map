@@ -2550,14 +2550,24 @@ function handleContractorCheckbox(cb) {
             }
         });
 
-        // 2. أزل فلاتر المقاولين للشيتات الأخرى فقط
-        //    (نفس الشيت = مسموح بأكثر من مقاول)
-        const otherSheets = new Set(
+        // 2. أزل فلاتر المقاولين للشيتات التي لا تنتمي لبند فرعي باسم مطابق
+        //    يُبقى: نفس الشيت، أو شيت آخر اسم بنده الفرعي = اسم البند الحالي
+        const currentSubName = (categories.flatMap(c => c.subitems).find(s => s.id === subId)?.name || "").trim();
+
+        const sheetsToRemove = new Set(
             [...activeContractorFilter]
                 .map(k => k.split('|')[0])
-                .filter(sid => sid !== sheetId)
+                .filter(sid => {
+                    if (sid === sheetId) return false; // نفس الشيت → يبقى
+                    // ابحث عن البند الفرعي المرتبط بهذا الشيت
+                    const matchingSub = categories.flatMap(c => c.subitems)
+                        .find(s => s.sheetId === sid);
+                    // يبقى فقط إذا كان اسم البند الفرعي مطابقاً
+                    return !matchingSub || matchingSub.name.trim() !== currentSubName;
+                })
         );
-        otherSheets.forEach(sid => {
+
+        sheetsToRemove.forEach(sid => {
             [...activeContractorFilter].forEach(k => {
                 if (k.startsWith(sid + '|')) activeContractorFilter.delete(k);
             });
