@@ -405,29 +405,64 @@
             height: 14px;
         }
 
-        /* Right side of nav */
+        /* Right side of nav — Modern Redesign */
         .nav-right {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             flex-shrink: 0;
+            padding: 0 4px;
+        }
+
+        .nav-right-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(255,255,255,0.15);
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
+        .nav-right-group {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
         }
 
         /* Notification bell */
         .nav-icon-btn {
             position: relative;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
             color: white;
-            width: 36px; height: 36px;
-            border-radius: 50%;
+            width: 34px; height: 34px;
+            border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s ease;
+            font-size: 15px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(4px);
         }
 
-        .nav-icon-btn:hover { background: rgba(255,255,255,0.2); }
+        .nav-icon-btn:hover {
+            background: rgba(255,255,255,0.18);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .nav-icon-btn:active {
+            transform: translateY(0);
+        }
+
+        .nav-icon-btn.active-tool {
+            background: rgba(245,200,66,0.2);
+            border-color: rgba(245,200,66,0.5);
+            color: var(--gold);
+        }
 
         .notif-badge {
             position: absolute;
@@ -1764,6 +1799,7 @@
             }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -1817,126 +1853,139 @@
         <!-- Category tabs (dynamic) -->
         <div class="nav-tabs" id="navTabs"></div>
 
-        <!-- Right side: notifications, themes, user -->
+        <!-- Right side: tools, settings, user -->
         <div class="nav-right">
 
-            <!-- Contractor button -->
-            <div style="position:relative">
-                <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel')" title="المقاولون">👷</div>
-                <div class="contractor-panel" id="contractorPanel">
-                    <div class="contractor-panel-header">👷 المقاولون</div>
-                    <div class="contractor-list" id="contractorList">
-                        <div class="contractor-empty">جاري التحميل...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Equipment button -->
-            <div style="position:relative">
-                <div class="nav-icon-btn" id="equipmentBtn" onclick="togglePanel('equipmentPanel')" title="المعدات">🚜</div>
-                <div class="equipment-panel" id="equipmentPanel">
-                    <div class="equipment-panel-header">
-                        <span>🚜 المعدات</span>
-                        <span class="equipment-panel-sub" id="equipmentPanelSub">جاري التحميل...</span>
-                    </div>
-                    <div class="equipment-list" id="equipmentList">
-                        <div class="equipment-empty">جاري التحميل...</div>
-                    </div>
-                    <div class="equipment-total-row" id="equipmentTotalRow" style="display:none">
-                        <span class="equipment-total-label">إجمالي المعدات</span>
-                        <span class="equipment-total-val" id="equipmentTotalVal">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notification bell -->
-            <div style="position:relative">
-                <div class="nav-icon-btn" id="notifBtn" onclick="togglePanel('notifPanel')">
-                    🔔
-                    <span class="notif-badge" id="notifBadge" style="display:none">!</span>
-                </div>
-                <div class="notif-panel" id="notifPanel">
-                    <div class="notif-panel-header">🔔 الإشعارات</div>
-                    <div id="notifList"><div class="notif-empty">جاري التحميل...</div></div>
-                </div>
-            </div>
-
-            <!-- Theme button -->
-            <div style="position:relative">
-                <div class="nav-icon-btn" id="themeBtn" onclick="togglePanel('themePanel')" title="تغيير الثيم">🎨</div>
-                <div class="theme-panel" id="themePanel">
-                    <div class="theme-panel-header">🎨 الثيمات</div>
-                    <div class="theme-option active" data-theme="" onclick="applyTheme('')">
-                        <div class="theme-swatch" style="background:linear-gradient(135deg,#6a2d91,#8b44b8)"></div>
-                        <span class="theme-label">البنفسجي الملكي (افتراضي)</span>
-                    </div>
-                    <div class="theme-option" data-theme="ocean" onclick="applyTheme('ocean')">
-                        <div class="theme-swatch" style="background:linear-gradient(135deg,#0d5c8a,#1a7bbf)"></div>
-                        <span class="theme-label">الأزرق المحيطي</span>
-                    </div>
-                    <div class="theme-option" data-theme="dark" onclick="applyTheme('dark')">
-                        <div class="theme-swatch" style="background:linear-gradient(135deg,#1a1a2e,#3d2060)"></div>
-                        <span class="theme-label">الوضع الداكن</span>
-                    </div>
-                    <div class="theme-option" data-theme="emerald" onclick="applyTheme('emerald')">
-                        <div class="theme-swatch" style="background:linear-gradient(135deg,#1a7a4a,#27ae6a)"></div>
-                        <span class="theme-label">الزمرد الأخضر</span>
-                    </div>
-                    <div class="theme-option" data-theme="sunset" onclick="applyTheme('sunset')">
-                        <div class="theme-swatch" style="background:linear-gradient(135deg,#c0392b,#e74c3c)"></div>
-                        <span class="theme-label">الغروب الأحمر</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Default Coordinates button (admin) -->
-            <div style="position:relative" class="admin-only" id="coordsBtnWrap">
-                <div class="nav-icon-btn" id="coordsBtn" onclick="togglePanel('coordsPanel')" title="الإحداثيات الافتراضية">📍</div>
-                <div class="coords-panel" id="coordsPanel">
-                    <div class="coords-panel-header">📍 الإحداثيات الافتراضية</div>
-                    <div class="coords-panel-body">
-                        <div class="coords-panel-row">
-                            <span class="coords-panel-label">خط العرض</span>
-                            <input type="text" class="coords-panel-input" id="defLat2" placeholder="21.292">
+            <!-- Tools Group -->
+            <div class="nav-right-group" id="toolsGroup">
+                <!-- Contractor button -->
+                <div style="position:relative" title="المقاولون">
+                    <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel')">👷</div>
+                    <div class="contractor-panel" id="contractorPanel">
+                        <div class="contractor-panel-header">👷 المقاولون</div>
+                        <div class="contractor-list" id="contractorList">
+                            <div class="contractor-empty">جاري التحميل...</div>
                         </div>
-                        <div class="coords-panel-row">
-                            <span class="coords-panel-label">خط الطول</span>
-                            <input type="text" class="coords-panel-input" id="defLng2" placeholder="39.71">
+                    </div>
+                </div>
+
+                <!-- Equipment button -->
+                <div style="position:relative" title="المعدات">
+                    <div class="nav-icon-btn" id="equipmentBtn" onclick="togglePanel('equipmentPanel')">🚜</div>
+                    <div class="equipment-panel" id="equipmentPanel">
+                        <div class="equipment-panel-header">
+                            <span>🚜 المعدات</span>
+                            <span class="equipment-panel-sub" id="equipmentPanelSub">جاري التحميل...</span>
                         </div>
-                        <div class="coords-panel-row">
-                            <span class="coords-panel-label">التكبير</span>
-                            <input type="text" class="coords-panel-input" id="defZoom2" placeholder="14">
+                        <div class="equipment-list" id="equipmentList">
+                            <div class="equipment-empty">جاري التحميل...</div>
                         </div>
-                        <button class="coords-panel-btn" onclick="saveDefaultCoordsNav()">✓ حفظ وتطبيق على الجميع</button>
+                        <div class="equipment-total-row" id="equipmentTotalRow" style="display:none">
+                            <span class="equipment-total-label">إجمالي المعدات</span>
+                            <span class="equipment-total-val" id="equipmentTotalVal">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification bell -->
+                <div style="position:relative" title="الإشعارات">
+                    <div class="nav-icon-btn" id="notifBtn" onclick="togglePanel('notifPanel')">
+                        🔔
+                        <span class="notif-badge" id="notifBadge" style="display:none">!</span>
+                    </div>
+                    <div class="notif-panel" id="notifPanel">
+                        <div class="notif-panel-header">🔔 الإشعارات</div>
+                        <div id="notifList"><div class="notif-empty">جاري التحميل...</div></div>
                     </div>
                 </div>
             </div>
 
-            <!-- User chip + dropdown -->
-            <div class="user-menu-wrap" id="userMenuWrap">
-                <div class="user-chip" onclick="togglePanel('userDropdown')">
-                    <div class="user-avatar" id="navAvatar">؟</div>
-                    <span class="user-name-small" id="navUserName">-</span>
-                </div>
-                <div class="user-dropdown" id="userDropdown">
-                    <div class="user-dropdown-header">
-                        <div class="ud-avatar-wrap" id="udAvatarWrap" onclick="triggerAvatarUpload()">
-                            <span id="udAvatarText">؟</span>
-                            <div class="ud-avatar-overlay">📷</div>
+            <div class="nav-right-divider"></div>
+
+            <!-- Settings Group -->
+            <div class="nav-right-group" id="settingsGroup">
+                <!-- Theme button -->
+                <div style="position:relative" title="تغيير الثيم">
+                    <div class="nav-icon-btn" id="themeBtn" onclick="togglePanel('themePanel')">🎨</div>
+                    <div class="theme-panel" id="themePanel">
+                        <div class="theme-panel-header">🎨 الثيمات</div>
+                        <div class="theme-option active" data-theme="" onclick="applyTheme('')">
+                            <div class="theme-swatch" style="background:linear-gradient(135deg,#6a2d91,#8b44b8)"></div>
+                            <span class="theme-label">البنفسجي الملكي (افتراضي)</span>
                         </div>
-                        <div class="ud-name" id="udName">-</div>
-                        <div class="ud-role" id="udRole">-</div>
+                        <div class="theme-option" data-theme="ocean" onclick="applyTheme('ocean')">
+                            <div class="theme-swatch" style="background:linear-gradient(135deg,#0d5c8a,#1a7bbf)"></div>
+                            <span class="theme-label">الأزرق المحيطي</span>
+                        </div>
+                        <div class="theme-option" data-theme="dark" onclick="applyTheme('dark')">
+                            <div class="theme-swatch" style="background:linear-gradient(135deg,#1a1a2e,#3d2060)"></div>
+                            <span class="theme-label">الوضع الداكن</span>
+                        </div>
+                        <div class="theme-option" data-theme="emerald" onclick="applyTheme('emerald')">
+                            <div class="theme-swatch" style="background:linear-gradient(135deg,#1a7a4a,#27ae6a)"></div>
+                            <span class="theme-label">الزمرد الأخضر</span>
+                        </div>
+                        <div class="theme-option" data-theme="sunset" onclick="applyTheme('sunset')">
+                            <div class="theme-swatch" style="background:linear-gradient(135deg,#c0392b,#e74c3c)"></div>
+                            <span class="theme-label">الغروب الأحمر</span>
+                        </div>
                     </div>
-                    <div class="ud-field">
-                        <label>الاسم</label>
-                        <input type="text" id="udNameInput" placeholder="الاسم الكامل">
+                </div>
+
+                <!-- Default Coordinates button (admin) -->
+                <div style="position:relative" class="admin-only" id="coordsBtnWrap" title="الإحداثيات الافتراضية">
+                    <div class="nav-icon-btn" id="coordsBtn" onclick="togglePanel('coordsPanel')">📍</div>
+                    <div class="coords-panel" id="coordsPanel">
+                        <div class="coords-panel-header">📍 الإحداثيات الافتراضية</div>
+                        <div class="coords-panel-body">
+                            <div class="coords-panel-row">
+                                <span class="coords-panel-label">خط العرض</span>
+                                <input type="text" class="coords-panel-input" id="defLat2" placeholder="21.292">
+                            </div>
+                            <div class="coords-panel-row">
+                                <span class="coords-panel-label">خط الطول</span>
+                                <input type="text" class="coords-panel-input" id="defLng2" placeholder="39.71">
+                            </div>
+                            <div class="coords-panel-row">
+                                <span class="coords-panel-label">التكبير</span>
+                                <input type="text" class="coords-panel-input" id="defZoom2" placeholder="14">
+                            </div>
+                            <button class="coords-panel-btn" onclick="saveDefaultCoordsNav()">✓ حفظ وتطبيق على الجميع</button>
+                        </div>
                     </div>
-                    <div class="ud-field">
-                        <label>كلمة مرور جديدة</label>
-                        <input type="password" id="udPassInput" placeholder="اتركها فارغة إذا لم تريد التغيير">
+                </div>
+            </div>
+
+            <div class="nav-right-divider"></div>
+
+            <!-- User Group -->
+            <div class="nav-right-group" id="userGroup">
+                <!-- User chip + dropdown -->
+                <div class="user-menu-wrap" id="userMenuWrap">
+                    <div class="user-chip" onclick="togglePanel('userDropdown')">
+                        <div class="user-avatar" id="navAvatar">؟</div>
+                        <span class="user-name-small" id="navUserName">-</span>
                     </div>
-                    <button class="ud-save-btn" onclick="saveUserProfile()">💾 حفظ التغييرات</button>
-                    <button class="ud-logout" onclick="doLogout()">🚪 تسجيل الخروج</button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-dropdown-header">
+                            <div class="ud-avatar-wrap" id="udAvatarWrap" onclick="triggerAvatarUpload()">
+                                <span id="udAvatarText">؟</span>
+                                <div class="ud-avatar-overlay">📷</div>
+                            </div>
+                            <div class="ud-name" id="udName">-</div>
+                            <div class="ud-role" id="udRole">-</div>
+                        </div>
+                        <div class="ud-field">
+                            <label>الاسم</label>
+                            <input type="text" id="udNameInput" placeholder="الاسم الكامل">
+                        </div>
+                        <div class="ud-field">
+                            <label>كلمة مرور جديدة</label>
+                            <input type="password" id="udPassInput" placeholder="اتركها فارغة إذا لم تريد التغيير">
+                        </div>
+                        <button class="ud-save-btn" onclick="saveUserProfile()">💾 حفظ التغييرات</button>
+                        <button class="ud-logout" onclick="doLogout()">🚪 تسجيل الخروج</button>
+                    </div>
                 </div>
             </div>
 
@@ -2382,6 +2431,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function enterApp() {
     document.getElementById("loginScreen").style.display = "none";
     document.getElementById("mainApp").classList.add("visible");
+
+
 
     if (currentUser.isAdmin) {
         document.body.classList.add("is-admin");
@@ -3122,7 +3173,7 @@ function exportConfig() {
     link.href     = URL.createObjectURL(blob);
     link.download = "categories.json";
     link.click();
-    showAlert("✅ تم تحميل categories.json (يتضمن الإحداثيات والحالات)", "success");
+    showAlert("✅ تم تحميل categories.json — ارفعه على GitHub يدوياً", "success");
 }
 
 function importConfig(e) {
@@ -3992,61 +4043,10 @@ document.querySelectorAll(".modal").forEach(m => {
              Nav-Right Icons (contractors, equipment, notifications, themes, coords, user)
    ==================================================== */
 
-/* ── Silent save to categories.json (no alerts) ── */
+/* ── Silent in-memory save (no download, no GitHub, no prompts) ── */
 async function saveConfigToFile(silent = true) {
-    const payload = {
-        categories: categories,
-        defaultCoords: defaultCoords,
-        // Include current UI state
-        selectedItems: selectedItems,
-        selectedStatuses: selectedStatuses,
-        activeContractorFilter: [...activeContractorFilter],
-        currentTheme: localStorage.getItem('mapTheme') || '',
-        // Include nav-right icon order
-        navRightOrder: (function() {
-            const order = [];
-            document.querySelectorAll('.nav-right > div').forEach(div => {
-                const btn = div.querySelector('.nav-icon-btn, .user-chip');
-                if (btn) {
-                    const id = btn.id;
-                    if (id) order.push(id);
-                }
-            });
-            return order;
-        })()
-    };
-
-    const jsonStr = JSON.stringify(payload, null, 2);
-
-    // Try to save via File System Access API (modern browsers)
-    if ('showSaveFilePicker' in window) {
-        try {
-            const handle = await showSaveFilePicker({
-                suggestedName: 'categories.json',
-                types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
-            });
-            const writable = await handle.createWritable();
-            await writable.write(jsonStr);
-            await writable.close();
-            if (!silent) showAlert('✅ تم الحفظ في categories.json', 'success');
-            return true;
-        } catch (e) {
-            // User cancelled or API not available — fallback to download
-        }
-    }
-
-    // Fallback: auto-download the file
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'categories.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    if (!silent) showAlert('✅ تم تحميل categories.json — ارفعه على GitHub', 'success');
+    // This function now only updates the in-memory state.
+    // To export categories.json, use exportConfig() manually.
     return true;
 }
 
@@ -4333,76 +4333,75 @@ function initSubitemsDrag() {
     });
 }
 
-/* ── 4. STATUS LEGEND ── */
+/* ── 4. STATUS LEGEND — DRAG DISABLED per user request ── */
 function initLegendDrag() {
-    if (!currentUser || !currentUser.isAdmin) return;
-    const legend = document.querySelector('.legend-section');
-    if (!legend) return;
-
-    const items = [...legend.querySelectorAll('.legend-item')];
-    if (items.length < 2) return;
-
-    makeDraggable(
-        items,
-        el => el.querySelector('input[data-status]')?.dataset.status || '',
-        newStatuses => {
-            const validStatuses = newStatuses.filter(s => s);
-            const newOrder = validStatuses
-                .map(s => STATUSES.find(x => x.value === s))
-                .filter(Boolean);
-
-            STATUSES.length = 0;
-            newOrder.forEach(s => STATUSES.push(s));
-
-            selectedStatuses = selectedStatuses.filter(s => STATUSES.some(x => x.value === s));
-
-            const parent = items[0].parentNode;
-            validStatuses.forEach(sVal => {
-                const el = items.find(i => i.querySelector('input[data-status]')?.dataset.status === sVal);
-                if (el) parent.appendChild(el);
-            });
-
-            initLegendDrag();
-            saveConfigToFile(true); // silent save
-        },
-        el => el.querySelector('.legend-label')?.textContent.trim() || '',
-        { silent: true }
-    );
+    // Legend drag & drop has been disabled.
+    // Status order is fixed: جاري التنفيذ → متاح → غير متاح → تم الانتهاء → متوقف
 }
 
-/* ── 5. NAV-RIGHT ICONS (contractors, equipment, notifications, themes, coords, user) ── */
+/* ── 5. NAV-RIGHT GROUPS (Tools, Settings, User) ── */
 function initNavRightDrag() {
     if (!currentUser || !currentUser.isAdmin) return;
     const navRight = document.querySelector('.nav-right');
     if (!navRight) return;
 
-    // Get all direct children divs (icon containers)
-    const items = [...navRight.querySelectorAll(':scope > div')];
-    if (items.length < 2) return;
+    // Get all group containers (nav-right-group) and dividers
+    const groups = [...navRight.querySelectorAll('.nav-right-group')];
+    if (groups.length < 2) return;
 
     makeDraggable(
-        items,
-        el => {
-            const btn = el.querySelector('.nav-icon-btn, .user-chip');
-            return btn ? (btn.id || btn.title || 'item') : 'item';
-        },
+        groups,
+        el => el.id || el.querySelector('.nav-icon-btn')?.id || 'group',
         newOrder => {
-            // Reorder DOM elements
-            newOrder.forEach(key => {
-                const el = items.find(i => {
-                    const btn = i.querySelector('.nav-icon-btn, .user-chip');
-                    return btn && (btn.id === key || btn.title === key);
-                });
-                if (el) navRight.appendChild(el);
+            // Reorder groups in DOM
+            newOrder.forEach(id => {
+                const el = groups.find(g => (g.id || '') === id);
+                if (el) {
+                    // Move divider before this group if exists
+                    const prev = el.previousElementSibling;
+                    if (prev && prev.classList.contains('nav-right-divider')) {
+                        navRight.appendChild(prev);
+                    }
+                    navRight.appendChild(el);
+                }
             });
             saveConfigToFile(true); // silent save
         },
         el => {
-            const btn = el.querySelector('.nav-icon-btn, .user-chip');
-            return btn ? (btn.title || btn.id || 'عنصر').slice(0, 40) : 'عنصر';
+            const firstBtn = el.querySelector('.nav-icon-btn');
+            return firstBtn ? (firstBtn.title || firstBtn.id || 'مجموعة').slice(0, 40) : 'مجموعة';
         },
         { silent: true, horizontal: true }
     );
+
+    // Also make individual buttons draggable WITHIN each group
+    groups.forEach(group => {
+        const items = [...group.querySelectorAll(':scope > div[position]')];
+        if (items.length < 2) return;
+
+        makeDraggable(
+            items,
+            el => {
+                const btn = el.querySelector('.nav-icon-btn, .user-chip');
+                return btn ? (btn.id || 'item') : 'item';
+            },
+            newOrder => {
+                newOrder.forEach(key => {
+                    const el = items.find(i => {
+                        const btn = i.querySelector('.nav-icon-btn, .user-chip');
+                        return btn && btn.id === key;
+                    });
+                    if (el) group.appendChild(el);
+                });
+                saveConfigToFile(true);
+            },
+            el => {
+                const btn = el.querySelector('.nav-icon-btn, .user-chip');
+                return btn ? (btn.title || btn.id || 'عنصر').slice(0, 40) : 'عنصر';
+            },
+            { silent: true, horizontal: true }
+        );
+    });
 }
 
 /* ── Hook: patch renderItems and renderNavTabs to re-init drag after render ── */
@@ -4421,10 +4420,7 @@ window.renderNavTabs = function() {
     setTimeout(() => { initNavTabsDrag(); }, 50);
 };
 
-/* ── Init legend drag once on load ── */
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => { initLegendDrag(); }, 800);
-});
+/* ── Legend drag removed per user request ── */
 
 // Also hook enterApp to init all drag systems after login
 const _afterEnterApp = () => {
@@ -4432,7 +4428,6 @@ const _afterEnterApp = () => {
         initNavTabsDrag();
         initSidebarSectionsDrag();
         initSubitemsDrag();
-        initLegendDrag();
         initNavRightDrag();
     }, 600);
 };
