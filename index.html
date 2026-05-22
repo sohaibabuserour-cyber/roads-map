@@ -1785,7 +1785,10 @@
 
         <div class="form-field">
             <label>كلمة المرور</label>
-            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+            <div style="position:relative">
+                <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" style="padding-left:38px">
+                <button type="button" id="togglePassword" onclick="togglePasswordVisibility()" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;opacity:0.6;transition:opacity 0.2s;padding:4px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">👁️</button>
+            </div>
         </div>
 
         <button class="login-btn" id="loginBtn" onclick="doLogin()">دخول</button>
@@ -2138,43 +2141,6 @@ function statusCls(s) {
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
 
-/* ── Persist categories & subitems order to localStorage ── */
-function saveCategoriesLocally() {
-    try {
-        localStorage.setItem('categoriesLocal', JSON.stringify({ categories, defaultCoords }));
-    } catch(e) { console.warn('saveCategoriesLocally failed:', e); }
-}
-
-/* ── Persist status legend order to localStorage ── */
-function saveStatusOrder() {
-    localStorage.setItem('statusOrder', JSON.stringify(STATUSES.map(s => s.value)));
-}
-
-function loadStatusOrder() {
-    const saved = localStorage.getItem('statusOrder');
-    if (!saved) return;
-    try {
-        const order = JSON.parse(saved);
-        const reordered = order.map(v => STATUSES.find(s => s.value === v)).filter(Boolean);
-        // Append any status not yet in saved list (future-proofing)
-        STATUSES.filter(s => !order.includes(s.value)).forEach(s => reordered.push(s));
-        STATUSES.length = 0;
-        reordered.forEach(s => STATUSES.push(s));
-    } catch(e) { localStorage.removeItem('statusOrder'); }
-}
-
-/* ── Apply saved status order to the legend DOM ── */
-function applyStatusOrderToLegend() {
-    const legend = document.querySelector('.legend-section');
-    if (!legend) return;
-    const items = [...legend.querySelectorAll('.legend-item')];
-    if (!items.length) return;
-    STATUSES.forEach(s => {
-        const el = items.find(i => i.querySelector('input')?.dataset.status === s.value);
-        if (el) legend.appendChild(el);
-    });
-}
-
 function sheetIdFromUrl(url) {
     const m = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
     return m ? m[1] : url.trim();
@@ -2326,6 +2292,20 @@ async function fetchUsers() {
     return users;
 }
 
+function togglePasswordVisibility() {
+    const input = document.getElementById("loginPassword");
+    const btn = document.getElementById("togglePassword");
+    if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+        btn.style.opacity = "1";
+    } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+        btn.style.opacity = "0.6";
+    }
+}
+
 async function doLogin() {
     const email = document.getElementById("loginEmail").value.trim().toLowerCase();
     const pass  = document.getElementById("loginPassword").value.trim();
@@ -2388,10 +2368,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         try { defaultCoords = JSON.parse(dc); } catch(e) {}
     }
 
-    // Apply saved status order before rendering legend
-    loadStatusOrder();
-    applyStatusOrderToLegend();
-
     // Try restore session
     const restored = await tryRestoreSession();
     if (restored) {
@@ -2431,6 +2407,18 @@ async function enterApp() {
 
     renderItems();
     renderNavTabs();
+
+    // Auto-select "القطع" under "الطرق" if nothing is selected
+    const hasAnySelection = Object.keys(selectedItems).length > 0;
+    if (!hasAnySelection) {
+        const roadsCat = categories.find(c => c.name.includes('طرق') || c.name.toLowerCase().includes('road'));
+        if (roadsCat) {
+            const qataaSub = roadsCat.subitems.find(s => s.name.includes('قطع') || s.name.toLowerCase().includes('piece') || s.name.toLowerCase().includes('block'));
+            if (qataaSub) {
+                selectedItems[qataaSub.id] = true;
+            }
+        }
+    }
 
     // Re-load previously selected layers
     categories.forEach(cat => {
@@ -3089,23 +3077,6 @@ async function loadNotifications() {
    ==================================================== */
 
 async function loadCategoriesConfig() {
-    // ── Check localStorage first (preserves admin drag-reorder across refreshes) ──
-    const localSaved = localStorage.getItem('categoriesLocal');
-    if (localSaved) {
-        try {
-            const data = JSON.parse(localSaved);
-            categories = Array.isArray(data) ? data : (data.categories || []);
-            if (!Array.isArray(data) && data.defaultCoords) {
-                defaultCoords = data.defaultCoords;
-                localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
-            }
-            categories.forEach(c => { if (!c.subitems) c.subitems = []; if (!c.id) c.id = uid(); });
-            return; // use locally saved version
-        } catch(e) {
-            localStorage.removeItem('categoriesLocal');
-        }
-    }
-    // ── Fall back to server categories.json ──
     try {
         const r = await fetch(CONFIG_FILE + "?t=" + Date.now());
         if (!r.ok) throw new Error("not found");
@@ -3129,14 +3100,29 @@ async function loadCategoriesConfig() {
    ==================================================== */
 
 function exportConfig() {
-    const payload = JSON.stringify({ categories, defaultCoords }, null, 2);
+    const payload = JSON.stringify({
+        categories: categories,
+        defaultCoords: defaultCoords,
+        // Include current UI state for persistence
+        selectedItems: selectedItems,
+        selectedStatuses: selectedStatuses,
+        activeContractorFilter: [...activeContractorFilter],
+        currentTheme: localStorage.getItem('mapTheme') || '',
+        navRightOrder: (function() {
+            const order = [];
+            document.querySelectorAll('.nav-right > div').forEach(div => {
+                const btn = div.querySelector('.nav-icon-btn, .user-chip');
+                if (btn && btn.id) order.push(btn.id);
+            });
+            return order;
+        })()
+    }, null, 2);
     const blob    = new Blob([payload], { type: "application/json" });
     const link    = document.createElement("a");
     link.href     = URL.createObjectURL(blob);
     link.download = "categories.json";
     link.click();
-    saveCategoriesLocally(); // sync localStorage with exported version
-    showAlert("✅ تم تحميل categories.json (يتضمن الإحداثيات الافتراضية)", "success");
+    showAlert("✅ تم تحميل categories.json (يتضمن الإحداثيات والحالات)", "success");
 }
 
 function importConfig(e) {
@@ -3155,11 +3141,31 @@ function importConfig(e) {
                 if (map) map.setView([defaultCoords.lat, defaultCoords.lng], defaultCoords.zoom);
                 syncCoordsInputs();
             }
-            saveCategoriesLocally(); // persist imported config locally
+            // Restore state if present
+            if (!Array.isArray(data)) {
+                if (data.selectedItems) selectedItems = data.selectedItems;
+                if (data.selectedStatuses) selectedStatuses = data.selectedStatuses;
+                if (data.activeContractorFilter) {
+                    activeContractorFilter.clear();
+                    data.activeContractorFilter.forEach(k => activeContractorFilter.add(k));
+                }
+                if (data.currentTheme) {
+                    applyTheme(data.currentTheme);
+                }
+                if (data.navRightOrder && Array.isArray(data.navRightOrder)) {
+                    const navRight = document.querySelector('.nav-right');
+                    if (navRight) {
+                        data.navRightOrder.forEach(id => {
+                            const el = document.getElementById(id)?.parentElement;
+                            if (el) navRight.appendChild(el);
+                        });
+                    }
+                }
+            }
             renderItems();
             renderNavTabs();
             updateStats();
-            showAlert("✅ تم استيراد الإعدادات", "success");
+            showAlert("✅ تم استيراد الإعدادات والحالات", "success");
         } catch { showAlert("❌ الملف غير صالح", "error"); }
     };
     reader.readAsText(file);
@@ -3246,12 +3252,9 @@ function makeEquipmentCard(sheetIds, subLabel = "البند المحدد") {
     // الأعمدة المستثناة
     const SKIP = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان', 'البند', 'BAND', 'ALBND', 'ITEM']);
 
-    // اسم البند الفرعي النشط
-    const activeSubNames = new Set(
-        categories.flatMap(c => c.subitems)
-            .filter(s => selectedItems[s.id])
-            .map(s => s.name.trim())
-    );
+    // اسم البند الفرعي النشط — unique names only, no duplicates
+    const activeSubs = categories.flatMap(c => c.subitems).filter(s => selectedItems[s.id]);
+    const activeSubNames = [...new Set(activeSubs.map(s => s.name.trim()))];
 
     // عمود البند
     const bandColOrig = equipmentRawHeaders.find(h => {
@@ -3261,12 +3264,12 @@ function makeEquipmentCard(sheetIds, subLabel = "البند المحدد") {
 
     // فلترة الصفوف
     let rows = equipmentRawRows;
-    if (bandColOrig && activeSubNames.size) {
+    if (bandColOrig && activeSubNames.length) {
         const bKey = bandColOrig.trim().toUpperCase();
         rows = equipmentRawRows.filter(row => {
             const val = (row[bKey] || "").trim();
             if (!val) return false; // صف بدون بند → لا يُدرج في الكارت
-            return activeSubNames.has(val);
+            return activeSubNames.includes(val);
         });
     }
 
@@ -3289,11 +3292,16 @@ function makeEquipmentCard(sheetIds, subLabel = "البند المحدد") {
     const entries = Object.entries(totals).sort((a,b) => b[1] - a[1]);
     if (!entries.length) return null;
 
+    // Build label: unique subitem names joined with " و " — no repetition
+    const uniqueSubNames = activeSubNames.length
+        ? activeSubNames.join(' و ')
+        : subLabel;
+
     const card = document.createElement("div");
     card.className = "stats-group stats-group-equipment";
     card.innerHTML = `
         <div class="stats-group-title">🚜 المعدات</div>
-        <div class="stats-group-type">إجمالي المعدات في بند ${subLabel}</div>
+        <div class="stats-group-type">إجمالي المعدات في بند ${uniqueSubNames}</div>
         <div class="equipment-chips">
             ${entries.map(([name, count]) =>
                 `<span class="equipment-chip">${name}<span class="equipment-chip-count">${fmtNum(count)}</span></span>`
@@ -3980,8 +3988,67 @@ document.querySelectorAll(".modal").forEach(m => {
 
 /* ====================================================
    DRAG & DROP — ADMIN ONLY
-   Supports: Nav Tabs (categories), Sidebar Items (subitems within cat), Status Legend
+   Supports: Nav Tabs (categories), Sidebar Items (subitems within cat), Status Legend,
+             Nav-Right Icons (contractors, equipment, notifications, themes, coords, user)
    ==================================================== */
+
+/* ── Silent save to categories.json (no alerts) ── */
+async function saveConfigToFile(silent = true) {
+    const payload = {
+        categories: categories,
+        defaultCoords: defaultCoords,
+        // Include current UI state
+        selectedItems: selectedItems,
+        selectedStatuses: selectedStatuses,
+        activeContractorFilter: [...activeContractorFilter],
+        currentTheme: localStorage.getItem('mapTheme') || '',
+        // Include nav-right icon order
+        navRightOrder: (function() {
+            const order = [];
+            document.querySelectorAll('.nav-right > div').forEach(div => {
+                const btn = div.querySelector('.nav-icon-btn, .user-chip');
+                if (btn) {
+                    const id = btn.id;
+                    if (id) order.push(id);
+                }
+            });
+            return order;
+        })()
+    };
+
+    const jsonStr = JSON.stringify(payload, null, 2);
+
+    // Try to save via File System Access API (modern browsers)
+    if ('showSaveFilePicker' in window) {
+        try {
+            const handle = await showSaveFilePicker({
+                suggestedName: 'categories.json',
+                types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(jsonStr);
+            await writable.close();
+            if (!silent) showAlert('✅ تم الحفظ في categories.json', 'success');
+            return true;
+        } catch (e) {
+            // User cancelled or API not available — fallback to download
+        }
+    }
+
+    // Fallback: auto-download the file
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'categories.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (!silent) showAlert('✅ تم تحميل categories.json — ارفعه على GitHub', 'success');
+    return true;
+}
 
 /* ── CSS for drag states (injected once) ── */
 (function injectDragCSS() {
@@ -3992,6 +4059,7 @@ document.querySelectorAll(".modal").forEach(m => {
         body.is-admin .sidebar-section  { cursor: grab; }
         body.is-admin .dropdown-item    { cursor: grab; }
         body.is-admin .legend-item      { cursor: grab; }
+        body.is-admin .nav-right > div  { cursor: grab; }
 
         .drag-dragging {
             opacity: 0.38;
@@ -4003,6 +4071,12 @@ document.querySelectorAll(".modal").forEach(m => {
         }
         .drag-over-bottom {
             border-bottom: 2.5px solid var(--gold) !important;
+        }
+        .drag-over-left {
+            border-left: 2.5px solid var(--gold) !important;
+        }
+        .drag-over-right {
+            border-right: 2.5px solid var(--gold) !important;
         }
         .drag-ghost {
             position: fixed;
@@ -4027,7 +4101,9 @@ document.querySelectorAll(".modal").forEach(m => {
         body.is-admin .nav-tab::before,
         body.is-admin .sidebar-section > .section-title::before,
         body.is-admin .dropdown-item::before,
-        body.is-admin .legend-item::before {
+        body.is-admin .legend-item::before,
+        body.is-admin .nav-right > div > .nav-icon-btn::before,
+        body.is-admin .nav-right > div > .user-chip::before {
             content: '⠿';
             font-size: 13px;
             opacity: 0;
@@ -4039,7 +4115,9 @@ document.querySelectorAll(".modal").forEach(m => {
         body.is-admin .nav-tab:hover::before,
         body.is-admin .sidebar-section:hover > .section-title::before,
         body.is-admin .dropdown-item:hover::before,
-        body.is-admin .legend-item:hover::before {
+        body.is-admin .legend-item:hover::before,
+        body.is-admin .nav-right > div:hover > .nav-icon-btn::before,
+        body.is-admin .nav-right > div:hover > .user-chip::before {
             opacity: 0.7;
         }
     `;
@@ -4071,18 +4149,22 @@ function removeGhost() {
    items: array of DOM elements
    getKey(el): returns unique key for the element
    onReorder(newOrder): called with new ordered keys array
+   options: { silent: true/false, horizontal: true/false }
 */
-function makeDraggable(items, getKey, onReorder, getLabel) {
+function makeDraggable(items, getKey, onReorder, getLabel, options = {}) {
     if (!currentUser || !currentUser.isAdmin) return;
+
+    const isHorizontal = options.horizontal || false;
+    const silent = options.silent !== false; // default true
 
     let draggingEl   = null;
     let draggingKey  = null;
     let overEl       = null;
-    let overPosition = null; // 'top' | 'bottom'
+    let overPosition = null; // 'top' | 'bottom' | 'left' | 'right'
 
     function clearOver() {
         if (overEl) {
-            overEl.classList.remove('drag-over-top', 'drag-over-bottom');
+            overEl.classList.remove('drag-over-top', 'drag-over-bottom', 'drag-over-left', 'drag-over-right');
             overEl = null;
         }
     }
@@ -4116,19 +4198,24 @@ function makeDraggable(items, getKey, onReorder, getLabel) {
             e.preventDefault();
             if (el === draggingEl) return;
             const rect   = el.getBoundingClientRect();
-            const midY   = rect.top + rect.height / 2;
-            const newPos = e.clientY < midY ? 'top' : 'bottom';
+            let newPos;
+            if (isHorizontal) {
+                const midX = rect.left + rect.width / 2;
+                newPos = e.clientX < midX ? 'left' : 'right';
+            } else {
+                const midY = rect.top + rect.height / 2;
+                newPos = e.clientY < midY ? 'top' : 'bottom';
+            }
             if (overEl !== el || overPosition !== newPos) {
                 clearOver();
                 overEl       = el;
                 overPosition = newPos;
-                el.classList.add(newPos === 'top' ? 'drag-over-top' : 'drag-over-bottom');
+                el.classList.add('drag-over-' + newPos);
             }
             e.dataTransfer.dropEffect = 'move';
         });
 
         el.addEventListener('dragleave', e => {
-            // Only clear if truly leaving this element (not entering a child)
             if (!el.contains(e.relatedTarget)) clearOver();
         });
 
@@ -4146,10 +4233,17 @@ function makeDraggable(items, getKey, onReorder, getLabel) {
 
             const newKeys = [...keys];
             newKeys.splice(fromIdx, 1);
-            const insertAt = overPosition === 'top' ? toIdx : toIdx + 1;
-            const adjustedInsert = overPosition === 'top'
-                ? (fromIdx < toIdx ? toIdx - 1 : toIdx)
-                : (fromIdx < toIdx ? toIdx : toIdx + 1);
+
+            let adjustedInsert;
+            if (isHorizontal) {
+                adjustedInsert = overPosition === 'left'
+                    ? (fromIdx < toIdx ? toIdx - 1 : toIdx)
+                    : (fromIdx < toIdx ? toIdx : toIdx + 1);
+            } else {
+                adjustedInsert = overPosition === 'top'
+                    ? (fromIdx < toIdx ? toIdx - 1 : toIdx)
+                    : (fromIdx < toIdx ? toIdx : toIdx + 1);
+            }
             newKeys.splice(adjustedInsert, 0, draggingKey);
 
             onReorder(newKeys);
@@ -4164,26 +4258,20 @@ function initNavTabsDrag() {
     if (!tabsEl) return;
 
     const items = [...tabsEl.querySelectorAll('.nav-tab')];
-    if (items.length < 2) return;
     makeDraggable(
         items,
         el => el.dataset.catId,
         newCatIds => {
-            // Reorder categories array
             categories = newCatIds
                 .map(id => categories.find(c => c.id === id))
                 .filter(Boolean);
-            // Append any categories not in tabs (safety)
-            categories.forEach(c => { if (!newCatIds.includes(c.id)) categories.push(c); });
-            saveCategoriesLocally(); // ✅ persist new order
             renderNavTabs();
             renderItems();
-            showAlert('✅ تم حفظ ترتيب التبويبات تلقائياً', 'success');
+            initNavTabsDrag();
+            saveConfigToFile(true); // silent save
         },
-        el => {
-            const span = el.querySelector('span');
-            return (span ? span.textContent : el.textContent).trim().slice(0, 40);
-        }
+        el => el.textContent.trim().slice(0, 40),
+        { silent: true }
     );
 }
 
@@ -4194,7 +4282,6 @@ function initSidebarSectionsDrag() {
     if (!section) return;
 
     const items = [...section.querySelectorAll('.sidebar-section')];
-    if (items.length < 2) return;
     makeDraggable(
         items,
         el => el.dataset.catId,
@@ -4202,12 +4289,14 @@ function initSidebarSectionsDrag() {
             categories = newCatIds
                 .map(id => categories.find(c => c.id === id))
                 .filter(Boolean);
-            saveCategoriesLocally(); // ✅ persist new order
             renderItems();
             renderNavTabs();
-            showAlert('✅ تم حفظ ترتيب البنود الرئيسية تلقائياً', 'success');
+            initSidebarSectionsDrag();
+            initSubitemsDrag();
+            saveConfigToFile(true); // silent save
         },
-        el => el.querySelector('.section-title-text')?.textContent.trim().slice(0, 40) || ''
+        el => el.querySelector('.section-title-text')?.textContent.trim().slice(0, 40) || '',
+        { silent: true }
     );
 }
 
@@ -4222,7 +4311,6 @@ function initSubitemsDrag() {
         const cat    = categories.find(c => c.id === catId);
         if (!cat) return;
 
-        // All subitem rows including those in closed dropdowns
         const items = [...container.querySelectorAll('.dropdown-item[data-sub]')];
         if (items.length < 2) return;
 
@@ -4233,12 +4321,14 @@ function initSubitemsDrag() {
                 cat.subitems = newSubIds
                     .map(id => cat.subitems.find(s => s.id === id))
                     .filter(Boolean);
-                saveCategoriesLocally(); // ✅ persist new subitems order
                 renderItems();
                 renderNavTabs();
-                showAlert('✅ تم حفظ ترتيب البنود الفرعية تلقائياً', 'success');
+                initSidebarSectionsDrag();
+                initSubitemsDrag();
+                saveConfigToFile(true); // silent save
             },
-            el => el.querySelector('label')?.textContent.trim().slice(0, 40) || ''
+            el => el.querySelector('label')?.textContent.trim().slice(0, 40) || '',
+            { silent: true }
         );
     });
 }
@@ -4256,31 +4346,62 @@ function initLegendDrag() {
         items,
         el => el.querySelector('input[data-status]')?.dataset.status || '',
         newStatuses => {
-            // Reorder the STATUSES array and the legend DOM
             const validStatuses = newStatuses.filter(s => s);
             const newOrder = validStatuses
                 .map(s => STATUSES.find(x => x.value === s))
                 .filter(Boolean);
 
-            // Rebuild STATUSES in place
             STATUSES.length = 0;
             newOrder.forEach(s => STATUSES.push(s));
 
-            // Reorder selectedStatuses to match
             selectedStatuses = selectedStatuses.filter(s => STATUSES.some(x => x.value === s));
 
-            // Rebuild DOM order
             const parent = items[0].parentNode;
             validStatuses.forEach(sVal => {
                 const el = items.find(i => i.querySelector('input[data-status]')?.dataset.status === sVal);
                 if (el) parent.appendChild(el);
             });
 
-            saveStatusOrder(); // ✅ persist status order to localStorage
             initLegendDrag();
-            showAlert('✅ تم حفظ ترتيب حالات التنفيذ تلقائياً', 'success');
+            saveConfigToFile(true); // silent save
         },
-        el => el.querySelector('.legend-label')?.textContent.trim() || ''
+        el => el.querySelector('.legend-label')?.textContent.trim() || '',
+        { silent: true }
+    );
+}
+
+/* ── 5. NAV-RIGHT ICONS (contractors, equipment, notifications, themes, coords, user) ── */
+function initNavRightDrag() {
+    if (!currentUser || !currentUser.isAdmin) return;
+    const navRight = document.querySelector('.nav-right');
+    if (!navRight) return;
+
+    // Get all direct children divs (icon containers)
+    const items = [...navRight.querySelectorAll(':scope > div')];
+    if (items.length < 2) return;
+
+    makeDraggable(
+        items,
+        el => {
+            const btn = el.querySelector('.nav-icon-btn, .user-chip');
+            return btn ? (btn.id || btn.title || 'item') : 'item';
+        },
+        newOrder => {
+            // Reorder DOM elements
+            newOrder.forEach(key => {
+                const el = items.find(i => {
+                    const btn = i.querySelector('.nav-icon-btn, .user-chip');
+                    return btn && (btn.id === key || btn.title === key);
+                });
+                if (el) navRight.appendChild(el);
+            });
+            saveConfigToFile(true); // silent save
+        },
+        el => {
+            const btn = el.querySelector('.nav-icon-btn, .user-chip');
+            return btn ? (btn.title || btn.id || 'عنصر').slice(0, 40) : 'عنصر';
+        },
+        { silent: true, horizontal: true }
     );
 }
 
@@ -4305,16 +4426,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => { initLegendDrag(); }, 800);
 });
 
-// Also hook enterApp to init legend drag after login
-const _origEnterApp = enterApp;
-// Legend drag is initialized after app renders via the DOMContentLoaded above,
-// but we also need it after dynamic enters — patch enterApp's tail:
+// Also hook enterApp to init all drag systems after login
 const _afterEnterApp = () => {
     setTimeout(() => {
         initNavTabsDrag();
         initSidebarSectionsDrag();
         initSubitemsDrag();
         initLegendDrag();
+        initNavRightDrag();
     }, 600);
 };
 
@@ -4326,7 +4445,6 @@ const _afterEnterApp = () => {
         _afterEnterApp();
     };
 })();
-
 </script>
 </body>
 </html>
