@@ -20,6 +20,19 @@
       ]
     },
     {
+      "id": "mpdg44dboew44",
+      "name": "التدبيش",
+      "emoji": "📍",
+      "subitems": [
+        {
+          "id": "mpdg5sedgu0ed",
+          "name": "التركيب",
+          "sheetId": "18NytcWD339-RUtGpe56fiBpdSnFqT__yUWmz4Q4GOmQ",
+          "geoJsonFile": "ROADS.geojson"
+        }
+      ]
+    },
+    {
       "id": "cat_roads",
       "name": "الطرق",
       "emoji": "📍",
@@ -55,24 +68,30 @@
           "geoJsonFile": "ROADS.geojson"
         }
       ]
-    },
-    {
-      "id": "mpdg44dboew44",
-      "name": "التدبيش",
-      "emoji": "📍",
-      "subitems": [
-        {
-          "id": "mpdg5sedgu0ed",
-          "name": "التركيب",
-          "sheetId": "18NytcWD339-RUtGpe56fiBpdSnFqT__yUWmz4Q4GOmQ",
-          "geoJsonFile": "ROADS.geojson"
-        }
-      ]
     }
   ],
   "defaultCoords": {
     "lat": 21.3,
     "lng": 39.7,
     "zoom": 13
-  }
+  },
+  "selectedItems": {
+    "sub_r2": true
+  },
+  "selectedStatuses": [
+    "جاري",
+    "متاح",
+    "غير متاح",
+    "تم الانتهاء",
+    "متوقف"
+  ],
+  "activeContractorFilter": [],
+  "currentTheme": "",
+  "navRightOrder": [
+    "contractorBtn",
+    "equipmentBtn",
+    "notifBtn",
+    "themeBtn",
+    "coordsBtn"
+  ]
 }
