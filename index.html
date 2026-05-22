@@ -2376,6 +2376,8 @@ function togglePanel(id) {
         panel.classList.add("active");
         // Load equipment data when panel opens
         if (id === 'equipmentPanel') buildEquipmentPanel();
+        // Load cashflow data when panel opens
+        if (id === 'cashflowPanel') onCashflowPanelOpen();
     }
 }
 
@@ -3304,24 +3306,7 @@ function parseCashflowCSV(csv) {
     return { headers, rows };
 }
 
-// Reuse the existing CSV parser from fetchUsers
-function parseCSVLine(line) {
-    const result = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-            if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-            else inQ = !inQ;
-        } else if (ch === ',' && !inQ) {
-            result.push(cur.trim()); cur = '';
-        } else {
-            cur += ch;
-        }
-    }
-    result.push(cur.trim());
-    return result;
-}
+// Using the existing parseCSVLine from fetchUsers
 
 function renderCashflowTable(type, data) {
     const container = document.getElementById('cashflow-' + type);
@@ -3354,19 +3339,14 @@ function renderCashflowTable(type, data) {
     container.innerHTML = html;
 }
 
-// Hook into togglePanel to load cashflow data when panel opens
-const _origTogglePanel = togglePanel;
-window.togglePanel = function(id) {
-    _origTogglePanel(id);
-    if (id === 'cashflowPanel') {
-        // Auto-load contractors tab by default
-        setTimeout(() => {
-            if (!cashflowData.contractors) {
-                loadCashflowData('contractors', CASHFLOW_CONTRACTORS_SHEET);
-            }
-        }, 100);
-    }
-};
+// Cashflow panel auto-load (called from the original togglePanel)
+function onCashflowPanelOpen() {
+    setTimeout(() => {
+        if (!cashflowData.contractors) {
+            loadCashflowData('contractors', CASHFLOW_CONTRACTORS_SHEET);
+        }
+    }, 100);
+}
 
 /* ====================================================
    NOTIFICATIONS — from dedicated sheet (column A, each row = one notification)
