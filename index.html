@@ -1862,147 +1862,317 @@
             color: #7dffb3;
         }
 
-        /* ── Cash Flow Panel ── */
-        .cashflow-panel {
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0;
-            width: 520px;
-            max-width: 90vw;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-            z-index: 9999;
-            overflow: hidden;
-            display: none;
-            max-height: 70vh;
-            flex-direction: column;
+        /* ── Cash Flow (removed - replaced by modal) ── */
+
+        /* ========== CASHFLOW DASHBOARD MODAL ========== */
+        .cf-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10,5,20,0.72);
+            backdrop-filter: blur(6px);
+            z-index: 1;
         }
 
-        .cashflow-panel.active { display: flex; animation: dropFade 0.2s ease-out; }
+        .cf-modal-wrap {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            margin: 24px auto;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(1100px, 96vw);
+            max-height: calc(100vh - 48px);
+            background: #0d0d1a;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07);
+            animation: cfSlideIn 0.28s cubic-bezier(0.34,1.2,0.64,1);
+        }
 
-        .cashflow-panel-header {
-            background: linear-gradient(135deg, #1a4a2e 0%, #1e6b3a 100%);
-            padding: 10px 14px;
-            font-size: 13px;
-            font-weight: 700;
-            color: white;
-            flex-shrink: 0;
+        @keyframes cfSlideIn {
+            from { opacity:0; transform:translateX(-50%) translateY(24px) scale(0.97); }
+            to   { opacity:1; transform:translateX(-50%) translateY(0)    scale(1);    }
+        }
+
+        /* ── Header ── */
+        .cf-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #12012a 0%, #1e0848 50%, #0d1f3c 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            flex-shrink: 0;
+            gap: 16px;
         }
 
-        .cashflow-panel-sub {
-            font-size: 10px;
-            opacity: 0.75;
+        .cf-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .cf-header-icon {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, #f5c842 0%, #e8a800 100%);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(245,200,66,0.35);
+        }
+
+        .cf-header-title {
+            font-size: 17px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: 0.3px;
+        }
+
+        .cf-header-sub {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 2px;
             font-weight: 600;
         }
 
-        .cashflow-tabs {
+        .cf-header-actions {
             display: flex;
-            background: #f5f5f5;
-            border-bottom: 1px solid var(--border);
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cf-tab-pills {
+            display: flex;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .cf-tab-pill {
+            padding: 7px 18px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .cf-tab-pill:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.07); }
+
+        .cf-tab-pill.active {
+            background: linear-gradient(135deg, #6a2d91 0%, #8b44b8 100%);
+            color: white;
+            box-shadow: 0 2px 12px rgba(106,45,145,0.45);
+        }
+
+        .cf-tab-icon { font-size: 14px; }
+
+        .cf-close-btn {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.18s ease;
             flex-shrink: 0;
         }
 
-        .cashflow-tab {
-            flex: 1;
-            padding: 8px 12px;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-soft);
-            cursor: pointer;
-            text-align: center;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
-            background: none;
-            border-top: none;
-            border-left: none;
-            border-right: none;
-            font-family: 'Cairo', sans-serif;
+        .cf-close-btn:hover { background: rgba(244,67,54,0.25); border-color: rgba(244,67,54,0.4); color: #ff6b6b; }
+
+        /* ── KPI Row ── */
+        .cf-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
         }
 
-        .cashflow-tab:hover { background: rgba(106,45,145,0.05); color: var(--purple); }
-
-        .cashflow-tab.active {
-            color: var(--purple);
-            border-bottom-color: var(--purple);
-            background: white;
+        .cf-kpi-card {
+            background: #0d0d1a;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .cashflow-content {
-            overflow-y: auto;
-            flex: 1;
-            display: none;
+        .cf-kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
         }
 
-        .cashflow-content.active { display: block; }
+        .cf-kpi-total::before  { background: linear-gradient(90deg, #6a2d91, #8b44b8); }
+        .cf-kpi-paid::before   { background: linear-gradient(90deg, #1a7a4a, #27ae6a); }
+        .cf-kpi-remaining::before { background: linear-gradient(90deg, #1a4a8a, #2196f3); }
+        .cf-kpi-pct::before    { background: linear-gradient(90deg, #b8860b, #f5c842); }
 
-        .cashflow-content::-webkit-scrollbar { width: 5px; }
-        .cashflow-content::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
-
-        .cashflow-table-wrap {
-            padding: 10px;
-        }
-
-        .cashflow-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-        }
-
-        .cashflow-table th {
-            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
-            color: white;
-            padding: 8px 10px;
-            text-align: right;
-            font-weight: 700;
+        .cf-kpi-label {
             font-size: 10px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
         }
 
-        .cashflow-table th:first-child { border-radius: 6px 0 0 0; }
-        .cashflow-table th:last-child { border-radius: 0 6px 0 0; }
+        .cf-kpi-value {
+            font-size: 22px;
+            font-weight: 900;
+            color: white;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
 
-        .cashflow-table td {
-            padding: 6px 10px;
-            border-bottom: 1px solid #f0f0f0;
-            text-align: right;
-            color: var(--text);
+        .cf-kpi-bar-wrap {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .cf-kpi-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f5c842, #f39c12);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        /* ── Body / Table ── */
+        .cf-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cf-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+        }
+
+        .cf-content.active { display: block; }
+
+        .cf-content::-webkit-scrollbar { width: 5px; }
+        .cf-content::-webkit-scrollbar-track { background: #0d0d1a; }
+        .cf-content::-webkit-scrollbar-thumb { background: rgba(106,45,145,0.6); border-radius: 10px; }
+
+        .cf-loading {
+            text-align: center;
+            color: rgba(255,255,255,0.35);
+            font-size: 13px;
+            padding: 60px 20px;
             font-weight: 600;
         }
 
-        .cashflow-table tr:hover td { background: rgba(106,45,145,0.04); }
-
-        .cashflow-table tr:nth-child(even) td { background: #fafafa; }
-        .cashflow-table tr:nth-child(even):hover td { background: rgba(106,45,145,0.06); }
-
-        .cashflow-empty {
-            padding: 30px;
+        .cf-error {
             text-align: center;
-            color: var(--text-soft);
-            font-size: 12px;
-        }
-
-        .cashflow-loading {
-            padding: 20px;
-            text-align: center;
-            color: var(--text-soft);
-            font-size: 12px;
-        }
-
-        .cashflow-error {
-            padding: 20px;
-            text-align: center;
-            color: var(--red);
-            font-size: 12px;
+            color: #ff6b6b;
+            font-size: 13px;
+            padding: 60px 20px;
             font-weight: 700;
         }
 
+        .cf-empty {
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            font-size: 13px;
+            padding: 60px 20px;
+        }
+
+        /* ── Table ── */
+        .cf-table-wrap {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .cf-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 600px;
+        }
+
+        .cf-table thead tr {
+            background: linear-gradient(135deg, #1e0848 0%, #12012a 100%);
+        }
+
+        .cf-table th {
+            padding: 12px 14px;
+            text-align: right;
+            font-weight: 800;
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+
+        .cf-table th:first-child { border-radius: 12px 0 0 0; }
+        .cf-table th:last-child  { border-radius: 0 12px 0 0; }
+
+        .cf-table tbody tr {
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            transition: background 0.15s ease;
+        }
+
+        .cf-table tbody tr:last-child { border-bottom: none; }
+
+        .cf-table tbody tr:hover { background: rgba(106,45,145,0.12); }
+
+        .cf-table td {
+            padding: 11px 14px;
+            text-align: right;
+            color: rgba(255,255,255,0.8);
+            font-weight: 600;
+        }
+
+        /* Number cells highlighted */
+        .cf-table td.cf-num {
+            color: #f5c842;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .cf-table td.cf-num-green  { color: #5cc890; font-weight: 700; }
+        .cf-table td.cf-num-blue   { color: #5baddf; font-weight: 700; }
+
+        /* Row index column */
+        .cf-table td:first-child, .cf-table th:first-child {
+            color: rgba(255,255,255,0.35);
+            font-size: 10px;
+            width: 36px;
+            text-align: center;
+        }
+
         @media (max-width: 768px) {
+            .cf-modal-wrap { margin: 0; border-radius: 16px 16px 0 0; top: auto; bottom: 0; max-height: 90vh; }
+            .cf-kpi-row { grid-template-columns: repeat(2,1fr); }
+            .cf-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
             .main-content { flex-direction: column; }
             .left-section  { flex: 1; }
             .right-sidebar { width: 100%; height: auto; flex-shrink: 0; border-right: none; border-top: 2px solid var(--border); flex-direction: row; overflow-x: auto; }
@@ -2073,10 +2243,7 @@
         <div class="nav-logo">
             <img src="logo-left.png" id="navLogo" alt="شعار" onerror="this.style.display='none';document.getElementById('navLogoFallback').style.display='block'">
             <span class="logo-fallback" id="navLogoFallback" style="display:none">👑</span>
-            <div class="nav-logo-text">
-                <span class="nav-logo-title">مشروع ولي العهد</span>
-                <span class="nav-logo-sub">الخريطة التفاعلية</span>
-            </div>
+
         </div>
 
         <!-- Category tabs (dynamic) -->
@@ -2089,23 +2256,7 @@
             <div class="nav-right-group" id="toolsGroup">
                 <!-- Cash Flow button -->
                 <div style="position:relative" title="التدفقات النقدية">
-                    <div class="nav-icon-btn" id="cashflowBtn" onclick="togglePanel('cashflowPanel')">💰</div>
-                    <div class="cashflow-panel" id="cashflowPanel">
-                        <div class="cashflow-panel-header">
-                            <span>💰 التدفقات النقدية</span>
-                            <span class="cashflow-panel-sub" id="cashflowPanelSub">اختر نوع التدفق</span>
-                        </div>
-                        <div class="cashflow-tabs">
-                            <button class="cashflow-tab active" data-tab="contractors" onclick="switchCashflowTab('contractors')">المقاولين</button>
-                            <button class="cashflow-tab" data-tab="company" onclick="switchCashflowTab('company')">الشركة</button>
-                        </div>
-                        <div class="cashflow-content active" id="cashflow-contractors">
-                            <div class="cashflow-loading">⏳ جاري تحميل بيانات المقاولين...</div>
-                        </div>
-                        <div class="cashflow-content" id="cashflow-company">
-                            <div class="cashflow-loading">⏳ جاري تحميل بيانات الشركة...</div>
-                        </div>
-                    </div>
+                    <div class="nav-icon-btn" id="cashflowBtn" onclick="openCashflowModal()">💰</div>
                 </div>
 
                 <!-- Contractor button -->
@@ -2368,6 +2519,68 @@
     </div>
 </div>
 
+<!-- CASHFLOW DASHBOARD MODAL -->
+<div class="modal" id="cashflowModal" style="z-index:60000;padding:0;align-items:stretch;justify-content:stretch;">
+    <div class="cf-modal-overlay" onclick="closeCashflowModal()"></div>
+    <div class="cf-modal-wrap">
+
+        <!-- Modal Header -->
+        <div class="cf-header">
+            <div class="cf-header-left">
+                <div class="cf-header-icon">💰</div>
+                <div>
+                    <div class="cf-header-title">لوحة التدفقات النقدية</div>
+                    <div class="cf-header-sub" id="cfLastUpdate">جاري التحميل...</div>
+                </div>
+            </div>
+            <div class="cf-header-actions">
+                <div class="cf-tab-pills">
+                    <button class="cf-tab-pill active" data-tab="contractors" onclick="switchCfTab('contractors')">
+                        <span class="cf-tab-icon">👷</span> المقاولون
+                    </button>
+                    <button class="cf-tab-pill" data-tab="company" onclick="switchCfTab('company')">
+                        <span class="cf-tab-icon">🏢</span> الشركة
+                    </button>
+                </div>
+                <button class="cf-close-btn" onclick="closeCashflowModal()" title="إغلاق">✕</button>
+            </div>
+        </div>
+
+        <!-- KPI Summary Row -->
+        <div class="cf-kpi-row" id="cfKpiRow">
+            <div class="cf-kpi-card cf-kpi-total">
+                <div class="cf-kpi-label">إجمالي العقود</div>
+                <div class="cf-kpi-value" id="cfKpiTotal">—</div>
+            </div>
+            <div class="cf-kpi-card cf-kpi-paid">
+                <div class="cf-kpi-label">المدفوع</div>
+                <div class="cf-kpi-value" id="cfKpiPaid">—</div>
+            </div>
+            <div class="cf-kpi-card cf-kpi-remaining">
+                <div class="cf-kpi-label">المتبقي</div>
+                <div class="cf-kpi-value" id="cfKpiRemaining">—</div>
+            </div>
+            <div class="cf-kpi-card cf-kpi-pct">
+                <div class="cf-kpi-label">نسبة الصرف</div>
+                <div class="cf-kpi-value" id="cfKpiPct">—</div>
+                <div class="cf-kpi-bar-wrap">
+                    <div class="cf-kpi-bar" id="cfKpiBar" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="cf-body">
+            <div class="cf-content active" id="cf-contractors">
+                <div class="cf-loading">⏳ جاري تحميل بيانات المقاولين...</div>
+            </div>
+            <div class="cf-content" id="cf-company">
+                <div class="cf-loading">⏳ جاري تحميل بيانات الشركة...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Hidden file inputs -->
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importConfig(event)">
 <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
@@ -2460,20 +2673,18 @@ function togglePanel(id) {
     const panel = document.getElementById(id);
     const isOpen = panel.classList.contains("active");
     // Close all panels first
-    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel,.cashflow-panel').forEach(p => p.classList.remove('active'));
-    if (!isOpen) {
+    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel').forEach(p => p.classList.remove('active'));
+        if (!isOpen) {
         panel.classList.add("active");
         // Load equipment data when panel opens
         if (id === 'equipmentPanel') buildEquipmentPanel();
-        // Load cashflow data when panel opens
-        if (id === 'cashflowPanel') onCashflowPanelOpen();
     }
 }
 
 // Close panels when clicking outside
 document.addEventListener("click", e => {
     if (!e.target.closest('.nav-right')) {
-        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel,.cashflow-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel').forEach(p => p.classList.remove('active'));
     }
     if (!e.target.closest('.search-wrap')) {
         document.getElementById("searchDropdown").classList.remove("active");
@@ -3319,120 +3530,226 @@ function toggleContractor(el) {
 }
 
 /* ====================================================
-   CASH FLOW PANEL
+   CASH FLOW DASHBOARD MODAL
    ==================================================== */
 
 const CASHFLOW_CONTRACTORS_SHEET = "1xmSUQNR02prdGK9P6QiJo8ybVKwdVZAE74yUkUTbVYA";
 const CASHFLOW_COMPANY_SHEET     = "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA";
 
-let cashflowData = {
-    contractors: null,
-    company: null
-};
+let cashflowData = { contractors: null, company: null };
+let cfActiveTab  = 'contractors';
 
-function switchCashflowTab(tab) {
-    document.querySelectorAll('.cashflow-tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.tab === tab);
-    });
-    document.querySelectorAll('.cashflow-content').forEach(c => {
-        c.classList.toggle('active', c.id === 'cashflow-' + tab);
-    });
-
-    const subEl = document.getElementById('cashflowPanelSub');
-    subEl.textContent = tab === 'contractors' ? 'التدفقات النقدية للمقاولين' : 'التدفقات النقدية للشركة';
-
-    // Load data if not loaded yet
-    if (tab === 'contractors' && !cashflowData.contractors) {
-        loadCashflowData('contractors', CASHFLOW_CONTRACTORS_SHEET);
-    } else if (tab === 'company' && !cashflowData.company) {
-        loadCashflowData('company', CASHFLOW_COMPANY_SHEET);
+function openCashflowModal() {
+    document.getElementById('cashflowModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    // load active tab data
+    if (!cashflowData[cfActiveTab]) {
+        const sheetId = cfActiveTab === 'contractors' ? CASHFLOW_CONTRACTORS_SHEET : CASHFLOW_COMPANY_SHEET;
+        loadCfData(cfActiveTab, sheetId);
+    } else {
+        renderCfKpis(cfActiveTab);
     }
 }
 
-async function loadCashflowData(type, sheetId) {
-    const container = document.getElementById('cashflow-' + type);
-    container.innerHTML = '<div class="cashflow-loading">⏳ جاري تحميل البيانات...</div>';
+function closeCashflowModal() {
+    document.getElementById('cashflowModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCashflowModal();
+});
+
+function switchCfTab(tab) {
+    cfActiveTab = tab;
+    document.querySelectorAll('.cf-tab-pill').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    document.querySelectorAll('.cf-content').forEach(c => {
+        c.classList.toggle('active', c.id === 'cf-' + tab);
+    });
+    if (!cashflowData[tab]) {
+        const sheetId = tab === 'contractors' ? CASHFLOW_CONTRACTORS_SHEET : CASHFLOW_COMPANY_SHEET;
+        loadCfData(tab, sheetId);
+    } else {
+        renderCfKpis(tab);
+    }
+}
+
+async function loadCfData(type, sheetId) {
+    const container = document.getElementById('cf-' + type);
+    container.innerHTML = '<div class="cf-loading">⏳ جاري تحميل البيانات...</div>';
+    // Reset KPIs
+    ['cfKpiTotal','cfKpiPaid','cfKpiRemaining','cfKpiPct'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '—';
+    });
+    const bar = document.getElementById('cfKpiBar');
+    if (bar) bar.style.width = '0%';
 
     try {
         const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-        const r = await fetch(url);
+        const r   = await fetch(url);
         if (!r.ok) throw new Error('Failed to fetch');
         const csv = await r.text();
-
         if (csv.trim().startsWith('<')) {
-            container.innerHTML = '<div class="cashflow-error">⚠️ الشيت يحتاج إعداد المشاركة العامة</div>';
+            container.innerHTML = '<div class="cf-error">⚠️ الشيت يحتاج إعداد المشاركة العامة</div>';
             return;
         }
-
-        const data = parseCashflowCSV(csv);
+        const data = parseCfCSV(csv);
         cashflowData[type] = data;
-        renderCashflowTable(type, data);
-    } catch (e) {
+        renderCfKpis(type);
+        renderCfTable(type, data);
+        document.getElementById('cfLastUpdate').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA');
+    } catch(e) {
         console.error('Cashflow load error:', e);
-        container.innerHTML = '<div class="cashflow-error">❌ تعذر تحميل البيانات — تأكد من إعدادات الشيت</div>';
+        container.innerHTML = '<div class="cf-error">❌ تعذر تحميل البيانات — تأكد من إعدادات الشيت</div>';
     }
 }
 
-function parseCashflowCSV(csv) {
+function parseCfCSV(csv) {
     const lines = csv.split('\n').filter(l => l.trim());
     if (!lines.length) return { headers: [], rows: [] };
-
-    // Parse headers
     const headers = parseCSVLine(lines[0]);
-
-    // Parse rows
     const rows = [];
     for (let i = 1; i < lines.length; i++) {
         const values = parseCSVLine(lines[i]);
         const row = {};
-        headers.forEach((h, idx) => {
-            row[h] = values[idx] || '';
-        });
+        headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
         rows.push(row);
     }
-
     return { headers, rows };
 }
 
-function renderCashflowTable(type, data) {
-    const container = document.getElementById('cashflow-' + type);
+/* ── Smart KPI detection: scan all columns for money-like totals ── */
+function renderCfKpis(type) {
+    const data = cashflowData[type];
+    if (!data || !data.rows.length) return;
 
-    if (!data.rows.length) {
-        container.innerHTML = '<div class="cashflow-empty">لا توجد بيانات</div>';
+    // Try to detect numeric columns that look like money
+    const numericCols = data.headers.filter(h => {
+        let hasNum = false;
+        data.rows.slice(0, 10).forEach(row => {
+            const v = (row[h] || '').replace(/,/g, '');
+            if (!isNaN(parseFloat(v)) && parseFloat(v) > 0) hasNum = true;
+        });
+        return hasNum;
+    });
+
+    if (numericCols.length === 0) {
+        // Can't compute KPIs — hide KPI row
+        document.getElementById('cfKpiRow').style.display = 'none';
         return;
     }
 
-    // Build table HTML - display exactly as in sheet
-    let html = '<div class="cashflow-table-wrap"><table class="cashflow-table"><thead><tr>';
-    data.headers.forEach(h => {
-        html += `<th>${h}</th>`;
-    });
-    html += '</tr></thead><tbody>';
+    document.getElementById('cfKpiRow').style.display = 'grid';
 
-    data.rows.forEach(row => {
-        html += '<tr>';
-        data.headers.forEach(h => {
-            const val = row[h] || '';
-            // Format numbers
-            const num = parseFloat(val.replace(/,/g, ''));
-            const display = (!isNaN(num) && val !== '') ? num.toLocaleString('en-US') : val;
-            html += `<td>${display}</td>`;
+    // Sum each numeric column
+    const colSums = {};
+    numericCols.forEach(col => {
+        let s = 0;
+        data.rows.forEach(row => {
+            const v = parseFloat((row[col] || '').replace(/,/g, ''));
+            if (!isNaN(v)) s += v;
         });
-        html += '</tr>';
+        colSums[col] = s;
     });
 
-    html += '</tbody></table></div>';
+    const sums = Object.values(colSums).sort((a, b) => b - a);
+
+    // Heuristic: biggest sum = total, second biggest = paid, difference = remaining
+    const total     = sums[0] || 0;
+    const paid      = sums[1] || 0;
+    const remaining = Math.max(0, total - paid);
+    const pct       = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
+
+    const fmt = n => n >= 1_000_000
+        ? (n / 1_000_000).toFixed(1) + ' م'
+        : n.toLocaleString('en-US');
+
+    document.getElementById('cfKpiTotal').textContent     = fmt(total);
+    document.getElementById('cfKpiPaid').textContent      = fmt(paid);
+    document.getElementById('cfKpiRemaining').textContent = fmt(remaining);
+    document.getElementById('cfKpiPct').textContent       = pct + '%';
+
+    const bar = document.getElementById('cfKpiBar');
+    if (bar) {
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = pct + '%'; }, 80);
+        bar.style.background = pct < 30
+            ? 'linear-gradient(90deg,#e74c3c,#c0392b)'
+            : pct < 70
+            ? 'linear-gradient(90deg,#f39c12,#e67e22)'
+            : 'linear-gradient(90deg,#27ae60,#1e8449)';
+    }
+}
+
+/* ── Render table with smart number detection & color coding ── */
+function renderCfTable(type, data) {
+    const container = document.getElementById('cf-' + type);
+    if (!data.rows.length) {
+        container.innerHTML = '<div class="cf-empty">لا توجد بيانات</div>';
+        return;
+    }
+
+    // Detect which columns are numeric
+    const numericHeaders = new Set(data.headers.filter(h => {
+        let cnt = 0;
+        data.rows.slice(0, Math.min(15, data.rows.length)).forEach(row => {
+            const v = (row[h] || '').replace(/,/g, '');
+            if (!isNaN(parseFloat(v)) && v.trim() !== '') cnt++;
+        });
+        return cnt > data.rows.length * 0.3;
+    }));
+
+    const numericCols = [...numericHeaders];
+    const colSums = {};
+    numericCols.forEach(col => {
+        let s = 0;
+        data.rows.forEach(row => {
+            const v = parseFloat((row[col] || '').replace(/,/g, ''));
+            if (!isNaN(v)) s += v;
+        });
+        colSums[col] = s;
+    });
+    const maxSum = Math.max(...Object.values(colSums), 1);
+
+    // Assign color classes: highest-sum col = gold, 2nd = green, 3rd = blue
+    const sortedCols = numericCols.sort((a, b) => colSums[b] - colSums[a]);
+    const colClass = {};
+    if (sortedCols[0]) colClass[sortedCols[0]] = '';          // gold (default cf-num)
+    if (sortedCols[1]) colClass[sortedCols[1]] = 'cf-num-green';
+    if (sortedCols[2]) colClass[sortedCols[2]] = 'cf-num-blue';
+
+    let html = `<div class="cf-table-wrap"><table class="cf-table"><thead><tr>
+        <th>#</th>`;
+    data.headers.forEach(h => { html += `<th>${h}</th>`; });
+    html += `</tr></thead><tbody>`;
+
+    data.rows.forEach((row, i) => {
+        html += `<tr><td>${i + 1}</td>`;
+        data.headers.forEach(h => {
+            const raw = row[h] || '';
+            const isNum = numericHeaders.has(h);
+            let display = raw;
+            if (isNum) {
+                const n = parseFloat(raw.replace(/,/g, ''));
+                display = !isNaN(n) ? n.toLocaleString('en-US') : raw;
+            }
+            const cls = isNum ? ('cf-num ' + (colClass[h] || '')) : '';
+            html += `<td class="${cls}">${display}</td>`;
+        });
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
     container.innerHTML = html;
 }
 
-// Cashflow panel auto-load (called from the original togglePanel)
-function onCashflowPanelOpen() {
-    setTimeout(() => {
-        if (!cashflowData.contractors) {
-            loadCashflowData('contractors', CASHFLOW_CONTRACTORS_SHEET);
-        }
-    }, 100);
-}
+// Legacy compat — keep old function names harmless
+function switchCashflowTab(tab) { switchCfTab(tab); }
+function onCashflowPanelOpen()  { /* no-op: replaced by modal */ }
 
 /* ====================================================
    NOTIFICATIONS — from dedicated sheet (column A, each row = one notification)
