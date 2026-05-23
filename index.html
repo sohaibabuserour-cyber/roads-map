@@ -427,8 +427,8 @@
             flex-direction: column;
             z-index: 99999;
             border-top: 2px solid var(--purple);
-            overflow: visible;
-            max-height: 480px;
+            overflow: hidden;
+            max-height: 80vh;
             overflow-y: auto;
         }
 
@@ -469,23 +469,17 @@
             color: var(--purple);
             transition: transform 0.15s ease;
         }
-        .bunood-cat-row.bunood-cat-hover .bunood-cat-arrow { opacity: 1; transform: scale(1.2); }
+        .bunood-cat-row.bunood-cat-hover .bunood-cat-arrow { opacity: 1; }
+        .bunood-cat-row.bunood-cat-open .bunood-cat-arrow { opacity: 1; transform: rotate(90deg); color: var(--purple); }
 
-        /* القائمة الفرعية (مستوى 2) */
-        .bunood-sub-dd {
-            position: fixed;
-            min-width: 220px;
-            max-width: 280px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 12px 36px rgba(0,0,0,0.2), 0 0 0 1px rgba(106,45,145,0.12);
+        /* القائمة الفرعية (مستوى 2 - inline داخل القائمة الرئيسية) */
+        .bunood-sub-dd-inline {
             display: none;
             flex-direction: column;
-            z-index: 100000;
-            border-right: 2px solid var(--purple);
+            background: rgba(106,45,145,0.04);
+            border-right: 3px solid var(--purple-light);
+            margin: 0;
             overflow: hidden;
-            max-height: 380px;
-            overflow-y: auto;
         }
 
         /* البنود الفرعية داخل مستوى 2 */
@@ -5508,52 +5502,23 @@ function renderNavTabs() {
             subDd.innerHTML = '<div style="padding:10px 14px;color:#aaa;font-size:11px;text-align:right">لا توجد بنود فرعية</div>';
         }
 
-        /* ── ربط الـ hover لإظهار/إخفاء القائمة الفرعية ── */
-        let subHideTimer = null;
-
-        const showSub = () => {
-            clearTimeout(subHideTimer);
-            // أخفِ أي قائمة فرعية أخرى مفتوحة
-            mainDd.querySelectorAll('.bunood-sub-dd').forEach(d => {
-                if (d !== subDd) { d.style.display = 'none'; }
-            });
-            mainDd.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-hover'));
-            catRow.classList.add('bunood-cat-hover');
-
-            // حساب الموضع
-            const catRect   = catRow.getBoundingClientRect();
-            const mainRect  = mainDd.getBoundingClientRect();
-            subDd.style.display = 'block';
-            subDd.style.top     = catRect.top + 'px';
-
-            // هل نفتح يسار أم يمين؟
-            const subW  = 220;
-            const spaceLeft  = mainRect.left;
-            const spaceRight = window.innerWidth - mainRect.right;
-            if (spaceRight >= subW || spaceRight >= spaceLeft) {
-                subDd.style.left  = mainRect.right + 'px';
-                subDd.style.right = 'auto';
-            } else {
-                subDd.style.right = (window.innerWidth - mainRect.left) + 'px';
-                subDd.style.left  = 'auto';
+        /* ── كليك على البند الرئيسي يفتح/يغلق القائمة الفرعية داخل القائمة الرئيسية ── */
+        catRow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = catRow.classList.contains('bunood-cat-open');
+            // أغلق كل البنود الأخرى
+            mainDd.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-open','bunood-cat-hover'));
+            mainDd.querySelectorAll('.bunood-sub-dd-inline').forEach(d => { d.style.display = 'none'; });
+            if (!isOpen) {
+                catRow.classList.add('bunood-cat-open', 'bunood-cat-hover');
+                subDd.style.display = 'flex';
             }
-        };
-
-        const hideSub = () => {
-            subHideTimer = setTimeout(() => {
-                subDd.style.display = 'none';
-                catRow.classList.remove('bunood-cat-hover');
-            }, 120);
-        };
-
-        catRow.addEventListener('mouseenter', showSub);
-        catRow.addEventListener('mouseleave', hideSub);
-        subDd.addEventListener('mouseenter', () => { clearTimeout(subHideTimer); catRow.classList.add('bunood-cat-hover'); });
-        subDd.addEventListener('mouseleave', hideSub);
+        });
         subDd.addEventListener('click', e => e.stopPropagation());
 
+        subDd.className = 'bunood-sub-dd-inline';
         mainDd.appendChild(catRow);
-        document.body.appendChild(subDd); // نُلحق بـ body حتى لا تُقيّده حدود الوالد
+        mainDd.appendChild(subDd);
     });
 
     /* ── محتوى التاب ── */
@@ -5561,37 +5526,35 @@ function renderNavTabs() {
     tab.appendChild(mainDd);
     tabsEl.appendChild(tab);
 
-    /* ── موضع القائمة الرئيسية عند الـ hover ── */
-    let mainHideTimer = null;
-
-    tab.addEventListener('mouseenter', () => {
-        clearTimeout(mainHideTimer);
-        const rect = tab.getBoundingClientRect();
-        mainDd.style.left  = rect.left + 'px';
-        mainDd.style.right = 'auto';
-        mainDd.style.display = 'flex';
-        // تصحيح إذا تجاوز يمين الشاشة
-        setTimeout(() => {
-            const ddRect = mainDd.getBoundingClientRect();
-            if (ddRect.right > window.innerWidth - 8) {
-                mainDd.style.left = 'auto';
-                mainDd.style.right = (window.innerWidth - rect.right) + 'px';
-            }
-        }, 0);
+    /* ── كليك على التاب يفتح/يغلق القائمة الرئيسية ── */
+    tab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = mainDd.style.display === 'flex';
+        if (isOpen) {
+            mainDd.style.display = 'none';
+        } else {
+            const rect = tab.getBoundingClientRect();
+            mainDd.style.left  = rect.left + 'px';
+            mainDd.style.right = 'auto';
+            mainDd.style.display = 'flex';
+            setTimeout(() => {
+                const ddRect = mainDd.getBoundingClientRect();
+                if (ddRect.right > window.innerWidth - 8) {
+                    mainDd.style.left = 'auto';
+                    mainDd.style.right = (window.innerWidth - rect.right) + 'px';
+                }
+            }, 0);
+        }
     });
 
-    const hideMain = () => {
-        mainHideTimer = setTimeout(() => {
-            mainDd.style.display = 'none';
-            // أخفِ كل القوائم الفرعية
-            document.querySelectorAll('.bunood-sub-dd').forEach(d => d.style.display = 'none');
-        }, 150);
-    };
-
-    tab.addEventListener('mouseleave', hideMain);
-    mainDd.addEventListener('mouseenter', () => clearTimeout(mainHideTimer));
-    mainDd.addEventListener('mouseleave', hideMain);
     mainDd.addEventListener('click', e => e.stopPropagation());
+
+    /* ── كليك خارج القائمة يغلقها ── */
+    document.addEventListener('click', () => {
+        mainDd.style.display = 'none';
+        mainDd.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-open','bunood-cat-hover'));
+        mainDd.querySelectorAll('.bunood-sub-dd-inline').forEach(d => { d.style.display = 'none'; });
+    });
 }
 
 /* ONE SUBITEM GLOBALLY — but allow subitems in the SAME similar-group to coexist.
