@@ -408,11 +408,121 @@
             z-index: 99999;
             border-top: 2px solid var(--purple);
             overflow: hidden;
-            max-height: 320px;
+            max-height: 420px;
             overflow-y: auto;
         }
 
-        .nav-tab:hover .tab-sub-dropdown { display: flex; }
+        /* ── تاب البنود الموحد ── */
+        .nav-tab-bunood { user-select: none; }
+
+        /* القائمة الرئيسية (مستوى 1) */
+        .bunood-main-dd {
+            position: fixed;
+            top: 58px;
+            min-width: 230px;
+            background: white;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06);
+            display: none;
+            flex-direction: column;
+            z-index: 99999;
+            border-top: 2px solid var(--purple);
+            overflow: visible;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        /* صف البند الرئيسي */
+        .bunood-cat-row {
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: background 0.15s ease;
+            position: relative;
+        }
+        .bunood-cat-row:last-child { border-bottom: none; }
+        .bunood-cat-row:hover,
+        .bunood-cat-row.bunood-cat-hover { background: rgba(106,45,145,0.06); }
+        .bunood-cat-row.bunood-cat-active { background: rgba(106,45,145,0.1); }
+        .bunood-cat-row.bunood-cat-active .bunood-cat-label { color: var(--purple); font-weight: 800; }
+
+        .bunood-cat-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            flex: 1;
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-direction: row-reverse;
+        }
+
+        .bunood-cat-arrow {
+            font-size: 9px;
+            opacity: 0.4;
+            flex-shrink: 0;
+            color: var(--purple);
+            transition: transform 0.15s ease;
+        }
+        .bunood-cat-row.bunood-cat-hover .bunood-cat-arrow { opacity: 1; transform: scale(1.2); }
+
+        /* القائمة الفرعية (مستوى 2) */
+        .bunood-sub-dd {
+            position: fixed;
+            min-width: 220px;
+            max-width: 280px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.2), 0 0 0 1px rgba(106,45,145,0.12);
+            display: none;
+            flex-direction: column;
+            z-index: 100000;
+            border-right: 2px solid var(--purple);
+            overflow: hidden;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        /* البنود الفرعية داخل مستوى 2 */
+        .bunood-sub-item {
+            padding: 9px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+        .bunood-sub-item:last-child { border-bottom: none; }
+        .bunood-sub-item:hover { background: rgba(106,45,145,0.07); }
+        .bunood-sub-item label {
+            flex: 1;
+            cursor: pointer;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-direction: row-reverse;
+        }
+        .bunood-sub-item input[type="checkbox"] {
+            accent-color: var(--purple);
+            flex-shrink: 0;
+            width: 14px;
+            height: 14px;
+        }
 
         .tab-sub-item {
             padding: 10px 16px;
@@ -5337,63 +5447,151 @@ function removeLayer(sheetId) {
 
 function renderNavTabs() {
     const tabsEl = document.getElementById("navTabs");
+    // أزل القوائم الفرعية القديمة من body
+    document.querySelectorAll('.bunood-sub-dd').forEach(el => el.remove());
     tabsEl.innerHTML = "";
 
+    if (!categories.length) return;
+
+    /* ── تاب "البنود" الوحيد ── */
+    const hasAnyActive = categories.some(cat => cat.subitems.some(s => selectedItems[s.id]));
+
+    const tab = document.createElement("div");
+    tab.className = "nav-tab nav-tab-bunood" + (hasAnyActive ? " active" : "");
+    tab.id = "navTabBunood";
+
+    /* ── القائمة المنسدلة الرئيسية (مستوى 1: البنود الرئيسية) ── */
+    const mainDd = document.createElement("div");
+    mainDd.className = "tab-sub-dropdown bunood-main-dd";
+    mainDd.id = "bunoodMainDd";
+
     categories.forEach(cat => {
-        const tab = document.createElement("div");
-        tab.className = "nav-tab";
-        tab.dataset.catId = cat.id;
+        const catHasActive = cat.subitems.some(s => selectedItems[s.id]);
 
-        // Check if any subitem in this category is active
-        const hasActive = cat.subitems.some(s => selectedItems[s.id]);
-        if (hasActive) tab.classList.add("active");
+        /* ── صف البند الرئيسي ── */
+        const catRow = document.createElement("div");
+        catRow.className = "bunood-cat-row" + (catHasActive ? " bunood-cat-active" : "");
+        catRow.dataset.catId = cat.id;
+        catRow.innerHTML = `
+            <span class="bunood-cat-label">${cat.emoji} ${cat.number ? '<span style="font-size:9px;opacity:0.65;margin-left:3px;">['+cat.number+']</span>' : ''} ${cat.name}</span>
+            <span class="bunood-cat-arrow">&#x25B6;</span>`;
 
-        tab.innerHTML = `
-            <span>${cat.emoji} ${cat.name}</span>
-            <div class="tab-sub-dropdown" id="tabDrop_${cat.id}">
-                ${cat.subitems.map(sub => `
-                    <div class="tab-sub-item" data-sub-id="${sub.id}" data-cat-id="${cat.id}">
-                        <input type="checkbox" id="tabcb_${sub.id}"
-                            data-sub-id="${sub.id}"
-                            data-cat-id="${cat.id}"
-                            data-sheet="${sub.sheetId}"
-                            data-geo="${sub.geoJsonFile}"
-                            ${selectedItems[sub.id] ? 'checked' : ''}>
-                        <label for="tabcb_${sub.id}">${sub.name}</label>
-                    </div>`).join('')}
-                ${!cat.subitems.length ? '<div style="padding:12px;color:#aaa;font-size:11px;text-align:center">لا توجد بنود فرعية</div>' : ''}
-            </div>`;
+        /* ── القائمة الفرعية (مستوى 2: البنود الفرعية) ── */
+        const subDd = document.createElement("div");
+        subDd.className = "bunood-sub-dd";
+        subDd.id = "bunoodSubDd_" + cat.id;
 
-        tabsEl.appendChild(tab);
+        if (cat.subitems.length) {
+            cat.subitems.forEach(sub => {
+                const subRow = document.createElement("div");
+                subRow.className = "tab-sub-item bunood-sub-item";
+                subRow.innerHTML = `
+                    <input type="checkbox" id="tabcb_${sub.id}"
+                        data-sub-id="${sub.id}"
+                        data-cat-id="${cat.id}"
+                        data-sheet="${sub.sheetId}"
+                        data-geo="${sub.geoJsonFile}"
+                        ${selectedItems[sub.id] ? 'checked' : ''}>
+                    <label for="tabcb_${sub.id}">
+                        ${sub.number ? `<span style="font-size:9px;opacity:0.6;margin-left:4px;">${sub.number}</span>` : ''}
+                        ${sub.name}
+                    </label>`;
 
-        // Position dropdown using fixed coords based on tab position
-        const dd = tab.querySelector('.tab-sub-dropdown');
+                subRow.querySelector('input').addEventListener('change', function(e) {
+                    e.stopPropagation();
+                    handleSubitemToggle(this.dataset.catId, this.dataset.subId, this.dataset.sheet, this.dataset.geo, this.checked);
+                });
 
-        tab.addEventListener('mouseenter', () => {
-            const rect = tab.getBoundingClientRect();
-            dd.style.left = rect.left + 'px';
-            dd.style.right = 'auto';
-            // Make sure it doesn't overflow viewport on the right
-            setTimeout(() => {
-                const ddRect = dd.getBoundingClientRect();
-                if (ddRect.right > window.innerWidth - 8) {
-                    dd.style.left = 'auto';
-                    dd.style.right = (window.innerWidth - rect.right) + 'px';
-                }
-            }, 0);
-        });
-
-        // Prevent dropdown from closing on internal clicks
-        dd.addEventListener('click', e => e.stopPropagation());
-
-        // Handle checkbox changes in tab dropdown
-        tab.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', function(e) {
-                e.stopPropagation();
-                handleSubitemToggle(this.dataset.catId, this.dataset.subId, this.dataset.sheet, this.dataset.geo, this.checked);
+                subDd.appendChild(subRow);
             });
-        });
+        } else {
+            subDd.innerHTML = '<div style="padding:10px 14px;color:#aaa;font-size:11px;text-align:right">لا توجد بنود فرعية</div>';
+        }
+
+        /* ── ربط الـ hover لإظهار/إخفاء القائمة الفرعية ── */
+        let subHideTimer = null;
+
+        const showSub = () => {
+            clearTimeout(subHideTimer);
+            // أخفِ أي قائمة فرعية أخرى مفتوحة
+            mainDd.querySelectorAll('.bunood-sub-dd').forEach(d => {
+                if (d !== subDd) { d.style.display = 'none'; }
+            });
+            mainDd.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-hover'));
+            catRow.classList.add('bunood-cat-hover');
+
+            // حساب الموضع
+            const catRect   = catRow.getBoundingClientRect();
+            const mainRect  = mainDd.getBoundingClientRect();
+            subDd.style.display = 'block';
+            subDd.style.top     = catRect.top + 'px';
+
+            // هل نفتح يسار أم يمين؟
+            const subW  = 220;
+            const spaceLeft  = mainRect.left;
+            const spaceRight = window.innerWidth - mainRect.right;
+            if (spaceRight >= subW || spaceRight >= spaceLeft) {
+                subDd.style.left  = mainRect.right + 'px';
+                subDd.style.right = 'auto';
+            } else {
+                subDd.style.right = (window.innerWidth - mainRect.left) + 'px';
+                subDd.style.left  = 'auto';
+            }
+        };
+
+        const hideSub = () => {
+            subHideTimer = setTimeout(() => {
+                subDd.style.display = 'none';
+                catRow.classList.remove('bunood-cat-hover');
+            }, 120);
+        };
+
+        catRow.addEventListener('mouseenter', showSub);
+        catRow.addEventListener('mouseleave', hideSub);
+        subDd.addEventListener('mouseenter', () => { clearTimeout(subHideTimer); catRow.classList.add('bunood-cat-hover'); });
+        subDd.addEventListener('mouseleave', hideSub);
+        subDd.addEventListener('click', e => e.stopPropagation());
+
+        mainDd.appendChild(catRow);
+        document.body.appendChild(subDd); // نُلحق بـ body حتى لا تُقيّده حدود الوالد
     });
+
+    /* ── محتوى التاب ── */
+    tab.innerHTML = `<span>📋 البنود</span>`;
+    tab.appendChild(mainDd);
+    tabsEl.appendChild(tab);
+
+    /* ── موضع القائمة الرئيسية عند الـ hover ── */
+    let mainHideTimer = null;
+
+    tab.addEventListener('mouseenter', () => {
+        clearTimeout(mainHideTimer);
+        const rect = tab.getBoundingClientRect();
+        mainDd.style.left  = rect.left + 'px';
+        mainDd.style.right = 'auto';
+        mainDd.style.display = 'flex';
+        // تصحيح إذا تجاوز يمين الشاشة
+        setTimeout(() => {
+            const ddRect = mainDd.getBoundingClientRect();
+            if (ddRect.right > window.innerWidth - 8) {
+                mainDd.style.left = 'auto';
+                mainDd.style.right = (window.innerWidth - rect.right) + 'px';
+            }
+        }, 0);
+    });
+
+    const hideMain = () => {
+        mainHideTimer = setTimeout(() => {
+            mainDd.style.display = 'none';
+            // أخفِ كل القوائم الفرعية
+            document.querySelectorAll('.bunood-sub-dd').forEach(d => d.style.display = 'none');
+        }, 150);
+    };
+
+    tab.addEventListener('mouseleave', hideMain);
+    mainDd.addEventListener('mouseenter', () => clearTimeout(mainHideTimer));
+    mainDd.addEventListener('mouseleave', hideMain);
+    mainDd.addEventListener('click', e => e.stopPropagation());
 }
 
 /* ONE SUBITEM GLOBALLY — but allow subitems in the SAME similar-group to coexist.
@@ -6058,26 +6256,7 @@ function makeDraggable(items, getKey, onReorder, getLabel, options = {}) {
 
 /* ── 1. NAV TABS (category order) ── */
 function initNavTabsDrag() {
-    if (!currentUser || !currentUser.isAdmin) return;
-    const tabsEl = document.getElementById('navTabs');
-    if (!tabsEl) return;
-
-    const items = [...tabsEl.querySelectorAll('.nav-tab')];
-    makeDraggable(
-        items,
-        el => el.dataset.catId,
-        newCatIds => {
-            categories = newCatIds
-                .map(id => categories.find(c => c.id === id))
-                .filter(Boolean);
-            renderNavTabs();
-            renderItems();
-            initNavTabsDrag();
-            saveConfigToFile(true); // silent save
-        },
-        el => el.textContent.trim().slice(0, 40),
-        { silent: true }
-    );
+    // تاب البنود الآن عنصر واحد فقط — الترتيب يتم عبر السايدبار
 }
 
 /* ── 2. SIDEBAR SECTIONS (category order, same as tabs) ── */
