@@ -2399,7 +2399,7 @@
                         <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم...">
                         <div class="search-dropdown" id="searchDropdown"></div>
                     </div>
-                    <!-- Progress Ring -->
+                    <!-- Progress Ring - Execution -->
                     <div class="progress-ring-wrap" id="progressRingWrap">
                         <svg class="progress-ring-svg" width="38" height="38" viewBox="0 0 38 38">
                             <circle class="progress-ring-circle-bg" cx="19" cy="19" r="15"/>
@@ -2409,6 +2409,18 @@
                         <div class="progress-ring-text">
                             <span class="progress-ring-pct" id="progressRingPct">0%</span>
                             <span class="progress-ring-label">نسبة التنفيذ</span>
+                        </div>
+                    </div>
+                    <!-- Progress Ring - Financial -->
+                    <div class="progress-ring-wrap" id="financialRingWrap" style="background:linear-gradient(135deg,#1a4a2e 0%,#1e6b3a 100%);">
+                        <svg class="progress-ring-svg" width="38" height="38" viewBox="0 0 38 38">
+                            <circle class="progress-ring-circle-bg" cx="19" cy="19" r="15"/>
+                            <circle class="progress-ring-circle" id="financialRingCircle" cx="19" cy="19" r="15"
+                                stroke-dasharray="94.25" stroke-dashoffset="94.25" style="stroke:#7dffb3"/>
+                        </svg>
+                        <div class="progress-ring-text">
+                            <span class="progress-ring-pct" id="financialRingPct" style="color:#7dffb3">0%</span>
+                            <span class="progress-ring-label">نسبة الصرف</span>
                         </div>
                     </div>
                 </div>
@@ -2494,8 +2506,8 @@
             <input type="text" id="inSubName" placeholder="مثال: الردم">
         </div>
         <div class="modal-field">
-            <label>القيمة الإجمالية للبند (ريال)</label>
-            <input type="number" id="inSubPrice" placeholder="مثال: 5000000" min="0" step="1">
+            <label>سعر الوحدة (ريال / وحدة)</label>
+            <input type="number" id="inSubPrice" placeholder="مثال: 250" min="0" step="0.01">
         </div>
         <div class="modal-field">
             <label>رابط Google Sheet</label>
@@ -3907,7 +3919,9 @@ function importConfig(e) {
 /* ── helper: calc totals for a subitem, respecting contractor filter & status filter ── */
 function calcSubTotals(sub) {
     let total = 0, done = 0;
-    if (!allData[sub.sheetId]) return { total, done };
+    if (!allData[sub.sheetId]) return { total, done, financialTotal: 0, financialDone: 0 };
+
+    const unitPrice = sub.unitPrice || 0;
 
     // Build set of active contractors for this sheet (if filter is on)
     const filterOn = activeContractorFilter && activeContractorFilter.size > 0;
@@ -3932,18 +3946,32 @@ function calcSubTotals(sub) {
         done  += toNum(row["DONE-QTY"]);
     });
 
-    return { total, done };
+    // القيمة المالية = الكمية × سعر الوحدة
+    const financialTotal = unitPrice > 0 ? total * unitPrice : 0;
+    const financialDone  = unitPrice > 0 ? done  * unitPrice : 0;
+
+    return { total, done, financialTotal, financialDone };
 }
 
 /* ── build one stat card element ── */
-function makeStatCard(title, subtitle, total, done, isTotal = false, subPct = null) {
+function makeStatCard(title, subtitle, total, done, isTotal = false, subPct = null, financialTotal = 0, financialDone = 0) {
     const card = document.createElement("div");
     card.className = "stats-group" + (isTotal ? " stats-group-total" : "");
 
     // نسبة الإنجاز من الكمية
     const execPct = total > 0 ? Math.round((done / total) * 100) : 0;
 
-    // نسبة القيمة المالية (subPct) — تُعرض فقط إن وُجدت
+    // نسبة الصرف المالي الفعلي
+    const financialPct = financialTotal > 0 ? Math.round((financialDone / financialTotal) * 100) : 0;
+
+    // تنسيق المبالغ المالية
+    const fmtMoney = n => n >= 1_000_000
+        ? (n / 1_000_000).toFixed(2) + ' م'
+        : n >= 1_000
+        ? (n / 1_000).toFixed(1) + ' ألف'
+        : fmtNum(n);
+
+    // نسبة القيمة المالية للمشروع ككل (subPct) — تُعرض فقط إن وُجدت
     const pctBadge = subPct !== null
         ? `<span style="
                 display:inline-flex;align-items:center;gap:4px;
@@ -3965,6 +3993,23 @@ function makeStatCard(title, subtitle, total, done, isTotal = false, subPct = nu
         ⚙️ ${execPct}% منفذ
       </span>`;
 
+    // صف القيمة المالية — يظهر فقط إن وُجد سعر وحدة
+    const financialRow = financialTotal > 0 ? `
+        <div class="stat-row" style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.15);">
+            <div class="stat-item">
+                <div class="stat-label" style="color:rgba(125,255,179,0.8)">القيمة الإجمالية</div>
+                <div class="stat-value" style="color:#7dffb3;font-size:12px">${fmtMoney(financialTotal)}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label" style="color:rgba(125,255,179,0.8)">المصروف</div>
+                <div class="stat-value" style="color:#7dffb3;font-size:12px">${fmtMoney(financialDone)}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label" style="color:rgba(125,255,179,0.8)">نسبة الصرف</div>
+                <div class="stat-value" style="color:#7dffb3;font-size:12px">${financialPct}%</div>
+            </div>
+        </div>` : '';
+
     card.innerHTML = `
         <div class="stats-group-title">${title}</div>
         <div class="stats-group-type" style="display:flex;align-items:center;flex-wrap:wrap;gap:3px;">
@@ -3975,7 +4020,7 @@ function makeStatCard(title, subtitle, total, done, isTotal = false, subPct = nu
             <div class="stat-item"><div class="stat-label">الإجمالي</div><div class="stat-value">${fmtNum(total)}</div></div>
             <div class="stat-item"><div class="stat-label">المنفذ</div><div class="stat-value">${fmtNum(done)}</div></div>
             <div class="stat-item"><div class="stat-label">المتبقي</div><div class="stat-value">${fmtNum(total - done)}</div></div>
-        </div>`;
+        </div>${financialRow}`;
     return card;
 }
 
@@ -4105,12 +4150,40 @@ function updateProgressRing(total, done) {
     circle.style.stroke = pct < 30 ? "#f44336" : pct < 70 ? "#ff9800" : "var(--gold)";
 }
 
-function updateStats() {
+/* ── update the financial progress ring in the search bar ── */
+function updateFinancialRing(financialTotal, financialDone) {
+    const wrap   = document.getElementById("financialRingWrap");
+    const circle = document.getElementById("financialRingCircle");
+    const pctEl  = document.getElementById("financialRingPct");
+
+    if (!wrap) return;
+
+    if (!financialTotal || financialTotal === 0) {
+        wrap.classList.remove("visible");
+        return;
+    }
+
+    const pct           = Math.min(100, Math.round((financialDone / financialTotal) * 100));
+    const circumference = 94.25;
+    const offset        = circumference - (pct / 100) * circumference;
+
+    wrap.classList.add("visible");
+    circle.style.strokeDashoffset = offset;
+    pctEl.textContent = pct + "%";
+
+    // Color coding for financial %
+    const color = pct < 30 ? "#f44336" : pct < 70 ? "#ff9800" : "#7dffb3";
+    circle.style.stroke = color;
+    pctEl.style.color   = color;
+}
+
+
     const wrapper = document.getElementById("statsWrapper");
     wrapper.innerHTML = "";
     const contractorMode = activeContractorFilter && activeContractorFilter.size > 0;
 
     let grandTotal = 0, grandDone = 0, cardCount = 0;
+    let grandFinancialTotal = 0, grandFinancialDone = 0;
 
     if (contractorMode) {
         /* ── وضع فلتر المقاول: كارت لكل مقاول/شيت ── */
@@ -4154,9 +4227,10 @@ function updateStats() {
     } else {
         /* ── الوضع العادي: الترتيب: مقاولون → معدات → إجماليات البنود → الإجمالي الكلي ── */
 
-        // احسب إجمالي قيمة المشروع كله من كل البنود الفرعية (price)
+        // احسب إجمالي قيمة المشروع كله من كل البنود الفرعية (unitPrice × TOTAL-QTY من الشيتات)
+        // نحسبها من كل البنود التي لها unitPrice (سواء محملة أو لا — سنستخدم الكميات المحملة فقط)
         const totalProjectPrice = categories.reduce((sum, cat) =>
-            sum + cat.subitems.reduce((s, sub) => s + (sub.price || 0), 0), 0);
+            sum + cat.subitems.reduce((s, sub) => s + (sub.unitPrice || 0), 0), 0);
 
         // كارت ملخص قيمة المشروع — يظهر فقط إن في سعر محدد لأي بند
         if (totalProjectPrice > 0) {
@@ -4164,12 +4238,12 @@ function updateStats() {
             priceCard.className = "stats-group";
             priceCard.style.cssText = "background:linear-gradient(135deg,#1a3a1a 0%,#1e5c1e 100%);border:1.5px solid rgba(245,200,66,0.5);min-width:200px;";
 
-            // اجمع أسعار كل البنود الفرعية
+            // اجمع أسعار كل البنود الفرعية التي لها سعر وحدة
             const allSubs = categories.flatMap(cat =>
-                cat.subitems.filter(s => s.price > 0).map(s => ({
+                cat.subitems.filter(s => s.unitPrice > 0).map(s => ({
                     name: `${cat.emoji} ${s.name}`,
-                    price: s.price,
-                    pct: (s.price / totalProjectPrice) * 100
+                    price: s.unitPrice,
+                    pct: (s.unitPrice / totalProjectPrice) * 100
                 }))
             ).sort((a, b) => b.price - a.price);
 
@@ -4203,23 +4277,37 @@ function updateStats() {
             const activeSubs = cat.subitems.filter(s => selectedItems[s.id] && allData[s.sheetId]);
             if (!activeSubs.length) return;
             let catTotal = 0, catDone = 0;
+            let catFinancialTotal = 0, catFinancialDone = 0;
 
-            // احسب إجمالي سعر البنود الفرعية النشطة في هذه الفئة
-            const catPrice = activeSubs.reduce((s, sub) => s + (sub.price || 0), 0);
-            const subPct   = totalProjectPrice > 0 && catPrice > 0 ? (catPrice / totalProjectPrice) * 100 : null;
+            // احسب إجمالي سعر الوحدة للبنود النشطة في هذه الفئة
+            const catUnitPriceSum = activeSubs.reduce((s, sub) => s + (sub.unitPrice || 0), 0);
+            const subPct   = totalProjectPrice > 0 && catUnitPriceSum > 0 ? (catUnitPriceSum / totalProjectPrice) * 100 : null;
 
             activeSubs.forEach(sub => {
-                const { total, done } = calcSubTotals(sub);
+                const { total, done, financialTotal, financialDone } = calcSubTotals(sub);
                 catTotal += total; catDone += done;
+                catFinancialTotal += financialTotal;
+                catFinancialDone  += financialDone;
                 activeSheetIds.push(sub.sheetId);
             });
+
+            // حساب النسبة المالية الفعلية للبند (منفذ/إجمالي بالريال)
+            const catFinancialPct = catFinancialTotal > 0
+                ? ((catFinancialDone / catFinancialTotal) * 100).toFixed(1) + '%'
+                : null;
+
+            grandFinancialTotal += catFinancialTotal;
+            grandFinancialDone  += catFinancialDone;
+
             catCards.push({
                 el: makeStatCard(
                     cat.emoji + " " + cat.name,
                     activeSubs.map(s => s.name).join(" + "),
                     catTotal, catDone,
                     false,
-                    subPct
+                    subPct,
+                    catFinancialTotal,
+                    catFinancialDone
                 ),
                 total: catTotal,
                 done: catDone
@@ -4254,8 +4342,9 @@ function updateStats() {
         }
     }
 
-    // Progress ring
+    // Progress rings
     updateProgressRing(grandTotal, grandDone);
+    updateFinancialRing(grandFinancialTotal, grandFinancialDone);
 
     sessionStorage.setItem("selectedStatuses", JSON.stringify(selectedStatuses));
     sessionStorage.setItem("selectedItems",    JSON.stringify(selectedItems));
@@ -4691,7 +4780,7 @@ function addSubitem() {
     if (!cat) { showAlert("❌ البند غير موجود"); return; }
 
     const price = priceRaw !== "" ? parseFloat(priceRaw) : 0;
-    cat.subitems.push({ id: uid(), name, sheetId, geoJsonFile: geo, price: isNaN(price) ? 0 : price });
+    cat.subitems.push({ id: uid(), name, sheetId, geoJsonFile: geo, unitPrice: isNaN(price) ? 0 : price });
     renderItems();
     renderNavTabs();
     closeModal("modalAddSubitem");
