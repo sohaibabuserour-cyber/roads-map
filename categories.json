@@ -71,12 +71,13 @@
     }
   ],
   "defaultCoords": {
-    "lat": 21.3,
-    "lng": 39.7,
-    "zoom": 13
+    "lat": 21.291,
+    "lng": 39.71,
+    "zoom": 14
   },
   "selectedItems": {
-    "sub_r2": true
+    "sub_r1": true,
+    "sub_l1": true
   },
   "selectedStatuses": [
     "جاري",
@@ -86,12 +87,9 @@
     "متوقف"
   ],
   "activeContractorFilter": [],
-  "currentTheme": "",
+  "currentTheme": "ocean",
   "navRightOrder": [
-    "contractorBtn",
-    "equipmentBtn",
-    "notifBtn",
-    "themeBtn",
-    "coordsBtn"
+    "cashflowBtn",
+    "themeBtn"
   ]
 }
