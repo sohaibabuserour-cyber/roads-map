@@ -4341,7 +4341,7 @@ function handleContractorCheckbox(cb) {
     }
 
     renderItems();
-    renderNavTabs();
+    updateNavTabsState();
     updateStats();
     syncContractorCheckboxes();
 }
@@ -4536,7 +4536,7 @@ async function toggleGroupFilter(groupId, rowEl) {
     });
 
     renderItems();
-    renderNavTabs();
+    updateNavTabsState();
     updateStats();
     syncContractorCheckboxes();
     // re-render group tab to refresh counts
@@ -5446,37 +5446,35 @@ function removeLayer(sheetId) {
    NAV TABS (top navigation tabs per category)
    ==================================================== */
 
-function renderNavTabs() {
+/* ── بناء قوائم البنود — يُستدعى مرة واحدة أو عند تغيير هيكل الكاتيغوريز ── */
+function buildNavTabs() {
     const tabsEl = document.getElementById("navTabs");
-    // أزل كل القوائم الفرعية القديمة من body
     document.querySelectorAll('.bunood-sub-flyout').forEach(el => el.remove());
+    const oldMainDd = document.getElementById('bunoodMainDd');
+    if (oldMainDd) oldMainDd.remove();
     tabsEl.innerHTML = "";
 
     if (!categories.length) return;
 
-    const hasAnyActive = categories.some(cat => cat.subitems.some(s => selectedItems[s.id]));
-
     const tab = document.createElement("div");
-    tab.className = "nav-tab nav-tab-bunood" + (hasAnyActive ? " active" : "");
+    tab.className = "nav-tab nav-tab-bunood";
     tab.id = "navTabBunood";
+    tab.innerHTML = `<span>📋 البنود</span>`;
+    tabsEl.appendChild(tab);
 
-    /* ── القائمة الرئيسية (مستوى 1) ── */
     const mainDd = document.createElement("div");
     mainDd.className = "tab-sub-dropdown bunood-main-dd";
     mainDd.id = "bunoodMainDd";
     document.body.appendChild(mainDd);
 
     categories.forEach(cat => {
-        const catHasActive = cat.subitems.some(s => selectedItems[s.id]);
-
         const catRow = document.createElement("div");
-        catRow.className = "bunood-cat-row" + (catHasActive ? " bunood-cat-active" : "");
+        catRow.className = "bunood-cat-row";
         catRow.dataset.catId = cat.id;
         catRow.innerHTML = `
             <span class="bunood-cat-label">${cat.emoji} ${cat.number ? '<span style="font-size:9px;opacity:0.65;margin-left:3px;">['+cat.number+']</span>' : ''} ${cat.name}</span>
             <span class="bunood-cat-arrow">&#x25B6;</span>`;
 
-        /* ── القائمة الجانبية (مستوى 2) — ملحقة بـ body ── */
         const subDd = document.createElement("div");
         subDd.className = "bunood-sub-flyout";
         subDd.id = "bunoodSub_" + cat.id;
@@ -5491,8 +5489,7 @@ function renderNavTabs() {
                         data-sub-id="${sub.id}"
                         data-cat-id="${cat.id}"
                         data-sheet="${sub.sheetId}"
-                        data-geo="${sub.geoJsonFile}"
-                        ${selectedItems[sub.id] ? 'checked' : ''}>
+                        data-geo="${sub.geoJsonFile}">
                     <label for="tabcb_${sub.id}">
                         ${sub.number ? `<span style="font-size:9px;opacity:0.6;margin-left:4px;">${sub.number}</span>` : ''}
                         ${sub.name}
@@ -5507,24 +5504,18 @@ function renderNavTabs() {
             subDd.innerHTML = '<div style="padding:10px 14px;color:#aaa;font-size:11px;text-align:right">لا توجد بنود فرعية</div>';
         }
 
-        /* ── كليك على صف البند الرئيسي يفتح/يغلق القائمة الجانبية ── */
         catRow.addEventListener('click', (e) => {
             e.stopPropagation();
             const isOpen = catRow.classList.contains('bunood-cat-open');
-
-            // أغلق كل الفرعيات الأخرى
             document.querySelectorAll('.bunood-sub-flyout').forEach(d => d.style.display = 'none');
             mainDd.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-open'));
-
             if (!isOpen) {
                 catRow.classList.add('bunood-cat-open');
                 const catRect  = catRow.getBoundingClientRect();
                 const mainRect = mainDd.getBoundingClientRect();
                 subDd.style.display = 'flex';
-                subDd.style.top     = catRect.top + 'px';
-
-                // افتح يسار القائمة الرئيسية (اتجاه RTL — نحو اليمين على الشاشة)
-                const subW = subDd.offsetWidth || 230;
+                subDd.style.top = catRect.top + 'px';
+                const subW = 230;
                 const spaceRight = window.innerWidth - mainRect.right;
                 if (spaceRight >= subW) {
                     subDd.style.left  = mainRect.right + 'px';
@@ -5540,17 +5531,11 @@ function renderNavTabs() {
         mainDd.appendChild(catRow);
     });
 
-    tab.innerHTML = `<span>📋 البنود</span>`;
-    tabsEl.appendChild(tab);
-
-    /* ── كليك على التاب يفتح/يغلق القائمة الرئيسية ── */
     tab.addEventListener('click', (e) => {
         e.stopPropagation();
         const isOpen = mainDd.style.display === 'flex';
-        // أغلق الفرعيات دائماً عند تبديل القائمة الرئيسية
         document.querySelectorAll('.bunood-sub-flyout').forEach(d => d.style.display = 'none');
         mainDd.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-open'));
-
         if (isOpen) {
             mainDd.style.display = 'none';
         } else {
@@ -5569,17 +5554,45 @@ function renderNavTabs() {
     });
 
     mainDd.addEventListener('click', e => e.stopPropagation());
+
+    // مستمع إغلاق عند الكليك خارج — مرة واحدة فقط
+    if (!window._bunoodClickListenerAdded) {
+        window._bunoodClickListenerAdded = true;
+        document.addEventListener('click', () => {
+            const md = document.getElementById('bunoodMainDd');
+            if (md) md.style.display = 'none';
+            document.querySelectorAll('.bunood-sub-flyout').forEach(d => d.style.display = 'none');
+            document.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-open'));
+        });
+    }
+
+    // تحديث الحالة بعد البناء
+    updateNavTabsState();
 }
 
-/* ── مستمع واحد فقط لإغلاق قوائم البنود عند الكليك خارجها ── */
-if (!window._bunoodClickListenerAdded) {
-    window._bunoodClickListenerAdded = true;
-    document.addEventListener('click', () => {
-        const mainDd = document.getElementById('bunoodMainDd');
-        if (mainDd) mainDd.style.display = 'none';
-        document.querySelectorAll('.bunood-sub-flyout').forEach(d => d.style.display = 'none');
-        document.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-open'));
+/* ── تحديث الشيك بوكسات والألوان فقط بدون إعادة بناء ── */
+function updateNavTabsState() {
+    const tab = document.getElementById('navTabBunood');
+    if (!tab) return;
+
+    const hasAnyActive = categories.some(cat => cat.subitems.some(s => selectedItems[s.id]));
+    tab.classList.toggle('active', hasAnyActive);
+
+    categories.forEach(cat => {
+        const catHasActive = cat.subitems.some(s => selectedItems[s.id]);
+        const catRow = document.querySelector(`.bunood-cat-row[data-cat-id="${cat.id}"]`);
+        if (catRow) catRow.classList.toggle('bunood-cat-active', catHasActive);
+
+        cat.subitems.forEach(sub => {
+            const cb = document.getElementById('tabcb_' + sub.id);
+            if (cb) cb.checked = !!selectedItems[sub.id];
+        });
     });
+}
+
+/* ── renderNavTabs: إعادة بناء كاملة فقط عند تغيير هيكل الكاتيغوريز ── */
+function renderNavTabs() {
+    buildNavTabs();
 }
 
 /* ONE SUBITEM GLOBALLY — but allow subitems in the SAME similar-group to coexist.
@@ -5656,7 +5669,7 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
     }
 
     renderItems();
-    renderNavTabs();
+    updateNavTabsState();
     updateStats();
     syncContractorCheckboxes();
 }
@@ -6389,7 +6402,6 @@ window.renderItems = function() {
 const _origRenderNavTabs = renderNavTabs;
 window.renderNavTabs = function() {
     _origRenderNavTabs();
-    setTimeout(() => { initNavTabsDrag(); }, 50);
 };
 
 /* ── Legend drag removed per user request ── */
