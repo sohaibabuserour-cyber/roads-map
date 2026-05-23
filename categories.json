@@ -1,5 +1,306 @@
 {
-  "categories": [],
+  "categories": [
+    {
+      "id": "mpimhbuk2sh63",
+      "number": "1",
+      "name": "تسليم الشبكات القائمة",
+      "emoji": "🔗",
+      "subitems": [
+        {
+          "id": "mpimhnzv6prqe",
+          "number": "1",
+          "name": "تسليم الشبكات القائمة",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpimi2j97nclh",
+      "number": "2",
+      "name": "اعمال التطهير والإزالة",
+      "emoji": "🧹",
+      "subitems": [
+        {
+          "id": "mpimihuw26hz5",
+          "number": "2",
+          "name": "اعمال التطهير والإزالة",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpimj0axtc0a0",
+      "number": "3",
+      "name": "بترات خرسانية",
+      "emoji": "🧱",
+      "subitems": [
+        {
+          "id": "mpimj7jokdtce",
+          "number": "3",
+          "name": "بترات خرسانية",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpimknuedzb4k",
+      "number": "4",
+      "name": "أعمال الطرق",
+      "emoji": "🛣️",
+      "subitems": [
+        {
+          "id": "mpiml7x5b651b",
+          "number": "4",
+          "name": "أعمال الحفر",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimlmznpvvui",
+          "number": "5",
+          "name": "أعمال الردم للطرق",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimmdcg9gi9g",
+          "number": "7",
+          "name": "الأساس الحصوي",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimn3ptm5x1i",
+          "number": "8",
+          "name": "طبقة التشرب",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimo7t3buvcd",
+          "number": "9",
+          "name": "طبقة الاسفلت",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpimq38rg1hkw",
+      "number": "5",
+      "name": "قطع الأراضي",
+      "emoji": "🏔️",
+      "subitems": [
+        {
+          "id": "mpimqhc9ijefw",
+          "number": "4",
+          "name": "أعمال الحفر",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimqsoe6f2yc",
+          "number": "6",
+          "name": "أعمال الردم لقطع الأراضي",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpims8xi3pwm0",
+      "number": "10",
+      "name": "أعمال صرف مياه الأمطار",
+      "emoji": "🌊",
+      "subitems": [
+        {
+          "id": "mpimsq0xn671m",
+          "number": "10.1",
+          "name": "\"قنوات حجرية، القاعدة بسمك 300 مم  عرض 12م ، و ارتفاع 2.5م  و ميل جانبي 2H:1V \"",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimtyj83q5gt",
+          "number": "10.2",
+          "name": "\"قنوات حجرية، القاعدة بسمك 300 مم  عرض 8م، و ارتفاع 3م  و ميل جانبي 2H:1V \"",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimu9mvqksnn",
+          "number": "10.3",
+          "name": "\"أقنوات حجرية، القاعدة بسمك 300 مم  عرض 16م ، و ارتفاع 2.5م  و ميل جانبي 2H:1V \"",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimurbdg5ht0",
+          "number": "10.4",
+          "name": "\"قنوات حجرية، القاعدة بسمك 300 مم  عرض 3م ، و ارتفاع 2.5م  و ميل جانبي 2H:1V \"",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimv0ydltdhf",
+          "number": "10.5",
+          "name": "\"قنوات حجرية، القاعدة بسمك 300 مم  عرض 2م ، و ارتفاع 3م  و ميل جانبي 2H:1V \"",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpimvtc2lwscv",
+      "number": "11",
+      "name": "أعمال المجاري المائية الحجر",
+      "emoji": "🌊",
+      "subitems": [
+        {
+          "id": "mpimwfdb4xwnh",
+          "number": "11.1",
+          "name": "مجاري المياه لحرم طريق 42م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpimwqmou4nyd",
+          "number": "11.2",
+          "name": "مجاري المياه لحرم طريق 52م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpimxbj35zg7n",
+      "number": "12",
+      "name": "حماية منطقة سريان مياه السيول",
+      "emoji": "🛡️",
+      "subitems": [
+        {
+          "id": "mpimxri6xs1qx",
+          "number": "12",
+          "name": "حماية منطقة سريان مياه السيول",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpimycs1nbaqf",
+      "number": "13",
+      "name": "أعمال المجاري المائية الخرسانة",
+      "emoji": "🌊",
+      "subitems": [
+        {
+          "id": "mpimyrkxif55u",
+          "number": "13.1",
+          "name": "مجاري مياه من الخرسانة، مقطع شبه منحرف، عرض سفلي 1200مم،وعمق 1200مم وعرض علوي 3600مم مع ميلان جانبي حسب الأبعاد وامتداد 200مم من الجانبين",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpio37h9drvlx",
+      "number": "14",
+      "name": "عبارات صندوقية مصبوبة بالموقع",
+      "emoji": "📦",
+      "subitems": [
+        {
+          "id": "mpio3myemljwz",
+          "number": "14.1",
+          "name": "\"العبارة الصندوقية  - عدد الخلايا :3 قياس الخلايا (H) 1.5mx(W) 3.0m\"",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpio41one691t",
+          "number": "14.2",
+          "name": "\"العبارة الصندوقية  - عدد الخلايا :1 قياس الخلايا (H) 2.0mx(W)3.0m\"",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpio56rthk6vz",
+      "number": "15",
+      "name": "غرف التفتيش / احواض التجميع",
+      "emoji": "🕳️",
+      "subitems": [
+        {
+          "id": "mpio5n5ujjdi8",
+          "number": "15.1",
+          "name": "أحواض تجميع مزدوجة نوع (drop) ذات عمق داخلي (Invert) من 1.0م الى أقل من 2.0م وأبعاد داخلية 1.90*1.20م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpio61mz7itit",
+          "number": "15.2",
+          "name": "أحواض تجميع مزدوجة نوع (drop) ذات عمق داخلي (Invert) من 2.0م الى أقل من 3.0م وأبعاد داخلية 1.90*1.20م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpio6i8kkrqbi",
+          "number": "15.3",
+          "name": "أحواض تجميع مزدوجة نوع (drop) ذات عمق داخلي (Invert) من 3.0م الى أقل من 4.0م وأبعاد داخلية 1.90*1.20م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpio75liudpqt",
+      "number": "16",
+      "name": "مداخل العبارات الساقطة",
+      "emoji": "↘️",
+      "subitems": [
+        {
+          "id": "mpio7r7xhvcz2",
+          "number": "16.1",
+          "name": "ذات عمق داخلي (Invert) أقل من 1.0م و أبعاد داخلية 3.00*3.00 م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpio85tf8xx81",
+          "number": "16.2",
+          "name": "عمق داخلي  من 1.0 الى 2.0 أبعاد داخلية 3.00*3.00 م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        },
+        {
+          "id": "mpio8ql4kj7nn",
+          "number": "16.3",
+          "name": "عمق داخلي  من 2.0 الى 3.0 أبعاد داخلية 3.00*3.00 م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    },
+    {
+      "id": "mpio9ihubi96b",
+      "number": "17",
+      "name": "غرف التفتيش الدائرية",
+      "emoji": "⚪",
+      "subitems": [
+        {
+          "id": "mpioa47luj3y7",
+          "number": "17.1",
+          "name": "ذات عمق داخلي  من 3.0 الى 4.0  و أبعاد داخلية 3.00*3.00 م",
+          "sheetId": "",
+          "geoJsonFile": ""
+        }
+      ]
+    }
+  ],
   "defaultCoords": {
     "lat": 21.291,
     "lng": 39.71,
