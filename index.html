@@ -872,6 +872,7 @@
             flex: 1;
             min-height: 0;
             overflow: hidden;
+            align-items: stretch;
         }
 
         /* ========== LEFT SECTION ========== */
@@ -1187,7 +1188,7 @@
 
         /* ========== RIGHT SIDEBAR ========== */
         .right-sidebar {
-            width: 220px;
+            width: 235px;
             height: 100%;
             background: var(--white);
             border-right: 2px solid var(--border);
@@ -1197,6 +1198,7 @@
             z-index: 1000;
             overflow: hidden;
             flex-shrink: 0;
+            align-self: stretch;
         }
 
         .sidebar-header {
@@ -1247,6 +1249,7 @@
             overflow-y: auto;
             overflow-x: hidden;
             border-bottom: 2px solid var(--border);
+            min-height: 0;
         }
 
         .items-section::-webkit-scrollbar { width: 4px; }
