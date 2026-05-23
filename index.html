@@ -2940,13 +2940,13 @@
 
         </div>
 
-        <!-- Category tabs (dynamic) -->
-        <div class="nav-tabs" id="navTabs">
-            <!-- Bills Dashboard Tab -->
-            <div class="nav-tab" id="navTabBills" onclick="openBillsModal()" title="داشبورد البنود والأسعار">
-                <span>📊 البنود</span>
-            </div>
+        <!-- Bills Dashboard Tab (ثابت خارج navTabs حتى لا يُمسح بـ buildNavTabs) -->
+        <div class="nav-tab" id="navTabBills" onclick="openBillsModal()" title="داشبورد البنود والأسعار" style="flex-shrink:0;">
+            <span>📊 البنود</span>
         </div>
+
+        <!-- Category tabs (dynamic) -->
+        <div class="nav-tabs" id="navTabs"></div>
 
         <!-- Right side: tools, settings, user -->
         <div class="nav-right">
