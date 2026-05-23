@@ -1874,14 +1874,10 @@
         }
 
         .cf-modal-wrap {
-            position: fixed;
-            inset: 0;
+            position: relative;
             z-index: 2;
             display: flex;
             flex-direction: column;
-            margin: 24px auto;
-            left: 50%;
-            transform: translateX(-50%);
             width: min(1100px, 96vw);
             max-height: calc(100vh - 48px);
             background: #0d0d1a;
@@ -1892,8 +1888,8 @@
         }
 
         @keyframes cfSlideIn {
-            from { opacity:0; transform:translateX(-50%) translateY(24px) scale(0.97); }
-            to   { opacity:1; transform:translateX(-50%) translateY(0)    scale(1);    }
+            from { opacity:0; transform:translateY(24px) scale(0.97); }
+            to   { opacity:1; transform:translateY(0)    scale(1);    }
         }
 
         /* ── Header ── */
@@ -2160,19 +2156,12 @@
         .cf-table td.cf-num-green  { color: #5cc890; font-weight: 700; }
         .cf-table td.cf-num-blue   { color: #5baddf; font-weight: 700; }
 
-        /* Row index column */
-        .cf-table td:first-child, .cf-table th:first-child {
-            color: rgba(255,255,255,0.35);
-            font-size: 10px;
-            width: 36px;
-            text-align: center;
-        }
+        /* ── table borders ── */
 
         @media (max-width: 768px) {
             .cf-modal-wrap { margin: 0; border-radius: 16px 16px 0 0; top: auto; bottom: 0; max-height: 90vh; }
             .cf-kpi-row { grid-template-columns: repeat(2,1fr); }
             .cf-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-        }
             .main-content { flex-direction: column; }
             .left-section  { flex: 1; }
             .right-sidebar { width: 100%; height: auto; flex-shrink: 0; border-right: none; border-top: 2px solid var(--border); flex-direction: row; overflow-x: auto; }
@@ -2520,8 +2509,8 @@
 </div>
 
 <!-- CASHFLOW DASHBOARD MODAL -->
-<div class="modal" id="cashflowModal" style="z-index:60000;padding:0;align-items:stretch;justify-content:stretch;">
-    <div class="cf-modal-overlay" onclick="closeCashflowModal()"></div>
+<div class="modal" id="cashflowModal" style="z-index:60000;padding:24px;align-items:center;justify-content:center;">
+    <div class="cf-modal-overlay" onclick="closeCashflowModal()" style="position:fixed;inset:0;"></div>
     <div class="cf-modal-wrap">
 
         <!-- Modal Header -->
@@ -2549,7 +2538,7 @@
         <!-- KPI Summary Row -->
         <div class="cf-kpi-row" id="cfKpiRow">
             <div class="cf-kpi-card cf-kpi-total">
-                <div class="cf-kpi-label">إجمالي العقود</div>
+                <div class="cf-kpi-label">القيمة الإجمالية</div>
                 <div class="cf-kpi-value" id="cfKpiTotal">—</div>
             </div>
             <div class="cf-kpi-card cf-kpi-paid">
@@ -3722,13 +3711,12 @@ function renderCfTable(type, data) {
     if (sortedCols[1]) colClass[sortedCols[1]] = 'cf-num-green';
     if (sortedCols[2]) colClass[sortedCols[2]] = 'cf-num-blue';
 
-    let html = `<div class="cf-table-wrap"><table class="cf-table"><thead><tr>
-        <th>#</th>`;
+    let html = `<div class="cf-table-wrap"><table class="cf-table"><thead><tr>`;
     data.headers.forEach(h => { html += `<th>${h}</th>`; });
     html += `</tr></thead><tbody>`;
 
     data.rows.forEach((row, i) => {
-        html += `<tr><td>${i + 1}</td>`;
+        html += `<tr>`;
         data.headers.forEach(h => {
             const raw = row[h] || '';
             const isNum = numericHeaders.has(h);
