@@ -2835,12 +2835,31 @@ async function doLogin() {
 
     try {
         const users = await fetchUsers();
+
+        // DEBUG
+        console.log("=== DEBUG LOGIN ===");
+        console.log("Users fetched:", users.length);
+        if (users.length === 0) {
+            console.warn("NO USERS — الشيت فارغ أو غير مشترك للعموم");
+        }
+        users.forEach((u, i) => {
+            console.log(`Row ${i}: EMAIL=[${u["EMAIL"]}] PASS=[${u["PASSWORD"]}] ROLE=[${u["ROLE"]}]`);
+        });
+        console.log("Input email:", email, "| Input pass:", pass);
+
         const found = users.find(u =>
-            u["EMAIL"] && u["EMAIL"].toLowerCase() === email &&
-            u["PASSWORD"] && u["PASSWORD"]          === pass
+            u["EMAIL"] && u["EMAIL"].toLowerCase().trim() === email &&
+            u["PASSWORD"] && u["PASSWORD"].trim()          === pass
         );
 
-        if (!found) { showLoginError("البريد الإلكتروني أو كلمة المرور غير صحيحة"); return; }
+        if (!found) {
+            if (users.length === 0) {
+                showLoginError("❌ الشيت غير مشترك — اضغط F12 وشيك الـ Console");
+            } else {
+                showLoginError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+            }
+            return;
+        }
 
         currentUser = {
             email  : found["EMAIL"],
@@ -2854,7 +2873,7 @@ async function doLogin() {
         enterApp();
 
     } catch(e) {
-        console.error(e);
+        console.error("LOGIN ERROR:", e);
         showLoginError("خطأ في الاتصال - تأكد من إعدادات الشيت");
     } finally {
         document.getElementById("loginLoading").style.display = "none";
