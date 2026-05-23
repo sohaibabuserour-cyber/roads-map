@@ -2756,6 +2756,137 @@
                 margin-bottom: 8px;
             }
         }
+
+        /* ========== BILLS DASHBOARD MODAL ========== */
+        .bd-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,5,20,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 1;
+        }
+        .bd-modal-wrap {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column;
+            width: min(1150px, 96vw);
+            max-height: calc(100vh - 40px);
+            background: #0d0d1a;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.07);
+            box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+            animation: cfSlideIn 0.28s cubic-bezier(0.34,1.2,0.64,1);
+        }
+        .bd-hdr {
+            background: linear-gradient(135deg,#12012a,#1e0848,#0d1f3c);
+            padding: 16px 22px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            flex-shrink: 0; gap: 12px;
+        }
+        .bd-hdr-left { display: flex; align-items: center; gap: 12px; }
+        .bd-hdr-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg,#f5c842,#e8a800);
+            border-radius: 11px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(245,200,66,0.3);
+        }
+        .bd-hdr-title { font-size: 15px; font-weight: 900; color: white; }
+        .bd-hdr-sub { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 2px; }
+        .bd-search-inp {
+            flex: 1; max-width: 240px;
+            padding: 7px 11px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px; color: white;
+            font-size: 12px; font-family: 'Cairo', sans-serif;
+            outline: none; text-align: right;
+            transition: border-color 0.2s;
+        }
+        .bd-search-inp::placeholder { color: rgba(255,255,255,0.3); }
+        .bd-search-inp:focus { border-color: rgba(245,200,66,0.5); }
+        .bd-kpi-row-wrap {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
+        }
+        .bd-kpi-c {
+            padding: 14px 18px; position: relative; overflow: hidden;
+            border-left: 1px solid rgba(255,255,255,0.04);
+        }
+        .bd-kpi-c:last-child { border-left: none; }
+        .bd-kpi-c::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+        }
+        .bd-kpi-c:nth-child(1)::before { background: linear-gradient(90deg,#6a2d91,#8b44b8); }
+        .bd-kpi-c:nth-child(2)::before { background: linear-gradient(90deg,#1a7a4a,#27ae6a); }
+        .bd-kpi-c:nth-child(3)::before { background: linear-gradient(90deg,#1a4a8a,#2196f3); }
+        .bd-kpi-c:nth-child(4)::before { background: linear-gradient(90deg,#b8860b,#f5c842); }
+        .bd-kpi-lbl {
+            font-size: 9px; font-weight: 700;
+            color: rgba(255,255,255,0.35); letter-spacing: .8px; text-transform: uppercase;
+        }
+        .bd-kpi-val { font-size: 20px; font-weight: 900; color: white; margin-top: 3px; letter-spacing: -0.5px; }
+        .bd-kpi-unit { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 2px; }
+        .bd-kpi-bw { height: 3px; background: rgba(255,255,255,0.08); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        .bd-kpi-b  { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        .bd-body-wrap { flex: 1; overflow-y: auto; padding: 14px 18px; min-height: 0; }
+        .bd-body-wrap::-webkit-scrollbar { width: 4px; }
+        .bd-body-wrap::-webkit-scrollbar-thumb { background: rgba(106,45,145,0.5); border-radius: 10px; }
+        .bd-status-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px; gap: 8px; flex-wrap: wrap;
+        }
+        .bd-cnt-badge {
+            background: rgba(106,45,145,0.2); border: 1px solid rgba(106,45,145,0.35);
+            color: rgba(255,255,255,0.65); font-size: 11px; font-weight: 700;
+            padding: 4px 10px; border-radius: 20px;
+        }
+        .bd-tbl-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.07); }
+        .bd-tbl { width: 100%; border-collapse: collapse; min-width: 750px; font-size: 12px; }
+        .bd-tbl thead tr { background: linear-gradient(135deg,#1e0848,#12012a); }
+        .bd-tbl th {
+            padding: 10px 12px; text-align: right; font-weight: 800; font-size: 10px;
+            color: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(255,255,255,0.07);
+            white-space: nowrap; letter-spacing: .3px;
+        }
+        .bd-tbl tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; }
+        .bd-tbl tbody tr:hover { background: rgba(106,45,145,0.1); }
+        .bd-tbl tbody tr:last-child { border-bottom: none; }
+        .bd-tbl td { padding: 10px 12px; text-align: right; color: rgba(255,255,255,0.75); font-weight: 600; }
+        .bd-tbl td.bdn  { color: #f5c842; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .bd-tbl td.bdg  { color: #5cc890; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .bd-tbl td.bdb  { color: #5baddf; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .bd-tbl td.bdr  { color: #ff8a80; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .bd-num-pill {
+            background: rgba(106,45,145,0.25); border: 1px solid rgba(106,45,145,0.4);
+            color: #c39bd3; padding: 2px 7px; border-radius: 4px;
+            font-size: 10px; font-weight: 700; white-space: nowrap;
+        }
+        .bd-pct-bw { background: rgba(255,255,255,0.08); border-radius: 10px; height: 5px; min-width: 60px; overflow: hidden; }
+        .bd-pct-b  { height: 100%; border-radius: 10px; }
+        .bd-footer-bar {
+            background: rgba(0,0,0,0.25); padding: 9px 18px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
+        }
+        .bd-footer-note { font-size: 10px; color: rgba(255,255,255,0.3); }
+        .bd-refresh-btn {
+            background: rgba(106,45,145,0.2); border: 1px solid rgba(106,45,145,0.4);
+            color: rgba(255,255,255,0.7); padding: 5px 12px; border-radius: 6px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+            font-family: 'Cairo', sans-serif; transition: all 0.2s;
+        }
+        .bd-refresh-btn:hover { background: rgba(106,45,145,0.35); color: white; }
+        .bd-msg { text-align: center; padding: 40px 20px; font-size: 13px; font-family: 'Cairo', sans-serif; }
+        .bd-msg-load { color: rgba(255,255,255,0.3); }
+        .bd-msg-err  { color: #ff8a80; }
+        @media (max-width: 768px) {
+            .bd-kpi-row-wrap { grid-template-columns: repeat(2,1fr); }
+            .bd-hdr { flex-wrap: wrap; }
+            .bd-search-inp { max-width: 100%; }
+        }
     </style>
 <base target="_blank">
 </head>
@@ -2810,7 +2941,12 @@
         </div>
 
         <!-- Category tabs (dynamic) -->
-        <div class="nav-tabs" id="navTabs"></div>
+        <div class="nav-tabs" id="navTabs">
+            <!-- Bills Dashboard Tab -->
+            <div class="nav-tab" id="navTabBills" onclick="openBillsModal()" title="داشبورد البنود والأسعار">
+                <span>📊 البنود</span>
+            </div>
+        </div>
 
         <!-- Right side: tools, settings, user -->
         <div class="nav-right">
@@ -3255,6 +3391,71 @@
 
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importConfig(event)">
 <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+
+<!-- MODAL: BILLS DASHBOARD -->
+<div class="modal" id="billsModal" style="z-index:60001;padding:24px;align-items:center;justify-content:center;">
+    <div class="bd-modal-overlay" onclick="closeBillsModal()" style="position:fixed;inset:0;"></div>
+    <div class="bd-modal-wrap">
+
+        <!-- Header -->
+        <div class="bd-hdr">
+            <div class="bd-hdr-left">
+                <div class="bd-hdr-icon">📊</div>
+                <div>
+                    <div class="bd-hdr-title">داشبورد البنود</div>
+                    <div class="bd-hdr-sub" id="bdLastUpdate">جاري التحميل...</div>
+                </div>
+            </div>
+            <input class="bd-search-inp" type="text" id="bdSearchInput"
+                placeholder="🔍 ابحث برقم البند أو الاسم..."
+                oninput="bdFilterRows()">
+            <button class="cf-close-btn" onclick="closeBillsModal()">✕</button>
+        </div>
+
+        <!-- KPI Row -->
+        <div class="bd-kpi-row-wrap">
+            <div class="bd-kpi-c">
+                <div class="bd-kpi-lbl">إجمالي القيمة</div>
+                <div class="bd-kpi-val" id="bdKpiTotalVal">—</div>
+                <div class="bd-kpi-unit">ريال سعودي</div>
+            </div>
+            <div class="bd-kpi-c">
+                <div class="bd-kpi-lbl">القيمة المنفذة</div>
+                <div class="bd-kpi-val" id="bdKpiDoneVal">—</div>
+                <div class="bd-kpi-unit" id="bdKpiDoneUnit">—</div>
+                <div class="bd-kpi-bw"><div class="bd-kpi-b" id="bdKpiDoneBar" style="background:linear-gradient(90deg,#27ae60,#1e8449);width:0%"></div></div>
+            </div>
+            <div class="bd-kpi-c">
+                <div class="bd-kpi-lbl">القيمة المتبقية</div>
+                <div class="bd-kpi-val" id="bdKpiRemVal">—</div>
+                <div class="bd-kpi-unit">ريال سعودي</div>
+            </div>
+            <div class="bd-kpi-c">
+                <div class="bd-kpi-lbl">نسبة التنفيذ</div>
+                <div class="bd-kpi-val" id="bdKpiPct">—</div>
+                <div class="bd-kpi-unit">إجمالي البنود: <span id="bdKpiCount">—</span></div>
+                <div class="bd-kpi-bw"><div class="bd-kpi-b" id="bdKpiPctBar" style="width:0%"></div></div>
+            </div>
+        </div>
+
+        <!-- Body / Table -->
+        <div class="bd-body-wrap">
+            <div class="bd-status-row">
+                <div class="bd-cnt-badge" id="bdCountBadge">جاري التحميل...</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'Cairo',sans-serif;">الربط: رقم البند ← بيانات الشيت</div>
+            </div>
+            <div class="bd-tbl-wrap" id="bdTableWrap">
+                <div class="bd-msg bd-msg-load">⏳ جاري تحميل بيانات البنود...</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bd-footer-bar">
+            <div class="bd-footer-note" id="bdFooterNote">مصدر البيانات: Google Sheets</div>
+            <button class="bd-refresh-btn" onclick="loadBillsData()">🔄 تحديث البيانات</button>
+        </div>
+    </div>
+</div>
 
 <script>
 /* ====================================================
@@ -6424,6 +6625,265 @@ const _afterEnterApp = () => {
         _afterEnterApp();
     };
 })();
+
+/* ====================================================
+   BILLS DASHBOARD
+   ==================================================== */
+
+const BILLS_SHEET_ID = "1Sb4K98Yy5_lj580EgpqLPl7HyjBRZSA4JS_z_Qyh9XI";
+let bdAllRows  = [];
+let bdHeaders  = [];
+let bdColMap   = {};
+let bdLoaded   = false;
+
+/* ── Open / Close ── */
+function openBillsModal() {
+    openModal('billsModal');
+    if (!bdLoaded) loadBillsData();
+}
+
+function closeBillsModal() {
+    closeModal('billsModal');
+}
+
+/* Close on Escape */
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeBillsModal();
+});
+
+/* ── Smart column detection ── */
+function bdDetectCol(hdrs, keywords) {
+    for (const kw of keywords) {
+        const idx = hdrs.findIndex(h => h.trim().toLowerCase().includes(kw.toLowerCase()));
+        if (idx !== -1) return hdrs[idx];
+    }
+    return null;
+}
+
+/* ── Formatted number (compact) ── */
+function bdFmt(v) {
+    const raw = String(v || '').replace(/,/g, '').trim();
+    const n = parseFloat(raw);
+    if (isNaN(n) || raw === '') return '—';
+    if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(2) + ' م';
+    if (Math.abs(n) >= 1_000)     return (n / 1_000).toFixed(1) + ' ك';
+    return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+/* ── Formatted number (full, no compact) ── */
+function bdFmtFull(v) {
+    const raw = String(v || '').replace(/,/g, '').trim();
+    const n = parseFloat(raw);
+    if (isNaN(n) || raw === '') return '—';
+    return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+/* ── Load data from Google Sheet ── */
+async function loadBillsData() {
+    const wrap = document.getElementById('bdTableWrap');
+    if (!wrap) return;
+    wrap.innerHTML = '<div class="bd-msg bd-msg-load">⏳ جاري تحميل البيانات...</div>';
+    document.getElementById('bdCountBadge').textContent = 'جاري التحميل...';
+
+    // Reset KPI display
+    ['bdKpiTotalVal','bdKpiDoneVal','bdKpiRemVal','bdKpiPct'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = '—';
+    });
+    ['bdKpiDoneBar','bdKpiPctBar'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.width = '0%';
+    });
+
+    try {
+        const url = `https://docs.google.com/spreadsheets/d/${BILLS_SHEET_ID}/export?format=csv&gid=0`;
+        const r   = await fetch(url);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const csv = await r.text();
+
+        if (csv.trim().startsWith('<')) {
+            wrap.innerHTML = `<div class="bd-msg bd-msg-err">
+                ⚠️ الشيت يحتاج إعداد المشاركة العامة<br>
+                <small style="opacity:0.7;">(Share → Anyone with the link → Viewer)</small>
+            </div>`;
+            return;
+        }
+
+        const lines = csv.split('\n').filter(l => l.trim());
+        if (!lines.length) { wrap.innerHTML = '<div class="bd-msg bd-msg-err">لا توجد بيانات في الشيت</div>'; return; }
+
+        bdHeaders = parseCSVLine(lines[0]);
+
+        bdColMap = {
+            num:      bdDetectCol(bdHeaders, ['رقم البند','رقم','بند رقم','no','item no','number','num','#']),
+            name:     bdDetectCol(bdHeaders, ['اسم البند','اسم','البند','وصف','بيان','description','item name','item','name']),
+            unit:     bdDetectCol(bdHeaders, ['الوحدة','وحدة','unit','uom']),
+            price:    bdDetectCol(bdHeaders, ['سعر الوحدة','سعر','unit price','price','rate','unit rate']),
+            totalQty: bdDetectCol(bdHeaders, ['الكمية الاجمالية','الكمية الإجمالية','إجمالي الكمية','الكمية','total qty','total quantity','quantity','qty']),
+            totalVal: bdDetectCol(bdHeaders, ['القيمة الاجمالية','القيمة الإجمالية','إجمالي القيمة','القيمة','total value','total amount','amount','value']),
+            doneQty:  bdDetectCol(bdHeaders, ['الكمية المنفذة','كمية منفذة','منفذ كمية','done qty','executed qty','completed qty','done']),
+            doneVal:  bdDetectCol(bdHeaders, ['القيمة المنفذة','قيمة منفذة','منفذ قيمة','done value','executed value','completed value']),
+            remQty:   bdDetectCol(bdHeaders, ['الكمية المتبقية','كمية متبقية','متبقي كمية','remaining qty','rem qty','balance qty']),
+            remVal:   bdDetectCol(bdHeaders, ['القيمة المتبقية','قيمة متبقية','متبقي قيمة','remaining value','rem value','balance value','balance']),
+        };
+
+        bdAllRows = [];
+        for (let i = 1; i < lines.length; i++) {
+            const vals = parseCSVLine(lines[i]);
+            if (!vals.some(v => v.trim())) continue;
+            const row = {};
+            bdHeaders.forEach((h, idx) => { row[h] = vals[idx] || ''; });
+            bdAllRows.push(row);
+        }
+
+        bdLoaded = true;
+        bdComputeKPIs(bdAllRows);
+        bdRenderTable(bdAllRows);
+
+        const now = new Date().toLocaleTimeString('ar-SA');
+        document.getElementById('bdLastUpdate').textContent = 'آخر تحديث: ' + now;
+        document.getElementById('bdFooterNote').textContent = bdAllRows.length + ' بند • ' + now;
+
+    } catch(e) {
+        console.error('Bills load error:', e);
+        wrap.innerHTML = `<div class="bd-msg bd-msg-err">
+            ❌ تعذر تحميل البيانات<br>
+            <small style="opacity:0.7;">${e.message}</small>
+        </div>`;
+    }
+}
+
+/* ── Compute & render KPI cards ── */
+function bdComputeKPIs(rows) {
+    let totalVal = 0, doneVal = 0;
+
+    rows.forEach(row => {
+        const tv = parseFloat(String(row[bdColMap.totalVal] || '').replace(/,/g,'')) || 0;
+        const dv = parseFloat(String(row[bdColMap.doneVal]  || '').replace(/,/g,'')) || 0;
+        totalVal += tv;
+        doneVal  += dv;
+    });
+
+    const remVal   = Math.max(0, totalVal - doneVal);
+    const donePct  = totalVal > 0 ? Math.min(100, Math.round((doneVal / totalVal) * 100)) : 0;
+
+    const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+    setEl('bdKpiTotalVal', bdFmt(totalVal));
+    setEl('bdKpiDoneVal',  bdFmt(doneVal));
+    setEl('bdKpiDoneUnit', donePct + '% من الإجمالي');
+    setEl('bdKpiRemVal',   bdFmt(remVal));
+    setEl('bdKpiPct',      donePct + '%');
+    setEl('bdKpiCount',    rows.length);
+
+    setTimeout(() => {
+        const doneBar = document.getElementById('bdKpiDoneBar');
+        const pctBar  = document.getElementById('bdKpiPctBar');
+        if (doneBar) doneBar.style.width = donePct + '%';
+        if (pctBar) {
+            pctBar.style.width      = donePct + '%';
+            pctBar.style.background = donePct < 30
+                ? 'linear-gradient(90deg,#e74c3c,#c0392b)'
+                : donePct < 70
+                ? 'linear-gradient(90deg,#f39c12,#e67e22)'
+                : 'linear-gradient(90deg,#27ae60,#1e8449)';
+        }
+    }, 80);
+}
+
+/* ── Render the data table ── */
+function bdRenderTable(rows) {
+    const badge = document.getElementById('bdCountBadge');
+    const wrap  = document.getElementById('bdTableWrap');
+    if (!badge || !wrap) return;
+
+    badge.textContent = rows.length + ' بند';
+
+    if (!rows.length) {
+        wrap.innerHTML = '<div class="bd-msg bd-msg-load">لا توجد نتائج مطابقة للبحث</div>';
+        return;
+    }
+
+    const has = k => bdColMap[k] && bdColMap[k].trim();
+
+    /* ── Table header ── */
+    let html = `<table class="bd-tbl"><thead><tr>
+        ${has('num')      ? '<th>رقم البند</th>'          : ''}
+        ${has('name')     ? '<th>اسم البند / البيان</th>' : ''}
+        ${has('unit')     ? '<th>الوحدة</th>'             : ''}
+        ${has('price')    ? '<th>سعر الوحدة</th>'         : ''}
+        ${has('totalQty') ? '<th>الكمية الإجمالية</th>'   : ''}
+        ${has('totalVal') ? '<th>القيمة الإجمالية</th>'   : ''}
+        ${has('doneQty')  ? '<th>الكمية المنفذة</th>'     : ''}
+        ${has('doneVal')  ? '<th>القيمة المنفذة</th>'     : ''}
+        ${has('remQty')   ? '<th>الكمية المتبقية</th>'    : ''}
+        <th>القيمة المتبقية</th>
+        <th style="min-width:110px;">نسبة التنفيذ</th>
+    </tr></thead><tbody>`;
+
+    /* ── Table rows ── */
+    rows.forEach(row => {
+        const tv  = parseFloat(String(row[bdColMap.totalVal] || '').replace(/,/g,'')) || 0;
+        const dv  = parseFloat(String(row[bdColMap.doneVal]  || '').replace(/,/g,'')) || 0;
+        /* القيمة المتبقية: من العمود مباشرة إن وُجد، وإلا نحسبها */
+        const rvRaw = has('remVal')
+            ? parseFloat(String(row[bdColMap.remVal] || '').replace(/,/g,''))
+            : NaN;
+        const rv    = !isNaN(rvRaw) ? rvRaw : Math.max(0, tv - dv);
+
+        const pct      = tv > 0 ? Math.min(100, Math.round((dv / tv) * 100)) : 0;
+        const pctColor = pct < 30 ? '#ff8a80' : pct < 70 ? '#ffb74d' : '#5cc890';
+
+        /* اسم البند: قطع النص الطويل */
+        const nameVal = has('name') ? (row[bdColMap.name] || '—') : '';
+
+        html += `<tr>
+            ${has('num')
+                ? `<td><span class="bd-num-pill">${row[bdColMap.num] || '—'}</span></td>`
+                : ''}
+            ${has('name')
+                ? `<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                       title="${nameVal.replace(/"/g,"'")}">${nameVal}</td>`
+                : ''}
+            ${has('unit')
+                ? `<td style="color:rgba(255,255,255,0.45);font-size:11px;">${row[bdColMap.unit] || '—'}</td>`
+                : ''}
+            ${has('price')    ? `<td class="bdn">${bdFmtFull(row[bdColMap.price])}</td>`    : ''}
+            ${has('totalQty') ? `<td class="bdn">${bdFmtFull(row[bdColMap.totalQty])}</td>` : ''}
+            ${has('totalVal') ? `<td class="bdn">${bdFmtFull(row[bdColMap.totalVal])}</td>` : ''}
+            ${has('doneQty')  ? `<td class="bdg">${bdFmtFull(row[bdColMap.doneQty])}</td>`  : ''}
+            ${has('doneVal')  ? `<td class="bdg">${bdFmtFull(row[bdColMap.doneVal])}</td>`  : ''}
+            ${has('remQty')   ? `<td class="bdb">${bdFmtFull(row[bdColMap.remQty])}</td>`   : ''}
+            <td class="bdr">${bdFmtFull(rv)}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="bd-pct-bw">
+                        <div class="bd-pct-b" style="width:${pct}%;background:${pctColor};"></div>
+                    </div>
+                    <span style="font-size:10px;font-weight:700;color:${pctColor};min-width:30px;font-family:'Cairo',sans-serif;">${pct}%</span>
+                </div>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+}
+
+/* ── Search / Filter ── */
+function bdFilterRows() {
+    const q = (document.getElementById('bdSearchInput').value || '').trim().toLowerCase();
+    if (!q) {
+        bdRenderTable(bdAllRows);
+        bdComputeKPIs(bdAllRows);
+        return;
+    }
+    const filtered = bdAllRows.filter(row => {
+        const numVal  = String(row[bdColMap.num]  || '').toLowerCase();
+        const nameVal = String(row[bdColMap.name] || '').toLowerCase();
+        return numVal.includes(q) || nameVal.includes(q);
+    });
+    bdRenderTable(filtered);
+    bdComputeKPIs(filtered);
+}
 </script>
 </body>
 </html>
