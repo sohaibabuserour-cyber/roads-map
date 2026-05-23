@@ -965,27 +965,46 @@
 
         /* ── Contractors stat card ── */
         .stats-group-contractors {
-            background: linear-gradient(135deg, #1a4a2e 0%, #1e6b3a 100%);
-            border: 1.5px solid rgba(58,170,92,0.45);
-            min-width: 180px;
+            background: linear-gradient(135deg, #1a2e4a 0%, #1e3d6b 100%);
+            border: 1.5px solid rgba(33,120,243,0.4);
+            min-width: 200px;
         }
 
         .contractor-chips {
             display: flex;
             flex-wrap: wrap;
-            gap: 3px;
-            margin-top: 3px;
+            gap: 4px;
+            margin-top: 5px;
         }
 
         .contractor-chip {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.25);
-            color: white;
-            font-size: 9px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 20px;
+            overflow: hidden;
             white-space: nowrap;
+        }
+
+        .contractor-chip-name {
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px 3px 4px;
+        }
+
+        .contractor-chip-badge {
+            background: rgba(245,200,66,0.9);
+            color: #1a1a2e;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 3px 6px;
+            border-radius: 0 20px 20px 0;
+            min-width: 20px;
+            text-align: center;
+            line-height: 1;
         }
 
         /* ── Equipment stat card ── */
@@ -3624,23 +3643,36 @@ function makeStatCard(title, subtitle, total, done, isTotal = false) {
 
 /* ── build contractors card for the active subitems ── */
 function makeContractorsCard(sheetIds, subLabel = "البند المحدد") {
-    const names = new Set();
+    // اجمع المقاولين مع عدد الصفوف لكل مقاول
+    const contractorCounts = {};
     sheetIds.forEach(sid => {
         if (!allData[sid]) return;
         Object.values(allData[sid]).forEach(row => {
             const c = (row["CONTRACTOR"] || "").trim();
-            if (c) names.add(c);
+            if (!c) return;
+            contractorCounts[c] = (contractorCounts[c] || 0) + 1;
         });
     });
-    if (!names.size) return null;
+
+    if (!Object.keys(contractorCounts).length) return null;
+
+    const sorted = Object.entries(contractorCounts)
+        .sort((a, b) => b[1] - a[1]); // ترتيب تنازلي بالعدد
+
+    const total = sorted.length;
+
     const card = document.createElement("div");
     card.className = "stats-group stats-group-contractors";
     card.innerHTML = `
         <div class="stats-group-title">👷 المقاولون</div>
-        <div class="stats-group-type">العاملون في بند ${subLabel}</div>
+        <div class="stats-group-type">${total} مقاول في بند ${subLabel}</div>
         <div class="contractor-chips">
-            ${[...names].sort((a,b) => a.localeCompare(b,'ar'))
-                .map(n => `<span class="contractor-chip">${n}</span>`).join('')}
+            ${sorted.map(([name, count]) =>
+                `<span class="contractor-chip">
+                    <span class="contractor-chip-name">${name}</span>
+                    <span class="contractor-chip-badge">${count}</span>
+                </span>`
+            ).join('')}
         </div>`;
     return card;
 }
@@ -3743,6 +3775,7 @@ function updateStats() {
     let grandTotal = 0, grandDone = 0, cardCount = 0;
 
     if (contractorMode) {
+        /* ── وضع فلتر المقاول: كارت لكل مقاول/شيت ── */
         const bySheet = {};
         [...activeContractorFilter].forEach(key => {
             const pipeIdx = key.indexOf('|');
@@ -3752,7 +3785,6 @@ function updateStats() {
             bySheet[sid].push(cname);
         });
 
-        const contractorCards = [];
         Object.entries(bySheet).forEach(([sid, contractors]) => {
             if (!allData[sid]) return;
             let subLabel = sid, catLabel = "";
@@ -3773,19 +3805,20 @@ function updateStats() {
             const title = contractors.length === 1
                 ? ("👷 " + contractors[0])
                 : ("👷 " + contractors.length + " مقاولين");
-            contractorCards.push({ el: makeStatCard(title, catLabel + " ← " + subLabel, total, done), total, done });
+            wrapper.appendChild(makeStatCard(title, catLabel + " ← " + subLabel, total, done));
             grandTotal += total; grandDone += done; cardCount++;
         });
 
-        // Add all contractor cards first, then total
-        contractorCards.forEach(c => wrapper.appendChild(c.el));
         if (cardCount > 1) {
             wrapper.appendChild(makeStatCard("📊 الإجمالي الكلي", "مجموع المقاولين المحددين", grandTotal, grandDone, true));
         }
 
     } else {
-        // Collect all active sheetIds for contractors card
+        /* ── الوضع العادي: الترتيب: مقاولون → معدات → إجماليات البنود → الإجمالي الكلي ── */
+
+        // 1. اجمع كل البيانات اللازمة أولاً
         const activeSheetIds = [];
+        const catCards = []; // {el, total, done}
 
         categories.forEach(cat => {
             const activeSubs = cat.subitems.filter(s => selectedItems[s.id] && allData[s.sheetId]);
@@ -3796,32 +3829,40 @@ function updateStats() {
                 catTotal += total; catDone += done;
                 activeSheetIds.push(sub.sheetId);
             });
-            wrapper.appendChild(makeStatCard(
-                cat.emoji + " " + cat.name,
-                activeSubs.map(s => s.name).join(" + "),
-                catTotal, catDone
-            ));
+            catCards.push({
+                el: makeStatCard(
+                    cat.emoji + " " + cat.name,
+                    activeSubs.map(s => s.name).join(" + "),
+                    catTotal, catDone
+                ),
+                total: catTotal,
+                done: catDone
+            });
             grandTotal += catTotal; grandDone += catDone; cardCount++;
         });
 
-        // Contractors card (أول كارت)
+        // 2. أنشئ اسم البند
+        const activeNames = categories.flatMap(c => c.subitems)
+            .filter(s => selectedItems[s.id])
+            .map(s => s.name.trim());
+        const subLabel = [...new Set(activeNames)].join(' و ') || "البند المحدد";
+
+        // 3. أضف كارت المقاولين أولاً
         if (activeSheetIds.length) {
-            const activeNames = categories.flatMap(c => c.subitems)
-                .filter(s => selectedItems[s.id])
-                .map(s => s.name.trim());
-            const subLabel = activeNames.length ? activeNames.join(' و ') : "البند المحدد";
-
             const cCard = makeContractorsCard(activeSheetIds, subLabel);
-            if (cCard) wrapper.insertBefore(cCard, wrapper.firstChild);
-
-            // Equipment card (بعد كارت المقاولين)
-            const eCard = makeEquipmentCard(activeSheetIds, subLabel);
-            if (eCard) {
-                const second = wrapper.children[1] || null;
-                wrapper.insertBefore(eCard, second);
-            }
+            if (cCard) wrapper.appendChild(cCard);
         }
 
+        // 4. أضف كارت المعدات ثانياً
+        if (activeSheetIds.length) {
+            const eCard = makeEquipmentCard(activeSheetIds, subLabel);
+            if (eCard) wrapper.appendChild(eCard);
+        }
+
+        // 5. أضف كروت إجماليات البنود
+        catCards.forEach(c => wrapper.appendChild(c.el));
+
+        // 6. أضف الإجمالي الكلي أخيراً إن وُجد أكثر من بند
         if (cardCount > 1) {
             wrapper.appendChild(makeStatCard("📊 الإجمالي الكلي", "مجموع جميع البنود", grandTotal, grandDone, true));
         }
