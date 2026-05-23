@@ -2179,6 +2179,396 @@
 
         /* ── table borders ── */
 
+        /* ========== SETTINGS PANEL ========== */
+        .settings-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 340px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+            z-index: 9999;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            max-height: calc(100vh - 80px);
+        }
+
+        .settings-panel.active { display: flex; animation: dropFade 0.22s ease-out; }
+
+        .settings-panel-header {
+            background: linear-gradient(135deg, #1a0a2e 0%, #3d1060 100%);
+            padding: 14px 16px;
+            font-size: 14px;
+            font-weight: 900;
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .settings-tabs {
+            display: flex;
+            background: #f8f6fc;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .settings-tab {
+            flex: 1;
+            padding: 9px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            cursor: pointer;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+            transition: all 0.18s ease;
+            font-family: 'Cairo', sans-serif;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .settings-tab:hover { color: var(--purple); }
+        .settings-tab.active { color: var(--purple); border-bottom-color: var(--purple); background: white; }
+
+        .settings-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .settings-body::-webkit-scrollbar { width: 4px; }
+        .settings-body::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        .settings-section {
+            display: none;
+            padding: 14px 16px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .settings-section.active { display: flex; }
+
+        .settings-field { display: flex; flex-direction: column; gap: 5px; }
+
+        .settings-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            text-align: right;
+        }
+
+        .settings-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            background: white;
+            text-align: right;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .settings-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(106,45,145,0.1); }
+
+        .settings-save-btn {
+            width: 100%;
+            padding: 9px;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
+            border: none;
+            border-radius: 7px;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 4px;
+        }
+
+        .settings-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(106,45,145,0.35); }
+
+        /* Similar groups list */
+        .similar-groups-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .similar-group-card {
+            background: rgba(106,45,145,0.05);
+            border: 1.5px solid rgba(106,45,145,0.15);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .similar-group-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            background: rgba(106,45,145,0.08);
+            border-bottom: 1px solid rgba(106,45,145,0.1);
+        }
+
+        .similar-group-name {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--purple);
+            flex: 1;
+            text-align: right;
+        }
+
+        .similar-group-del {
+            background: none;
+            border: none;
+            color: #e53935;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 0 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .similar-group-del:hover { opacity: 1; }
+
+        .similar-group-items {
+            padding: 6px 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .similar-group-pill {
+            background: rgba(106,45,145,0.1);
+            border: 1px solid rgba(106,45,145,0.25);
+            color: var(--purple);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .settings-add-group-btn {
+            width: 100%;
+            padding: 8px;
+            background: rgba(106,45,145,0.07);
+            border: 1.5px dashed rgba(106,45,145,0.35);
+            border-radius: 7px;
+            color: var(--purple);
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-align: center;
+        }
+
+        .settings-add-group-btn:hover { background: rgba(106,45,145,0.12); border-color: var(--purple); }
+
+        /* Similar groups modal */
+        .similar-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 70000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .similar-modal-box {
+            background: white;
+            border-radius: 16px;
+            width: min(520px, 94vw);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+            animation: modalPop 0.28s ease-out;
+            overflow: hidden;
+        }
+
+        .similar-modal-header {
+            background: linear-gradient(135deg, #6a2d91 0%, #8b44b8 100%);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .similar-modal-title {
+            font-size: 14px;
+            font-weight: 900;
+            color: white;
+        }
+
+        .similar-modal-close {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 28px; height: 28px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.18s;
+        }
+
+        .similar-modal-close:hover { background: rgba(255,255,255,0.3); }
+
+        .similar-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 18px;
+        }
+
+        .similar-modal-body::-webkit-scrollbar { width: 4px; }
+        .similar-modal-body::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        .similar-modal-group-name-field {
+            margin-bottom: 14px;
+        }
+
+        .similar-modal-group-name-field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            margin-bottom: 5px;
+            text-align: right;
+        }
+
+        .similar-modal-group-name-field input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 13px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            text-align: right;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .similar-modal-group-name-field input:focus {
+            border-color: var(--purple);
+        }
+
+        .similar-select-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            text-align: right;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .similar-subitems-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 340px;
+            overflow-y: auto;
+        }
+
+        .similar-subitems-grid::-webkit-scrollbar { width: 4px; }
+        .similar-subitems-grid::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        .similar-cat-section { margin-bottom: 4px; }
+
+        .similar-cat-label {
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--purple);
+            text-align: right;
+            padding: 5px 8px 3px;
+            border-bottom: 1px solid rgba(106,45,145,0.12);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .similar-subitem-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: rgba(106,45,145,0.03);
+            border: 1.5px solid transparent;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .similar-subitem-row:hover { background: rgba(106,45,145,0.07); border-color: rgba(106,45,145,0.15); }
+        .similar-subitem-row.selected { background: rgba(106,45,145,0.12); border-color: var(--purple-light); }
+
+        .similar-subitem-row input[type="checkbox"] {
+            width: 14px; height: 14px;
+            accent-color: var(--purple);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .similar-subitem-row label {
+            flex: 1;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .similar-subitem-cat-badge {
+            font-size: 9px;
+            color: var(--text-soft);
+            background: rgba(0,0,0,0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        .similar-modal-footer {
+            padding: 12px 18px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            background: #fafafa;
+        }
+
+        /* Filter conflict toast */
+        .filter-conflict-toast {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #6a2d91 0%, #8b44b8 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            z-index: 99999;
+            box-shadow: 0 8px 24px rgba(106,45,145,0.45);
+            animation: alertPop 0.3s ease-out;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) {
             .cf-modal-wrap { margin: 0; border-radius: 16px 16px 0 0; top: auto; bottom: 0; max-height: 90vh; }
             .cf-kpi-row { grid-template-columns: repeat(2,1fr); }
@@ -2315,6 +2705,46 @@
 
             <!-- Settings Group -->
             <div class="nav-right-group" id="settingsGroup">
+                <!-- Settings button (admin only) -->
+                <div style="position:relative" class="admin-only" id="settingsBtnWrap" title="الإعدادات">
+                    <div class="nav-icon-btn" id="settingsBtn" onclick="togglePanel('settingsPanel')">⚙️</div>
+                    <div class="settings-panel" id="settingsPanel">
+                        <div class="settings-panel-header">
+                            ⚙️ الإعدادات — مدير النظام
+                        </div>
+                        <div class="settings-tabs">
+                            <button class="settings-tab active" onclick="switchSettingsTab('coords')">📍 الإحداثيات</button>
+                            <button class="settings-tab" onclick="switchSettingsTab('similar')">🔗 البنود المتشابهة</button>
+                        </div>
+                        <div class="settings-body">
+                            <!-- Tab: Default Coordinates -->
+                            <div class="settings-section active" id="settingsTabCoords">
+                                <div class="settings-field">
+                                    <label class="settings-label">خط العرض (Latitude)</label>
+                                    <input type="text" class="settings-input" id="settingsLat" placeholder="21.292">
+                                </div>
+                                <div class="settings-field">
+                                    <label class="settings-label">خط الطول (Longitude)</label>
+                                    <input type="text" class="settings-input" id="settingsLng" placeholder="39.71">
+                                </div>
+                                <div class="settings-field">
+                                    <label class="settings-label">مستوى التكبير (Zoom)</label>
+                                    <input type="text" class="settings-input" id="settingsZoom" placeholder="14">
+                                </div>
+                                <button class="settings-save-btn" onclick="saveSettingsCoords()">✓ حفظ وتطبيق</button>
+                            </div>
+                            <!-- Tab: Similar Items -->
+                            <div class="settings-section" id="settingsTabSimilar">
+                                <div style="font-size:11px;color:var(--text-soft);text-align:right;line-height:1.6;background:rgba(106,45,145,0.05);padding:8px 10px;border-radius:7px;border-right:3px solid var(--purple);">
+                                    حدد مجموعات البنود المتشابهة — البنود في نفس المجموعة يمكن اختيارها معاً على الخريطة، بينما لا يمكن الجمع بين بندين من مجموعتين مختلفتين.
+                                </div>
+                                <div class="similar-groups-list" id="similarGroupsList"></div>
+                                <button class="settings-add-group-btn" onclick="openSimilarGroupModal()">+ إضافة مجموعة بنود متشابهة</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Theme button -->
                 <div style="position:relative" title="تغيير الثيم">
                     <div class="nav-icon-btn" id="themeBtn" onclick="togglePanel('themePanel')">🎨</div>
@@ -2343,28 +2773,7 @@
                     </div>
                 </div>
 
-                <!-- Default Coordinates button (admin) -->
-                <div style="position:relative" class="admin-only" id="coordsBtnWrap" title="الإحداثيات الافتراضية">
-                    <div class="nav-icon-btn" id="coordsBtn" onclick="togglePanel('coordsPanel')">📍</div>
-                    <div class="coords-panel" id="coordsPanel">
-                        <div class="coords-panel-header">📍 الإحداثيات الافتراضية</div>
-                        <div class="coords-panel-body">
-                            <div class="coords-panel-row">
-                                <span class="coords-panel-label">خط العرض</span>
-                                <input type="text" class="coords-panel-input" id="defLat2" placeholder="21.292">
-                            </div>
-                            <div class="coords-panel-row">
-                                <span class="coords-panel-label">خط الطول</span>
-                                <input type="text" class="coords-panel-input" id="defLng2" placeholder="39.71">
-                            </div>
-                            <div class="coords-panel-row">
-                                <span class="coords-panel-label">التكبير</span>
-                                <input type="text" class="coords-panel-input" id="defZoom2" placeholder="14">
-                            </div>
-                            <button class="coords-panel-btn" onclick="saveDefaultCoordsNav()">✓ حفظ وتطبيق على الجميع</button>
-                        </div>
-                    </div>
-                </div>
+                <!-- Coords panel removed — now lives in ⚙️ Settings panel -->
             </div>
 
             <div class="nav-right-divider"></div>
@@ -2635,7 +3044,31 @@
     </div>
 </div>
 
+<!-- MODAL: SIMILAR GROUPS -->
+<div id="similarGroupModal" style="display:none;position:fixed;inset:0;z-index:70000;align-items:center;justify-content:center;">
+    <div class="similar-modal-overlay" onclick="closeSimilarGroupModal()"></div>
+    <div class="similar-modal-box">
+        <div class="similar-modal-header">
+            <div class="similar-modal-title">🔗 إضافة مجموعة بنود متشابهة</div>
+            <button class="similar-modal-close" onclick="closeSimilarGroupModal()">✕</button>
+        </div>
+        <div class="similar-modal-body">
+            <div class="similar-modal-group-name-field">
+                <label>اسم المجموعة (اختياري)</label>
+                <input type="text" id="similarGroupNameInput" placeholder="مثال: الطرق والأرصفة">
+            </div>
+            <span class="similar-select-label">اختر البنود الفرعية التي تنتمي لهذه المجموعة:</span>
+            <div class="similar-subitems-grid" id="similarSubitemsGrid"></div>
+        </div>
+        <div class="similar-modal-footer">
+            <button class="btn btn-secondary" onclick="closeSimilarGroupModal()">إلغاء</button>
+            <button class="btn btn-primary" onclick="saveSimilarGroup()">✓ حفظ المجموعة</button>
+        </div>
+    </div>
+</div>
+
 <!-- Hidden file inputs -->
+
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importConfig(event)">
 <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
 
@@ -2681,6 +3114,8 @@ let allLayers      = {};   // sheetId → Leaflet GeoJSON layer
 let allData        = {};   // sheetId → { id: rowObj }
 let allFeatures    = {};   // `${sheetId}-${name}` → Leaflet layer
 let equipmentData  = {};
+let similarGroups  = [];        // [{id, name, subIds:[]}] — مجموعات البنود المتشابهة
+let _editingGroupId = null;     // for editing existing group
 let defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 14 };
 
 /* ====================================================
@@ -2727,18 +3162,24 @@ function togglePanel(id) {
     const panel = document.getElementById(id);
     const isOpen = panel.classList.contains("active");
     // Close all panels first
-    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel,.settings-panel').forEach(p => p.classList.remove('active'));
         if (!isOpen) {
         panel.classList.add("active");
         // Load equipment data when panel opens
         if (id === 'equipmentPanel') buildEquipmentPanel();
+        // Render similar groups when settings opens on similar tab
+        if (id === 'settingsPanel') {
+            const sl = document.getElementById("settingsLat"); if(sl) sl.value = defaultCoords.lat;
+            const sg = document.getElementById("settingsLng"); if(sg) sg.value = defaultCoords.lng;
+            const sz = document.getElementById("settingsZoom"); if(sz) sz.value = defaultCoords.zoom;
+        }
     }
 }
 
 // Close panels when clicking outside
 document.addEventListener("click", e => {
-    if (!e.target.closest('.nav-right')) {
-        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel').forEach(p => p.classList.remove('active'));
+    if (!e.target.closest('.nav-right') && !e.target.closest('#similarGroupModal')) {
+        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel,.settings-panel').forEach(p => p.classList.remove('active'));
     }
     if (!e.target.closest('.search-wrap')) {
         document.getElementById("searchDropdown").classList.remove("active");
@@ -2966,6 +3407,7 @@ async function enterApp() {
 
     await loadCategoriesConfig();
     await loadDefaultCoords();
+    loadSimilarGroups();
 
     const savedSel = sessionStorage.getItem("selectedStatuses");
     if (savedSel) selectedStatuses = JSON.parse(savedSel);
@@ -3037,6 +3479,10 @@ function updateUserUI() {
         const l2 = document.getElementById("defLat2"); if(l2) l2.value = defaultCoords.lat;
         const g2 = document.getElementById("defLng2"); if(g2) g2.value = defaultCoords.lng;
         const z2 = document.getElementById("defZoom2"); if(z2) z2.value = defaultCoords.zoom;
+        // Settings panel
+        const sl = document.getElementById("settingsLat"); if(sl) sl.value = defaultCoords.lat;
+        const sg = document.getElementById("settingsLng"); if(sg) sg.value = defaultCoords.lng;
+        const sz = document.getElementById("settingsZoom"); if(sz) sz.value = defaultCoords.zoom;
     }
 }
 
@@ -3202,6 +3648,187 @@ function syncCoordsInputs() {
     const l2 = document.getElementById("defLat2"); if(l2) l2.value = defaultCoords.lat;
     const g2 = document.getElementById("defLng2"); if(g2) g2.value = defaultCoords.lng;
     const z2 = document.getElementById("defZoom2"); if(z2) z2.value = defaultCoords.zoom;
+    // Also sync new settings panel inputs
+    const sl = document.getElementById("settingsLat"); if(sl) sl.value = defaultCoords.lat;
+    const sg = document.getElementById("settingsLng"); if(sg) sg.value = defaultCoords.lng;
+    const sz = document.getElementById("settingsZoom"); if(sz) sz.value = defaultCoords.zoom;
+}
+
+/* ====================================================
+   SETTINGS PANEL
+   ==================================================== */
+
+function switchSettingsTab(tab) {
+    document.querySelectorAll('.settings-tab').forEach((t, i) => {
+        const tabs = ['coords', 'similar'];
+        t.classList.toggle('active', tabs[i] === tab);
+    });
+    document.getElementById('settingsTabCoords').classList.toggle('active', tab === 'coords');
+    document.getElementById('settingsTabSimilar').classList.toggle('active', tab === 'similar');
+    if (tab === 'similar') renderSimilarGroupsList();
+}
+
+function saveSettingsCoords() {
+    const lat  = parseFloat(document.getElementById("settingsLat").value);
+    const lng  = parseFloat(document.getElementById("settingsLng").value);
+    const zoom = parseInt(document.getElementById("settingsZoom").value);
+    if (isNaN(lat) || isNaN(lng) || isNaN(zoom)) { showAlert("❌ أدخل إحداثيات صحيحة"); return; }
+    defaultCoords = { lat, lng, zoom };
+    localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
+    if (map) map.setView([lat, lng], zoom);
+    syncCoordsInputs();
+    showAlert("✅ تم حفظ الإحداثيات الافتراضية", "success");
+}
+
+/* ====================================================
+   SIMILAR GROUPS MANAGEMENT
+   ==================================================== */
+
+function loadSimilarGroups() {
+    try {
+        const saved = localStorage.getItem('similarGroups');
+        if (saved) similarGroups = JSON.parse(saved);
+    } catch(e) { similarGroups = []; }
+}
+
+function saveSimilarGroupsToStorage() {
+    localStorage.setItem('similarGroups', JSON.stringify(similarGroups));
+}
+
+/* ── Get group that a subitem belongs to ── */
+function getGroupForSub(subId) {
+    return similarGroups.find(g => g.subIds.includes(subId)) || null;
+}
+
+/* ── Render the groups list in settings panel ── */
+function renderSimilarGroupsList() {
+    const list = document.getElementById('similarGroupsList');
+    if (!list) return;
+
+    if (!similarGroups.length) {
+        list.innerHTML = '<div style="text-align:center;color:var(--text-soft);font-size:11px;padding:12px 0;">لا توجد مجموعات بعد</div>';
+        return;
+    }
+
+    list.innerHTML = similarGroups.map(group => {
+        const subNames = group.subIds.map(sid => {
+            let name = sid;
+            categories.forEach(c => {
+                const sub = c.subitems.find(s => s.id === sid);
+                if (sub) name = sub.name;
+            });
+            return name;
+        });
+
+        return `
+        <div class="similar-group-card">
+            <div class="similar-group-card-header">
+                <button class="similar-group-del" onclick="deleteSimilarGroup('${group.id}')" title="حذف المجموعة">✕</button>
+                <span class="similar-group-name">${group.name || 'مجموعة بدون اسم'}</span>
+                <button onclick="openSimilarGroupModal('${group.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--purple);font-weight:700;font-family:'Cairo',sans-serif;padding:0 4px;" title="تعديل">✎ تعديل</button>
+            </div>
+            <div class="similar-group-items">
+                ${subNames.map(n => `<span class="similar-group-pill">${n}</span>`).join('')}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function deleteSimilarGroup(groupId) {
+    similarGroups = similarGroups.filter(g => g.id !== groupId);
+    saveSimilarGroupsToStorage();
+    renderSimilarGroupsList();
+    showAlert("✅ تم حذف المجموعة", "success");
+}
+
+/* ── Open modal to add/edit a similar group ── */
+function openSimilarGroupModal(editId = null) {
+    _editingGroupId = editId;
+    const modal = document.getElementById('similarGroupModal');
+    modal.style.display = 'flex';
+
+    // Set name
+    const existing = editId ? similarGroups.find(g => g.id === editId) : null;
+    document.getElementById('similarGroupNameInput').value = existing ? (existing.name || '') : '';
+
+    // Build subitems grid
+    const grid = document.getElementById('similarSubitemsGrid');
+    grid.innerHTML = '';
+
+    categories.forEach(cat => {
+        if (!cat.subitems.length) return;
+        const section = document.createElement('div');
+        section.className = 'similar-cat-section';
+        section.innerHTML = `<div class="similar-cat-label">${cat.emoji} ${cat.name}</div>`;
+
+        cat.subitems.forEach(sub => {
+            const row = document.createElement('div');
+            row.className = 'similar-subitem-row';
+
+            const isChecked = existing && existing.subIds.includes(sub.id);
+
+            // Check if this sub belongs to another group (not the one being edited)
+            const otherGroup = similarGroups.find(g => g.id !== editId && g.subIds.includes(sub.id));
+            const isInOtherGroup = !!otherGroup;
+
+            row.innerHTML = `
+                <input type="checkbox" id="sg_${sub.id}"
+                    data-sub-id="${sub.id}"
+                    ${isChecked ? 'checked' : ''}
+                    ${isInOtherGroup ? 'disabled title="هذا البند موجود في مجموعة أخرى: ' + (otherGroup.name || 'بدون اسم') + '"' : ''}>
+                <label for="sg_${sub.id}" style="${isInOtherGroup ? 'opacity:0.45;' : ''}">${sub.name}${sub.number ? ' (' + sub.number + ')' : ''}</label>
+                ${isInOtherGroup ? `<span class="similar-subitem-cat-badge" title="المجموعة: ${otherGroup.name || 'بدون اسم'}">مُجمَّع</span>` : ''}`;
+
+            if (isChecked) row.classList.add('selected');
+
+            row.addEventListener('click', e => {
+                if (isInOtherGroup) return;
+                const cb = row.querySelector('input[type="checkbox"]');
+                if (e.target !== cb) cb.checked = !cb.checked;
+                row.classList.toggle('selected', cb.checked);
+            });
+
+            section.appendChild(row);
+        });
+        grid.appendChild(section);
+    });
+}
+
+function closeSimilarGroupModal() {
+    document.getElementById('similarGroupModal').style.display = 'none';
+    _editingGroupId = null;
+}
+
+function saveSimilarGroup() {
+    const name = document.getElementById('similarGroupNameInput').value.trim();
+    const checked = [...document.querySelectorAll('#similarSubitemsGrid input[type="checkbox"]:checked')]
+        .map(cb => cb.dataset.subId);
+
+    if (checked.length < 2) {
+        showAlert("❌ اختر بندين فرعيين على الأقل");
+        return;
+    }
+
+    if (_editingGroupId) {
+        const g = similarGroups.find(g => g.id === _editingGroupId);
+        if (g) { g.name = name || 'مجموعة'; g.subIds = checked; }
+    } else {
+        similarGroups.push({ id: uid(), name: name || 'مجموعة', subIds: checked });
+    }
+
+    saveSimilarGroupsToStorage();
+    renderSimilarGroupsList();
+    closeSimilarGroupModal();
+    showAlert("✅ تم حفظ المجموعة", "success");
+}
+
+/* ── Show conflict toast ── */
+function showFilterConflict(msg) {
+    const t = document.createElement('div');
+    t.className = 'filter-conflict-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
 }
 
 /* ====================================================
@@ -4484,18 +5111,56 @@ function renderNavTabs() {
     });
 }
 
-/* ONE SUBITEM GLOBALLY — selecting any subitem clears all others across all categories,
-   removes all other layers, and clears any contractor filter */
+/* ONE SUBITEM GLOBALLY — but allow subitems in the SAME similar-group to coexist.
+   Subitems from different groups (or ungrouped) cannot be selected together. */
 function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
 
     if (checked) {
-        // 1. وقف أي فلتر مقاول نشط وأزل طبقته إن لم تكن مستخدمة من السايدبار
+        // ── Determine the group of the subitem being selected ──
+        const myGroup = getGroupForSub(subId);
+
+        // ── Check conflict with currently selected items ──
+        const alreadySelected = Object.keys(selectedItems);
+        let conflict = false;
+        let conflictMsg = '';
+
+        for (const selId of alreadySelected) {
+            if (selId === subId) continue;
+            const selGroup = getGroupForSub(selId);
+
+            // Conflict: one is grouped + other is in different group, or one is ungrouped
+            if (!myGroup || !selGroup || myGroup.id !== selGroup.id) {
+                // Find name for conflict message
+                let selName = selId;
+                categories.forEach(c => { const s = c.subitems.find(s => s.id === selId); if(s) selName = s.name; });
+                conflict = true;
+                conflictMsg = myGroup
+                    ? `"${cat.subitems.find(s=>s.id===subId)?.name}" و "${selName}" في مجموعات مختلفة — لا يمكن الجمع بينهما`
+                    : `لا يمكن الجمع بين بندين غير متشابهين`;
+                break;
+            }
+        }
+
+        if (conflict) {
+            // Deselect everything and start fresh with this subitem
+            // But first ask implicitly by clearing others and selecting this one
+            const allSubItems = categories.flatMap(c => c.subitems);
+            Object.keys(selectedItems).forEach(selSubId => {
+                if (selSubId === subId) return;
+                const selSub = allSubItems.find(s => s.id === selSubId);
+                if (!selSub) { delete selectedItems[selSubId]; return; }
+                loadTokens[selSub.sheetId] = null;
+                if (allLayers[selSub.sheetId]) { map.removeLayer(allLayers[selSub.sheetId]); delete allLayers[selSub.sheetId]; }
+                delete allData[selSub.sheetId];
+                delete selectedItems[selSubId];
+            });
+        }
+
+        // 1. وقف أي فلتر مقاول نشط
         if (activeContractorFilter.size > 0) {
-            const contractorSheets = new Set(
-                [...activeContractorFilter].map(k => k.split('|')[0])
-            );
+            const contractorSheets = new Set([...activeContractorFilter].map(k => k.split('|')[0]));
             activeContractorFilter.clear();
             contractorSheets.forEach(sid => {
                 const usedBySidebar = categories.flatMap(c => c.subitems)
@@ -4508,38 +5173,7 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
             });
         }
 
-        // 2. أزل أي بند فرعي محدد لا يستوفي شروط البقاء الثلاثة معاً:
-        //    يُبقى البند المحدد مسبقاً فقط إذا تحققت الثلاثة في آنٍ واحد:
-        //      ✅ بند رئيسي مختلف
-        //      ✅ شيت مختلف
-        //      ✅ نفس اسم البند الفرعي
-        //    وإلا يُحذف.
-        const allSubItems = categories.flatMap(c => c.subitems);
-        const currentSub  = cat.subitems.find(s => s.id === subId);
-        const currentName = currentSub ? currentSub.name.trim() : "";
-
-        Object.keys(selectedItems).forEach(selSubId => {
-            if (selSubId === subId) return;
-            const selSub = allSubItems.find(s => s.id === selSubId);
-            if (!selSub) { delete selectedItems[selSubId]; return; }
-
-            const diffCat   = !categories.find(c => c.id === catId)
-                                          .subitems.some(s => s.id === selSubId);
-            const diffSheet = selSub.sheetId !== sheetId;
-            const sameName  = selSub.name.trim() === currentName;
-
-            // يبقى فقط إذا اجتمعت الشروط الثلاثة
-            const keepIt = diffCat && diffSheet && sameName;
-
-            if (!keepIt) {
-                loadTokens[selSub.sheetId] = null;
-                if (allLayers[selSub.sheetId]) { map.removeLayer(allLayers[selSub.sheetId]); delete allLayers[selSub.sheetId]; }
-                delete allData[selSub.sheetId];
-                delete selectedItems[selSubId];
-            }
-        });
-
-        // 3. اختر هذا البند وحمل طبقته
+        // 2. اختر هذا البند وحمل طبقته
         selectedItems[subId] = true;
         const sub = cat.subitems.find(s => s.id === subId);
         if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
