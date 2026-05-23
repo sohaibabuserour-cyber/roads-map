@@ -6651,31 +6651,29 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeBillsModal();
 });
 
-/* ── Smart column detection ── */
-function bdDetectCol(hdrs, keywords) {
-    for (const kw of keywords) {
-        const idx = hdrs.findIndex(h => h.trim().toLowerCase().includes(kw.toLowerCase()));
-        if (idx !== -1) return hdrs[idx];
-    }
-    return null;
-}
-
-/* ── Formatted number (compact) ── */
+/* ── Formatted number (compact, for KPI cards) ── */
 function bdFmt(v) {
     const raw = String(v || '').replace(/,/g, '').trim();
     const n = parseFloat(raw);
     if (isNaN(n) || raw === '') return '—';
-    if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(2) + ' م';
-    if (Math.abs(n) >= 1_000)     return (n / 1_000).toFixed(1) + ' ك';
+    if (Math.abs(n) >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + ' مليار';
+    if (Math.abs(n) >= 1_000_000)     return (n / 1_000_000).toFixed(2) + ' م';
+    if (Math.abs(n) >= 1_000)         return (n / 1_000).toFixed(1) + ' ك';
     return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-/* ── Formatted number (full, no compact) ── */
+/* ── Formatted number (full with commas) ── */
 function bdFmtFull(v) {
     const raw = String(v || '').replace(/,/g, '').trim();
     const n = parseFloat(raw);
     if (isNaN(n) || raw === '') return '—';
     return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+/* ── Parse numeric cell ── */
+function bdNum(v) {
+    const n = parseFloat(String(v || '').replace(/,/g, ''));
+    return isNaN(n) ? 0 : n;
 }
 
 /* ── Load data from Google Sheet ── */
@@ -6684,6 +6682,7 @@ async function loadBillsData() {
     if (!wrap) return;
     wrap.innerHTML = '<div class="bd-msg bd-msg-load">⏳ جاري تحميل البيانات...</div>';
     document.getElementById('bdCountBadge').textContent = 'جاري التحميل...';
+    bdLoaded = false;
 
     // Reset KPI display
     ['bdKpiTotalVal','bdKpiDoneVal','bdKpiRemVal','bdKpiPct'].forEach(id => {
@@ -6710,19 +6709,34 @@ async function loadBillsData() {
         const lines = csv.split('\n').filter(l => l.trim());
         if (!lines.length) { wrap.innerHTML = '<div class="bd-msg bd-msg-err">لا توجد بيانات في الشيت</div>'; return; }
 
+        // ── قراءة الهيدر ──
         bdHeaders = parseCSVLine(lines[0]);
 
+        /*
+         * ترتيب الأعمدة الثابت كما في الشيت:
+         *   العمود 0 → رقم البند
+         *   العمود 1 → منطوق البند
+         *   العمود 2 → الوحدة
+         *   العمود 3 → السعر
+         *   العمود 4 → الكمية الإجمالية
+         *
+         * الأعمدة المحسوبة (قد تكون في الشيت أو تُحسب):
+         *   القيمة الإجمالية  = السعر × الكمية الإجمالية
+         *   الكمية المنفذة    = عمود 5 إن وُجد
+         *   القيمة المنفذة    = عمود 6 إن وُجد (أو السعر × الكمية المنفذة)
+         *   الكمية المتبقية   = عمود 7 إن وُجد (أو الإجمالية - المنفذة)
+         *   القيمة المتبقية   = القيمة الإجمالية - القيمة المنفذة
+         *   نسبة التنفيذ      = القيمة المنفذة / القيمة الإجمالية
+        */
         bdColMap = {
-            num:      bdDetectCol(bdHeaders, ['رقم البند','رقم','بند رقم','no','item no','number','num','#']),
-            name:     bdDetectCol(bdHeaders, ['اسم البند','اسم','البند','وصف','بيان','description','item name','item','name']),
-            unit:     bdDetectCol(bdHeaders, ['الوحدة','وحدة','unit','uom']),
-            price:    bdDetectCol(bdHeaders, ['سعر الوحدة','سعر','unit price','price','rate','unit rate']),
-            totalQty: bdDetectCol(bdHeaders, ['الكمية الاجمالية','الكمية الإجمالية','إجمالي الكمية','الكمية','total qty','total quantity','quantity','qty']),
-            totalVal: bdDetectCol(bdHeaders, ['القيمة الاجمالية','القيمة الإجمالية','إجمالي القيمة','القيمة','total value','total amount','amount','value']),
-            doneQty:  bdDetectCol(bdHeaders, ['الكمية المنفذة','كمية منفذة','منفذ كمية','done qty','executed qty','completed qty','done']),
-            doneVal:  bdDetectCol(bdHeaders, ['القيمة المنفذة','قيمة منفذة','منفذ قيمة','done value','executed value','completed value']),
-            remQty:   bdDetectCol(bdHeaders, ['الكمية المتبقية','كمية متبقية','متبقي كمية','remaining qty','rem qty','balance qty']),
-            remVal:   bdDetectCol(bdHeaders, ['القيمة المتبقية','قيمة متبقية','متبقي قيمة','remaining value','rem value','balance value','balance']),
+            num:      bdHeaders[0] || null,   // رقم البند    (موضع 0)
+            name:     bdHeaders[1] || null,   // منطوق البند  (موضع 1)
+            unit:     bdHeaders[2] || null,   // الوحدة       (موضع 2)
+            price:    bdHeaders[3] || null,   // السعر         (موضع 3)
+            totalQty: bdHeaders[4] || null,   // الكمية الإجمالية (موضع 4)
+            doneQty:  bdHeaders[5] || null,   // الكمية المنفذة   (موضع 5) - اختياري
+            doneVal:  bdHeaders[6] || null,   // القيمة المنفذة   (موضع 6) - اختياري
+            remQty:   bdHeaders[7] || null,   // الكمية المتبقية  (موضع 7) - اختياري
         };
 
         bdAllRows = [];
@@ -6731,6 +6745,29 @@ async function loadBillsData() {
             if (!vals.some(v => v.trim())) continue;
             const row = {};
             bdHeaders.forEach((h, idx) => { row[h] = vals[idx] || ''; });
+            // ── حساب الأعمدة المشتقة ──
+            const price    = bdNum(row[bdColMap.price]);
+            const totalQty = bdNum(row[bdColMap.totalQty]);
+            const totalVal = price * totalQty;
+            row['__totalVal'] = totalVal;
+
+            const doneQty  = bdNum(row[bdColMap.doneQty]);
+            const doneVal  = bdColMap.doneVal
+                ? bdNum(row[bdColMap.doneVal])
+                : price * doneQty;
+            row['__doneQty']  = doneQty;
+            row['__doneVal']  = doneVal;
+
+            const remQty   = bdColMap.remQty
+                ? bdNum(row[bdColMap.remQty])
+                : Math.max(0, totalQty - doneQty);
+            const remVal   = Math.max(0, totalVal - doneVal);
+            row['__remQty']   = remQty;
+            row['__remVal']   = remVal;
+
+            const pct = totalVal > 0 ? Math.min(100, (doneVal / totalVal) * 100) : 0;
+            row['__pct'] = pct;
+
             bdAllRows.push(row);
         }
 
@@ -6740,7 +6777,7 @@ async function loadBillsData() {
 
         const now = new Date().toLocaleTimeString('ar-SA');
         document.getElementById('bdLastUpdate').textContent = 'آخر تحديث: ' + now;
-        document.getElementById('bdFooterNote').textContent = bdAllRows.length + ' بند • ' + now;
+        document.getElementById('bdFooterNote').textContent = bdAllRows.length + ' بند • مصدر البيانات: Google Sheets';
 
     } catch(e) {
         console.error('Bills load error:', e);
@@ -6756,14 +6793,12 @@ function bdComputeKPIs(rows) {
     let totalVal = 0, doneVal = 0;
 
     rows.forEach(row => {
-        const tv = parseFloat(String(row[bdColMap.totalVal] || '').replace(/,/g,'')) || 0;
-        const dv = parseFloat(String(row[bdColMap.doneVal]  || '').replace(/,/g,'')) || 0;
-        totalVal += tv;
-        doneVal  += dv;
+        totalVal += row['__totalVal'] || 0;
+        doneVal  += row['__doneVal']  || 0;
     });
 
-    const remVal   = Math.max(0, totalVal - doneVal);
-    const donePct  = totalVal > 0 ? Math.min(100, Math.round((doneVal / totalVal) * 100)) : 0;
+    const remVal  = Math.max(0, totalVal - doneVal);
+    const donePct = totalVal > 0 ? Math.min(100, Math.round((doneVal / totalVal) * 100)) : 0;
 
     const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
 
@@ -6802,73 +6837,69 @@ function bdRenderTable(rows) {
         return;
     }
 
-    const has = k => bdColMap[k] && bdColMap[k].trim();
+    const hasDoneQty = !!bdColMap.doneQty;
+    const hasRemQty  = !!bdColMap.remQty;
 
     /* ── Table header ── */
-    let html = `<table class="bd-tbl"><thead><tr>
-        ${has('num')      ? '<th>رقم البند</th>'          : ''}
-        ${has('name')     ? '<th>اسم البند / البيان</th>' : ''}
-        ${has('unit')     ? '<th>الوحدة</th>'             : ''}
-        ${has('price')    ? '<th>سعر الوحدة</th>'         : ''}
-        ${has('totalQty') ? '<th>الكمية الإجمالية</th>'   : ''}
-        ${has('totalVal') ? '<th>القيمة الإجمالية</th>'   : ''}
-        ${has('doneQty')  ? '<th>الكمية المنفذة</th>'     : ''}
-        ${has('doneVal')  ? '<th>القيمة المنفذة</th>'     : ''}
-        ${has('remQty')   ? '<th>الكمية المتبقية</th>'    : ''}
+    let html = `<div class="bd-tbl-wrap"><table class="bd-tbl"><thead><tr>
+        <th style="min-width:80px;">رقم البند</th>
+        <th style="min-width:180px;">منطوق البند</th>
+        <th>الوحدة</th>
+        <th>السعر</th>
+        <th>الكمية الإجمالية</th>
+        <th>القيمة الإجمالية</th>
+        ${hasDoneQty ? '<th>الكمية المنفذة</th>' : ''}
+        <th>القيمة المنفذة</th>
+        ${hasRemQty  ? '<th>الكمية المتبقية</th>' : ''}
         <th>القيمة المتبقية</th>
-        <th style="min-width:110px;">نسبة التنفيذ</th>
+        <th style="min-width:120px;">نسبة التنفيذ</th>
     </tr></thead><tbody>`;
 
     /* ── Table rows ── */
     rows.forEach(row => {
-        const tv  = parseFloat(String(row[bdColMap.totalVal] || '').replace(/,/g,'')) || 0;
-        const dv  = parseFloat(String(row[bdColMap.doneVal]  || '').replace(/,/g,'')) || 0;
-        /* القيمة المتبقية: من العمود مباشرة إن وُجد، وإلا نحسبها */
-        const rvRaw = has('remVal')
-            ? parseFloat(String(row[bdColMap.remVal] || '').replace(/,/g,''))
-            : NaN;
-        const rv    = !isNaN(rvRaw) ? rvRaw : Math.max(0, tv - dv);
+        const numVal  = row[bdColMap.num]  || '—';
+        const nameVal = row[bdColMap.name] || '—';
+        const unit    = row[bdColMap.unit] || '—';
+        const price   = bdNum(row[bdColMap.price]);
+        const tQty    = bdNum(row[bdColMap.totalQty]);
+        const tVal    = row['__totalVal'];
+        const dQty    = row['__doneQty'];
+        const dVal    = row['__doneVal'];
+        const rQty    = row['__remQty'];
+        const rVal    = row['__remVal'];
+        const pct     = row['__pct'] || 0;
+        const pctRnd  = Math.round(pct);
 
-        const pct      = tv > 0 ? Math.min(100, Math.round((dv / tv) * 100)) : 0;
-        const pctColor = pct < 30 ? '#ff8a80' : pct < 70 ? '#ffb74d' : '#5cc890';
-
-        /* اسم البند: قطع النص الطويل */
-        const nameVal = has('name') ? (row[bdColMap.name] || '—') : '';
+        const pctColor = pctRnd < 30 ? '#ff8a80' : pctRnd < 70 ? '#ffb74d' : '#5cc890';
 
         html += `<tr>
-            ${has('num')
-                ? `<td><span class="bd-num-pill">${row[bdColMap.num] || '—'}</span></td>`
-                : ''}
-            ${has('name')
-                ? `<td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
-                       title="${nameVal.replace(/"/g,"'")}">${nameVal}</td>`
-                : ''}
-            ${has('unit')
-                ? `<td style="color:rgba(255,255,255,0.45);font-size:11px;">${row[bdColMap.unit] || '—'}</td>`
-                : ''}
-            ${has('price')    ? `<td class="bdn">${bdFmtFull(row[bdColMap.price])}</td>`    : ''}
-            ${has('totalQty') ? `<td class="bdn">${bdFmtFull(row[bdColMap.totalQty])}</td>` : ''}
-            ${has('totalVal') ? `<td class="bdn">${bdFmtFull(row[bdColMap.totalVal])}</td>` : ''}
-            ${has('doneQty')  ? `<td class="bdg">${bdFmtFull(row[bdColMap.doneQty])}</td>`  : ''}
-            ${has('doneVal')  ? `<td class="bdg">${bdFmtFull(row[bdColMap.doneVal])}</td>`  : ''}
-            ${has('remQty')   ? `<td class="bdb">${bdFmtFull(row[bdColMap.remQty])}</td>`   : ''}
-            <td class="bdr">${bdFmtFull(rv)}</td>
+            <td><span class="bd-num-pill">${numVal}</span></td>
+            <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                title="${nameVal.replace(/"/g,"'")}">${nameVal}</td>
+            <td style="color:rgba(255,255,255,0.5);font-size:11px;">${unit}</td>
+            <td class="bdn">${bdFmtFull(price)}</td>
+            <td class="bdn">${bdFmtFull(tQty)}</td>
+            <td class="bdn">${bdFmtFull(tVal)}</td>
+            ${hasDoneQty ? `<td class="bdg">${bdFmtFull(dQty)}</td>` : ''}
+            <td class="bdg">${bdFmtFull(dVal)}</td>
+            ${hasRemQty  ? `<td class="bdb">${bdFmtFull(rQty)}</td>` : ''}
+            <td class="bdr">${bdFmtFull(rVal)}</td>
             <td>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <div class="bd-pct-bw">
-                        <div class="bd-pct-b" style="width:${pct}%;background:${pctColor};"></div>
+                <div style="display:flex;align-items:center;gap:7px;">
+                    <div class="bd-pct-bw" style="flex:1;min-width:60px;">
+                        <div class="bd-pct-b" style="width:${pctRnd}%;background:${pctColor};"></div>
                     </div>
-                    <span style="font-size:10px;font-weight:700;color:${pctColor};min-width:30px;font-family:'Cairo',sans-serif;">${pct}%</span>
+                    <span style="font-size:11px;font-weight:900;color:${pctColor};min-width:36px;text-align:left;font-family:'Cairo',sans-serif;">${pctRnd}%</span>
                 </div>
             </td>
         </tr>`;
     });
 
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     wrap.innerHTML = html;
 }
 
-/* ── Search / Filter ── */
+/* ── Search / Filter (by num or name) ── */
 function bdFilterRows() {
     const q = (document.getElementById('bdSearchInput').value || '').trim().toLowerCase();
     if (!q) {
