@@ -286,43 +286,80 @@
             display: flex;
             align-items: center;
             flex-shrink: 0;
-            height: 52px;
-            padding: 0 14px;
+            height: 58px;
+            padding: 0 16px;
             gap: 0;
             position: relative;
             z-index: 2000;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.4);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        /* Subtle top accent line */
+        .top-nav::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, var(--gold) 40%, rgba(245,200,66,0.4) 70%, transparent 100%);
+            opacity: 0.7;
         }
 
         /* Logo in top-nav */
         .nav-logo {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             flex-shrink: 0;
-            margin-left: 14px;
+            margin-left: 20px;
+            padding-left: 16px;
+            border-left: 1px solid rgba(255,255,255,0.1);
         }
 
         .nav-logo img {
-            height: 46px;
+            height: 40px;
             width: auto;
             object-fit: contain;
-            filter: drop-shadow(0 0 8px rgba(245,200,66,0.4));
+            filter: drop-shadow(0 0 10px rgba(245,200,66,0.5));
         }
 
         .nav-logo .logo-fallback {
-            font-size: 28px;
+            font-size: 26px;
+        }
+
+        /* App title next to logo */
+        .nav-logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .nav-logo-title {
+            font-size: 13px;
+            font-weight: 900;
+            color: white;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+
+        .nav-logo-sub {
+            font-size: 9px;
+            color: rgba(255,255,255,0.45);
+            font-weight: 600;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
         }
 
         /* Tab navigation */
         .nav-tabs {
             display: flex;
-            gap: 2px;
+            gap: 1px;
             flex: 1;
             height: 100%;
             overflow-x: auto;
             overflow-y: visible;
             align-items: center;
+            padding: 0 8px;
         }
 
         .nav-tabs::-webkit-scrollbar { display: none; }
@@ -331,35 +368,41 @@
             position: relative;
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 0 14px;
-            height: 100%;
-            font-size: 13px;
+            gap: 7px;
+            padding: 0 16px;
+            height: calc(100% - 8px);
+            font-size: 12.5px;
             font-weight: 700;
-            color: rgba(255,255,255,0.65);
+            color: rgba(255,255,255,0.55);
             cursor: pointer;
             transition: all 0.2s ease;
-            border-bottom: 3px solid transparent;
+            border-bottom: 2px solid transparent;
             white-space: nowrap;
             flex-shrink: 0;
+            border-radius: 8px;
+            letter-spacing: 0.2px;
         }
 
-        .nav-tab:hover { color: white; background: rgba(255,255,255,0.07); }
+        .nav-tab:hover {
+            color: rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.08);
+        }
 
         .nav-tab.active {
             color: var(--gold);
             border-bottom-color: var(--gold);
-            background: rgba(255,255,255,0.08);
+            background: rgba(245,200,66,0.08);
+            border-radius: 8px 8px 0 0;
         }
 
         /* Subitem tooltip/dropdown from tab */
         .nav-tab .tab-sub-dropdown {
             position: fixed;
-            top: 52px;
-            min-width: 200px;
+            top: 58px;
+            min-width: 210px;
             background: white;
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06);
             display: none;
             flex-direction: column;
             z-index: 99999;
@@ -372,7 +415,7 @@
         .nav-tab:hover .tab-sub-dropdown { display: flex; }
 
         .tab-sub-item {
-            padding: 10px 14px;
+            padding: 10px 16px;
             font-size: 12px;
             font-weight: 600;
             color: var(--text);
@@ -381,13 +424,13 @@
             align-items: center;
             gap: 8px;
             transition: background 0.15s ease;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
             flex-direction: row-reverse;
             justify-content: flex-end;
         }
 
         .tab-sub-item:last-child { border-bottom: none; }
-        .tab-sub-item:hover { background: rgba(106,45,145,0.07); }
+        .tab-sub-item:hover { background: rgba(106,45,145,0.06); }
 
         .tab-sub-item label {
             flex: 1;
@@ -405,75 +448,96 @@
             height: 14px;
         }
 
-        /* Right side of nav — Modern Redesign */
+        /* Right side of nav */
         .nav-right {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             flex-shrink: 0;
-            padding: 0 4px;
+            padding: 0 6px;
         }
 
         .nav-right-divider {
             width: 1px;
-            height: 24px;
-            background: rgba(255,255,255,0.15);
-            margin: 0 2px;
+            height: 22px;
+            background: rgba(255,255,255,0.12);
+            margin: 0 4px;
             flex-shrink: 0;
         }
 
         .nav-right-group {
             display: flex;
             align-items: center;
-            gap: 3px;
-            padding: 2px 4px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.08);
+            gap: 2px;
+            padding: 3px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.07);
         }
 
-        /* Notification bell */
+        /* Icon buttons */
         .nav-icon-btn {
             position: relative;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.12);
-            color: white;
-            width: 34px; height: 34px;
-            border-radius: 10px;
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            width: 36px; height: 36px;
+            border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
-            font-size: 15px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(4px);
+            font-size: 16px;
+            transition: all 0.18s ease;
         }
 
         .nav-icon-btn:hover {
-            background: rgba(255,255,255,0.18);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            border-color: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.12);
+            color: white;
+            transform: translateY(-1px);
         }
 
         .nav-icon-btn:active {
-            transform: translateY(0);
+            transform: scale(0.94);
+            background: rgba(255,255,255,0.08);
         }
 
         .nav-icon-btn.active-tool {
-            background: rgba(245,200,66,0.2);
-            border-color: rgba(245,200,66,0.5);
+            background: rgba(245,200,66,0.15);
             color: var(--gold);
+        }
+
+        /* Tooltip on hover */
+        .nav-icon-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.75);
+            color: white;
+            font-size: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 5px;
+            white-space: nowrap;
+            z-index: 99999;
+            pointer-events: none;
+            letter-spacing: 0.3px;
         }
 
         .notif-badge {
             position: absolute;
-            top: -2px; left: -2px;
-            width: 16px; height: 16px;
-            background: var(--red);
-            border-radius: 50%;
-            font-size: 9px;
-            font-weight: 700;
+            top: 4px; left: 4px;
+            min-width: 15px; height: 15px;
+            background: #e53935;
+            border-radius: 8px;
+            font-size: 8px;
+            font-weight: 900;
             color: white;
             display: flex; align-items: center; justify-content: center;
+            padding: 0 3px;
+            border: 1.5px solid rgba(26, 10, 46, 0.6);
+            line-height: 1;
         }
 
         /* Notification panel */
@@ -657,32 +721,34 @@
         .user-chip {
             display: flex;
             align-items: center;
-            gap: 7px;
-            padding: 5px 10px;
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 20px;
+            gap: 8px;
+            padding: 4px 10px 4px 5px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .user-chip:hover { background: rgba(255,255,255,0.2); }
+        .user-chip:hover {
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(255,255,255,0.2);
+        }
 
         .user-avatar {
-            width: 38px; height: 38px;
+            width: 30px; height: 30px;
             border-radius: 50%;
-            background: var(--gold);
+            background: linear-gradient(135deg, var(--gold) 0%, #e8a800 100%);
             display: flex; align-items: center; justify-content: center;
-            font-size: 15px; font-weight: 700; color: #3d1060;
+            font-size: 12px; font-weight: 900; color: #3d1060;
             overflow: hidden;
             flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,0.35);
-            box-shadow: 0 0 0 2px rgba(245,200,66,0.4);
+            border: 1.5px solid rgba(255,255,255,0.25);
         }
 
         .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-        .user-name-small { font-size: 11px; font-weight: 700; color: white; white-space: nowrap; }
+        .user-name-small { font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.9); white-space: nowrap; }
 
         .user-dropdown {
             position: absolute;
@@ -1988,6 +2054,10 @@
         <div class="nav-logo">
             <img src="logo-left.png" id="navLogo" alt="شعار" onerror="this.style.display='none';document.getElementById('navLogoFallback').style.display='block'">
             <span class="logo-fallback" id="navLogoFallback" style="display:none">👑</span>
+            <div class="nav-logo-text">
+                <span class="nav-logo-title">مشروع ولي العهد</span>
+                <span class="nav-logo-sub">الخريطة التفاعلية</span>
+            </div>
         </div>
 
         <!-- Category tabs (dynamic) -->
