@@ -5940,40 +5940,71 @@ function applyXlToCategoriesAndClose() {
     const cats = xlAiResult?.categories;
     if (!cats || !cats.length) { showAlert('❌ لا توجد بنود لإضافتها', 'error'); return; }
 
-    let added = 0;
+    let addedCats = 0, addedSubs = 0;
+
     cats.forEach(cat => {
-        // Check if category already exists by name
-        let existingCat = categories.find(c => c.name.trim() === cat.name.trim());
+        const hasSubs    = cat.subitems && cat.subitems.length > 0;
+        const hasQty     = cat.totalQty  || cat.doneQty || cat.remainQty;
 
-        if (!existingCat) {
-            existingCat = {
-                id: uid(),
-                name: cat.name,
-                emoji: cat.emoji || '📍',
-                subitems: []
-            };
-            categories.push(existingCat);
-            added++;
-        }
-
-        // Add subitems that don't already exist
-        (cat.subitems || []).forEach(sub => {
-            const exists = existingCat.subitems.find(s => s.name.trim() === sub.name.trim());
-            if (!exists) {
-                existingCat.subitems.push({
-                    id: uid(),
-                    name: sub.name,
-                    sheetId: '',
-                    geoJsonFile: ''
-                });
+        if (!hasSubs && hasQty) {
+            /* ── بند منفرد له كمية وليس له فرعيات
+               → يُعامَل كبند فرعي مستقل تحت فئة رئيسية باسمه ── */
+            let parentCat = categories.find(c => c.name.trim() === cat.name.trim());
+            if (!parentCat) {
+                parentCat = {
+                    id       : uid(),
+                    name     : cat.name,
+                    emoji    : cat.emoji || '📍',
+                    subitems : []
+                };
+                categories.push(parentCat);
+                addedCats++;
             }
-        });
+            // أضف نفسه كبند فرعي وحيد (بـ checkbox) إذا لم يكن موجوداً
+            const selfExists = parentCat.subitems.find(s => s.name.trim() === cat.name.trim());
+            if (!selfExists) {
+                parentCat.subitems.push({
+                    id          : uid(),
+                    name        : cat.name,
+                    sheetId     : '',
+                    geoJsonFile : ''
+                });
+                addedSubs++;
+            }
+
+        } else {
+            /* ── بند رئيسي عادي مع فرعيات ── */
+            let existingCat = categories.find(c => c.name.trim() === cat.name.trim());
+            if (!existingCat) {
+                existingCat = {
+                    id       : uid(),
+                    name     : cat.name,
+                    emoji    : cat.emoji || '📍',
+                    subitems : []
+                };
+                categories.push(existingCat);
+                addedCats++;
+            }
+
+            (cat.subitems || []).forEach(sub => {
+                const exists = existingCat.subitems.find(s => s.name.trim() === sub.name.trim());
+                if (!exists) {
+                    existingCat.subitems.push({
+                        id          : uid(),
+                        name        : sub.name,
+                        sheetId     : '',
+                        geoJsonFile : ''
+                    });
+                    addedSubs++;
+                }
+            });
+        }
     });
 
     renderItems();
     renderNavTabs();
     closeExcelImportModal();
-    showAlert(`✅ تمت إضافة ${cats.length} بند رئيسي للسايدبار`, 'success');
+    showAlert(`✅ تمت إضافة ${addedCats} بند رئيسي و${addedSubs} بند فرعي للسايدبار`, 'success');
 }
 </script>
 </body>
