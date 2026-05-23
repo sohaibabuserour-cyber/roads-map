@@ -1615,6 +1615,25 @@
         .btn-secondary { background: #ededf0; color: var(--text); }
         .btn-secondary:hover { background: #e0e0e5; }
 
+        /* ── دبل كليك للأدمن: مؤشر تعديل ── */
+        body.is-admin .dropdown-item[data-sub] {
+            transition: all 0.15s ease;
+        }
+        body.is-admin .dropdown-item[data-sub]:hover {
+            border-left: 2px solid var(--purple-light);
+        }
+        body.is-admin .dropdown-item[data-sub]::after {
+            content: '';
+            display: none;
+        }
+        /* Tooltip hint for admin on subitem hover */
+        body.is-admin .dropdown-item[data-sub]:hover label::after {
+            content: ' ✎';
+            font-size: 10px;
+            color: var(--purple-light);
+            opacity: 0.7;
+        }
+
         /* ========== RESPONSIVE ========== */
 
         /* ========== CONTRACTOR PANEL ========== */
@@ -2469,6 +2488,10 @@
     <div class="modal-box">
         <div class="modal-title">➕ إضافة بند رئيسي</div>
         <div class="modal-field">
+            <label>رقم البند</label>
+            <input type="text" id="inCatNumber" placeholder="مثال: 1 أو A-01">
+        </div>
+        <div class="modal-field">
             <label>اسم البند</label>
             <input type="text" id="inCatName" placeholder="مثال: الطرق">
         </div>
@@ -2492,6 +2515,10 @@
             <select id="inSubCat"><option value="">-- اختر --</option></select>
         </div>
         <div class="modal-field">
+            <label>رقم البند الفرعي</label>
+            <input type="text" id="inSubNumber" placeholder="مثال: 1-1 أو A-01-02">
+        </div>
+        <div class="modal-field">
             <label>اسم الفرعي</label>
             <input type="text" id="inSubName" placeholder="مثال: الردم">
         </div>
@@ -2510,7 +2537,43 @@
     </div>
 </div>
 
-<!-- CASHFLOW DASHBOARD MODAL -->
+<!-- MODAL: EDIT SUBITEM (double-click, admin only) -->
+<div class="modal" id="modalEditSubitem">
+    <div class="modal-box">
+        <div class="modal-title">✏️ تعديل البند الفرعي</div>
+        <input type="hidden" id="editSubCatId">
+        <input type="hidden" id="editSubId">
+        <div class="modal-field">
+            <label>رقم البند الفرعي</label>
+            <input type="text" id="editSubNumber" placeholder="مثال: 1-1">
+        </div>
+        <div class="modal-field">
+            <label>اسم البند الفرعي</label>
+            <input type="text" id="editSubName" placeholder="مثال: الردم">
+        </div>
+        <div class="modal-field">
+            <label>رابط Google Sheet</label>
+            <input type="text" id="editSubSheet" placeholder="https://docs.google.com/spreadsheets/d/...">
+            <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">
+                <a id="editSubSheetLink" href="#" target="_blank"
+                   style="font-size:11px;color:var(--purple);font-weight:700;text-decoration:none;display:none;
+                          padding:4px 10px;background:rgba(106,45,145,0.08);border-radius:5px;border:1px solid rgba(106,45,145,0.2);transition:background 0.2s;"
+                   onmouseover="this.style.background='rgba(106,45,145,0.16)'"
+                   onmouseout="this.style.background='rgba(106,45,145,0.08)'">
+                   🔗 فتح الشيت
+                </a>
+            </div>
+        </div>
+        <div class="modal-field">
+            <label>ملف GeoJSON</label>
+            <input type="text" id="editSubGeo" placeholder="ROADS.geojson">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modalEditSubitem')">إلغاء</button>
+            <button class="btn btn-primary" onclick="saveSubitemEdit()">💾 حفظ</button>
+        </div>
+    </div>
+</div>
 <div class="modal" id="cashflowModal" style="z-index:60000;padding:24px;align-items:center;justify-content:center;">
     <div class="cf-modal-overlay" onclick="closeCashflowModal()" style="position:fixed;inset:0;"></div>
     <div class="cf-modal-wrap">
@@ -4507,24 +4570,41 @@ function renderItems() {
         div.className = "sidebar-section";
         div.dataset.catId = cat.id;
 
+        // عنوان البند الرئيسي: رقم البند + الاسم
+        const catLabel = (cat.number ? `<span style="font-size:9px;opacity:0.7;margin-left:3px;background:rgba(255,255,255,0.15);padding:1px 5px;border-radius:4px;">${cat.number}</span>` : '') + cat.emoji + ' ' + cat.name;
+
         div.innerHTML = `
             <div class="section-title">
                 <button class="expand-btn" data-cat="${cat.id}">+</button>
-                <span class="section-title-text">${cat.emoji} ${cat.name}</span>
+                <span class="section-title-text">${catLabel}</span>
                 ${isAdmin ? `<button class="del-cat-btn admin-only" onclick="deleteCategory('${cat.id}')">✕</button>` : ""}
             </div>
             <div class="dropdown-items" data-cat="${cat.id}">
-                ${cat.subitems.map(sub => `
-                    <div class="dropdown-item ${selectedItems[sub.id]?'selected':''}" data-sub="${sub.id}">
+                ${cat.subitems.map(sub => {
+                    // رقم البند الفرعي
+                    const numBadge = sub.number
+                        ? `<span style="font-size:9px;font-weight:700;color:var(--purple);background:rgba(106,45,145,0.1);padding:1px 5px;border-radius:4px;flex-shrink:0;border:1px solid rgba(106,45,145,0.2);">${sub.number}</span>`
+                        : '';
+                    // مؤشر بيانات مفقودة (شيت أو geo فارغ)
+                    const missingData = !sub.sheetId || !sub.geoJsonFile;
+                    const warningIcon = (isAdmin && missingData)
+                        ? `<span title="بيانات مفقودة — دبل كليك للتعديل" style="color:#ff9800;font-size:11px;flex-shrink:0;">⚠️</span>`
+                        : '';
+                    return `
+                    <div class="dropdown-item ${selectedItems[sub.id]?'selected':''}" data-sub="${sub.id}"
+                         ${isAdmin ? `title="دبل كليك لتعديل البند"` : ''}>
                         <input type="checkbox" class="subitem-cb"
                             data-sub-id="${sub.id}"
                             data-cat-id="${cat.id}"
                             data-sheet="${sub.sheetId}"
                             data-geo="${sub.geoJsonFile}"
                             ${selectedItems[sub.id]?'checked':''}>
-                        <label>${sub.name}</label>
+                        ${numBadge}
+                        <label style="flex:1">${sub.name}</label>
+                        ${warningIcon}
                         ${isAdmin ? `<button class="del-sub-btn admin-only" onclick="deleteSubitem('${cat.id}','${sub.id}')">✕</button>` : ""}
-                    </div>`).join('')}
+                    </div>`;
+                }).join('')}
                 ${isAdmin ? `<div class="add-sub-row admin-only" onclick="openAddSubitemModalFor('${cat.id}')">+ إضافة فرعي</div>` : ""}
             </div>`;
 
@@ -4540,6 +4620,18 @@ function renderItems() {
                 handleSubitemToggle(this.dataset.catId, this.dataset.subId, this.dataset.sheet, this.dataset.geo, this.checked);
             });
         });
+
+        // دبل كليك على البند الفرعي — للأدمن فقط
+        if (isAdmin) {
+            div.querySelectorAll(".dropdown-item[data-sub]").forEach(item => {
+                item.addEventListener("dblclick", function(e) {
+                    // تجاهل الدبل كليك على الأزرار
+                    if (e.target.closest('.del-sub-btn') || e.target.closest('.subitem-cb')) return;
+                    const subId = this.dataset.sub;
+                    openEditSubitemModal(cat.id, subId);
+                });
+            });
+        }
     });
 
     // Update modal select
@@ -4548,7 +4640,8 @@ function renderItems() {
         sel.innerHTML = '<option value="">-- اختر --</option>';
         categories.forEach(c => {
             const o = document.createElement("option");
-            o.value = c.id; o.textContent = c.name;
+            o.value = c.id;
+            o.textContent = (c.number ? `[${c.number}] ` : '') + c.name;
             sel.appendChild(o);
         });
     }
@@ -4559,16 +4652,18 @@ function renderItems() {
    ==================================================== */
 
 function openAddCategoryModal() {
+    document.getElementById("inCatNumber").value = "";
     document.getElementById("inCatName").value  = "";
     document.getElementById("inCatEmoji").value = "📍";
     openModal("modalAddCategory");
 }
 
 function addCategory() {
-    const name  = document.getElementById("inCatName").value.trim();
-    const emoji = document.getElementById("inCatEmoji").value.trim() || "📍";
+    const number = document.getElementById("inCatNumber").value.trim();
+    const name   = document.getElementById("inCatName").value.trim();
+    const emoji  = document.getElementById("inCatEmoji").value.trim() || "📍";
     if (!name) { showAlert("❌ يرجى إدخال اسم البند"); return; }
-    categories.push({ id: uid(), name, emoji, subitems: [] });
+    categories.push({ id: uid(), number, name, emoji, subitems: [] });
     renderItems();
     renderNavTabs();
     closeModal("modalAddCategory");
@@ -4579,6 +4674,7 @@ let _addSubForCat = null;
 
 function openAddSubitemModal() {
     _addSubForCat = null;
+    document.getElementById("inSubNumber").value = "";
     document.getElementById("inSubName").value  = "";
     document.getElementById("inSubSheet").value = "";
     document.getElementById("inSubGeo").value   = "";
@@ -4588,6 +4684,7 @@ function openAddSubitemModal() {
 
 function openAddSubitemModalFor(catId) {
     _addSubForCat = catId;
+    document.getElementById("inSubNumber").value = "";
     document.getElementById("inSubName").value  = "";
     document.getElementById("inSubSheet").value = "";
     document.getElementById("inSubGeo").value   = "";
@@ -4597,6 +4694,7 @@ function openAddSubitemModalFor(catId) {
 
 function addSubitem() {
     const catId    = document.getElementById("inSubCat").value || _addSubForCat;
+    const number   = document.getElementById("inSubNumber").value.trim();
     const name     = document.getElementById("inSubName").value.trim();
     const sheetRaw = document.getElementById("inSubSheet").value.trim();
     const geo      = document.getElementById("inSubGeo").value.trim();
@@ -4608,7 +4706,7 @@ function addSubitem() {
     const cat = categories.find(c => c.id === catId);
     if (!cat) { showAlert("❌ البند غير موجود"); return; }
 
-    cat.subitems.push({ id: uid(), name, sheetId, geoJsonFile: geo });
+    cat.subitems.push({ id: uid(), number, name, sheetId, geoJsonFile: geo });
     renderItems();
     renderNavTabs();
     closeModal("modalAddSubitem");
@@ -4640,6 +4738,97 @@ function deleteSubitem(catId, subId) {
     renderNavTabs();
     updateStats();
     showAlert("✅ تم الحذف", "success");
+}
+
+/* ====================================================
+   EDIT SUBITEM (double-click — admin only)
+   ==================================================== */
+
+function openEditSubitemModal(catId, subId) {
+    if (!currentUser || !currentUser.isAdmin) return;
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return;
+    const sub = cat.subitems.find(s => s.id === subId);
+    if (!sub) return;
+
+    document.getElementById("editSubCatId").value  = catId;
+    document.getElementById("editSubId").value     = subId;
+    document.getElementById("editSubNumber").value = sub.number || "";
+    document.getElementById("editSubName").value   = sub.name   || "";
+    document.getElementById("editSubGeo").value    = sub.geoJsonFile || "";
+
+    // Sheet: show full URL if sheetId looks like an ID, else show as-is
+    const sheetVal = sub.sheetId || "";
+    const sheetUrl = sheetVal.startsWith('http')
+        ? sheetVal
+        : `https://docs.google.com/spreadsheets/d/${sheetVal}`;
+    document.getElementById("editSubSheet").value = sheetUrl;
+
+    // Show "فتح الشيت" link
+    const linkEl = document.getElementById("editSubSheetLink");
+    if (sheetVal) {
+        linkEl.href = sheetUrl;
+        linkEl.style.display = "inline-flex";
+        linkEl.style.alignItems = "center";
+        linkEl.style.gap = "4px";
+    } else {
+        linkEl.style.display = "none";
+    }
+
+    // Update link when URL changes
+    document.getElementById("editSubSheet").oninput = function() {
+        const v = this.value.trim();
+        const id = sheetIdFromUrl(v) || v;
+        if (id) {
+            linkEl.href = v.startsWith('http') ? v : `https://docs.google.com/spreadsheets/d/${id}`;
+            linkEl.style.display = "inline-flex";
+            linkEl.style.alignItems = "center";
+            linkEl.style.gap = "4px";
+        } else {
+            linkEl.style.display = "none";
+        }
+    };
+
+    openModal("modalEditSubitem");
+}
+
+function saveSubitemEdit() {
+    const catId    = document.getElementById("editSubCatId").value;
+    const subId    = document.getElementById("editSubId").value;
+    const number   = document.getElementById("editSubNumber").value.trim();
+    const name     = document.getElementById("editSubName").value.trim();
+    const sheetRaw = document.getElementById("editSubSheet").value.trim();
+    const geo      = document.getElementById("editSubGeo").value.trim();
+
+    if (!name || !sheetRaw || !geo) { showAlert("❌ يرجى ملء الاسم والشيت والـ GeoJSON"); return; }
+
+    const sheetId = sheetIdFromUrl(sheetRaw) || sheetRaw;
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return;
+    const sub = cat.subitems.find(s => s.id === subId);
+    if (!sub) return;
+
+    const oldSheetId = sub.sheetId;
+    const sheetChanged = oldSheetId !== sheetId;
+    const geoChanged = sub.geoJsonFile !== geo;
+
+    sub.number      = number;
+    sub.name        = name;
+    sub.sheetId     = sheetId;
+    sub.geoJsonFile = geo;
+
+    // إذا تغير الشيت أو الـ GeoJSON وكانت الطبقة محملة، أعد تحميلها
+    if ((sheetChanged || geoChanged) && selectedItems[subId]) {
+        loadTokens[oldSheetId] = null;
+        if (allLayers[oldSheetId]) { map.removeLayer(allLayers[oldSheetId]); delete allLayers[oldSheetId]; }
+        delete allData[oldSheetId];
+        loadLayer(sheetId, name, geo, catId);
+    }
+
+    renderItems();
+    renderNavTabs();
+    closeModal("modalEditSubitem");
+    showAlert("✅ تم حفظ التعديلات", "success");
 }
 
 /* ====================================================
