@@ -4698,19 +4698,19 @@ function addSubitem() {
     const name     = document.getElementById("inSubName").value.trim();
     const sheetRaw = document.getElementById("inSubSheet").value.trim();
     const geo      = document.getElementById("inSubGeo").value.trim();
-    if (!catId || !name || !sheetRaw || !geo) { showAlert("❌ يرجى ملء جميع الحقول"); return; }
-
-    const sheetId = sheetIdFromUrl(sheetRaw);
-    if (!sheetId) { showAlert("❌ رابط الشيت غير صحيح"); return; }
+    if (!catId || !name) { showAlert("❌ يرجى اختيار البند الرئيسي وإدخال الاسم"); return; }
 
     const cat = categories.find(c => c.id === catId);
     if (!cat) { showAlert("❌ البند غير موجود"); return; }
+
+    // الشيت والـ GeoJSON اختياريان — يمكن إضافتهما لاحقاً عبر دبل كليك
+    const sheetId = sheetRaw ? (sheetIdFromUrl(sheetRaw) || sheetRaw) : "";
 
     cat.subitems.push({ id: uid(), number, name, sheetId, geoJsonFile: geo });
     renderItems();
     renderNavTabs();
     closeModal("modalAddSubitem");
-    showAlert("✅ تمت إضافة البند الفرعي", "success");
+    showAlert("✅ تمت إضافة البند الفرعي" + (!sheetId || !geo ? " — أضف الشيت والـ GeoJSON لاحقاً بدبل كليك" : ""), "success");
 }
 
 function deleteCategory(catId) {
