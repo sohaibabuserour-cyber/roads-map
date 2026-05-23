@@ -2376,13 +2376,10 @@
 
         /* Similar groups modal */
         .similar-modal-overlay {
-            position: fixed;
+            position: absolute;
             inset: 0;
             background: rgba(0,0,0,0.55);
-            z-index: 70000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            z-index: 1;
         }
 
         .similar-modal-box {
@@ -3046,8 +3043,8 @@
 
 <!-- MODAL: SIMILAR GROUPS -->
 <div id="similarGroupModal" style="display:none;position:fixed;inset:0;z-index:70000;align-items:center;justify-content:center;">
-    <div class="similar-modal-overlay" onclick="closeSimilarGroupModal()"></div>
-    <div class="similar-modal-box">
+    <div class="similar-modal-overlay" onclick="closeSimilarGroupModal()" style="position:fixed;inset:0;z-index:1;"></div>
+    <div class="similar-modal-box" style="position:relative;z-index:2;">
         <div class="similar-modal-header">
             <div class="similar-modal-title">🔗 إضافة مجموعة بنود متشابهة</div>
             <button class="similar-modal-close" onclick="closeSimilarGroupModal()">✕</button>
