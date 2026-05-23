@@ -1,79 +1,20 @@
 {
-  "categories": [
-    {
-      "id": "mpic5b2fsunuf",
-      "name": "الطرق",
-      "emoji": "📍",
-      "subitems": [
-        {
-          "id": "mpic5i6m9lbli",
-          "name": "الردم",
-          "sheetId": "1uEMaen3ZKZdQh2_d0M5sQ93XXXAl8SJm1AHkKnO3RPA",
-          "geoJsonFile": "ROADS.geojson"
-        },
-        {
-          "id": "mpic8bqa8l35i",
-          "name": "القطع",
-          "sheetId": "11l-KrQpBRlwdyj5KH7Tu_5JHi0A5NZTRsHh4sdDonAY",
-          "geoJsonFile": "ROADS.geojson"
-        },
-        {
-          "id": "mpic96hnvwr38",
-          "name": "الأساس الحصوي",
-          "sheetId": "1VJpp4MCcf6le1cGDNCYO0wNNt4LSgW8LgqnxELAhKaI",
-          "geoJsonFile": "ROADS.geojson"
-        },
-        {
-          "id": "mpicbbza7ur51",
-          "name": "طبقة التشرب",
-          "sheetId": "1L0HGAoURaqLO-AIy27nto6KLrEtbcrLmHD43_AuQd_Q",
-          "geoJsonFile": "ROADS.geojson"
-        },
-        {
-          "id": "mpicc0846tpy4",
-          "name": "الأسفلت",
-          "sheetId": "1oxw_AOsWi4wRkRm5iVaTE62nUKOw--zS9aY2XMjEs6Y",
-          "geoJsonFile": "ROADS.geojson"
-        }
-      ]
-    },
-    {
-      "id": "mpic6mh2d095e",
-      "name": "قطع الاراضي",
-      "emoji": "📍",
-      "subitems": [
-        {
-          "id": "mpic6sjknecap",
-          "name": "الردم",
-          "sheetId": "1OSYpiZjdPfshQL7-KswuHynT2Kh15Qu8AvBV4SkURh0",
-          "geoJsonFile": "BLOCKS.geojson"
-        },
-        {
-          "id": "mpic9sp56awyx",
-          "name": "القطع",
-          "sheetId": "11oJPrGpmr9bBl22YTSRJNQSE3DovzesOwMJ_OKTAcIM",
-          "geoJsonFile": "BLOCKS.geojson"
-        }
-      ]
-    }
-  ],
+  "categories": [],
   "defaultCoords": {
     "lat": 21.291,
     "lng": 39.71,
     "zoom": 14
   },
-  "selectedItems": {
-    "mpic5i6m9lbli": true
-  },
+  "selectedItems": {},
   "selectedStatuses": [
+    "جاري",
     "متاح",
     "غير متاح",
     "تم الانتهاء",
-    "متوقف",
-    "جاري"
+    "متوقف"
   ],
   "activeContractorFilter": [],
-  "currentTheme": "ocean",
+  "currentTheme": "",
   "navRightOrder": [
     "cashflowBtn",
     "themeBtn"
