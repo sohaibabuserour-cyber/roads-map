@@ -1763,6 +1763,61 @@
             font-size: 12px;
         }
 
+        /* ── Group filter rows ── */
+        .cgroup-row {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .cgroup-row:last-child { border-bottom: none; }
+        .cgroup-row:hover { background: rgba(106,45,145,0.05); }
+        .cgroup-row.active-group { background: rgba(106,45,145,0.1); }
+
+        .cgroup-row input[type="checkbox"] {
+            width: 15px; height: 15px;
+            accent-color: var(--purple);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .cgroup-row-info { flex: 1; text-align: right; }
+
+        .cgroup-row-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .cgroup-row-subs {
+            font-size: 10px;
+            color: var(--text-soft);
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        .cgroup-row-badge {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 2px 8px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .cgroup-no-groups {
+            padding: 20px 14px;
+            text-align: center;
+            color: var(--text-soft);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
         .c-cat-group {
             margin-bottom: 4px;
         }
@@ -2660,9 +2715,30 @@
                 <div style="position:relative" title="المقاولون">
                     <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel')">👷</div>
                     <div class="contractor-panel" id="contractorPanel">
-                        <div class="contractor-panel-header">👷 المقاولون</div>
-                        <div class="contractor-list" id="contractorList">
-                            <div class="contractor-empty">جاري التحميل...</div>
+                        <div class="contractor-panel-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                            <span>👷 المقاولون</span>
+                            <div style="display:flex;background:rgba(255,255,255,0.12);border-radius:8px;padding:2px;gap:1px;">
+                                <button id="cTabContractor" onclick="switchContractorTab('contractor')"
+                                    style="padding:4px 10px;border:none;border-radius:6px;font-size:10px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.18s;background:rgba(255,255,255,0.9);color:#6a2d91;">
+                                    حسب المقاول
+                                </button>
+                                <button id="cTabGroup" onclick="switchContractorTab('group')"
+                                    style="padding:4px 10px;border:none;border-radius:6px;font-size:10px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.18s;background:transparent;color:rgba(255,255,255,0.75);">
+                                    حسب المجموعة
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Tab: by contractor -->
+                        <div id="contractorTabContractor">
+                            <div class="contractor-list" id="contractorList">
+                                <div class="contractor-empty">جاري التحميل...</div>
+                            </div>
+                        </div>
+                        <!-- Tab: by group -->
+                        <div id="contractorTabGroup" style="display:none;">
+                            <div class="contractor-list" id="contractorGroupList">
+                                <div class="contractor-empty">جاري التحميل...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3169,6 +3245,10 @@ function togglePanel(id) {
             const sl = document.getElementById("settingsLat"); if(sl) sl.value = defaultCoords.lat;
             const sg = document.getElementById("settingsLng"); if(sg) sg.value = defaultCoords.lng;
             const sz = document.getElementById("settingsZoom"); if(sz) sz.value = defaultCoords.zoom;
+        }
+        // Refresh group tab if it's the active one
+        if (id === 'contractorPanel' && _activeContractorTab === 'group') {
+            renderContractorGroupList();
         }
     }
 }
@@ -4080,7 +4160,7 @@ function renderContractorList() {
     });
 }
 
-/* ── handle contractor checkbox toggle ── */
+/* ── handle contractor checkbox toggle — group-aware ── */
 function handleContractorCheckbox(cb) {
     const filterKey = cb.dataset.filterKey;
     const sheetId   = cb.dataset.sheet;
@@ -4089,33 +4169,25 @@ function handleContractorCheckbox(cb) {
     const subId     = cb.dataset.subId;
 
     if (cb.checked) {
-        // 1. أزل جميع اختيارات السايدبار وطبقاتها
-        categories.flatMap(c => c.subitems).forEach(s => {
-            if (selectedItems[s.id]) {
-                loadTokens[s.sheetId] = null;
-                if (allLayers[s.sheetId]) { map.removeLayer(allLayers[s.sheetId]); delete allLayers[s.sheetId]; }
-                delete allData[s.sheetId];
-                delete selectedItems[s.id];
-            }
+        // ── الشيت الجديد في أي مجموعة؟
+        const newSub      = categories.flatMap(c => c.subitems).find(s => s.id === subId);
+        const newSubGroup = newSub ? getGroupForSub(newSub.id) : null;
+
+        // ── هل في تعارض مع الشيتات النشطة حالياً؟
+        const activeSheets = new Set([...activeContractorFilter].map(k => k.split('|')[0]));
+        const sheetsToRemove = new Set();
+
+        activeSheets.forEach(sid => {
+            if (sid === sheetId) return; // نفس الشيت → يبقى دائماً
+            const existingSub   = categories.flatMap(c => c.subitems).find(s => s.sheetId === sid);
+            const existingGroup = existingSub ? getGroupForSub(existingSub.id) : null;
+
+            // تعارض: مجموعتان مختلفتان، أو أحدهما غير مُجمَّع
+            const conflict = !newSubGroup || !existingGroup || newSubGroup.id !== existingGroup.id;
+            if (conflict) sheetsToRemove.add(sid);
         });
 
-        // 2. أزل فلاتر المقاولين للشيتات التي لا تنتمي لبند فرعي باسم مطابق
-        //    يُبقى: نفس الشيت، أو شيت آخر اسم بنده الفرعي = اسم البند الحالي
-        const currentSubName = (categories.flatMap(c => c.subitems).find(s => s.id === subId)?.name || "").trim();
-
-        const sheetsToRemove = new Set(
-            [...activeContractorFilter]
-                .map(k => k.split('|')[0])
-                .filter(sid => {
-                    if (sid === sheetId) return false; // نفس الشيت → يبقى
-                    // ابحث عن البند الفرعي المرتبط بهذا الشيت
-                    const matchingSub = categories.flatMap(c => c.subitems)
-                        .find(s => s.sheetId === sid);
-                    // يبقى فقط إذا كان اسم البند الفرعي مطابقاً
-                    return !matchingSub || matchingSub.name.trim() !== currentSubName;
-                })
-        );
-
+        // أزل الشيتات المتعارضة
         sheetsToRemove.forEach(sid => {
             [...activeContractorFilter].forEach(k => {
                 if (k.startsWith(sid + '|')) activeContractorFilter.delete(k);
@@ -4125,13 +4197,22 @@ function handleContractorCheckbox(cb) {
             delete allData[sid];
         });
 
-        // 3. أضف الفلتر الجديد
+        // أزل جميع اختيارات السايدبار
+        categories.flatMap(c => c.subitems).forEach(s => {
+            if (selectedItems[s.id]) {
+                loadTokens[s.sheetId] = null;
+                if (allLayers[s.sheetId]) { map.removeLayer(allLayers[s.sheetId]); delete allLayers[s.sheetId]; }
+                delete allData[s.sheetId];
+                delete selectedItems[s.id];
+            }
+        });
+
+        // أضف الفلتر الجديد
         activeContractorFilter.add(filterKey);
 
-        // 4. حمل الطبقة إذا لم تكن محملة
+        // حمّل الطبقة
         if (!allLayers[sheetId]) {
-            const sub = categories.flatMap(c => c.subitems).find(s => s.id === subId);
-            if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
+            if (newSub) loadLayer(sheetId, newSub.name, geoFile, catId);
         } else {
             applyContractorFilter();
         }
@@ -4154,10 +4235,215 @@ function handleContractorCheckbox(cb) {
     syncContractorCheckboxes();
 }
 
+/* ── switch between "by contractor" and "by group" tabs ── */
+let _activeContractorTab = 'contractor';
+
+function switchContractorTab(tab) {
+    _activeContractorTab = tab;
+    const isContractor = tab === 'contractor';
+
+    document.getElementById('contractorTabContractor').style.display = isContractor ? 'block' : 'none';
+    document.getElementById('contractorTabGroup').style.display      = isContractor ? 'none'  : 'block';
+
+    const btnC = document.getElementById('cTabContractor');
+    const btnG = document.getElementById('cTabGroup');
+    if (btnC) {
+        btnC.style.background = isContractor ? 'rgba(255,255,255,0.9)' : 'transparent';
+        btnC.style.color      = isContractor ? '#6a2d91' : 'rgba(255,255,255,0.75)';
+    }
+    if (btnG) {
+        btnG.style.background = !isContractor ? 'rgba(255,255,255,0.9)' : 'transparent';
+        btnG.style.color      = !isContractor ? '#6a2d91' : 'rgba(255,255,255,0.75)';
+    }
+
+    if (!isContractor) renderContractorGroupList();
+}
+
+/* ── render "by group" tab content ── */
+function renderContractorGroupList() {
+    const list = document.getElementById('contractorGroupList');
+    if (!list) return;
+
+    if (!similarGroups.length) {
+        list.innerHTML = `
+            <div class="cgroup-no-groups">
+                لم تُعرَّف أي مجموعات بعد<br>
+                <span style="font-size:10px;opacity:0.7;">اذهب إلى ⚙️ الإعدادات ← البنود المتشابهة لإضافة مجموعات</span>
+            </div>`;
+        return;
+    }
+
+    // بناء قائمة المجموعات مع عدد المقاولين في كل مجموعة
+    list.innerHTML = similarGroups.map(group => {
+        // أسماء البنود الفرعية في هذه المجموعة
+        const subNames = group.subIds.map(sid => {
+            let name = '';
+            categories.forEach(c => { const s = c.subitems.find(x => x.id === sid); if(s) name = s.name; });
+            return name;
+        }).filter(Boolean);
+
+        // عدد المقاولين عبر كل شيتات المجموعة
+        let contractorCount = 0;
+        const contractorSet = new Set();
+        group.subIds.forEach(sid => {
+            const sub = categories.flatMap(c => c.subitems).find(s => s.id === sid);
+            if (!sub) return;
+            if (allData[sub.sheetId]) {
+                Object.values(allData[sub.sheetId]).forEach(row => {
+                    const c = (row['CONTRACTOR'] || '').trim();
+                    if (c) contractorSet.add(c);
+                });
+            }
+            if (contractorMap) {
+                Object.keys(contractorMap).forEach(name => {
+                    if (contractorMap[name].some(e => e.subId === sid)) contractorSet.add(name);
+                });
+            }
+        });
+        contractorCount = contractorSet.size;
+
+        // هل هذه المجموعة نشطة حالياً؟
+        const isActive = group.subIds.some(sid => {
+            const sub = categories.flatMap(c => c.subitems).find(s => s.id === sid);
+            return sub && [...activeContractorFilter].some(k => k.startsWith(sub.sheetId + '|'));
+        });
+
+        return `
+        <div class="cgroup-row ${isActive ? 'active-group' : ''}" onclick="toggleGroupFilter('${group.id}', this)">
+            <input type="checkbox" class="cgroup-cb" data-group-id="${group.id}" ${isActive ? 'checked' : ''} onclick="event.stopPropagation()">
+            <div class="cgroup-row-info">
+                <div class="cgroup-row-name">${group.name || 'مجموعة'}</div>
+                <div class="cgroup-row-subs">${subNames.join(' · ')}</div>
+            </div>
+            ${contractorCount ? `<span class="cgroup-row-badge">${contractorCount} مقاول</span>` : ''}
+        </div>`;
+    }).join('');
+
+    // bind checkbox clicks separately to avoid double-fire
+    list.querySelectorAll('.cgroup-cb').forEach(cb => {
+        cb.addEventListener('change', function(e) {
+            e.stopPropagation();
+            toggleGroupFilter(this.dataset.groupId, this.closest('.cgroup-row'));
+        });
+    });
+}
+
+/* ── activate/deactivate a whole group filter ── */
+async function toggleGroupFilter(groupId, rowEl) {
+    const group = similarGroups.find(g => g.id === groupId);
+    if (!group) return;
+
+    const cb = rowEl ? rowEl.querySelector('.cgroup-cb') : null;
+
+    // Is this group currently active?
+    const anyActive = group.subIds.some(sid => {
+        const sub = categories.flatMap(c => c.subitems).find(s => s.id === sid);
+        return sub && [...activeContractorFilter].some(k => k.startsWith(sub.sheetId + '|'));
+    });
+
+    if (anyActive) {
+        // ── deactivate: remove all filters for this group's sheets ──
+        group.subIds.forEach(sid => {
+            const sub = categories.flatMap(c => c.subitems).find(s => s.id === sid);
+            if (!sub) return;
+            [...activeContractorFilter].forEach(k => {
+                if (k.startsWith(sub.sheetId + '|')) activeContractorFilter.delete(k);
+            });
+            const stillUsed = [...activeContractorFilter].some(k => k.startsWith(sub.sheetId + '|'));
+            if (!stillUsed) {
+                loadTokens[sub.sheetId] = null;
+                if (allLayers[sub.sheetId]) { map.removeLayer(allLayers[sub.sheetId]); delete allLayers[sub.sheetId]; }
+                delete allData[sub.sheetId];
+            }
+        });
+        if (rowEl) { rowEl.classList.remove('active-group'); if(cb) cb.checked = false; }
+
+    } else {
+        // ── activate: clear conflicting filters, load all sheets in group ──
+
+        // أزل أي فلاتر من مجموعات أخرى
+        const otherSheets = new Set(
+            [...activeContractorFilter]
+                .map(k => k.split('|')[0])
+                .filter(sid => !group.subIds.some(gsid => {
+                    const s = categories.flatMap(c => c.subitems).find(x => x.id === gsid);
+                    return s && s.sheetId === sid;
+                }))
+        );
+        otherSheets.forEach(sid => {
+            [...activeContractorFilter].forEach(k => { if(k.startsWith(sid+'|')) activeContractorFilter.delete(k); });
+            loadTokens[sid] = null;
+            if (allLayers[sid]) { map.removeLayer(allLayers[sid]); delete allLayers[sid]; }
+            delete allData[sid];
+        });
+
+        // أزل اختيارات السايدبار
+        categories.flatMap(c => c.subitems).forEach(s => {
+            if (selectedItems[s.id]) {
+                loadTokens[s.sheetId] = null;
+                if (allLayers[s.sheetId]) { map.removeLayer(allLayers[s.sheetId]); delete allLayers[s.sheetId]; }
+                delete allData[s.sheetId];
+                delete selectedItems[s.id];
+            }
+        });
+
+        // لكل بند فرعي في المجموعة: حمّل الطبقة وأضف فلاتر كل المقاولين فيها
+        for (const sid of group.subIds) {
+            const sub = categories.flatMap(c => c.subitems).find(s => s.id === sid);
+            if (!sub || !sub.sheetId || !sub.geoJsonFile) continue;
+            const cat = categories.find(c => c.subitems.some(s => s.id === sid));
+            if (!cat) continue;
+
+            // احصل على المقاولين لهذا الشيت
+            const contractors = getContractorsForSheet(sub.sheetId);
+
+            if (contractors.length) {
+                contractors.forEach(name => {
+                    activeContractorFilter.add(sub.sheetId + '|' + name);
+                });
+            } else {
+                // لا يوجد مقاولون محددون → أضف فلتر wildcard بـ "*" لإظهار الكل
+                activeContractorFilter.add(sub.sheetId + '|*');
+            }
+
+            if (!allLayers[sub.sheetId]) {
+                loadLayer(sub.sheetId, sub.name, sub.geoJsonFile, cat.id);
+            }
+        }
+
+        if (rowEl) { rowEl.classList.add('active-group'); if(cb) cb.checked = true; }
+    }
+
+    // Deactivate all other group rows
+    document.querySelectorAll('.cgroup-row').forEach(r => {
+        const gid = r.querySelector('.cgroup-cb')?.dataset.groupId;
+        if (gid && gid !== groupId && !anyActive) {
+            r.classList.remove('active-group');
+            const rcb = r.querySelector('.cgroup-cb');
+            if (rcb) rcb.checked = false;
+        }
+    });
+
+    renderItems();
+    renderNavTabs();
+    updateStats();
+    syncContractorCheckboxes();
+    // re-render group tab to refresh counts
+    setTimeout(() => renderContractorGroupList(), 300);
+}
+
+/* ── get all contractor names for a sheetId from contractorMap ── */
+function getContractorsForSheet(sheetId) {
+    const names = [];
+    Object.keys(contractorMap).forEach(name => {
+        if (contractorMap[name].some(e => e.sheetId === sheetId)) names.push(name);
+    });
+    return names;
+}
+
 /* ── apply gray-out: highlight only features whose CONTRACTOR matches active filters ── */
 function applyContractorFilter() {
     if (!activeContractorFilter.size) {
-        // No contractor filter active — restore normal status-based colors
         refreshLayerColors();
         return;
     }
@@ -4165,17 +4451,19 @@ function applyContractorFilter() {
     Object.entries(allLayers).forEach(([sheetId, layer]) => {
         if (!layer || !allData[sheetId]) return;
 
-        // Which contractors are active for this sheet?
         const activeForSheet = [...activeContractorFilter]
             .filter(k => k.startsWith(sheetId + '|'))
             .map(k => k.split('|')[1].trim().toLowerCase());
 
+        // wildcard '*' → show all features with normal colors
+        const isWildcard = activeForSheet.includes('*');
+
         layer.eachLayer(f => {
-            const row        = allData[sheetId][f.feature.properties.ID];
+            const row = allData[sheetId][f.feature.properties.ID];
             if (!row) return;
             const featureCon = (row["CONTRACTOR"] || "").trim().toLowerCase();
-            const match      = activeForSheet.length === 0 ||
-                               activeForSheet.includes(featureCon);
+            const match = activeForSheet.length === 0 || isWildcard ||
+                          activeForSheet.includes(featureCon);
 
             if (match) {
                 f.setStyle(featureStyle(row));
