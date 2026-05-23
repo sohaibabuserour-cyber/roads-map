@@ -4080,7 +4080,7 @@ function updateStats() {
     let grandTotal = 0, grandDone = 0, cardCount = 0;
 
     if (contractorMode) {
-        /* ── وضع فلتر المقاول: كارت لكل مقاول/شيت ── */
+        /* ── وضع فلتر المقاول: كارت معدات لكل مقاول أولاً، ثم كروت الإجماليات ── */
         const bySheet = {};
         [...activeContractorFilter].forEach(key => {
             const pipeIdx = key.indexOf('|');
@@ -4090,6 +4090,81 @@ function updateStats() {
             bySheet[sid].push(cname);
         });
 
+        // ── ثوابت المعدات ──
+        const SKIP_EQ = new Set(['ID','BAYAN','البيان','DESCRIPTION','بيان','البند','BAND','ALBND','ITEM']);
+        const bandColOrig = equipmentRawHeaders.find(h => {
+            const u = h.trim().toUpperCase();
+            return u === 'البند' || u === 'BAND' || u === 'ALBND' || u === 'ITEM';
+        });
+        const idColEq = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
+
+        // ── 1. كروت المعدات أولاً — كارت مستقل لكل مقاول ──
+        Object.entries(bySheet).forEach(([sid, contractors]) => {
+            if (!equipmentRawRows.length) return;
+
+            // اسم البند الفرعي لهذا الشيت
+            let subName = "";
+            categories.forEach(cat => cat.subitems.forEach(sub => {
+                if (sub.sheetId === sid) subName = sub.name.trim();
+            }));
+
+            // فلتر صفوف المعدات بالبند الفرعي
+            let eqRows = equipmentRawRows;
+            if (bandColOrig && subName) {
+                const bKey = bandColOrig.trim().toUpperCase();
+                eqRows = equipmentRawRows.filter(row => (row[bKey] || "").trim() === subName);
+            }
+            if (!eqRows.length) return;
+
+            contractors.forEach(cname => {
+                const cLow = cname.toLowerCase();
+
+                // الـ IDs التابعة لهذا المقاول من allData
+                const contractorIds = new Set();
+                if (allData[sid]) {
+                    Object.entries(allData[sid]).forEach(([id, row]) => {
+                        if ((row["CONTRACTOR"] || "").trim().toLowerCase() === cLow) contractorIds.add(id);
+                    });
+                }
+
+                // فلتر صفوف المعدات بالـ IDs إذا أمكن، وإلا كل صفوف البند
+                let filteredRows = eqRows;
+                if (idColEq !== -1 && contractorIds.size > 0) {
+                    const byId = eqRows.filter(row => contractorIds.has((row['ID'] || "").trim()));
+                    if (byId.length) filteredRows = byId;
+                }
+
+                // احسب مجموع كل نوع معدة
+                const totals = {};
+                equipmentRawHeaders.forEach((h, i) => {
+                    const hUp = h.trim().toUpperCase();
+                    if (i === idColEq || !h.trim() || SKIP_EQ.has(hUp) || SKIP_EQ.has(h.trim())) return;
+                    let sum = 0;
+                    filteredRows.forEach(row => {
+                        const val = parseFloat(row[hUp] || 0);
+                        if (!isNaN(val)) sum += val;
+                    });
+                    if (sum > 0) totals[h.trim()] = sum;
+                });
+
+                const entries = Object.entries(totals).sort((a,b) => b[1] - a[1]);
+                if (!entries.length) return;
+
+                const card = document.createElement("div");
+                card.className = "stats-group stats-group-equipment";
+                card.innerHTML = `
+                    <div class="stats-group-title">🚜 معدات ${cname}</div>
+                    <div class="stats-group-type">في بند ${subName || sid}</div>
+                    <div class="equipment-chips">
+                        ${entries.map(([name, count]) =>
+                            `<span class="equipment-chip">${name}<span class="equipment-chip-count">${fmtNum(count)}</span></span>`
+                        ).join('')}
+                    </div>`;
+                wrapper.appendChild(card);
+            });
+        });
+
+        // ── 2. كروت الإجماليات بعد المعدات ──
         Object.entries(bySheet).forEach(([sid, contractors]) => {
             if (!allData[sid]) return;
             let subLabel = sid, catLabel = "";
