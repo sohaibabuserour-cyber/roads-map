@@ -5569,12 +5569,16 @@ function renderNavTabs() {
     });
 
     mainDd.addEventListener('click', e => e.stopPropagation());
+}
 
-    /* ── كليك خارج كل القوائم يغلقها ── */
+/* ── مستمع واحد فقط لإغلاق قوائم البنود عند الكليك خارجها ── */
+if (!window._bunoodClickListenerAdded) {
+    window._bunoodClickListenerAdded = true;
     document.addEventListener('click', () => {
-        mainDd.style.display = 'none';
+        const mainDd = document.getElementById('bunoodMainDd');
+        if (mainDd) mainDd.style.display = 'none';
         document.querySelectorAll('.bunood-sub-flyout').forEach(d => d.style.display = 'none');
-        mainDd.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-open'));
+        document.querySelectorAll('.bunood-cat-row').forEach(r => r.classList.remove('bunood-cat-open'));
     });
 }
 
