@@ -680,6 +680,7 @@
     "zoom": 14
   },
   "selectedItems": {
+    "mpimqsoe6f2yc": true,
     "mpimlmznpvvui": true
   },
   "selectedStatuses": [
@@ -690,9 +691,9 @@
     "متوقف"
   ],
   "activeContractorFilter": [],
-  "currentTheme": "",
+  "currentTheme": "ocean",
   "navRightOrder": [
     "cashflowBtn",
-    "themeBtn"
+    "settingsBtn"
   ]
 }
