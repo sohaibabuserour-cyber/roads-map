@@ -4585,17 +4585,10 @@ function renderContractorGroupList() {
         return;
     }
 
-    // بناء قائمة المجموعات مع عدد المقاولين في كل مجموعة
-    list.innerHTML = similarGroups.map(group => {
-        // أسماء البنود الفرعية في هذه المجموعة
-        const subNames = group.subIds.map(sid => {
-            let name = '';
-            categories.forEach(c => { const s = c.subitems.find(x => x.id === sid); if(s) name = s.name; });
-            return name;
-        }).filter(Boolean);
-
+    // بناء قائمة المجموعات — تظهر فقط المجموعات التي بها مقاولين
+    const groupRows = [];
+    similarGroups.forEach(group => {
         // عدد المقاولين عبر كل شيتات المجموعة
-        let contractorCount = 0;
         const contractorSet = new Set();
         group.subIds.forEach(sid => {
             const sub = categories.flatMap(c => c.subitems).find(s => s.id === sid);
@@ -4612,7 +4605,10 @@ function renderContractorGroupList() {
                 });
             }
         });
-        contractorCount = contractorSet.size;
+        const contractorCount = contractorSet.size;
+
+        // تخطى المجموعات التي لا يوجد بها مقاولين
+        if (!contractorCount) return;
 
         // هل هذه المجموعة نشطة حالياً؟
         const isActive = group.subIds.some(sid => {
@@ -4620,16 +4616,26 @@ function renderContractorGroupList() {
             return sub && [...activeContractorFilter].some(k => k.startsWith(sub.sheetId + '|'));
         });
 
-        return `
+        groupRows.push(`
         <div class="cgroup-row ${isActive ? 'active-group' : ''}" onclick="toggleGroupFilter('${group.id}', this)">
             <input type="checkbox" class="cgroup-cb" data-group-id="${group.id}" ${isActive ? 'checked' : ''} onclick="event.stopPropagation()">
             <div class="cgroup-row-info">
                 <div class="cgroup-row-name">${group.name || 'مجموعة'}</div>
-                <div class="cgroup-row-subs">${subNames.join(' · ')}</div>
             </div>
-            ${contractorCount ? `<span class="cgroup-row-badge">${contractorCount} مقاول</span>` : ''}
-        </div>`;
-    }).join('');
+            <span class="cgroup-row-badge">${contractorCount} مقاول</span>
+        </div>`);
+    });
+
+    if (!groupRows.length) {
+        list.innerHTML = `
+            <div class="cgroup-no-groups">
+                لا توجد مجموعات بها مقاولين بعد<br>
+                <span style="font-size:10px;opacity:0.7;">تأكد من تحميل البيانات أولاً</span>
+            </div>`;
+        return;
+    }
+
+    list.innerHTML = groupRows.join('');
 
     // bind checkbox clicks separately to avoid double-fire
     list.querySelectorAll('.cgroup-cb').forEach(cb => {
