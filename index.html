@@ -295,6 +295,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.07);
         }
 
+        /* Subtle top accent line */
         .top-nav::before {
             content: '';
             position: absolute;
@@ -304,6 +305,7 @@
             opacity: 0.7;
         }
 
+        /* Logo in top-nav */
         .nav-logo {
             display: flex;
             align-items: center;
@@ -325,6 +327,7 @@
             font-size: 26px;
         }
 
+        /* App title next to logo */
         .nav-logo-text {
             display: flex;
             flex-direction: column;
@@ -347,6 +350,7 @@
             letter-spacing: 0.5px;
         }
 
+        /* Tab navigation */
         .nav-tabs {
             display: flex;
             gap: 1px;
@@ -391,6 +395,7 @@
             border-radius: 8px 8px 0 0;
         }
 
+        /* Subitem tooltip/dropdown from tab */
         .nav-tab .tab-sub-dropdown {
             position: fixed;
             top: 58px;
@@ -407,8 +412,10 @@
             overflow-y: auto;
         }
 
+        /* ── تاب البنود الموحد ── */
         .nav-tab-bunood { user-select: none; }
 
+        /* القائمة الرئيسية (مستوى 1) */
         .bunood-main-dd {
             position: fixed;
             top: 58px;
@@ -425,6 +432,7 @@
             overflow-y: auto;
         }
 
+        /* صف البند الرئيسي */
         .bunood-cat-row {
             padding: 10px 14px;
             display: flex;
@@ -464,6 +472,7 @@
         .bunood-cat-row.bunood-cat-hover .bunood-cat-arrow { opacity: 1; }
         .bunood-cat-row.bunood-cat-open .bunood-cat-arrow { opacity: 1; transform: rotate(90deg); color: var(--purple); }
 
+        /* القائمة الجانبية (مستوى 2 - flyout بجانب القائمة الرئيسية) */
         .bunood-sub-flyout {
             position: fixed;
             min-width: 220px;
@@ -480,6 +489,7 @@
             overflow-y: auto;
         }
 
+        /* البنود الفرعية داخل مستوى 2 */
         .bunood-sub-item {
             padding: 9px 14px;
             font-size: 12px;
@@ -549,6 +559,7 @@
             height: 14px;
         }
 
+        /* Right side of nav */
         .nav-right {
             display: flex;
             align-items: center;
@@ -575,6 +586,7 @@
             border: 1px solid rgba(255,255,255,0.07);
         }
 
+        /* Icon buttons */
         .nav-icon-btn {
             position: relative;
             background: transparent;
@@ -604,6 +616,7 @@
             color: var(--gold);
         }
 
+        /* Tooltip on hover */
         .nav-icon-btn[title]:hover::after {
             content: attr(title);
             position: absolute;
@@ -638,6 +651,7 @@
             line-height: 1;
         }
 
+        /* Notification panel */
         .notif-panel {
             position: absolute;
             top: calc(100% + 6px);
@@ -688,6 +702,7 @@
             font-size: 12px;
         }
 
+        /* Coords panel in nav */
         .coords-panel {
             position: absolute;
             top: calc(100% + 6px);
@@ -762,6 +777,7 @@
 
         .coords-panel-btn:hover { opacity: 0.85; }
 
+        /* Theme panel */
         .theme-panel {
             position: absolute;
             top: calc(100% + 6px);
@@ -808,6 +824,7 @@
 
         .theme-label { font-size: 12px; font-weight: 700; color: var(--text); flex: 1; text-align: right; }
 
+        /* User menu */
         .user-menu-wrap {
             position: relative;
         }
@@ -1009,6 +1026,7 @@
             gap: 10px;
         }
 
+        /* ── Progress Ring ── */
         .progress-ring-wrap {
             flex-shrink: 0;
             display: none;
@@ -1057,6 +1075,7 @@
             white-space: nowrap;
         }
 
+        /* ── Contractors stat card ── */
         .stats-group-contractors {
             background: linear-gradient(135deg, #1a2e4a 0%, #1e3d6b 100%);
             border: 1.5px solid rgba(33,120,243,0.4);
@@ -1100,6 +1119,7 @@
             line-height: 1;
         }
 
+        /* ── Equipment stat card ── */
         .stats-group-equipment {
             background: linear-gradient(135deg, #0d3d5c 0%, #1a6b8a 100%);
             border: 1.5px solid rgba(33,150,243,0.45);
@@ -1192,6 +1212,7 @@
             opacity: 0.7;
         }
 
+        /* Search box */
         .search-wrap {
             flex-shrink: 0;
             position: relative;
@@ -1273,6 +1294,7 @@
             color: white;
         }
 
+        /* ========== MAP ========== */
         #map { flex: 1; width: 100%; min-height: 0; z-index: 10; }
 
         /* ========== RIGHT SIDEBAR ========== */
@@ -1331,6 +1353,7 @@
 
         .hdr-btn.export-btn:hover { background: rgba(245,200,66,0.35); }
 
+        /* Items section */
         .items-section {
             flex: 1;
             overflow-y: auto;
@@ -1480,6 +1503,7 @@
         body.is-admin .add-sub-row { display: flex; }
         body:not(.is-admin) .admin-only { display: none !important; }
 
+        /* ========== LEGEND ========== */
         .legend-section {
             flex-shrink: 0;
             padding: 8px 10px;
@@ -1532,6 +1556,7 @@
         .color-completed   { background: var(--violet); }
         .color-stopped     { background: var(--red); }
 
+        /* ========== POPUP ========== */
         .popup-card {
             width: min(300px, 90vw);
             border-radius: 12px;
@@ -1580,6 +1605,7 @@
         .popup-value.status.completed   { background: var(--violet); }
         .popup-value.status.stopped     { background: var(--red); }
 
+        /* ========== ALERT ========== */
         .alert {
             position: fixed;
             top: 66px;
@@ -1603,6 +1629,7 @@
         .alert-error   { background: var(--red); color: white; }
         .alert-success { background: var(--green); color: white; }
 
+        /* ========== MODAL ========== */
         .modal {
             display: none;
             position: fixed;
@@ -1699,10 +1726,28 @@
         .btn-secondary { background: #ededf0; color: var(--text); }
         .btn-secondary:hover { background: #e0e0e5; }
 
-        #equipEntry_list::-webkit-scrollbar { width: 4px; }
-        #equipEntry_list::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
-        #equipEntry_list { scrollbar-color: var(--purple-light) transparent; }
+        /* ── دبل كليك للأدمن: مؤشر تعديل ── */
+        body.is-admin .dropdown-item[data-sub] {
+            transition: all 0.15s ease;
+        }
+        body.is-admin .dropdown-item[data-sub]:hover {
+            border-left: 2px solid var(--purple-light);
+        }
+        body.is-admin .dropdown-item[data-sub]::after {
+            content: '';
+            display: none;
+        }
+        /* Tooltip hint for admin on subitem hover */
+        body.is-admin .dropdown-item[data-sub]:hover label::after {
+            content: ' ✎';
+            font-size: 10px;
+            color: var(--purple-light);
+            opacity: 0.7;
+        }
 
+        /* ========== RESPONSIVE ========== */
+
+        /* ========== CONTRACTOR PANEL ========== */
         .contractor-panel {
             position: absolute;
             top: calc(100% + 6px);
@@ -1829,7 +1874,868 @@
             font-size: 12px;
         }
 
+        /* ── Group filter rows ── */
+        .cgroup-row {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .cgroup-row:last-child { border-bottom: none; }
+        .cgroup-row:hover { background: rgba(106,45,145,0.05); }
+        .cgroup-row.active-group { background: rgba(106,45,145,0.1); }
+
+        .cgroup-row input[type="checkbox"] {
+            width: 15px; height: 15px;
+            accent-color: var(--purple);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .cgroup-row-info { flex: 1; text-align: right; }
+
+        .cgroup-row-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .cgroup-row-subs {
+            font-size: 10px;
+            color: var(--text-soft);
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        .cgroup-row-badge {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 2px 8px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .cgroup-no-groups {
+            padding: 20px 14px;
+            text-align: center;
+            color: var(--text-soft);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .c-cat-group {
+            margin-bottom: 4px;
+        }
+
+        .c-cat-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--purple);
+            padding: 4px 6px 2px;
+            border-bottom: 1px solid rgba(106,45,145,0.15);
+            margin-bottom: 3px;
+            text-align: right;
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Equipment Panel ── */
+        .equipment-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 260px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            z-index: 9999;
+            overflow: hidden;
+            display: none;
+            max-height: 420px;
+            flex-direction: column;
+        }
+
+        .equipment-panel.active { display: flex; animation: dropFade 0.2s ease-out; }
+
+        .equipment-panel-header {
+            background: linear-gradient(135deg, #1a4a2e 0%, #1e6b3a 100%);
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .equipment-panel-sub {
+            font-size: 10px;
+            opacity: 0.75;
+            font-weight: 600;
+        }
+
+        .equipment-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .equipment-list::-webkit-scrollbar { width: 4px; }
+        .equipment-list::-webkit-scrollbar-thumb { background: #5cc890; border-radius: 10px; }
+
+        .equipment-row {
+            padding: 9px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: background 0.15s;
+        }
+
+        .equipment-row:last-child { border-bottom: none; }
+        .equipment-row:hover { background: rgba(26,122,74,0.05); }
+
+        .equipment-row-name {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            text-align: right;
+        }
+
+        .equipment-row-count {
+            background: linear-gradient(135deg, #1a7a4a 0%, #27ae6a 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 9px;
+            flex-shrink: 0;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .equipment-empty {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-soft);
+            font-size: 12px;
+        }
+
+        .equipment-total-row {
+            background: linear-gradient(135deg, #1a4a2e 0%, #1e6b3a 100%);
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .equipment-total-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .equipment-total-val {
+            font-size: 13px;
+            font-weight: 900;
+            color: #7dffb3;
+        }
+
+        /* ── Cash Flow (removed - replaced by modal) ── */
+
+        /* ========== CASHFLOW DASHBOARD MODAL ========== */
+        .cf-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10,5,20,0.72);
+            backdrop-filter: blur(6px);
+            z-index: 1;
+        }
+
+        .cf-modal-wrap {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            width: min(1100px, 96vw);
+            max-height: calc(100vh - 48px);
+            background: #0d0d1a;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07);
+            animation: cfSlideIn 0.28s cubic-bezier(0.34,1.2,0.64,1);
+        }
+
+        @keyframes cfSlideIn {
+            from { opacity:0; transform:translateY(24px) scale(0.97); }
+            to   { opacity:1; transform:translateY(0)    scale(1);    }
+        }
+
+        /* ── Header ── */
+        .cf-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #12012a 0%, #1e0848 50%, #0d1f3c 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            flex-shrink: 0;
+            gap: 16px;
+        }
+
+        .cf-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .cf-header-icon {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, #f5c842 0%, #e8a800 100%);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(245,200,66,0.35);
+        }
+
+        .cf-header-title {
+            font-size: 17px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: 0.3px;
+        }
+
+        .cf-header-sub {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        .cf-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cf-tab-pills {
+            display: flex;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .cf-tab-pill {
+            padding: 7px 18px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .cf-tab-pill:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.07); }
+
+        .cf-tab-pill.active {
+            background: linear-gradient(135deg, #6a2d91 0%, #8b44b8 100%);
+            color: white;
+            box-shadow: 0 2px 12px rgba(106,45,145,0.45);
+        }
+
+        .cf-tab-icon { font-size: 14px; }
+
+        .cf-close-btn {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.18s ease;
+            flex-shrink: 0;
+        }
+
+        .cf-close-btn:hover { background: rgba(244,67,54,0.25); border-color: rgba(244,67,54,0.4); color: #ff6b6b; }
+
+        /* ── KPI Row ── */
+        .cf-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: rgba(255,255,255,0.06);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .cf-kpi-card {
+            background: #0d0d1a;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cf-kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+
+        .cf-kpi-total::before  { background: linear-gradient(90deg, #6a2d91, #8b44b8); }
+        .cf-kpi-paid::before   { background: linear-gradient(90deg, #1a7a4a, #27ae6a); }
+        .cf-kpi-remaining::before { background: linear-gradient(90deg, #1a4a8a, #2196f3); }
+        .cf-kpi-pct::before    { background: linear-gradient(90deg, #b8860b, #f5c842); }
+
+        .cf-kpi-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .cf-kpi-value {
+            font-size: 22px;
+            font-weight: 900;
+            color: white;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+
+        .cf-kpi-bar-wrap {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .cf-kpi-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f5c842, #f39c12);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        /* ── Body / Table ── */
+        .cf-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cf-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+        }
+
+        .cf-content.active { display: block; }
+
+        .cf-content::-webkit-scrollbar { width: 5px; }
+        .cf-content::-webkit-scrollbar-track { background: #0d0d1a; }
+        .cf-content::-webkit-scrollbar-thumb { background: rgba(106,45,145,0.6); border-radius: 10px; }
+
+        .cf-loading {
+            text-align: center;
+            color: rgba(255,255,255,0.35);
+            font-size: 13px;
+            padding: 60px 20px;
+            font-weight: 600;
+        }
+
+        .cf-error {
+            text-align: center;
+            color: #ff6b6b;
+            font-size: 13px;
+            padding: 60px 20px;
+            font-weight: 700;
+        }
+
+        .cf-empty {
+            text-align: center;
+            color: rgba(255,255,255,0.3);
+            font-size: 13px;
+            padding: 60px 20px;
+        }
+
+        /* ── Table ── */
+        .cf-table-wrap {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .cf-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 600px;
+        }
+
+        .cf-table thead tr {
+            background: linear-gradient(135deg, #1e0848 0%, #12012a 100%);
+        }
+
+        .cf-table th {
+            padding: 12px 14px;
+            text-align: right;
+            font-weight: 800;
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+
+        .cf-table th:first-child { border-radius: 12px 0 0 0; }
+        .cf-table th:last-child  { border-radius: 0 12px 0 0; }
+
+        .cf-table tbody tr {
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            transition: background 0.15s ease;
+        }
+
+        .cf-table tbody tr:last-child { border-bottom: none; }
+
+        .cf-table tbody tr:hover { background: rgba(106,45,145,0.12); }
+
+        .cf-table td {
+            padding: 11px 14px;
+            text-align: right;
+            color: rgba(255,255,255,0.8);
+            font-weight: 600;
+        }
+
+        /* Number cells highlighted */
+        .cf-table td.cf-num {
+            color: #f5c842;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .cf-table td.cf-num-green  { color: #5cc890; font-weight: 700; }
+        .cf-table td.cf-num-blue   { color: #5baddf; font-weight: 700; }
+
+        /* ── table borders ── */
+
+        /* ========== SETTINGS PANEL ========== */
+        .settings-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 340px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 16px 50px rgba(0,0,0,0.25);
+            z-index: 9999;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            max-height: calc(100vh - 80px);
+        }
+
+        .settings-panel.active { display: flex; animation: dropFade 0.22s ease-out; }
+
+        .settings-panel-header {
+            background: linear-gradient(135deg, #1a0a2e 0%, #3d1060 100%);
+            padding: 14px 16px;
+            font-size: 14px;
+            font-weight: 900;
+            color: white;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .settings-tabs {
+            display: flex;
+            background: #f8f6fc;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .settings-tab {
+            flex: 1;
+            padding: 9px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            cursor: pointer;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+            transition: all 0.18s ease;
+            font-family: 'Cairo', sans-serif;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .settings-tab:hover { color: var(--purple); }
+        .settings-tab.active { color: var(--purple); border-bottom-color: var(--purple); background: white; }
+
+        .settings-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .settings-body::-webkit-scrollbar { width: 4px; }
+        .settings-body::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        .settings-section {
+            display: none;
+            padding: 14px 16px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .settings-section.active { display: flex; }
+
+        .settings-field { display: flex; flex-direction: column; gap: 5px; }
+
+        .settings-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            text-align: right;
+        }
+
+        .settings-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            background: white;
+            text-align: right;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .settings-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(106,45,145,0.1); }
+
+        .settings-save-btn {
+            width: 100%;
+            padding: 9px;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-mid) 100%);
+            border: none;
+            border-radius: 7px;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 4px;
+        }
+
+        .settings-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(106,45,145,0.35); }
+
+        /* Similar groups list */
+        .similar-groups-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .similar-group-card {
+            background: rgba(106,45,145,0.05);
+            border: 1.5px solid rgba(106,45,145,0.15);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .similar-group-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            background: rgba(106,45,145,0.08);
+            border-bottom: 1px solid rgba(106,45,145,0.1);
+        }
+
+        .similar-group-name {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--purple);
+            flex: 1;
+            text-align: right;
+        }
+
+        .similar-group-del {
+            background: none;
+            border: none;
+            color: #e53935;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 0 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .similar-group-del:hover { opacity: 1; }
+
+        .similar-group-items {
+            padding: 6px 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .similar-group-pill {
+            background: rgba(106,45,145,0.1);
+            border: 1px solid rgba(106,45,145,0.25);
+            color: var(--purple);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .settings-add-group-btn {
+            width: 100%;
+            padding: 8px;
+            background: rgba(106,45,145,0.07);
+            border: 1.5px dashed rgba(106,45,145,0.35);
+            border-radius: 7px;
+            color: var(--purple);
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            text-align: center;
+        }
+
+        .settings-add-group-btn:hover { background: rgba(106,45,145,0.12); border-color: var(--purple); }
+
+        /* Similar groups modal */
+        .similar-modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1;
+        }
+
+        .similar-modal-box {
+            background: white;
+            border-radius: 16px;
+            width: min(520px, 94vw);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+            animation: modalPop 0.28s ease-out;
+            overflow: hidden;
+        }
+
+        .similar-modal-header {
+            background: linear-gradient(135deg, #6a2d91 0%, #8b44b8 100%);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .similar-modal-title {
+            font-size: 14px;
+            font-weight: 900;
+            color: white;
+        }
+
+        .similar-modal-close {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 28px; height: 28px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.18s;
+        }
+
+        .similar-modal-close:hover { background: rgba(255,255,255,0.3); }
+
+        .similar-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 18px;
+        }
+
+        .similar-modal-body::-webkit-scrollbar { width: 4px; }
+        .similar-modal-body::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        .similar-modal-group-name-field {
+            margin-bottom: 14px;
+        }
+
+        .similar-modal-group-name-field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            margin-bottom: 5px;
+            text-align: right;
+        }
+
+        .similar-modal-group-name-field input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 13px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            text-align: right;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .similar-modal-group-name-field input:focus {
+            border-color: var(--purple);
+        }
+
+        .similar-select-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-soft);
+            text-align: right;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .similar-subitems-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 340px;
+            overflow-y: auto;
+        }
+
+        .similar-subitems-grid::-webkit-scrollbar { width: 4px; }
+        .similar-subitems-grid::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        .similar-cat-section { margin-bottom: 4px; }
+
+        .similar-cat-label {
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--purple);
+            text-align: right;
+            padding: 5px 8px 3px;
+            border-bottom: 1px solid rgba(106,45,145,0.12);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .similar-subitem-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: rgba(106,45,145,0.03);
+            border: 1.5px solid transparent;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .similar-subitem-row:hover { background: rgba(106,45,145,0.07); border-color: rgba(106,45,145,0.15); }
+        .similar-subitem-row.selected { background: rgba(106,45,145,0.12); border-color: var(--purple-light); }
+
+        .similar-subitem-row input[type="checkbox"] {
+            width: 14px; height: 14px;
+            accent-color: var(--purple);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .similar-subitem-row label {
+            flex: 1;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .similar-subitem-cat-badge {
+            font-size: 9px;
+            color: var(--text-soft);
+            background: rgba(0,0,0,0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        .similar-modal-footer {
+            padding: 12px 18px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            background: #fafafa;
+        }
+
+        /* Filter conflict toast */
+        .filter-conflict-toast {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #6a2d91 0%, #8b44b8 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            z-index: 99999;
+            box-shadow: 0 8px 24px rgba(106,45,145,0.45);
+            animation: alertPop 0.3s ease-out;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) {
+            .cf-modal-wrap { margin: 0; border-radius: 16px 16px 0 0; top: auto; bottom: 0; max-height: 90vh; }
+            .cf-kpi-row { grid-template-columns: repeat(2,1fr); }
+            .cf-header { flex-direction: column; align-items: flex-start; gap: 10px; }
             .main-content { flex-direction: column; }
             .left-section  { flex: 1; }
             .right-sidebar { width: 100%; height: auto; flex-shrink: 0; border-right: none; border-top: 2px solid var(--border); flex-direction: row; overflow-x: auto; }
@@ -1838,9 +2744,333 @@
             .legend-section { flex-shrink: 0; min-width: 150px; border-top: none; border-right: 1px solid var(--border); }
             .stats-group { min-width: 180px; }
             .search-input { width: 160px; }
+            .nav-tab .tab-sub-dropdown { right: auto; left: 0; }
+
+            /* ===== Mobile spacing: push down from top, up from bottom ===== */
+            #mainApp {
+                padding-top: 10px;
+                padding-bottom: 24px;
+            }
+            .right-sidebar {
+                padding-bottom: env(safe-area-inset-bottom, 20px);
+                margin-bottom: 8px;
+            }
         }
+
+        /* ========== BILLS DASHBOARD MODAL ========== */
+        .bd-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,5,20,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 1;
+        }
+        .bd-modal-wrap {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column;
+            width: min(1150px, 96vw);
+            max-height: calc(100vh - 40px);
+            background: #0d0d1a;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.07);
+            box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+            animation: cfSlideIn 0.28s cubic-bezier(0.34,1.2,0.64,1);
+        }
+        .bd-hdr {
+            background: linear-gradient(135deg,#12012a,#1e0848,#0d1f3c);
+            padding: 16px 22px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            flex-shrink: 0; gap: 12px;
+        }
+        .bd-hdr-left { display: flex; align-items: center; gap: 12px; }
+        .bd-hdr-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg,#f5c842,#e8a800);
+            border-radius: 11px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(245,200,66,0.3);
+        }
+        .bd-hdr-title { font-size: 15px; font-weight: 900; color: white; }
+        .bd-hdr-sub { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 2px; }
+        .bd-search-inp {
+            flex: 1; max-width: 240px;
+            padding: 7px 11px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px; color: white;
+            font-size: 12px; font-family: 'Cairo', sans-serif;
+            outline: none; text-align: right;
+            transition: border-color 0.2s;
+        }
+        .bd-search-inp::placeholder { color: rgba(255,255,255,0.3); }
+        .bd-search-inp:focus { border-color: rgba(245,200,66,0.5); }
+        .bd-kpi-row-wrap {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
+        }
+        .bd-kpi-c {
+            padding: 14px 18px; position: relative; overflow: hidden;
+            border-left: 1px solid rgba(255,255,255,0.04);
+        }
+        .bd-kpi-c:last-child { border-left: none; }
+        .bd-kpi-c::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+        }
+        .bd-kpi-c:nth-child(1)::before { background: linear-gradient(90deg,#6a2d91,#8b44b8); }
+        .bd-kpi-c:nth-child(2)::before { background: linear-gradient(90deg,#1a7a4a,#27ae6a); }
+        .bd-kpi-c:nth-child(3)::before { background: linear-gradient(90deg,#1a4a8a,#2196f3); }
+        .bd-kpi-c:nth-child(4)::before { background: linear-gradient(90deg,#b8860b,#f5c842); }
+        .bd-kpi-lbl {
+            font-size: 9px; font-weight: 700;
+            color: rgba(255,255,255,0.35); letter-spacing: .8px; text-transform: uppercase;
+        }
+        .bd-kpi-val { font-size: 20px; font-weight: 900; color: white; margin-top: 3px; letter-spacing: -0.5px; }
+        .bd-kpi-unit { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 2px; }
+        .bd-kpi-bw { height: 3px; background: rgba(255,255,255,0.08); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        .bd-kpi-b  { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        .bd-body-wrap { flex: 1; overflow-y: auto; padding: 14px 18px; min-height: 0; }
+        .bd-body-wrap::-webkit-scrollbar { width: 4px; }
+        .bd-body-wrap::-webkit-scrollbar-thumb { background: rgba(106,45,145,0.5); border-radius: 10px; }
+        .bd-status-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px; gap: 8px; flex-wrap: wrap;
+        }
+        .bd-cnt-badge {
+            background: rgba(106,45,145,0.2); border: 1px solid rgba(106,45,145,0.35);
+            color: rgba(255,255,255,0.65); font-size: 11px; font-weight: 700;
+            padding: 4px 10px; border-radius: 20px;
+        }
+        .bd-tbl-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.07); }
+        .bd-tbl { width: 100%; border-collapse: collapse; min-width: 750px; font-size: 12px; }
+        .bd-tbl thead tr { background: linear-gradient(135deg,#1e0848,#12012a); }
+        .bd-tbl th {
+            padding: 10px 12px; text-align: right; font-weight: 800; font-size: 10px;
+            color: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(255,255,255,0.07);
+            white-space: nowrap; letter-spacing: .3px;
+        }
+        .bd-tbl tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; }
+        .bd-tbl tbody tr:hover { background: rgba(106,45,145,0.1); }
+        .bd-tbl tbody tr:last-child { border-bottom: none; }
+        .bd-tbl td { padding: 10px 12px; text-align: right; color: rgba(255,255,255,0.75); font-weight: 600; }
+        .bd-tbl td.bdn  { color: #f5c842; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .bd-tbl td.bdg  { color: #5cc890; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .bd-tbl td.bdb  { color: #5baddf; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .bd-tbl td.bdr  { color: #ff8a80; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .bd-num-pill {
+            background: rgba(106,45,145,0.25); border: 1px solid rgba(106,45,145,0.4);
+            color: #c39bd3; padding: 2px 7px; border-radius: 4px;
+            font-size: 10px; font-weight: 700; white-space: nowrap;
+        }
+        .bd-pct-bw { background: rgba(255,255,255,0.08); border-radius: 10px; height: 5px; min-width: 60px; overflow: hidden; }
+        .bd-pct-b  { height: 100%; border-radius: 10px; }
+        .bd-footer-bar {
+            background: rgba(0,0,0,0.25); padding: 9px 18px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
+        }
+        .bd-footer-note { font-size: 10px; color: rgba(255,255,255,0.3); }
+        .bd-refresh-btn {
+            background: rgba(106,45,145,0.2); border: 1px solid rgba(106,45,145,0.4);
+            color: rgba(255,255,255,0.7); padding: 5px 12px; border-radius: 6px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+            font-family: 'Cairo', sans-serif; transition: all 0.2s;
+        }
+        .bd-refresh-btn:hover { background: rgba(106,45,145,0.35); color: white; }
+        .bd-msg { text-align: center; padding: 40px 20px; font-size: 13px; font-family: 'Cairo', sans-serif; }
+        .bd-msg-load { color: rgba(255,255,255,0.3); }
+        .bd-msg-err  { color: #ff8a80; }
+        @media (max-width: 768px) {
+            .bd-kpi-row-wrap { grid-template-columns: repeat(2,1fr); }
+            .bd-hdr { flex-wrap: wrap; }
+            .bd-search-inp { max-width: 100%; }
+        }
+
+        /* ========== EQUIPMENT PRO TABS ========== */
+        .eq-pro-tab {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: rgba(255,255,255,0.45);
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+        .eq-pro-tab:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); }
+        .eq-pro-tab.active { color: var(--gold); border-bottom-color: var(--gold); background: rgba(245,200,66,0.06); }
+
+        .eq-pro-sec { animation: dropFade 0.18s ease-out; }
+
+        .eq-pill-dark {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.75);
+            white-space: nowrap;
+        }
+        .eq-pill-dark strong { color: var(--gold); }
+
+        /* ========== EQUIPMENT FORM MODAL ========== */
+        .eq-form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .eq-form-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.55);
+            font-family: 'Cairo', sans-serif;
+            letter-spacing: 0.3px;
+        }
+        .eq-form-input {
+            width: 100%;
+            padding: 10px 13px;
+            background: rgba(255,255,255,0.06);
+            border: 1.5px solid rgba(255,255,255,0.1);
+            border-radius: 9px;
+            color: white;
+            font-size: 13px;
+            font-family: 'Cairo', sans-serif;
+            outline: none;
+            transition: all 0.2s ease;
+            text-align: right;
+        }
+        .eq-form-input:focus {
+            border-color: rgba(39,174,106,0.6);
+            background: rgba(255,255,255,0.09);
+            box-shadow: 0 0 0 3px rgba(39,174,106,0.12);
+        }
+        .eq-form-input::placeholder { color: rgba(255,255,255,0.25); }
+        .eq-form-input option { background: #1a1a2e; color: white; }
+
+        /* Equipment row inside form */
+        .eq-item-row {
+            display: grid;
+            grid-template-columns: 1fr 120px 36px;
+            gap: 10px;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 9px;
+            padding: 10px 12px;
+            transition: border-color 0.2s;
+        }
+        .eq-item-row:hover { border-color: rgba(39,174,106,0.3); }
+        .eq-item-row input {
+            background: rgba(255,255,255,0.06);
+            border: 1.5px solid rgba(255,255,255,0.08);
+            border-radius: 7px;
+            color: white;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            padding: 7px 10px;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+            text-align: right;
+        }
+        .eq-item-row input:focus { border-color: rgba(39,174,106,0.5); }
+        .eq-item-row input::placeholder { color: rgba(255,255,255,0.2); }
+        .eq-item-row input[type="number"] { text-align: center; }
+        .eq-del-row-btn {
+            width: 32px; height: 32px;
+            border-radius: 7px;
+            border: 1px solid rgba(244,67,54,0.3);
+            background: rgba(244,67,54,0.1);
+            color: #ff8a80;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.18s;
+            flex-shrink: 0;
+        }
+        .eq-del-row-btn:hover { background: rgba(244,67,54,0.25); border-color: rgba(244,67,54,0.6); }
+        .eq-empty-hint {
+            text-align: center;
+            color: rgba(255,255,255,0.2);
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            padding: 14px 0;
+        }
+
+        /* Submit success/error states */
+        .eqf-success {
+            background: rgba(39,174,106,0.15);
+            border: 1px solid rgba(39,174,106,0.4);
+            color: #5cc890;
+        }
+        .eqf-error {
+            background: rgba(244,67,54,0.15);
+            border: 1px solid rgba(244,67,54,0.4);
+            color: #ff8a80;
+        }
+        .eqf-loading {
+            background: rgba(245,200,66,0.1);
+            border: 1px solid rgba(245,200,66,0.3);
+            color: #f5c842;
+        }
+        /* Equipment form action buttons */
+        .eq-add-eq-btn {
+            background: linear-gradient(135deg, #27ae6a, #1a7a4a);
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .eq-add-eq-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(39,174,106,0.4); }
+
+        .eq-reset-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.6);
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .eq-reset-btn:hover { background: rgba(255,255,255,0.12); color: white; }
+
+        .eq-submit-btn {
+            background: linear-gradient(135deg, #27ae6a 0%, #1a7a4a 100%);
+            border: none;
+            color: white;
+            padding: 11px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 900;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(39,174,106,0.3);
+        }
+        .eq-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(39,174,106,0.5); }
+        .eq-submit-btn:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
     </style>
-<base target="_blank">
 </head>
 <body>
 
@@ -1882,1105 +3112,4 @@
 <!-- ==================== MAIN APP ==================== -->
 <div id="mainApp">
 
-    <!-- TOP NAV BAR -->
-    <div class="top-nav">
-
-        <!-- Logo -->
-        <div class="nav-logo">
-            <img src="logo-left.png" id="navLogo" alt="شعار" onerror="this.style.display='none';document.getElementById('navLogoFallback').style.display='block'">
-            <span class="logo-fallback" id="navLogoFallback" style="display:none">👑</span>
-        </div>
-
-        <!-- تبويب التقارير -->
-        <div class="nav-tab" id="navTabReports" style="flex-shrink:0;position:relative;" onclick="toggleReportsDropdown(event)">
-            <span>📋 التقارير</span>
-            <div class="tab-sub-dropdown" id="reportsDropdown" style="min-width:200px;display:none;">
-                <div class="tab-sub-item" onclick="openBillsModal();closeReportsDropdown()">
-                    <span style="font-size:14px;">📊</span>
-                    <label>داشبورد البنود</label>
-                </div>
-                <div class="tab-sub-item" onclick="openCashflowModal();closeReportsDropdown()">
-                    <span style="font-size:14px;">💰</span>
-                    <label>التدفقات النقدية</label>
-                </div>
-                <div class="tab-sub-item" onclick="openEquipmentModal();closeReportsDropdown()">
-                    <span style="font-size:14px;">🚜</span>
-                    <label>المعدات</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Category tabs (dynamic) -->
-        <div class="nav-tabs" id="navTabs"></div>
-
-        <!-- Right side: tools, settings, user -->
-        <div class="nav-right">
-
-            <!-- Tools Group -->
-            <div class="nav-right-group" id="toolsGroup">
-
-                <!-- Contractor button -->
-                <div style="position:relative" title="المقاولون">
-                    <div class="nav-icon-btn" id="contractorBtn" onclick="togglePanel('contractorPanel')">👷</div>
-                    <div class="contractor-panel" id="contractorPanel">
-                        <div class="contractor-panel-header">👷 المقاولون</div>
-                        <div class="contractor-list" id="contractorList">
-                            <div class="contractor-empty">جاري التحميل...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Equipment Entry Button -->
-                <div style="position:relative" title="إضافة سجل معدات">
-                    <div class="nav-icon-btn" id="equipEntryBtn" onclick="openEquipmentEntryModal()">➕</div>
-                </div>
-
-                <!-- Notification bell -->
-                <div style="position:relative" title="الإشعارات">
-                    <div class="nav-icon-btn" id="notifBtn" onclick="togglePanel('notifPanel')">
-                        🔔
-                        <span class="notif-badge" id="notifBadge" style="display:none">!</span>
-                    </div>
-                    <div class="notif-panel" id="notifPanel">
-                        <div class="notif-panel-header">🔔 الإشعارات</div>
-                        <div id="notifList"><div class="notif-empty">جاري التحميل...</div></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="nav-right-divider"></div>
-
-            <!-- Settings Group -->
-            <div class="nav-right-group" id="settingsGroup">
-                <!-- Theme button -->
-                <div style="position:relative" title="تغيير الثيم">
-                    <div class="nav-icon-btn" id="themeBtn" onclick="togglePanel('themePanel')">🎨</div>
-                    <div class="theme-panel" id="themePanel">
-                        <div class="theme-panel-header">🎨 الثيمات</div>
-                        <div class="theme-option active" data-theme="" onclick="applyTheme('')">
-                            <div class="theme-swatch" style="background:linear-gradient(135deg,#6a2d91,#8b44b8)"></div>
-                            <span class="theme-label">البنفسجي الملكي (افتراضي)</span>
-                        </div>
-                        <div class="theme-option" data-theme="ocean" onclick="applyTheme('ocean')">
-                            <div class="theme-swatch" style="background:linear-gradient(135deg,#0d5c8a,#1a7bbf)"></div>
-                            <span class="theme-label">الأزرق المحيطي</span>
-                        </div>
-                        <div class="theme-option" data-theme="dark" onclick="applyTheme('dark')">
-                            <div class="theme-swatch" style="background:linear-gradient(135deg,#1a1a2e,#3d2060)"></div>
-                            <span class="theme-label">الوضع الداكن</span>
-                        </div>
-                        <div class="theme-option" data-theme="emerald" onclick="applyTheme('emerald')">
-                            <div class="theme-swatch" style="background:linear-gradient(135deg,#1a7a4a,#27ae6a)"></div>
-                            <span class="theme-label">الزمرد الأخضر</span>
-                        </div>
-                        <div class="theme-option" data-theme="sunset" onclick="applyTheme('sunset')">
-                            <div class="theme-swatch" style="background:linear-gradient(135deg,#c0392b,#e74c3c)"></div>
-                            <span class="theme-label">الغروب الأحمر</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="nav-right-divider"></div>
-
-            <!-- User Group -->
-            <div class="nav-right-group" id="userGroup">
-                <!-- User chip + dropdown -->
-                <div class="user-menu-wrap" id="userMenuWrap">
-                    <div class="user-chip" onclick="togglePanel('userDropdown')">
-                        <div class="user-avatar" id="navAvatar">؟</div>
-                        <span class="user-name-small" id="navUserName">-</span>
-                    </div>
-                    <div class="user-dropdown" id="userDropdown">
-                        <div class="user-dropdown-header">
-                            <div class="ud-avatar-wrap" id="udAvatarWrap" onclick="triggerAvatarUpload()">
-                                <span id="udAvatarText">؟</span>
-                                <div class="ud-avatar-overlay">📷</div>
-                            </div>
-                            <div class="ud-name" id="udName">-</div>
-                            <div class="ud-role" id="udRole">-</div>
-                        </div>
-                        <div class="ud-field">
-                            <label>الاسم</label>
-                            <input type="text" id="udNameInput" placeholder="الاسم الكامل">
-                        </div>
-                        <div class="ud-field">
-                            <label>كلمة مرور جديدة</label>
-                            <input type="password" id="udPassInput" placeholder="اتركها فارغة إذا لم تريد التغيير">
-                        </div>
-                        <button class="ud-save-btn" onclick="saveUserProfile()">💾 حفظ التغييرات</button>
-                        <button class="ud-logout" onclick="doLogout()">🚪 تسجيل الخروج</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-
-        <!-- LEFT SECTION -->
-        <div class="left-section">
-
-            <!-- STATS + SEARCH BAR -->
-            <div class="stats-search-bar">
-                <div class="stats-row">
-                    <div class="stats-wrapper" id="statsWrapper"></div>
-                </div>
-                <div class="search-row">
-                    <div class="search-wrap" style="flex:1;position:relative">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم...">
-                        <div class="search-dropdown" id="searchDropdown"></div>
-                    </div>
-                    <!-- Progress Ring -->
-                    <div class="progress-ring-wrap" id="progressRingWrap">
-                        <svg class="progress-ring-svg" width="38" height="38" viewBox="0 0 38 38">
-                            <circle class="progress-ring-circle-bg" cx="19" cy="19" r="15"/>
-                            <circle class="progress-ring-circle" id="progressRingCircle" cx="19" cy="19" r="15"
-                                stroke-dasharray="94.25" stroke-dashoffset="94.25"/>
-                        </svg>
-                        <div class="progress-ring-text">
-                            <span class="progress-ring-pct" id="progressRingPct">0%</span>
-                            <span class="progress-ring-label">نسبة التنفيذ</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="map"></div>
-        </div>
-
-        <!-- RIGHT SIDEBAR -->
-        <div class="right-sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-header-title">📋 البنود</div>
-                <div class="admin-btns admin-only">
-                    <button class="hdr-btn export-btn" onclick="exportConfig()">⬇</button>
-                    <button class="hdr-btn" onclick="openAddCategoryModal()">+ بند</button>
-                    <button class="hdr-btn" onclick="openAddSubitemModal()">+ فرعي</button>
-                </div>
-            </div>
-
-            <div class="items-section" id="itemsSection"></div>
-
-            <div class="legend-section">
-                <div class="legend-title">📋 حالات التنفيذ</div>
-                <div class="legend-item">
-                    <div class="legend-color color-ongoing"></div>
-                    <label class="legend-label">جاري التنفيذ</label>
-                    <input type="checkbox" class="status-checkbox" data-status="جاري" checked>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color color-available"></div>
-                    <label class="legend-label">متاح للتنفيذ</label>
-                    <input type="checkbox" class="status-checkbox" data-status="متاح" checked>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color color-unavailable"></div>
-                    <label class="legend-label">غير متاح</label>
-                    <input type="checkbox" class="status-checkbox" data-status="غير متاح" checked>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color color-completed"></div>
-                    <label class="legend-label">تم الانتهاء</label>
-                    <input type="checkbox" class="status-checkbox" data-status="تم الانتهاء" checked>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color color-stopped"></div>
-                    <label class="legend-label">متوقف</label>
-                    <input type="checkbox" class="status-checkbox" data-status="متوقف" checked>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: ADD CATEGORY -->
-<div class="modal" id="modalAddCategory">
-    <div class="modal-box">
-        <div class="modal-title">➕ إضافة بند رئيسي</div>
-        <div class="modal-field">
-            <label>رقم البند</label>
-            <input type="text" id="inCatNumber" placeholder="مثال: 1 أو A-01">
-        </div>
-        <div class="modal-field">
-            <label>اسم البند</label>
-            <input type="text" id="inCatName" placeholder="مثال: الطرق">
-        </div>
-        <div class="modal-field">
-            <label>رمز (Emoji)</label>
-            <input type="text" id="inCatEmoji" placeholder="📍" maxlength="4" value="📍">
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('modalAddCategory')">إلغاء</button>
-            <button class="btn btn-primary" onclick="addCategory()">إضافة</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: ADD SUBITEM -->
-<div class="modal" id="modalAddSubitem">
-    <div class="modal-box">
-        <div class="modal-title">➕ إضافة بند فرعي</div>
-        <div class="modal-field">
-            <label>البند الرئيسي</label>
-            <select id="inSubCat"><option value="">-- اختر --</option></select>
-        </div>
-        <div class="modal-field">
-            <label>رقم البند الفرعي</label>
-            <input type="text" id="inSubNumber" placeholder="مثال: 1-1 أو A-01-02">
-        </div>
-        <div class="modal-field">
-            <label>اسم الفرعي</label>
-            <input type="text" id="inSubName" placeholder="مثال: الردم">
-        </div>
-        <div class="modal-field">
-            <label>رابط Google Sheet</label>
-            <input type="text" id="inSubSheet" placeholder="https://docs.google.com/spreadsheets/d/...">
-        </div>
-        <div class="modal-field">
-            <label>ملف GeoJSON</label>
-            <input type="text" id="inSubGeo" placeholder="ROADS.geojson">
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('modalAddSubitem')">إلغاء</button>
-            <button class="btn btn-primary" onclick="addSubitem()">إضافة</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: EDIT SUBITEM -->
-<div class="modal" id="modalEditSubitem">
-    <div class="modal-box">
-        <div class="modal-title">✏️ تعديل البند الفرعي</div>
-        <input type="hidden" id="editSubCatId">
-        <input type="hidden" id="editSubId">
-        <div class="modal-field">
-            <label>رقم البند الفرعي</label>
-            <input type="text" id="editSubNumber" placeholder="مثال: 1-1">
-        </div>
-        <div class="modal-field">
-            <label>اسم البند الفرعي</label>
-            <input type="text" id="editSubName" placeholder="مثال: الردم">
-        </div>
-        <div class="modal-field">
-            <label>رابط Google Sheet</label>
-            <input type="text" id="editSubSheet" placeholder="https://docs.google.com/spreadsheets/d/...">
-            <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">
-                <a id="editSubSheetLink" href="#" target="_blank"
-                   style="font-size:11px;color:var(--purple);font-weight:700;text-decoration:none;display:none;
-                          padding:4px 10px;background:rgba(106,45,145,0.08);border-radius:5px;border:1px solid rgba(106,45,145,0.2);transition:background 0.2s;"
-                   onmouseover="this.style.background='rgba(106,45,145,0.16)'"
-                   onmouseout="this.style.background='rgba(106,45,145,0.08)'">
-                   🔗 فتح الشيت
-                </a>
-            </div>
-        </div>
-        <div class="modal-field">
-            <label>ملف GeoJSON</label>
-            <input type="text" id="editSubGeo" placeholder="ROADS.geojson">
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('modalEditSubitem')">إلغاء</button>
-            <button class="btn btn-primary" onclick="saveSubitemEdit()">💾 حفظ</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: EQUIPMENT ENTRY FORM -->
-<div class="modal" id="modalEquipmentEntry" style="z-index:50000;">
-    <div class="modal-box" style="max-width:600px;">
-        <div class="modal-title">➕ إضافة سجل معدات</div>
-        
-        <!-- البيانات الأساسية -->
-        <div class="modal-field">
-            <label>معرّف العنصر / رقم المشروع</label>
-            <input type="text" id="equipEntry_elementId" placeholder="مثال: PRJ-001">
-        </div>
-
-        <div class="modal-field">
-            <label>اسم العنصر / الموقع</label>
-            <input type="text" id="equipEntry_elementName" placeholder="مثال: الطريق الرئيسي">
-        </div>
-
-        <div class="modal-field">
-            <label>اسم البند</label>
-            <input type="text" id="equipEntry_itemName" placeholder="مثال: الحفر والتسوية">
-        </div>
-
-        <div class="modal-field">
-            <label>المقاول</label>
-            <input type="text" id="equipEntry_contractor" placeholder="مثال: شركة النجم">
-        </div>
-
-        <div class="modal-field">
-            <label>التاريخ</label>
-            <input type="date" id="equipEntry_date">
-        </div>
-
-        <!-- المعدات -->
-        <div style="background:rgba(106,45,145,0.05);padding:12px;border-radius:8px;margin-bottom:14px;">
-            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-align:right;">📋 المعدات:</div>
-            
-            <div id="equipEntry_list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;">
-                <!-- سيتم ملأها ديناميكياً -->
-            </div>
-
-            <button type="button" style="width:100%;margin-top:10px;padding:8px;background:rgba(106,45,145,0.1);border:1.5px dashed rgba(106,45,145,0.4);border-radius:6px;color:var(--purple);font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;"
-                onclick="addEquipmentRow()"
-                onmouseover="this.style.background='rgba(106,45,145,0.2)'"
-                onmouseout="this.style.background='rgba(106,45,145,0.1)'">
-                + إضافة معدة
-            </button>
-        </div>
-
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('modalEquipmentEntry')">إلغاء</button>
-            <button class="btn btn-primary" onclick="saveEquipmentEntry()">💾 حفظ البيانات</button>
-        </div>
-    </div>
-</div>
-
-<!-- Hidden file inputs -->
-<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importConfig(event)">
-<input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
-
-<script>
-/* ====================================================
-   CONSTANTS & STATE
-   ==================================================== */
-
-const USERS_SHEET_ID     = "1maViL4HSsI5XsjnAOGM-2D98g0Ow_pawZ-A_R_Y9I_0";
-const EQUIPMENT_SHEET_ID = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
-const CONFIG_FILE        = "categories.json";
-const EQUIPMENT_ENTRY_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXQqn8MfdZOozZgPlNSNFS4Ji4jY0jy24FNB1aIyzIdaYQz3eTMQ6_ORBU2hGowMld/exec";
-
-// Inactivity timeout: 2 hours in ms
-const INACTIVITY_MS = 2 * 60 * 60 * 1000;
-let inactivityTimer = null;
-
-const STATUSES = [
-    { value: "جاري",        color: "#3aaa5c", cls: "ongoing"     },
-    { value: "متاح",        color: "#2196f3", cls: "available"   },
-    { value: "غير متاح",    color: "#ff9800", cls: "unavailable" },
-    { value: "تم الانتهاء", color: "#9c27b0", cls: "completed"   },
-    { value: "متوقف",       color: "#f44336", cls: "stopped"     }
-];
-
-const LABELS = {
-    "ID"           : "معرف",
-    "ROAD NAME"    : "اسم الطريق",
-    "BLOCK NAME"   : "اسم القطعة",
-    "TOTAL-QTY"    : "الإجمالي",
-    "DONE-QTY"     : "المنفذ",
-    "REMANING-QTY" : "المتبقي",
-    "STATUS"       : "الحالة",
-    "CONTRACTOR"   : "المقاول",
-    "EQUIPMENT"    : "المعدات"
-};
-
-const AVAILABLE_EQUIPMENTS = [
-    "حفار (Excavator)",
-    "لودر (Loader)",
-    "بولدوزر (Bulldozer)",
-    "شاحنة قلابة (Dumper)",
-    "رافعة (Crane)",
-    "كمبريسور (Compressor)",
-    "مولد كهربائي (Generator)",
-    "دراجة نارية (Motorcycle)",
-    "سيارة ركوب (Car)",
-    "شاحنة نقل (Truck)",
-    "معدة تسوية (Grader)",
-    "رولر (Roller)",
-    "أخرى"
-];
-
-let map;
-let currentUser    = null;
-let categories     = [];
-let selectedItems  = {};
-let selectedStatuses = ["جاري","متاح","غير متاح","تم الانتهاء","متوقف"];
-let allLayers      = {};
-let allData        = {};
-let allFeatures    = {};
-let equipmentData  = {};
-let equipmentRows  = [];
-let contractorMap  = {};
-let activeContractorFilter = new Set();
-let contractorsLoaded = false;
-let defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 14 };
-const loadTokens = {};
-
-/* ====================================================
-   HELPERS
-   ==================================================== */
-
-function fmtNum(v) {
-    const n = parseFloat(v);
-    if (isNaN(n)) return v || "";
-    return n.toLocaleString('en-US');
-}
-
-function toNum(v) { return (!isNaN(v) && v !== "") ? Number(v) : 0; }
-
-function statusColor(s) {
-    const f = STATUSES.find(x => x.value.toLowerCase() === (s||"").trim().toLowerCase());
-    return f ? f.color : "#9e9e9e";
-}
-
-function statusCls(s) {
-    const f = STATUSES.find(x => x.value.toLowerCase() === (s||"").trim().toLowerCase());
-    return f ? f.cls : "";
-}
-
-function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
-
-function sheetIdFromUrl(url) {
-    const m = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    return m ? m[1] : url.trim();
-}
-
-function showAlert(msg, type="error") {
-    const el = document.createElement("div");
-    el.className = `alert alert-${type}`;
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
-}
-
-function openModal(id)  { document.getElementById(id).classList.add("active"); }
-function closeModal(id) { document.getElementById(id).classList.remove("active"); }
-
-function togglePanel(id) {
-    const panel = document.getElementById(id);
-    const isOpen = panel.classList.contains("active");
-    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.settings-panel').forEach(p => p.classList.remove('active'));
-    if (!isOpen) {
-        panel.classList.add("active");
-    }
-}
-
-document.addEventListener("click", e => {
-    if (!e.target.closest('.nav-right')) {
-        document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel,.settings-panel').forEach(p => p.classList.remove('active'));
-    }
-    if (!e.target.closest('.search-wrap')) {
-        document.getElementById("searchDropdown").classList.remove("active");
-    }
-});
-
-/* ====================================================
-   THEMES
-   ==================================================== */
-
-function applyTheme(name) {
-    document.body.classList.remove('theme-ocean','theme-dark','theme-emerald','theme-sunset');
-    if (name) document.body.classList.add('theme-' + name);
-    localStorage.setItem('mapTheme', name);
-    document.querySelectorAll('.theme-option').forEach(el => {
-        el.classList.toggle('active', el.dataset.theme === name);
-    });
-    if (map) {
-        map.eachLayer(l => { if (l._url) map.removeLayer(l); });
-        const tileUrl = name === 'dark'
-            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-            : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-        L.tileLayer(tileUrl, { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
-    }
-}
-
-/* ====================================================
-   INACTIVITY SESSION
-   ==================================================== */
-
-function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-        if (currentUser) {
-            showAlert("⏰ انتهت جلستك بسبب عدم النشاط", "error");
-            setTimeout(doLogout, 2000);
-        }
-    }, INACTIVITY_MS);
-}
-
-function initInactivityWatcher() {
-    ['mousemove','keydown','click','scroll','touchstart'].forEach(ev => {
-        document.addEventListener(ev, resetInactivityTimer, { passive: true });
-    });
-    resetInactivityTimer();
-}
-
-/* ====================================================
-   SESSION PERSISTENCE
-   ==================================================== */
-
-function saveSession(user) {
-    sessionStorage.setItem("currentUser", JSON.stringify(user));
-    sessionStorage.setItem("sessionTime", Date.now().toString());
-}
-
-function clearSession() {
-    sessionStorage.removeItem("currentUser");
-    sessionStorage.removeItem("sessionTime");
-    sessionStorage.removeItem("selectedStatuses");
-    sessionStorage.removeItem("selectedItems");
-}
-
-async function tryRestoreSession() {
-    const saved     = sessionStorage.getItem("currentUser");
-    const savedTime = sessionStorage.getItem("sessionTime");
-    if (!saved || !savedTime) return false;
-    if (Date.now() - parseInt(savedTime) > INACTIVITY_MS) {
-        clearSession();
-        return false;
-    }
-    currentUser = JSON.parse(saved);
-    return true;
-}
-
-/* ====================================================
-   LOGIN
-   ==================================================== */
-
-function parseCSVLine(line) {
-    const result = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-            if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-            else inQ = !inQ;
-        } else if (ch === ',' && !inQ) {
-            result.push(cur.trim()); cur = '';
-        } else {
-            cur += ch;
-        }
-    }
-    result.push(cur.trim());
-    return result;
-}
-
-async function fetchUsers() {
-    const url = `https://docs.google.com/spreadsheets/d/${USERS_SHEET_ID}/export?format=csv&gid=0`;
-    const r   = await fetch(url);
-    const csv = await r.text();
-
-    const lines   = csv.split('\n').filter(l => l.trim());
-    const headers = parseCSVLine(lines[0]).map(h => h.toUpperCase());
-    const users   = [];
-    for (let i = 1; i < lines.length; i++) {
-        const vals = parseCSVLine(lines[i]);
-        const obj  = {};
-        headers.forEach((h, idx) => { obj[h] = vals[idx] || ""; });
-        users.push(obj);
-    }
-    return users;
-}
-
-function togglePasswordVisibility() {
-    const input = document.getElementById("loginPassword");
-    const btn = document.getElementById("togglePassword");
-    if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "🙈";
-        btn.style.opacity = "1";
-    } else {
-        input.type = "password";
-        btn.textContent = "👁️";
-        btn.style.opacity = "0.6";
-    }
-}
-
-async function doLogin() {
-    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-    const pass  = document.getElementById("loginPassword").value.trim();
-
-    if (!email || !pass) { showLoginError("يرجى إدخال البريد وكلمة المرور"); return; }
-
-    document.getElementById("loginLoading").style.display = "block";
-    document.getElementById("loginError").style.display   = "none";
-    document.getElementById("loginBtn").disabled = true;
-
-    try {
-        const users = await fetchUsers();
-        const found = users.find(u =>
-            u["EMAIL"] && u["EMAIL"].toLowerCase() === email &&
-            u["PASSWORD"] && u["PASSWORD"]          === pass
-        );
-
-        if (!found) { showLoginError("البريد الإلكتروني أو كلمة المرور غير صحيحة"); return; }
-
-        currentUser = {
-            email  : found["EMAIL"],
-            name   : found["NAME"]  || found["EMAIL"],
-            role   : found["ROLE"]  || "2",
-            isAdmin: (found["ROLE"] || "").toString().trim() === "1",
-            avatar : found["PHOTO"] || found["AVATAR"] || ""
-        };
-
-        saveSession(currentUser);
-        enterApp();
-
-    } catch(e) {
-        console.error(e);
-        showLoginError("خطأ في الاتصال - تأكد من إعدادات الشيت");
-    } finally {
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("loginBtn").disabled = false;
-    }
-}
-
-function showLoginError(msg) {
-    const el = document.getElementById("loginError");
-    el.textContent = msg;
-    el.style.display = "block";
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-    ["loginEmail","loginPassword"].forEach(id => {
-        document.getElementById(id).addEventListener("keydown", e => {
-            if (e.key === "Enter") doLogin();
-        });
-    });
-
-    const savedTheme = localStorage.getItem('mapTheme') || '';
-    if (savedTheme) applyTheme(savedTheme);
-
-    const restored = await tryRestoreSession();
-    if (restored) {
-        enterApp();
-    }
-});
-
-/* ====================================================
-   ENTER / LEAVE APP
-   ==================================================== */
-
-async function enterApp() {
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("mainApp").classList.add("visible");
-
-    if (currentUser.isAdmin) {
-        document.body.classList.add("is-admin");
-    } else {
-        document.body.classList.remove("is-admin");
-    }
-
-    updateUserUI();
-    initMap();
-    loadEquipmentData();
-    await loadCategoriesConfig();
-
-    const savedSel = sessionStorage.getItem("selectedStatuses");
-    if (savedSel) selectedStatuses = JSON.parse(savedSel);
-
-    const savedItems = sessionStorage.getItem("selectedItems");
-    if (savedItems) selectedItems = JSON.parse(savedItems);
-
-    renderItems();
-    renderNavTabs();
-
-    categories.forEach(cat => {
-        cat.subitems.forEach(sub => {
-            if (selectedItems[sub.id]) loadLayer(sub.sheetId, sub.name, sub.geoJsonFile, cat.id);
-        });
-    });
-
-    document.querySelectorAll(".status-checkbox").forEach(cb => {
-        cb.checked = selectedStatuses.includes(cb.dataset.status);
-    });
-
-    updateStats();
-    initInactivityWatcher();
-    loadNotifications();
-    contractorsLoaded = false;
-    buildContractorPanel();
-}
-
-function updateUserUI() {
-    const initial = (currentUser.name || "؟").charAt(0);
-
-    const navAv = document.getElementById("navAvatar");
-    navAv.innerHTML = currentUser.avatar
-        ? `<img src="${currentUser.avatar}" alt="صورة">`
-        : initial;
-
-    document.getElementById("navUserName").textContent = currentUser.name;
-
-    const udWrap = document.getElementById("udAvatarWrap");
-    udWrap.innerHTML = currentUser.avatar
-        ? `<img src="${currentUser.avatar}" alt="صورة"><div class="ud-avatar-overlay" onclick="triggerAvatarUpload()">📷</div>`
-        : `<span>${initial}</span><div class="ud-avatar-overlay" onclick="triggerAvatarUpload()">📷</div>`;
-
-    document.getElementById("udName").textContent    = currentUser.name;
-    document.getElementById("udRole").textContent    = currentUser.isAdmin ? "مدير النظام" : "مستخدم";
-    document.getElementById("udNameInput").value     = currentUser.name;
-    document.getElementById("udPassInput").value     = "";
-}
-
-function doLogout() {
-    clearSession();
-    clearTimeout(inactivityTimer);
-    currentUser = null;
-    Object.values(allLayers).forEach(l => { if (map) map.removeLayer(l); });
-    allLayers = {}; allData = {}; allFeatures = {};
-    selectedItems = {};
-    contractorMap = {}; contractorsLoaded = false; activeContractorFilter = new Set();
-    document.getElementById("mainApp").classList.remove("visible");
-    document.getElementById("loginScreen").style.display = "flex";
-    document.getElementById("loginEmail").value    = "";
-    document.getElementById("loginPassword").value = "";
-    document.getElementById("loginError").style.display = "none";
-    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown').forEach(p => p.classList.remove('active'));
-}
-
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXQqn8MfdZOozZgPlNSNFS4Ji4jY0jy24FNB1aIyzIdaYQz3eTMQ6_ORBU2hGowMld/exec";
-
-async function writeUserToSheet(payload) {
-    if (!APPS_SCRIPT_URL) return false;
-    try {
-        const r = await fetch(APPS_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify(payload),
-            redirect: "follow"
-        });
-        const text = await r.text();
-        return text.trim() === "OK" || r.ok;
-    } catch(e) {
-        console.warn("Apps Script write failed:", e);
-        return false;
-    }
-}
-
-/* ====================================================
-   USER PROFILE EDIT
-   ==================================================== */
-
-function triggerAvatarUpload() {
-    document.getElementById("avatarFileInput").click();
-}
-
-function compressImage(dataUrl, maxWidth = 120) {
-    return new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const scale = Math.min(1, maxWidth / img.width);
-            canvas.width  = img.width  * scale;
-            canvas.height = img.height * scale;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL('image/jpeg', 0.7));
-        };
-        img.src = dataUrl;
-    });
-}
-
-async function handleAvatarUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async ev => {
-        const compressed = await compressImage(ev.target.result, 120);
-        currentUser.avatar = compressed;
-        updateUserUI();
-        saveSession(currentUser);
-
-        showAlert("⏳ جاري حفظ الصورة...", "success");
-
-        const ok = await writeUserToSheet({
-            action: "updateUser",
-            role: currentUser.role,
-            photo: compressed
-        });
-
-        if (ok) {
-            showAlert("✅ تم حفظ الصورة في الشيت — ستظهر من أي جهاز", "success");
-        } else {
-            showAlert("✅ الصورة محفوظة في الجلسة الحالية", "success");
-        }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-}
-
-async function saveUserProfile() {
-    const newName = document.getElementById("udNameInput").value.trim();
-    const newPass = document.getElementById("udPassInput").value.trim();
-
-    if (!newName) { showAlert("❌ يرجى إدخال الاسم"); return; }
-
-    currentUser.name = newName;
-    saveSession(currentUser);
-    updateUserUI();
-
-    showAlert("⏳ جاري الحفظ...", "success");
-
-    const payload = { role: currentUser.role };
-    if (newName) payload.name = newName;
-    if (newPass) payload.password = newPass;
-
-    const ok = await writeUserToSheet(payload);
-
-    if (ok) {
-        showAlert("✅ تم حفظ التغييرات في الشيت", "success");
-    } else {
-        showAlert("✅ تم حفظ الاسم محلياً — تأكد من إعدادات الـ Apps Script", "success");
-    }
-
-    document.getElementById("userDropdown").classList.remove("active");
-}
-
-/* ====================================================
-   MAP
-   ==================================================== */
-
-function initMap() {
-    if (map) { map.remove(); map = null; }
-    const tileUrl = document.body.classList.contains('theme-dark')
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-    map = L.map('map', { zoomControl: true }).setView([defaultCoords.lat, defaultCoords.lng], defaultCoords.zoom);
-    L.tileLayer(tileUrl, { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
-}
-
-/* ====================================================
-   EQUIPMENT DATA
-   ==================================================== */
-
-let equipmentRawRows    = [];
-let equipmentRawHeaders = [];
-
-function loadEquipmentData() {
-    const url = `https://docs.google.com/spreadsheets/d/${EQUIPMENT_SHEET_ID}/export?format=csv&gid=0`;
-    fetch(url).then(r => r.text()).then(csv => {
-        const lines   = csv.split('\n').filter(l => l.trim());
-        if (!lines.length) return;
-        equipmentRawHeaders = lines[0].split(',').map(h => h.trim());
-        const headers = equipmentRawHeaders.map(h => h.toUpperCase());
-        const idIdx   = headers.findIndex(h => h === 'ID');
-        equipmentRawRows = [];
-        for (let i = 1; i < lines.length; i++) {
-            const v = lines[i].split(',').map(x => x.trim());
-            if (!v[idIdx]) continue;
-            equipmentData[v[idIdx]] = v[v.length - 1] || "غير محدد";
-            const row = {};
-            headers.forEach((h, idx) => { row[h] = v[idx] || ""; });
-            equipmentRawRows.push(row);
-        }
-    }).catch(e => console.warn("equipment load failed:", e));
-}
-
-function buildEquipmentPanel() {
-    const list     = document.getElementById("equipmentList");
-    if (!list) return;
-
-    if (!equipmentRawRows.length) {
-        list.innerHTML = '<div class="equipment-empty">⏳ جاري التحميل...</div>';
-        setTimeout(() => { if (equipmentRawRows.length) buildEquipmentPanel(); }, 1200);
-        return;
-    }
-
-    const SKIP_COLS = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان', 'البند', 'ALBND', 'BAND', 'ITEM']);
-    const rows = equipmentRawRows;
-    const idCol    = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
-    const equipCols = equipmentRawHeaders
-        .map((h, i) => ({ name: h, idx: i }))
-        .filter(c => c.idx !== idCol && c.name.trim() && !SKIP_COLS.has(c.name.trim()) && !SKIP_COLS.has(c.name.trim().toUpperCase()));
-
-    const totals = {};
-    equipCols.forEach(col => {
-        let sum = 0;
-        rows.forEach(row => {
-            const val = parseFloat(row[col.name.trim().toUpperCase()] || 0);
-            if (!isNaN(val)) sum += val;
-        });
-        if (sum > 0) totals[col.name] = sum;
-    });
-
-    const entries = Object.entries(totals).sort((a,b) => b[1] - a[1]);
-
-    if (!entries.length) {
-        list.innerHTML = '<div class="equipment-empty">لا توجد بيانات معدات</div>';
-        return;
-    }
-
-    const grandTotal = entries.reduce((s, [,v]) => s + v, 0);
-    list.innerHTML = entries.map(([name, count]) => `
-        <div class="equipment-row">
-            <div class="equipment-row-name">${name}</div>
-            <div class="equipment-row-count">${fmtNum(count)}</div>
-        </div>`).join('');
-}
-
-/* ====================================================
-   CONTRACTOR PANEL
-   ==================================================== */
-
-async function fetchSheetContractors(sub) {
-    const cat = categories.find(c => c.subitems.some(s => s.id === sub.id));
-
-    const addEntry = (cname) => {
-        if (!contractorMap[cname]) contractorMap[cname] = [];
-        if (!contractorMap[cname].find(e => e.subId === sub.id)) {
-            contractorMap[cname].push({
-                catId       : cat ? cat.id    : "",
-                catName     : cat ? cat.name  : "",
-                catEmoji    : cat ? cat.emoji : "📍",
-                catOrder    : categories.indexOf(cat),
-                subId       : sub.id,
-                subName     : sub.name,
-                sheetId     : sub.sheetId,
-                geoJsonFile : sub.geoJsonFile
-            });
-        }
-    };
-
-    if (allData[sub.sheetId]) {
-        Object.values(allData[sub.sheetId]).forEach(row => {
-            const cname = (row["CONTRACTOR"] || "").trim();
-            if (cname) addEntry(cname);
-        });
-        return;
-    }
-
-    try {
-        const url  = `https://docs.google.com/spreadsheets/d/${sub.sheetId}/export?format=csv&gid=0`;
-        const r    = await fetch(url);
-        if (!r.ok) return;
-        const csv  = await r.text();
-        if (csv.trim().startsWith('<')) return;
-        const lines   = csv.split('\n').filter(l => l.trim());
-        if (!lines.length) return;
-        const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
-        const cIdx    = headers.findIndex(h => h === 'CONTRACTOR');
-        if (cIdx === -1) return;
-        for (let i = 1; i < lines.length; i++) {
-            const vals  = lines[i].split(',').map(v => v.trim());
-            const cname = (vals[cIdx] || "").trim();
-            if (cname) addEntry(cname);
-        }
-    } catch(e) { console.warn("contractor fetch failed:", sub.name, e); }
-}
-
-async function buildContractorPanel({ forceRefresh = false } = {}) {
-    const list = document.getElementById("contractorList");
-    if (!list) return;
-
-    if (contractorsLoaded && !forceRefresh) {
-        renderContractorList();
-        return;
-    }
-
-    list.innerHTML = '<div class="contractor-empty">⏳ جاري التحميل...</div>';
-
-    contractorMap = {};
-    const allSubs = [];
-    categories.forEach(cat => cat.subitems.forEach(sub => allSubs.push(sub)));
-
-    if (!allSubs.length) {
-        list.innerHTML = '<div class="contractor-empty">لا توجد بنود مضافة بعد</div>';
-        return;
-    }
-
-    await Promise.all(allSubs.map(sub => fetchSheetContractors(sub)));
-    contractorsLoaded = true;
-    renderContractorList();
-}
-
-function renderContractorList() {
-    const list = document.getElementById("contractorList");
-    if (!list) return;
-
-    const names = Object.keys(contractorMap).sort((a,b) => a.localeCompare(b, 'ar'));
-
-    if (!names.length) {
-        list.innerHTML = '<div class="contractor-empty">لم يتم العثور على مقاولين</div>';
-        return;
-    }
-
-    list.innerHTML = names.map(name => {
-        const subs = [...contractorMap[name]].sort((a, b) => {
-            if (a.catOrder !== b.catOrder) return a.catOrder - b.catOrder;
-            const cat = categories.find(c => c.id === a.catId);
-            if (!cat) return 0;
-            return cat.subitems.findIndex(s => s.id === a.subId) -
-                   cat.subitems.findIndex(s => s.id === b.subId);
-        });
-
-        const byCategory = {};
-        subs.forEach(s => {
-            if (!byCategory[s.catId]) byCategory[s.catId] = { label: `${s.catEmoji} ${s.catName}`, items: [] };
-            byCategory[s.catId].items.push(s);
-        });
-
-        const subsHTML = Object.values(byCategory).map(group => `
-            <div class="c-cat-group">
-                <div class="c-cat-label">${group.label}</div>
-                ${group.items.map(s => {
-                    const filterKey = s.sheetId + '|' + name;
-                    const checked   = activeContractorFilter.has(filterKey) ? 'checked' : '';
-                    return `
-                    <div class="contractor-subitem">
-                        <input type="checkbox" class="contractor-cb"
-                            data-cat-id="${s.catId}"
-                            data-sub-id="${s.subId}"
-                            data-sheet="${s.sheetId}"
-                            data-geo="${s.geoJsonFile}"
-                            data-contractor="${name}"
-                            data-filter-key="${filterKey}"
-                            ${checked}
-                            onclick="event.stopPropagation()">
-                        <label>${s.subName}</label>
-                    </div>`;
-                }).join('')}
-            </div>`).join('');
-
-        return `
-        <div class="contractor-item">
-            <div class="contractor-name" onclick="toggleContractor(this)">
-                <span>${name}</span>
-                <div style="display:flex;align-items:center;gap:5px">
-                    <span class="contractor-count">${subs.length}</span>
-                    <span class="c-arrow">◀</span>
-                </div>
-            </div>
-            <div class="contractor-subitems">
-                ${subsHTML}
-            </div>
-        </div>`;
-    }).join('');
-
-    list.querySelectorAll('.contractor-cb').forEach(cb => {
-        cb.addEventListener('change', function() {
-            handleContractorCheckbox(this);
-        });
-    });
-}
-
-function handleContractorCheckbox(cb) {
-    const filterKey = cb.dataset.filterKey;
-    const sheetId   = cb.dataset.sheet;
-    const geoFile   = cb.dataset.geo;
-    const catId     = cb.dataset.catId;
-    const subId     = cb.dataset.subId;
-
-    if (cb.checked) {
-        const newSub = categories.flatMap(c => c.subitems).find(s => s.id === subId);
-        activeContractorFilter.add(filterKey);
-
-        if (!allLayers[sheetId]) {
-            if (newSub) loadLayer(sheetId, newSub.name, geoFile, catId);
-        } else {
-            applyContractorFilter();
-        }
-
-    } else {
-        activeContractorFilter.delete(filterKey);
-        const stillActive = [...activeContractorFilter].some(k => k.startsWith(sheetId + '|'));
-        if (!stillActive) {
-            loadTokens[sheetId] = null;
-            if (allLayers[sheetId]) { map.removeLayer(allLayers[sheetId]); delete allLayers[sheetId]; }
+    <!-- TOP NA
