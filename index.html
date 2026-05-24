@@ -3034,6 +3034,7 @@
                         </div>
                         <div class="settings-tabs">
                             <button class="settings-tab active" onclick="switchSettingsTab('coords')">📍 الإحداثيات</button>
+                            <button class="settings-tab" onclick="switchSettingsTab('default')">🏁 البند الافتراضي</button>
                             <button class="settings-tab" onclick="switchSettingsTab('similar')">🔗 البنود المتشابهة</button>
                         </div>
                         <div class="settings-body">
@@ -3052,6 +3053,18 @@
                                     <input type="text" class="settings-input" id="settingsZoom" placeholder="14">
                                 </div>
                                 <button class="settings-save-btn" onclick="saveSettingsCoords()">✓ حفظ وتطبيق</button>
+                            </div>
+                            <!-- Tab: Default Subitem -->
+                            <div class="settings-section" id="settingsTabDefault">
+                                <div style="font-size:11px;color:var(--text-soft);text-align:right;line-height:1.6;background:rgba(106,45,145,0.05);padding:8px 10px;border-radius:7px;border-right:3px solid var(--purple);margin-bottom:4px;">
+                                    رقم البند الفرعي الذي يُحمَّل تلقائياً عند فتح النظام لأول مرة (قبل أي اختيار من المستخدم).
+                                </div>
+                                <div class="settings-field">
+                                    <label class="settings-label">رقم البند الافتراضي</label>
+                                    <input type="text" class="settings-input" id="settingsDefaultSub" placeholder="مثال: 1-1 أو A-01-02">
+                                </div>
+                                <div id="settingsDefaultSubPreview" style="font-size:11px;color:var(--text-soft);text-align:right;padding:6px 8px;border-radius:6px;background:rgba(106,45,145,0.05);display:none;"></div>
+                                <button class="settings-save-btn" onclick="saveSettingsDefaultSub()">✓ حفظ وتطبيق</button>
                             </div>
                             <!-- Tab: Similar Items -->
                             <div class="settings-section" id="settingsTabSimilar">
@@ -3502,6 +3515,7 @@ let equipmentData  = {};
 let similarGroups  = [];        // [{id, name, subIds:[]}] — مجموعات البنود المتشابهة
 let _editingGroupId = null;     // for editing existing group
 let defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 14 };
+let defaultSubNumber = ""; // رقم البند الافتراضي الذي يُحمَّل عند بدء النظام
 
 /* ====================================================
    HELPERS
@@ -3557,6 +3571,8 @@ function togglePanel(id) {
             const sl = document.getElementById("settingsLat"); if(sl) sl.value = defaultCoords.lat;
             const sg = document.getElementById("settingsLng"); if(sg) sg.value = defaultCoords.lng;
             const sz = document.getElementById("settingsZoom"); if(sz) sz.value = defaultCoords.zoom;
+            const sd = document.getElementById("settingsDefaultSub"); if(sd) sd.value = defaultSubNumber || "";
+            renderDefaultSubPreview();
         }
         // Refresh group tab if it's the active one
         if (id === 'contractorPanel' && _activeContractorTab === 'group') {
@@ -3807,15 +3823,13 @@ async function enterApp() {
     renderItems();
     renderNavTabs();
 
-    // Auto-select "القطع" under "الطرق" if nothing is selected
+    // Auto-select البند الافتراضي إذا لم يكن هناك اختيار سابق
     const hasAnySelection = Object.keys(selectedItems).length > 0;
-    if (!hasAnySelection) {
-        const roadsCat = categories.find(c => c.name.includes('طرق') || c.name.toLowerCase().includes('road'));
-        if (roadsCat) {
-            const qataaSub = roadsCat.subitems.find(s => s.name.includes('قطع') || s.name.toLowerCase().includes('piece') || s.name.toLowerCase().includes('block'));
-            if (qataaSub) {
-                selectedItems[qataaSub.id] = true;
-            }
+    if (!hasAnySelection && defaultSubNumber) {
+        const defaultSub = categories.flatMap(c => c.subitems)
+            .find(s => (s.number || "").trim() === defaultSubNumber.trim());
+        if (defaultSub) {
+            selectedItems[defaultSub.id] = true;
         }
     }
 
@@ -4018,6 +4032,9 @@ async function loadDefaultCoords() {
             if (map) map.setView([defaultCoords.lat, defaultCoords.lng], defaultCoords.zoom);
         } catch(e) {}
     }
+    // تحميل رقم البند الافتراضي من localStorage كـ fallback
+    const dsn = localStorage.getItem('defaultSubNumber');
+    if (dsn !== null && !defaultSubNumber) defaultSubNumber = dsn;
 }
 
 function saveDefaultCoordsNav() {
@@ -4049,12 +4066,14 @@ function syncCoordsInputs() {
 
 function switchSettingsTab(tab) {
     document.querySelectorAll('.settings-tab').forEach((t, i) => {
-        const tabs = ['coords', 'similar'];
+        const tabs = ['coords', 'default', 'similar'];
         t.classList.toggle('active', tabs[i] === tab);
     });
     document.getElementById('settingsTabCoords').classList.toggle('active', tab === 'coords');
+    document.getElementById('settingsTabDefault').classList.toggle('active', tab === 'default');
     document.getElementById('settingsTabSimilar').classList.toggle('active', tab === 'similar');
     if (tab === 'similar') renderSimilarGroupsList();
+    if (tab === 'default') renderDefaultSubPreview();
 }
 
 function saveSettingsCoords() {
@@ -4067,6 +4086,39 @@ function saveSettingsCoords() {
     if (map) map.setView([lat, lng], zoom);
     syncCoordsInputs();
     showAlert("✅ تم حفظ الإحداثيات الافتراضية", "success");
+}
+
+function saveSettingsDefaultSub() {
+    const num = document.getElementById("settingsDefaultSub").value.trim();
+    // تحقق إن الرقم موجود فعلاً في البنود
+    const found = categories.flatMap(c => c.subitems).find(s => (s.number || "").trim() === num);
+    if (num && !found) {
+        showAlert("❌ رقم البند غير موجود — تأكد من الرقم");
+        return;
+    }
+    defaultSubNumber = num;
+    localStorage.setItem('defaultSubNumber', num);
+    renderDefaultSubPreview();
+    showAlert(num ? "✅ تم حفظ البند الافتراضي: " + (found ? found.name : num) : "✅ تم مسح البند الافتراضي", "success");
+}
+
+function renderDefaultSubPreview() {
+    const inp     = document.getElementById("settingsDefaultSub");
+    const preview = document.getElementById("settingsDefaultSubPreview");
+    if (!inp || !preview) return;
+    inp.value = defaultSubNumber || "";
+    if (!defaultSubNumber) { preview.style.display = "none"; return; }
+    const found = categories.flatMap(c => c.subitems).find(s => (s.number || "").trim() === defaultSubNumber);
+    if (found) {
+        const cat = categories.find(c => c.subitems.some(s => s.id === found.id));
+        preview.textContent = "✔ " + (cat ? cat.name + " ← " : "") + found.name;
+        preview.style.display = "block";
+        preview.style.color = "var(--green)";
+    } else {
+        preview.textContent = "⚠ رقم البند غير موجود في البنود الحالية";
+        preview.style.display = "block";
+        preview.style.color = "var(--orange)";
+    }
 }
 
 /* ====================================================
@@ -5117,6 +5169,11 @@ async function loadCategoriesConfig() {
             similarGroups = data.similarGroups;
             localStorage.setItem('similarGroups', JSON.stringify(similarGroups));
         }
+        // Load defaultSubNumber from config if present
+        if (!Array.isArray(data) && data.defaultSubNumber !== undefined) {
+            defaultSubNumber = data.defaultSubNumber || "";
+            localStorage.setItem('defaultSubNumber', defaultSubNumber);
+        }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
         categories = [];
@@ -5133,6 +5190,7 @@ function exportConfig() {
         categories: categories,
         defaultCoords: defaultCoords,
         similarGroups: similarGroups,
+        defaultSubNumber: defaultSubNumber,
         // Include current UI state for persistence
         selectedItems: selectedItems,
         selectedStatuses: selectedStatuses,
@@ -5176,6 +5234,10 @@ function importConfig(e) {
                 if (data.similarGroups) {
                     similarGroups = data.similarGroups;
                     localStorage.setItem('similarGroups', JSON.stringify(similarGroups));
+                }
+                if (data.defaultSubNumber !== undefined) {
+                    defaultSubNumber = data.defaultSubNumber || "";
+                    localStorage.setItem('defaultSubNumber', defaultSubNumber);
                 }
                 if (data.selectedItems) selectedItems = data.selectedItems;
                 if (data.selectedStatuses) selectedStatuses = data.selectedStatuses;
