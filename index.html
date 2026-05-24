@@ -3023,6 +3023,54 @@
             border: 1px solid rgba(245,200,66,0.3);
             color: #f5c842;
         }
+        /* Equipment form action buttons */
+        .eq-add-eq-btn {
+            background: linear-gradient(135deg, #27ae6a, #1a7a4a);
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .eq-add-eq-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(39,174,106,0.4); }
+
+        .eq-reset-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.6);
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .eq-reset-btn:hover { background: rgba(255,255,255,0.12); color: white; }
+
+        .eq-submit-btn {
+            background: linear-gradient(135deg, #27ae6a 0%, #1a7a4a 100%);
+            border: none;
+            color: white;
+            padding: 11px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 900;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(39,174,106,0.3);
+        }
+        .eq-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(39,174,106,0.5); }
+        .eq-submit-btn:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
 
 <base target="_blank">
 </head>
@@ -7710,38 +7758,31 @@ function eqPopulateContractors() {
 
 /* ── Add an equipment row ── */
 function eqAddEquipmentRow() {
-    const container = document.getElementById('eqf_equipments_container');
-    const hint = container.querySelector('.eq-empty-hint');
+    var container = document.getElementById('eqf_equipments_container');
+    var hint = container.querySelector('.eq-empty-hint');
     if (hint) hint.remove();
 
     eqFormEquipmentCount++;
-    const rowId = 'eqrow_' + eqFormEquipmentCount;
+    var rowId = 'eqrow_' + eqFormEquipmentCount;
+    var dlId  = 'eqdl_'  + eqFormEquipmentCount;
 
-    // Build datalist for this row
-    const dlId = 'eqdl_' + eqFormEquipmentCount;
-    const dlHtml = `<datalist id="${dlId}">${EQ_KNOWN_TYPES.map(t => `<option value="${t}">`).join('')}</datalist>`;
+    // Build datalist options without nested template literals
+    var optionsHtml = EQ_KNOWN_TYPES.map(function(t) {
+        return '<option value="' + t + '">';
+    }).join('');
 
-    const row = document.createElement('div');
+    var row = document.createElement('div');
     row.className = 'eq-item-row';
     row.id = rowId;
-    row.innerHTML = `
-        ${dlHtml}
-        <input type="text"
-            placeholder="نوع المعدة (مثال: حفار)"
-            list="${dlId}"
-            class="eq-type-inp"
-            id="${rowId}_type">
-        <input type="number"
-            placeholder="العدد"
-            min="0"
-            id="${rowId}_count"
-            style="text-align:center;">
-        <button class="eq-del-row-btn" onclick="eqRemoveEquipmentRow('${rowId}')" title="حذف">✕</button>`;
+    row.innerHTML =
+        '<datalist id="' + dlId + '">' + optionsHtml + '</datalist>' +
+        '<input type="text" placeholder="نوع المعدة (مثال: حفار)" list="' + dlId + '" class="eq-type-inp" id="' + rowId + '_type">' +
+        '<input type="number" placeholder="العدد" min="0" id="' + rowId + '_count" style="text-align:center;">' +
+        '<button class="eq-del-row-btn" onclick="eqRemoveEquipmentRow('' + rowId + '')" title="حذف">✕</button>';
 
     container.appendChild(row);
     row.querySelector('.eq-type-inp').focus();
 }
-
 /* ── Remove an equipment row ── */
 function eqRemoveEquipmentRow(rowId) {
     const row = document.getElementById(rowId);
@@ -8316,7 +8357,7 @@ window.loadEquipmentModal = function() {
             <div style="border:1px solid rgba(39,174,106,0.25);border-radius:12px;overflow:hidden;margin-bottom:16px;">
                 <div style="background:linear-gradient(135deg,rgba(39,174,106,0.15),rgba(26,122,74,0.1));padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(39,174,106,0.15);">
                     <span style="font-size:13px;font-weight:800;color:rgba(255,255,255,0.9);font-family:'Cairo',sans-serif;">🚜 أنواع المعدات</span>
-                    <button onclick="eqAddEquipmentRow()" style="background:linear-gradient(135deg,#27ae6a,#1a7a4a);border:none;color:white;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+                    <button onclick="eqAddEquipmentRow()" class="eq-add-eq-btn">
                         ＋ إضافة معدة
                     </button>
                 </div>
@@ -8334,10 +8375,10 @@ window.loadEquipmentModal = function() {
 
         <!-- Footer -->
         <div style="background:rgba(0,0,0,0.25);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;gap:12px;">
-            <button onclick="eqResetForm()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+            <button onclick="eqResetForm()" class="eq-reset-btn">
                 🔄 إعادة تعيين
             </button>
-            <button onclick="eqSubmitForm()" id="eqf_submit_btn" style="background:linear-gradient(135deg,#27ae6a 0%,#1a7a4a 100%);border:none;color:white;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(39,174,106,0.3);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(39,174,106,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(39,174,106,0.3)'">
+            <button onclick="eqSubmitForm()" id="eqf_submit_btn" class="eq-submit-btn">
                 💾 حفظ في السجل
             </button>
         </div>
