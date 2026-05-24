@@ -7711,6 +7711,7 @@ function openEquipmentFormModal() {
     document.body.style.overflow = 'hidden';
     eqPopulateSubitems();
     eqPopulateContractors();
+    eqBuildElementsList();
     // Set today's date
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('eqf_date').value = today;
@@ -7728,34 +7729,186 @@ function eqPopulateSubitems() {
     const sel = document.getElementById('eqf_item_name');
     sel.innerHTML = '<option value="">-- اختر البند --</option>';
     (categories || []).forEach(cat => {
+        const grp = document.createElement('optgroup');
+        grp.label = cat.emoji + ' ' + cat.name;
         (cat.subitems || []).forEach(sub => {
             const opt = document.createElement('option');
             opt.value = sub.name;
-            opt.textContent = (sub.number ? `[${sub.number}] ` : '') + cat.name + ' ← ' + sub.name;
-            sel.appendChild(opt);
+            opt.textContent = (sub.number ? '[' + sub.number + '] ' : '') + sub.name;
+            grp.appendChild(opt);
         });
+        if (grp.children.length) sel.appendChild(grp);
     });
 }
 
-/* ── Populate contractors datalist from loaded data ── */
+/* ── Populate contractors select from loaded data ── */
 function eqPopulateContractors() {
-    const dl = document.getElementById('eqf_contractor_list');
-    dl.innerHTML = '';
+    const sel = document.getElementById('eqf_contractor');
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">-- اختر المقاول --</option>';
     const contractors = new Set();
+    // من allData المحملة
     Object.values(allData || {}).forEach(sheetData => {
         Object.values(sheetData).forEach(row => {
             const c = (row['CONTRACTOR'] || '').trim();
             if (c) contractors.add(c);
         });
     });
+    // من contractorMap
     Object.keys(contractorMap || {}).forEach(name => {
         if (name.trim()) contractors.add(name.trim());
     });
-    contractors.forEach(name => {
+    const sorted = [...contractors].sort((a, b) => a.localeCompare(b, 'ar'));
+    sorted.forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
-        dl.appendChild(opt);
+        opt.textContent = name;
+        sel.appendChild(opt);
     });
+    if (currentVal) sel.value = currentVal;
+}
+
+/* ── Element search dropdown ── */
+let _eqAllElements = []; // { id, name, sheetId, subName }
+
+function eqBuildElementsList() {
+    _eqAllElements = [];
+    categories.forEach(cat => {
+        cat.subitems.forEach(sub => {
+            if (!allData[sub.sheetId]) return;
+            Object.values(allData[sub.sheetId]).forEach(row => {
+                const nameKey = row['ROAD NAME'] ? 'ROAD NAME' : row['BLOCK NAME'] ? 'BLOCK NAME' : 'NAME';
+                const name = (row[nameKey] || '').trim();
+                const id   = (row['ID'] || '').trim();
+                if (name && id) {
+                    _eqAllElements.push({ id, name, sheetId: sub.sheetId, subName: sub.name });
+                }
+            });
+        });
+    });
+}
+
+function eqShowElementDropdown() {
+    eqBuildElementsList();
+    eqFilterElementDropdown();
+}
+
+function eqFilterElementDropdown() {
+    const inp = document.getElementById('eqf_element_search');
+    const dd  = document.getElementById('eqf_element_dropdown');
+    const q   = (inp.value || '').trim().toLowerCase();
+
+    const filtered = q
+        ? _eqAllElements.filter(e => e.name.toLowerCase().includes(q) || e.id.toLowerCase().includes(q))
+        : _eqAllElements;
+
+    if (!filtered.length) {
+        dd.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;font-family:\'Cairo\',sans-serif;">لا توجد عناصر مطابقة</div>';
+    } else {
+        dd.innerHTML = filtered.slice(0, 60).map(e =>
+            '<div onclick="eqSelectElement(\'' + e.id.replace(/'/g,"\\'") + '\',\'' + e.name.replace(/'/g,"\\'") + '\')" ' +
+            'style="padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s;display:flex;flex-direction:column;gap:2px;" ' +
+            'onmouseover="this.style.background=\'rgba(39,174,106,0.12)\'" onmouseout="this.style.background=\'\'">'+
+            '<span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);font-family:\'Cairo\',sans-serif;">' + e.name + '</span>' +
+            '<span style="font-size:10px;color:rgba(255,255,255,0.4);font-family:\'Cairo\',sans-serif;">ID: ' + e.id + ' • ' + e.subName + '</span>' +
+            '</div>'
+        ).join('');
+    }
+    dd.style.display = 'block';
+
+    // Close on outside click
+    setTimeout(() => {
+        document.addEventListener('click', eqCloseElementDropdownOutside, { once: true, capture: true });
+    }, 0);
+}
+
+function eqCloseElementDropdownOutside(e) {
+    const dd  = document.getElementById('eqf_element_dropdown');
+    const inp = document.getElementById('eqf_element_search');
+    if (!dd || !inp) return;
+    if (!dd.contains(e.target) && e.target !== inp) {
+        dd.style.display = 'none';
+    } else {
+        // Re-attach if click was inside dropdown or input
+        document.addEventListener('click', eqCloseElementDropdownOutside, { once: true, capture: true });
+    }
+}
+
+function eqSelectElement(id, name) {
+    document.getElementById('eqf_element_id').value   = id;
+    document.getElementById('eqf_element_name').value = name;
+    document.getElementById('eqf_element_search').value = name;
+    document.getElementById('eqf_element_dropdown').style.display = 'none';
+    // Show info bar
+    const info = document.getElementById('eqf_element_info');
+    document.getElementById('eqf_element_info_name').textContent = name;
+    document.getElementById('eqf_element_info_id').textContent   = 'ID: ' + id;
+    info.style.display = 'flex';}
+
+function eqClearElement() {
+    document.getElementById('eqf_element_id').value   = '';
+    document.getElementById('eqf_element_name').value = '';
+    document.getElementById('eqf_element_search').value = '';
+    document.getElementById('eqf_element_info').style.display = 'none';
+}
+
+/* ── Pick from map ── */
+let _eqPickingFromMap = false;
+let _eqMapClickHandler = null;
+
+function eqPickFromMap() {
+    if (!map) { showAlert('❌ الخريطة غير جاهزة'); return; }
+    _eqPickingFromMap = true;
+    document.getElementById('eqf_pick_hint').style.display = 'block';
+    document.getElementById('eqf_pick_btn').style.background = 'linear-gradient(135deg,#e74c3c,#c0392b)';
+    document.getElementById('eqf_pick_btn').textContent = '⏳ في انتظار الاختيار...';
+    // Close modal overlay temporarily to allow map clicks (keep modal open)
+    document.getElementById('equipmentFormModal').style.pointerEvents = 'none';
+
+    _eqMapClickHandler = function(e) {
+        if (!_eqPickingFromMap) return;
+        // Find the nearest feature
+        let nearest = null, nearestDist = Infinity;
+        Object.entries(allLayers).forEach(([sheetId, layer]) => {
+            if (!layer || !allData[sheetId]) return;
+            layer.eachLayer(f => {
+                if (!f.getBounds) return;
+                try {
+                    const center = f.getBounds().getCenter();
+                    const d = map.distance(e.latlng, center);
+                    if (d < nearestDist) {
+                        nearestDist = d;
+                        const row = allData[sheetId][f.feature.properties.ID];
+                        if (row) {
+                            const nameKey = row['ROAD NAME'] ? 'ROAD NAME' : row['BLOCK NAME'] ? 'BLOCK NAME' : 'NAME';
+                            nearest = { id: row['ID'], name: row[nameKey] || f.feature.properties.ID };
+                        }
+                    }
+                } catch(err) {}
+            });
+        });
+        eqCancelPickFromMap();
+        if (nearest) {
+            eqSelectElement(nearest.id, nearest.name);
+            showAlert('✅ تم اختيار: ' + nearest.name, 'success');
+        } else {
+            showAlert('❌ لم يتم العثور على عنصر — تأكد من تحميل طبقة على الخريطة');
+        }
+    };
+
+    map.once('click', _eqMapClickHandler);
+}
+
+function eqCancelPickFromMap() {
+    _eqPickingFromMap = false;
+    document.getElementById('eqf_pick_hint').style.display = 'none';
+    document.getElementById('eqf_pick_btn').style.background = 'linear-gradient(135deg,#1a4a8a,#2196f3)';
+    document.getElementById('eqf_pick_btn').textContent = '🗺 اختر من الخريطة';
+    document.getElementById('equipmentFormModal').style.pointerEvents = '';
+    if (map && _eqMapClickHandler) {
+        map.off('click', _eqMapClickHandler);
+        _eqMapClickHandler = null;
+    }
 }
 
 /* ── Add an equipment row ── */
@@ -7805,8 +7958,11 @@ function eqShowEmptyHint() {
 
 /* ── Reset the form ── */
 function eqResetForm() {
-    document.getElementById('eqf_element_id').value   = '';
-    document.getElementById('eqf_element_name').value = '';
+    document.getElementById('eqf_element_id').value     = '';
+    document.getElementById('eqf_element_name').value   = '';
+    document.getElementById('eqf_element_search').value = '';
+    document.getElementById('eqf_element_info').style.display = 'none';
+    document.getElementById('eqf_element_dropdown').style.display = 'none';
     document.getElementById('eqf_item_name').value    = '';
     document.getElementById('eqf_contractor').value   = '';
     const today = new Date().toISOString().split('T')[0];
@@ -7815,6 +7971,7 @@ function eqResetForm() {
     eqFormEquipmentCount = 0;
     eqShowEmptyHint();
     eqHideFeedback();
+    eqCancelPickFromMap();
 }
 
 /* ── Show / hide feedback ── */
@@ -7859,10 +8016,9 @@ async function eqSubmitForm() {
     const date         = document.getElementById('eqf_date').value.trim();
 
     // Validation
-    if (!element_id)   { eqShowFeedback('❌ يرجى إدخال رقم العنصر (ID)', 'error'); return; }
-    if (!element_name) { eqShowFeedback('❌ يرجى إدخال اسم العنصر', 'error'); return; }
+    if (!element_name) { eqShowFeedback('❌ يرجى اختيار أو إدخال اسم العنصر', 'error'); return; }
     if (!item_name)    { eqShowFeedback('❌ يرجى اختيار البند', 'error'); return; }
-    if (!contractor)   { eqShowFeedback('❌ يرجى إدخال اسم المقاول', 'error'); return; }
+    if (!contractor)   { eqShowFeedback('❌ يرجى اختيار المقاول', 'error'); return; }
     if (!date)         { eqShowFeedback('❌ يرجى اختيار التاريخ', 'error'); return; }
 
     const equipments = eqCollectEquipments();
@@ -8319,31 +8475,60 @@ window.loadEquipmentModal = function() {
 
         <!-- Form Body -->
         <div style="flex:1;overflow-y:auto;padding:20px 24px;" id="eqFormBody">
-            
-            <!-- Row 1: Element ID + Element Name -->
-            <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px;">
-                <div class="eq-form-field">
-                    <label class="eq-form-label">🔢 رقم العنصر (ID)</label>
-                    <input type="text" id="eqf_element_id" class="eq-form-input" placeholder="مثال: RD-001">
-                </div>
+
+            <!-- Row 1: Element Name dropdown + Pick from map button -->
+            <div style="margin-bottom:16px;">
                 <div class="eq-form-field">
                     <label class="eq-form-label">📍 اسم العنصر</label>
-                    <input type="text" id="eqf_element_name" class="eq-form-input" placeholder="مثال: طريق الملك عبدالله">
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div style="position:relative;flex:1;">
+                            <input type="text" id="eqf_element_search" class="eq-form-input"
+                                placeholder="ابحث باسم العنصر أو اختر من القائمة..."
+                                oninput="eqFilterElementDropdown()"
+                                onfocus="eqShowElementDropdown()"
+                                autocomplete="off"
+                                style="padding-left:32px;">
+                            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;opacity:0.4;pointer-events:none;">🔍</span>
+                            <div id="eqf_element_dropdown"
+                                style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:#1a1a2e;border:1px solid rgba(39,174,106,0.4);border-radius:10px;z-index:9999;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+                            </div>
+                        </div>
+                        <button onclick="eqPickFromMap()" id="eqf_pick_btn"
+                            title="اختر عنصراً من الخريطة"
+                            style="flex-shrink:0;padding:10px 14px;background:linear-gradient(135deg,#1a4a8a,#2196f3);border:none;border-radius:9px;color:white;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:all 0.2s;box-shadow:0 2px 10px rgba(33,150,243,0.35);">
+                            🗺 اختر من الخريطة
+                        </button>
+                    </div>
+                    <!-- Selected element info -->
+                    <div id="eqf_element_info" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(39,174,106,0.1);border:1px solid rgba(39,174,106,0.3);border-radius:8px;align-items:center;gap:10px;">
+                        <span style="font-size:16px;">✅</span>
+                        <div style="flex:1;">
+                            <div id="eqf_element_info_name" style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Cairo',sans-serif;"></div>
+                            <div id="eqf_element_info_id" style="font-size:10px;color:rgba(255,255,255,0.45);font-family:'Cairo',sans-serif;margin-top:2px;"></div>
+                        </div>
+                        <button onclick="eqClearElement()" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:16px;padding:2px 6px;" title="مسح">✕</button>
+                    </div>
+                    <!-- Hidden fields -->
+                    <input type="hidden" id="eqf_element_id">
+                    <input type="hidden" id="eqf_element_name">
                 </div>
             </div>
 
-            <!-- Row 2: Item Name (subitem selector) + Contractor -->
+            <!-- Row 2: Item Name (searchable select) + Contractor (select) -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
                 <div class="eq-form-field">
                     <label class="eq-form-label">📋 البند</label>
-                    <select id="eqf_item_name" class="eq-form-input" style="cursor:pointer;">
-                        <option value="">-- اختر البند --</option>
-                    </select>
+                    <div style="position:relative;">
+                        <select id="eqf_item_name" class="eq-form-input" style="cursor:pointer;appearance:auto;-webkit-appearance:auto;">
+                            <option value="">-- اختر البند --</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="eq-form-field">
                     <label class="eq-form-label">👷 المقاول</label>
-                    <input type="text" id="eqf_contractor" class="eq-form-input" placeholder="اسم المقاول" list="eqf_contractor_list">
-                    <datalist id="eqf_contractor_list"></datalist>
+                    <select id="eqf_contractor" class="eq-form-input" style="cursor:pointer;appearance:auto;-webkit-appearance:auto;">
+                        <option value="">-- اختر المقاول --</option>
+                    </select>
                 </div>
             </div>
 
@@ -8353,6 +8538,12 @@ window.loadEquipmentModal = function() {
                     <label class="eq-form-label">📅 التاريخ</label>
                     <input type="date" id="eqf_date" class="eq-form-input" style="max-width:220px;">
                 </div>
+            </div>
+
+            <!-- Pick-from-map hint bar -->
+            <div id="eqf_pick_hint" style="display:none;margin-bottom:14px;padding:10px 16px;background:linear-gradient(135deg,rgba(33,150,243,0.15),rgba(33,150,243,0.08));border:1px solid rgba(33,150,243,0.4);border-radius:10px;font-size:12px;font-weight:700;color:#5baddf;font-family:'Cairo',sans-serif;text-align:center;animation:cfSlideIn 0.2s ease;">
+                🗺 انقر على أي عنصر في الخريطة لاختياره... &nbsp;
+                <button onclick="eqCancelPickFromMap()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;">إلغاء</button>
             </div>
 
             <!-- Equipment Section -->
