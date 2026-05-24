@@ -5635,7 +5635,9 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
                 if (activeContractorFilter && activeContractorFilter.size > 0) {
                     applyContractorFilter();
                 }
-                buildContractorPanel({ forceRefresh: true });
+                // تحديث واجهة المقاولين فقط بدون إعادة تحميل البيانات
+                if (contractorsLoaded) renderContractorList();
+                else buildContractorPanel();
             });
         })
         .catch(e => { console.error(e); showAlert("❌ خطأ في تحميل البيانات"); });
