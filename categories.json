@@ -803,8 +803,20 @@
     }
   ],
   "defaultSubNumber": "4",
+  "equipmentTypes": [
+    "بوكلين",
+    "بلدوزر",
+    "جريدر",
+    "رصاصة",
+    "قلاب",
+    "شيول",
+    "تانك مياة",
+    "فنشر أسفلت",
+    "رصاصة كاوتش",
+    "رصاصة أسفلت"
+  ],
   "selectedItems": {
-    "mpimlmznpvvui": true
+    "mpimmdcg9gi9g": true
   },
   "selectedStatuses": [
     "جاري",
@@ -816,7 +828,7 @@
   "activeContractorFilter": [],
   "currentTheme": "",
   "navRightOrder": [
-    "cashflowBtn",
+    "contractorBtn",
     "settingsBtn"
   ]
 }
