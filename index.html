@@ -2921,6 +2921,253 @@
             white-space: nowrap;
         }
         .eq-pill-dark strong { color: var(--gold); }
+
+        /* ========== EQUIPMENT REGISTRATION MODAL ========== */
+        .eq-reg-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 65000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .eq-reg-modal.active { display: flex; }
+
+        .eq-reg-wrap {
+            background: var(--white);
+            border-radius: 18px;
+            width: min(560px, 96vw);
+            max-height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 70px rgba(0,0,0,0.4);
+            animation: modalPop 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .eq-reg-header {
+            background: linear-gradient(135deg, #1a4a2e 0%, #27ae6a 100%);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .eq-reg-header-left { display: flex; align-items: center; gap: 10px; }
+        .eq-reg-header-icon {
+            width: 38px; height: 38px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .eq-reg-header-title { font-size: 14px; font-weight: 900; color: white; }
+        .eq-reg-header-sub   { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+        .eq-reg-close {
+            width: 30px; height: 30px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.18s;
+            flex-shrink: 0;
+        }
+        .eq-reg-close:hover { background: rgba(255,255,255,0.3); }
+
+        .eq-reg-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .eq-reg-body::-webkit-scrollbar { width: 4px; }
+        .eq-reg-body::-webkit-scrollbar-thumb { background: var(--purple-light); border-radius: 10px; }
+
+        /* Field rows */
+        .eq-reg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .eq-reg-row.full { grid-template-columns: 1fr; }
+        .eq-reg-field { display: flex; flex-direction: column; gap: 5px; }
+        .eq-reg-field label {
+            font-size: 11px; font-weight: 700; color: var(--text-soft);
+        }
+        .eq-reg-field select,
+        .eq-reg-field input {
+            padding: 9px 11px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.2s;
+            text-align: right;
+        }
+        .eq-reg-field select:focus,
+        .eq-reg-field input:focus {
+            border-color: #1a7a4a;
+            box-shadow: 0 0 0 3px rgba(26,122,74,0.1);
+        }
+
+        /* Equipment list area */
+        .eq-reg-divider {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 16px 0 12px;
+        }
+        .eq-reg-list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .eq-reg-list-title {
+            font-size: 12px; font-weight: 900; color: #1a7a4a;
+        }
+        .eq-reg-add-btn {
+            display: flex; align-items: center; gap: 5px;
+            padding: 6px 12px;
+            background: rgba(26,122,74,0.08);
+            border: 1.5px dashed rgba(26,122,74,0.5);
+            border-radius: 7px;
+            color: #1a7a4a;
+            font-size: 11px; font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .eq-reg-add-btn:hover { background: rgba(26,122,74,0.15); border-color: #1a7a4a; }
+
+        /* Individual equipment row */
+        .eq-reg-items { display: flex; flex-direction: column; gap: 7px; }
+        .eq-reg-item {
+            display: grid;
+            grid-template-columns: 1fr 90px 32px;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 10px;
+            background: rgba(26,122,74,0.04);
+            border: 1px solid rgba(26,122,74,0.15);
+            border-radius: 8px;
+        }
+        .eq-reg-item select,
+        .eq-reg-item input[type="number"] {
+            padding: 7px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.2s;
+            text-align: right;
+        }
+        .eq-reg-item input[type="number"] { text-align: center; }
+        .eq-reg-item select:focus,
+        .eq-reg-item input:focus { border-color: #1a7a4a; }
+        .eq-reg-item-del {
+            width: 30px; height: 30px;
+            background: rgba(244,67,54,0.08);
+            border: 1px solid rgba(244,67,54,0.25);
+            border-radius: 7px;
+            color: #e53935;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .eq-reg-item-del:hover { background: rgba(244,67,54,0.18); }
+
+        /* Manage equipment list panel */
+        .eq-manage-section {
+            margin-top: 14px;
+            background: rgba(106,45,145,0.04);
+            border: 1.5px dashed rgba(106,45,145,0.25);
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .eq-manage-title {
+            font-size: 11px; font-weight: 900; color: var(--purple);
+            margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .eq-manage-tags {
+            display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;
+        }
+        .eq-manage-tag {
+            display: flex; align-items: center; gap: 4px;
+            background: rgba(106,45,145,0.1);
+            border: 1px solid rgba(106,45,145,0.2);
+            border-radius: 20px;
+            padding: 3px 10px 3px 4px;
+            font-size: 11px; font-weight: 700; color: var(--purple);
+        }
+        .eq-manage-tag-del {
+            background: none; border: none;
+            color: #e53935; font-size: 12px; cursor: pointer;
+            padding: 0; width: 16px; height: 16px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; transition: background 0.15s;
+        }
+        .eq-manage-tag-del:hover { background: rgba(244,67,54,0.15); }
+        .eq-manage-add-row {
+            display: flex; gap: 6px; align-items: center;
+        }
+        .eq-manage-input {
+            flex: 1;
+            padding: 7px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            background: var(--white);
+            outline: none;
+            text-align: right;
+            transition: border-color 0.2s;
+        }
+        .eq-manage-input:focus { border-color: var(--purple); }
+        .eq-manage-confirm-btn {
+            padding: 7px 14px;
+            background: linear-gradient(135deg, var(--purple), var(--purple-mid));
+            border: none; border-radius: 7px;
+            color: white; font-size: 11px; font-weight: 700;
+            font-family: 'Cairo', sans-serif; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .eq-manage-confirm-btn:hover { transform: translateY(-1px); }
+
+        .eq-reg-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex; gap: 8px; flex-shrink: 0;
+            background: #fafafa;
+        }
+        .eq-reg-submit {
+            flex: 1;
+            padding: 11px;
+            background: linear-gradient(135deg, #1a7a4a, #27ae6a);
+            border: none; border-radius: 9px;
+            color: white; font-size: 14px; font-weight: 900;
+            font-family: 'Cairo', sans-serif; cursor: pointer;
+            transition: all 0.3s;
+        }
+        .eq-reg-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26,122,74,0.4); }
+        .eq-reg-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .eq-reg-cancel {
+            padding: 11px 20px;
+            background: #ededf0; border: none; border-radius: 9px;
+            color: var(--text); font-size: 13px; font-weight: 700;
+            font-family: 'Cairo', sans-serif; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .eq-reg-cancel:hover { background: #e0e0e5; }
     </style>
 <base target="_blank">
 </head>
@@ -3033,6 +3280,11 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Equipment Registration button -->
+                <div style="position:relative" title="تسجيل المعدات">
+                    <div class="nav-icon-btn" id="eqRegBtn" onclick="openEqRegModal()" style="font-size:18px;">🚜</div>
                 </div>
 
                 <!-- Notification bell -->
@@ -3573,10 +3825,379 @@
     </div>
 </div>
 
+<!-- MODAL: EQUIPMENT REGISTRATION -->
+<div class="eq-reg-modal" id="eqRegModal">
+    <div class="eq-reg-wrap">
+
+        <!-- Header -->
+        <div class="eq-reg-header">
+            <div class="eq-reg-header-left">
+                <div class="eq-reg-header-icon">🚜</div>
+                <div>
+                    <div class="eq-reg-header-title">تسجيل المعدات اليومي</div>
+                    <div class="eq-reg-header-sub">تسجيل المعدات المتواجدة في الموقع</div>
+                </div>
+            </div>
+            <button class="eq-reg-close" onclick="closeEqRegModal()">✕</button>
+        </div>
+
+        <!-- Body -->
+        <div class="eq-reg-body">
+
+            <!-- Row 1: Element ID + Element Name -->
+            <div class="eq-reg-row">
+                <div class="eq-reg-field">
+                    <label>رقم العنصر</label>
+                    <select id="eqRegElementId" onchange="onEqRegElementChange()">
+                        <option value="">-- اختر رقم العنصر --</option>
+                    </select>
+                </div>
+                <div class="eq-reg-field">
+                    <label>اسم العنصر</label>
+                    <select id="eqRegElementName" onchange="onEqRegElementNameChange()">
+                        <option value="">-- اختر اسم العنصر --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2: Item (band) + Contractor -->
+            <div class="eq-reg-row">
+                <div class="eq-reg-field">
+                    <label>البند / الأعمال</label>
+                    <select id="eqRegItemName">
+                        <option value="">-- اختر البند --</option>
+                    </select>
+                </div>
+                <div class="eq-reg-field">
+                    <label>المقاول</label>
+                    <select id="eqRegContractor">
+                        <option value="">-- اختر المقاول --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 3: Date -->
+            <div class="eq-reg-row full">
+                <div class="eq-reg-field">
+                    <label>التاريخ</label>
+                    <input type="date" id="eqRegDate">
+                </div>
+            </div>
+
+            <hr class="eq-reg-divider">
+
+            <!-- Equipment items list -->
+            <div class="eq-reg-list-header">
+                <span class="eq-reg-list-title">🔧 المعدات المتواجدة</span>
+                <button class="eq-reg-add-btn" onclick="addEqRegItem()">+ إضافة معدة</button>
+            </div>
+            <div class="eq-reg-items" id="eqRegItems"></div>
+
+            <!-- Manage equipment types -->
+            <div class="eq-manage-section">
+                <div class="eq-manage-title">
+                    <span>⚙️ إدارة قائمة المعدات</span>
+                    <span style="font-size:10px;font-weight:600;color:var(--text-soft);">أضف أو احذف أنواع المعدات</span>
+                </div>
+                <div class="eq-manage-tags" id="eqManageTags"></div>
+                <div class="eq-manage-add-row">
+                    <input type="text" class="eq-manage-input" id="eqManageNewInput" placeholder="اسم المعدة الجديدة..." onkeydown="if(event.key==='Enter') addEqType()">
+                    <button class="eq-manage-confirm-btn" onclick="addEqType()">+ إضافة</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="eq-reg-footer">
+            <button class="eq-reg-cancel" onclick="closeEqRegModal()">إلغاء</button>
+            <button class="eq-reg-submit" id="eqRegSubmitBtn" onclick="submitEqReg()">💾 حفظ وإرسال للشيت</button>
+        </div>
+    </div>
+</div>
+
 <script>
 /* ====================================================
-   CONSTANTS & STATE
+   EQUIPMENT REGISTRATION SYSTEM
    ==================================================== */
+
+const EQ_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxn4DbJEjaqBwL04ypHFRKDXIkIxhlrHTR5wlk_5cfux22Ip051n3W03fOZzX7c_KkM/exec";
+
+/* Default equipment types — saved/loaded from localStorage */
+const EQ_TYPES_DEFAULT = [
+    'حفار','لودر','دمك','شاحنة','سيارة نقل','مضخة',
+    'رافعة','بوكس','كومبيكتور','أوغر','سكريبر','بلدوزر'
+];
+
+let eqTypes = [];
+let eqRegItemCount = 0;
+
+function loadEqTypes() {
+    const saved = localStorage.getItem('eqTypesList');
+    eqTypes = saved ? JSON.parse(saved) : [...EQ_TYPES_DEFAULT];
+}
+
+function saveEqTypes() {
+    localStorage.setItem('eqTypesList', JSON.stringify(eqTypes));
+}
+
+/* ── Open / Close ── */
+function openEqRegModal() {
+    loadEqTypes();
+    document.getElementById('eqRegModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Set today's date
+    const d = new Date();
+    document.getElementById('eqRegDate').value =
+        d.getFullYear() + '-' +
+        String(d.getMonth()+1).padStart(2,'0') + '-' +
+        String(d.getDate()).padStart(2,'0');
+
+    populateEqRegDropdowns();
+    renderEqManageTags();
+
+    // Start with one empty equipment row
+    document.getElementById('eqRegItems').innerHTML = '';
+    eqRegItemCount = 0;
+    addEqRegItem();
+}
+
+function closeEqRegModal() {
+    document.getElementById('eqRegModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+/* ── Populate dropdowns from live system data ── */
+function populateEqRegDropdowns() {
+    /* ── Element IDs & Names from allData (all loaded sheets) ── */
+    const elementIdSet   = new Set();
+    const elementNameSet = new Set();
+    const itemNameSet    = new Set();
+    const contractorSet  = new Set();
+
+    /* scan allData (sheetId → {id: rowObj}) */
+    Object.values(allData).forEach(sheetRows => {
+        Object.values(sheetRows).forEach(row => {
+            const id   = (row['ID']          || '').trim();
+            const rn   = (row['ROAD NAME']   || '').trim();
+            const bn   = (row['BLOCK NAME']  || '').trim();
+            const nm   = (row['NAME']        || '').trim();
+            const contr= (row['CONTRACTOR']  || '').trim();
+            if (id)    elementIdSet.add(id);
+            if (rn)    elementNameSet.add(rn);
+            if (bn)    elementNameSet.add(bn);
+            if (nm)    elementNameSet.add(nm);
+            if (contr) contractorSet.add(contr);
+        });
+    });
+
+    /* item names from categories (sub.name + sub.number) */
+    (categories || []).forEach(cat => {
+        (cat.subitems || []).forEach(sub => {
+            const label = sub.number ? `[${sub.number}] ${sub.name}` : sub.name;
+            itemNameSet.add(label);
+        });
+    });
+
+    /* also pick contractors from contractorMap if populated */
+    Object.keys(contractorMap || {}).forEach(c => contractorSet.add(c));
+
+    const fill = (selId, items, placeholder) => {
+        const sel = document.getElementById(selId);
+        sel.innerHTML = `<option value="">${placeholder}</option>`;
+        [...items].sort((a,b) => a.localeCompare(b,'ar')).forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v; opt.textContent = v;
+            sel.appendChild(opt);
+        });
+    };
+
+    fill('eqRegElementId',   elementIdSet,   '-- اختر رقم العنصر --');
+    fill('eqRegElementName', elementNameSet, '-- اختر اسم العنصر --');
+    fill('eqRegItemName',    itemNameSet,    '-- اختر البند --');
+    fill('eqRegContractor',  contractorSet,  '-- اختر المقاول --');
+}
+
+/* ── Sync element name when element ID chosen ── */
+function onEqRegElementChange() {
+    const id  = document.getElementById('eqRegElementId').value;
+    if (!id) return;
+    /* Try to find matching road/block name */
+    let found = '';
+    Object.values(allData).forEach(sheetRows => {
+        Object.values(sheetRows).forEach(row => {
+            if ((row['ID'] || '').trim() === id) {
+                found = (row['ROAD NAME'] || row['BLOCK NAME'] || row['NAME'] || '').trim();
+            }
+        });
+    });
+    if (found) {
+        const sel = document.getElementById('eqRegElementName');
+        for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === found) { sel.selectedIndex = i; break; }
+        }
+    }
+}
+
+/* ── Sync element ID when name chosen ── */
+function onEqRegElementNameChange() {
+    const name = document.getElementById('eqRegElementName').value;
+    if (!name) return;
+    let found = '';
+    Object.values(allData).forEach(sheetRows => {
+        Object.values(sheetRows).forEach(row => {
+            const rn = (row['ROAD NAME'] || row['BLOCK NAME'] || row['NAME'] || '').trim();
+            if (rn === name) found = (row['ID'] || '').trim();
+        });
+    });
+    if (found) {
+        const sel = document.getElementById('eqRegElementId');
+        for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === found) { sel.selectedIndex = i; break; }
+        }
+    }
+}
+
+/* ── Add an equipment item row ── */
+function addEqRegItem() {
+    const container = document.getElementById('eqRegItems');
+    const id = ++eqRegItemCount;
+    const div = document.createElement('div');
+    div.className = 'eq-reg-item';
+    div.id = 'eqRegItem_' + id;
+
+    const opts = eqTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+
+    div.innerHTML = `
+        <select class="eqRegTypeSelect">
+            <option value="">-- نوع المعدة --</option>
+            ${opts}
+        </select>
+        <input type="number" class="eqRegCountInput" min="1" value="1" placeholder="العدد">
+        <button class="eq-reg-item-del" onclick="removeEqRegItem(${id})" title="حذف">✕</button>`;
+    container.appendChild(div);
+}
+
+function removeEqRegItem(id) {
+    const el = document.getElementById('eqRegItem_' + id);
+    if (el) el.remove();
+}
+
+/* ── Manage equipment types ── */
+function renderEqManageTags() {
+    const container = document.getElementById('eqManageTags');
+    container.innerHTML = eqTypes.map((t, i) => `
+        <span class="eq-manage-tag">
+            <button class="eq-manage-tag-del" onclick="removeEqType(${i})" title="حذف">✕</button>
+            ${t}
+        </span>`).join('');
+}
+
+function addEqType() {
+    const inp = document.getElementById('eqManageNewInput');
+    const val = inp.value.trim();
+    if (!val) return;
+    if (eqTypes.includes(val)) { showAlert('❌ هذه المعدة موجودة بالفعل'); return; }
+    eqTypes.push(val);
+    saveEqTypes();
+    inp.value = '';
+    renderEqManageTags();
+    /* Update all existing dropdowns in the modal */
+    document.querySelectorAll('.eqRegTypeSelect').forEach(sel => {
+        const cur = sel.value;
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = val;
+        sel.appendChild(opt);
+        sel.value = cur;
+    });
+    showAlert('✅ تمت إضافة "' + val + '"', 'success');
+}
+
+function removeEqType(idx) {
+    const removed = eqTypes.splice(idx, 1)[0];
+    saveEqTypes();
+    renderEqManageTags();
+    /* Remove from all existing dropdowns */
+    document.querySelectorAll('.eqRegTypeSelect').forEach(sel => {
+        for (let i = sel.options.length - 1; i >= 0; i--) {
+            if (sel.options[i].value === removed) sel.remove(i);
+        }
+    });
+}
+
+/* ── Submit ── */
+async function submitEqReg() {
+    const elementId   = document.getElementById('eqRegElementId').value.trim();
+    const elementName = document.getElementById('eqRegElementName').value.trim();
+    const itemName    = document.getElementById('eqRegItemName').value.trim();
+    const contractor  = document.getElementById('eqRegContractor').value.trim();
+    const date        = document.getElementById('eqRegDate').value.trim();
+
+    if (!elementId || !elementName || !itemName || !contractor || !date) {
+        showAlert('❌ يرجى ملء جميع الحقول الأساسية');
+        return;
+    }
+
+    const rows = document.querySelectorAll('.eq-reg-item');
+    const equipments = [];
+    rows.forEach(row => {
+        const typeEl  = row.querySelector('.eqRegTypeSelect');
+        const countEl = row.querySelector('.eqRegCountInput');
+        if (typeEl && typeEl.value && countEl && countEl.value) {
+            equipments.push({ type: typeEl.value, count: parseInt(countEl.value) || 1 });
+        }
+    });
+
+    if (!equipments.length) {
+        showAlert('❌ أضف معدة واحدة على الأقل');
+        return;
+    }
+
+    const btn = document.getElementById('eqRegSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري الإرسال...';
+
+    const payload = { element_id: elementId, element_name: elementName, item_name: itemName, contractor, date, equipments };
+
+    try {
+        const res = await fetch(EQ_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload),
+            redirect: 'follow'
+        });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch(e) { data = { status: res.ok ? 'success' : 'error' }; }
+
+        if (data.status === 'success' || res.ok) {
+            showAlert('✅ تم حفظ المعدات في الشيت بنجاح!', 'success');
+            closeEqRegModal();
+        } else {
+            showAlert('❌ خطأ: ' + (data.message || 'تعذر الحفظ'));
+        }
+    } catch(e) {
+        showAlert('❌ خطأ في الاتصال: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 حفظ وإرسال للشيت';
+    }
+}
+
+/* Close on Escape — integrated with existing handler */
+(function() {
+    const _origKD = document.onkeydown;
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeEqRegModal();
+    });
+})();
+
+/* Close on backdrop click */
+document.getElementById('eqRegModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEqRegModal();
+});
+</script>
 
 const USERS_SHEET_ID     = "1maViL4HSsI5XsjnAOGM-2D98g0Ow_pawZ-A_R_Y9I_0";
 const EQUIPMENT_SHEET_ID = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
