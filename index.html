@@ -2887,6 +2887,40 @@
             .bd-hdr { flex-wrap: wrap; }
             .bd-search-inp { max-width: 100%; }
         }
+
+        /* ========== EQUIPMENT PRO TABS ========== */
+        .eq-pro-tab {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: rgba(255,255,255,0.45);
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+        .eq-pro-tab:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); }
+        .eq-pro-tab.active { color: var(--gold); border-bottom-color: var(--gold); background: rgba(245,200,66,0.06); }
+
+        .eq-pro-sec { animation: dropFade 0.18s ease-out; }
+
+        .eq-pill-dark {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.75);
+            white-space: nowrap;
+        }
+        .eq-pill-dark strong { color: var(--gold); }
     </style>
 <base target="_blank">
 </head>
@@ -3466,7 +3500,7 @@
 <!-- MODAL: EQUIPMENT -->
 <div class="modal" id="equipmentModal" style="z-index:60002;padding:24px;align-items:center;justify-content:center;">
     <div class="bd-modal-overlay" onclick="closeEquipmentModal()" style="position:fixed;inset:0;"></div>
-    <div class="bd-modal-wrap" style="max-width:700px;">
+    <div class="bd-modal-wrap" style="max-width:1100px;">
         <div class="bd-hdr">
             <div class="bd-hdr-left">
                 <div class="bd-hdr-icon">🚜</div>
@@ -3475,20 +3509,62 @@
                     <div class="bd-hdr-sub" id="eqLastUpdate">جاري التحميل...</div>
                 </div>
             </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-right:auto;">
+                <input type="text" id="eqSearchInput" placeholder="🔍 ابحث عن مقاول أو بند..."
+                    style="padding:6px 11px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:white;font-size:12px;font-family:'Cairo',sans-serif;outline:none;width:200px;"
+                    oninput="eqFilterSearch()">
+            </div>
             <button class="cf-close-btn" onclick="closeEquipmentModal()">✕</button>
         </div>
-        <div class="bd-kpi-row-wrap" style="grid-template-columns:repeat(2,1fr);">
+        <!-- KPI Row -->
+        <div class="bd-kpi-row-wrap" style="grid-template-columns:repeat(4,1fr);">
             <div class="bd-kpi-c">
-                <div class="bd-kpi-lbl">إجمالي أنواع المعدات</div>
+                <div class="bd-kpi-lbl">أنواع المعدات</div>
                 <div class="bd-kpi-val" id="eqKpiTypes">—</div>
             </div>
             <div class="bd-kpi-c">
-                <div class="bd-kpi-lbl">إجمالي عدد المعدات</div>
+                <div class="bd-kpi-lbl">إجمالي المعدات</div>
                 <div class="bd-kpi-val" id="eqKpiTotal">—</div>
             </div>
+            <div class="bd-kpi-c">
+                <div class="bd-kpi-lbl">عدد المقاولين</div>
+                <div class="bd-kpi-val" id="eqKpiContractors">—</div>
+            </div>
+            <div class="bd-kpi-c">
+                <div class="bd-kpi-lbl">عدد البنود</div>
+                <div class="bd-kpi-val" id="eqKpiBands">—</div>
+            </div>
         </div>
-        <div class="bd-body-wrap" id="eqBody">
-            <div class="bd-msg bd-msg-load">⏳ جاري تحميل بيانات المعدات...</div>
+        <!-- Tabs -->
+        <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;background:#0d0d1a;">
+            <button class="eq-pro-tab active" id="eqTabOverview"    onclick="eqSwitchTab('overview')">📊 نظرة عامة</button>
+            <button class="eq-pro-tab"        id="eqTabContractor"  onclick="eqSwitchTab('contractor')">👷 حسب المقاول</button>
+            <button class="eq-pro-tab"        id="eqTabBand"        onclick="eqSwitchTab('band')">📋 حسب البند</button>
+            <button class="eq-pro-tab"        id="eqTabMatrix"      onclick="eqSwitchTab('matrix')">🔢 مصفوفة المعدات</button>
+        </div>
+        <!-- Tab bodies -->
+        <div class="bd-body-wrap" id="eqBody" style="min-height:320px;">
+            <div class="bd-msg bd-msg-load" id="eqLoadMsg">⏳ جاري تحميل بيانات المعدات...</div>
+            <!-- Overview -->
+            <div id="eqSecOverview" class="eq-pro-sec" style="display:none;">
+                <div id="eqOverviewLegend" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;font-size:11px;color:rgba(255,255,255,0.6);"></div>
+                <div style="position:relative;width:100%;height:280px;">
+                    <canvas id="eqOverviewChart" role="img" aria-label="مخطط شريطي لإجمالي أنواع المعدات">إجمالي المعدات حسب النوع.</canvas>
+                </div>
+            </div>
+            <!-- By Contractor -->
+            <div id="eqSecContractor" class="eq-pro-sec" style="display:none;">
+                <div class="bd-tbl-wrap" id="eqContractorTableWrap"></div>
+            </div>
+            <!-- By Band -->
+            <div id="eqSecBand" class="eq-pro-sec" style="display:none;">
+                <div class="bd-tbl-wrap" id="eqBandTableWrap"></div>
+            </div>
+            <!-- Matrix -->
+            <div id="eqSecMatrix" class="eq-pro-sec" style="display:none;">
+                <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-bottom:8px;text-align:right;">توزيع كل نوع معدة على المقاولين — اللون الأغمق = عدد أكبر</div>
+                <div class="bd-tbl-wrap" id="eqMatrixWrap"></div>
+            </div>
         </div>
         <div class="bd-footer-bar">
             <div class="bd-footer-note">مصدر البيانات: Google Sheets</div>
@@ -6789,6 +6865,7 @@ document.addEventListener('click', () => closeReportsDropdown());
 
 /* ── Equipment Modal ── */
 function openEquipmentModal() {
+    _eqActiveTab = 'overview';
     openModal('equipmentModal');
     loadEquipmentModal();
 }
@@ -6797,71 +6874,283 @@ function closeEquipmentModal() {
     closeModal('equipmentModal');
 }
 
-function loadEquipmentModal() {
-    const body = document.getElementById('eqBody');
-    if (!body) return;
+/* ── Equipment Pro: state ── */
+let _eqActiveTab   = 'overview';
+let _eqChartInst   = null;
+const EQ_PALETTE   = ['#f5c842','#27ae6a','#2196f3','#9c27b0','#ff9800','#e91e63','#00bcd4','#8bc34a','#ff5722','#607d8b'];
+const EQ_SKIP      = new Set(['ID','BAYAN','البيان','DESCRIPTION','بيان','البند','BAND','ALBND','ITEM','ALBAYAN']);
 
+function _eqGetCols() {
+    const idIdx = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
+    return equipmentRawHeaders
+        .map((h, i) => ({ name: h, key: h.trim().toUpperCase(), idx: i }))
+        .filter(c => c.idx !== idIdx && c.name.trim() && !EQ_SKIP.has(c.key) && !EQ_SKIP.has(c.name.trim()));
+}
+
+function _eqGetBandKey() {
+    return (equipmentRawHeaders.find(h => {
+        const u = h.trim().toUpperCase();
+        return u === 'البند' || u === 'BAND' || u === 'ALBND' || u === 'ITEM';
+    }) || '').trim().toUpperCase() || null;
+}
+
+function _eqGetContractorKey() {
+    return (equipmentRawHeaders.find(h => {
+        const u = h.trim().toUpperCase();
+        return u === 'CONTRACTOR' || u === 'المقاول' || u === 'ALMUKAWIL';
+    }) || '').trim().toUpperCase() || null;
+}
+
+function _eqSumCols(rows, cols) {
+    const t = {};
+    cols.forEach(col => {
+        let s = 0;
+        rows.forEach(r => { const v = parseFloat(r[col.key] || 0); if (!isNaN(v)) s += v; });
+        if (s > 0) t[col.name] = s;
+    });
+    return t;
+}
+
+function eqSwitchTab(tab) {
+    _eqActiveTab = tab;
+    ['overview','contractor','band','matrix'].forEach(t => {
+        const btn = document.getElementById('eqTab' + t.charAt(0).toUpperCase() + t.slice(1));
+        const sec = document.getElementById('eqSec'  + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) btn.classList.toggle('active', t === tab);
+        if (sec) sec.style.display = t === tab ? 'block' : 'none';
+    });
+}
+
+function eqFilterSearch() {
+    const q = (document.getElementById('eqSearchInput').value || '').trim().toLowerCase();
+    ['eqContractorTableWrap','eqBandTableWrap'].forEach(wid => {
+        const wrap = document.getElementById(wid);
+        if (!wrap) return;
+        wrap.querySelectorAll('tbody tr').forEach(tr => {
+            const txt = tr.querySelector('td')?.textContent?.toLowerCase() || '';
+            tr.style.display = (!q || txt.includes(q)) ? '' : 'none';
+        });
+    });
+}
+
+function loadEquipmentModal() {
+    const loadMsg = document.getElementById('eqLoadMsg');
     if (!equipmentRawRows.length) {
-        body.innerHTML = '<div class="bd-msg bd-msg-load">⏳ جاري التحميل...</div>';
+        if (loadMsg) loadMsg.style.display = 'block';
+        ['eqSecOverview','eqSecContractor','eqSecBand','eqSecMatrix'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.display = 'none';
+        });
         setTimeout(() => { if (equipmentRawRows.length) loadEquipmentModal(); }, 1200);
         return;
     }
+    if (loadMsg) loadMsg.style.display = 'none';
 
-    const SKIP = new Set(['ID','BAYAN','البيان','DESCRIPTION','بيان','البند','BAND','ALBND','ITEM']);
-    const idIdx = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
+    const cols    = _eqGetCols();
+    const bKey    = _eqGetBandKey();
+    const cKey    = _eqGetContractorKey();
+    const allRows = equipmentRawRows;
 
-    // جمع أعمدة المعدات مع إجماليها لكل بند
-    const bandColOrig = equipmentRawHeaders.find(h => {
-        const u = h.trim().toUpperCase();
-        return u === 'البند' || u === 'BAND' || u === 'ALBND' || u === 'ITEM';
-    });
+    /* ── KPIs ── */
+    const totalsByType  = _eqSumCols(allRows, cols);
+    const grandTotal    = Object.values(totalsByType).reduce((a,b) => a+b, 0);
+    const contractors   = new Set(allRows.map(r => (r[cKey] || '').trim()).filter(Boolean));
+    const bands         = new Set(allRows.map(r => (r[bKey] || '').trim()).filter(Boolean));
 
-    const equipCols = equipmentRawHeaders
-        .map((h, i) => ({ name: h, idx: i }))
-        .filter(c => c.idx !== idIdx && c.name.trim() && !SKIP.has(c.name.trim()) && !SKIP.has(c.name.trim().toUpperCase()));
+    const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setEl('eqKpiTypes',       Object.keys(totalsByType).length);
+    setEl('eqKpiTotal',       fmtNum(grandTotal));
+    setEl('eqKpiContractors', contractors.size || '—');
+    setEl('eqKpiBands',       bands.size || '—');
+    setEl('eqLastUpdate',     'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA'));
 
-    // إجمالي كل نوع معدة
-    const totals = {};
-    equipCols.forEach(col => {
-        let sum = 0;
-        equipmentRawRows.forEach(row => {
-            const val = parseFloat(row[col.name.trim().toUpperCase()] || 0);
-            if (!isNaN(val)) sum += val;
+    /* ── Overview chart ── */
+    const entries = Object.entries(totalsByType).sort((a,b) => b[1]-a[1]);
+    const legendEl = document.getElementById('eqOverviewLegend');
+    if (legendEl) {
+        legendEl.innerHTML = entries.map(([name, val], i) =>
+            `<span style="display:flex;align-items:center;gap:5px;">
+                <span style="width:10px;height:10px;border-radius:2px;background:${EQ_PALETTE[i%EQ_PALETTE.length]};display:inline-block;"></span>
+                ${name}: <strong style="color:var(--gold);">${fmtNum(val)}</strong>
+            </span>`).join('');
+    }
+    if (_eqChartInst) { _eqChartInst.destroy(); _eqChartInst = null; }
+    const cvs = document.getElementById('eqOverviewChart');
+    if (cvs && entries.length) {
+        _eqChartInst = new Chart(cvs, {
+            type: 'bar',
+            data: {
+                labels: entries.map(([name]) => name),
+                datasets: [{
+                    label: 'عدد المعدات',
+                    data: entries.map(([,v]) => v),
+                    backgroundColor: entries.map((_, i) => EQ_PALETTE[i % EQ_PALETTE.length]),
+                    borderRadius: 5,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y.toLocaleString('en-US') + ' وحدة' } }
+                },
+                scales: {
+                    x: { ticks: { autoSkip: false, maxRotation: 40, color: 'rgba(255,255,255,0.55)', font: { size: 11 } }, grid: { display: false } },
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.07)' }, ticks: { color: 'rgba(255,255,255,0.55)', font: { size: 11 }, callback: v => v.toLocaleString('en-US') } }
+                }
+            }
         });
-        if (sum > 0) totals[col.name] = sum;
-    });
-
-    const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-    const grandTotal = entries.reduce((s, [, v]) => s + v, 0);
-
-    // تحديث KPIs
-    const eqTypes = document.getElementById('eqKpiTypes');
-    const eqTotal = document.getElementById('eqKpiTotal');
-    if (eqTypes) eqTypes.textContent = entries.length;
-    if (eqTotal) eqTotal.textContent = fmtNum(grandTotal);
-    const eqLast = document.getElementById('eqLastUpdate');
-    if (eqLast) eqLast.textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA');
-
-    if (!entries.length) {
-        body.innerHTML = '<div class="bd-msg bd-msg-load">لا توجد بيانات معدات</div>';
-        return;
     }
 
-    // بناء جدول
-    let html = '<div class="bd-tbl-wrap"><table class="bd-tbl"><thead><tr>' +
-        '<th>نوع المعدة</th><th style="min-width:100px;">الإجمالي</th>' +
-        '</tr></thead><tbody>';
+    /* ── By Contractor ── */
+    const contractorWrap = document.getElementById('eqContractorTableWrap');
+    if (contractorWrap) {
+        if (!cKey) {
+            contractorWrap.innerHTML = '<div class="bd-msg bd-msg-load">لا يوجد عمود مقاول في الشيت</div>';
+        } else {
+            const byC = {};
+            allRows.forEach(row => {
+                const c = (row[cKey] || '').trim();
+                if (!c) return;
+                if (!byC[c]) byC[c] = { rows: [], bands: new Set() };
+                byC[c].rows.push(row);
+                if (bKey && row[bKey]) byC[c].bands.add(row[bKey].trim());
+            });
+            const sortedC = Object.entries(byC).sort((a,b) => {
+                const ta = Object.values(_eqSumCols(a[1].rows, cols)).reduce((x,y)=>x+y,0);
+                const tb = Object.values(_eqSumCols(b[1].rows, cols)).reduce((x,y)=>x+y,0);
+                return tb - ta;
+            });
+            let html = '<table class="bd-tbl"><thead><tr>' +
+                '<th>المقاول</th><th>البند</th><th style="min-width:90px;text-align:center;">الإجمالي</th><th>تفاصيل المعدات</th>' +
+                '</tr></thead><tbody>';
+            sortedC.forEach(([name, data]) => {
+                const t = _eqSumCols(data.rows, cols);
+                const tot = Object.values(t).reduce((a,b)=>a+b,0);
+                const bandsStr = [...data.bands].join(' • ') || '—';
+                const pillsArr = Object.entries(t).sort((a,b)=>b[1]-a[1]);
+                const pills = pillsArr.slice(0,5).map(([pn, pv]) =>
+                    `<span class="eq-pill-dark">${pn}: <strong>${fmtNum(pv)}</strong></span>`).join(' ');
+                const more = pillsArr.length > 5 ? `<span class="eq-pill-dark">+${pillsArr.length-5} أخرى</span>` : '';
+                html += `<tr>
+                    <td style="font-weight:700;color:var(--gold);">${name}</td>
+                    <td style="font-size:11px;color:rgba(255,255,255,0.55);">${bandsStr}</td>
+                    <td style="text-align:center;"><span style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.3);color:var(--gold);padding:2px 10px;border-radius:4px;font-weight:900;font-size:13px;">${fmtNum(tot)}</span></td>
+                    <td><div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;">${pills}${more}</div></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            contractorWrap.innerHTML = html;
+        }
+    }
 
-    entries.forEach(([name, count]) => {
-        html += '<tr><td>' + name + '</td><td class="bdn">' + fmtNum(count) + '</td></tr>';
-    });
+    /* ── By Band ── */
+    const bandWrap = document.getElementById('eqBandTableWrap');
+    if (bandWrap) {
+        if (!bKey) {
+            bandWrap.innerHTML = '<div class="bd-msg bd-msg-load">لا يوجد عمود بند في الشيت</div>';
+        } else {
+            const byB = {};
+            allRows.forEach(row => {
+                const b = (row[bKey] || '').trim();
+                if (!b) return;
+                if (!byB[b]) byB[b] = { rows: [], contractors: new Set() };
+                byB[b].rows.push(row);
+                if (cKey && row[cKey]) byB[b].contractors.add(row[cKey].trim());
+            });
+            const sortedB = Object.entries(byB).sort((a,b) => a[0].localeCompare(b[0], 'ar'));
+            let html = '<table class="bd-tbl"><thead><tr>' +
+                '<th>البند</th><th>المقاولون</th><th style="min-width:90px;text-align:center;">الإجمالي</th><th>تفاصيل المعدات</th>' +
+                '</tr></thead><tbody>';
+            sortedB.forEach(([name, data]) => {
+                const t = _eqSumCols(data.rows, cols);
+                const tot = Object.values(t).reduce((a,b)=>a+b,0);
+                const cStr = [...data.contractors].join(' • ') || '—';
+                const pillsArr = Object.entries(t).sort((a,b)=>b[1]-a[1]);
+                const pills = pillsArr.slice(0,5).map(([pn,pv]) =>
+                    `<span class="eq-pill-dark">${pn}: <strong>${fmtNum(pv)}</strong></span>`).join(' ');
+                const more = pillsArr.length > 5 ? `<span class="eq-pill-dark">+${pillsArr.length-5} أخرى</span>` : '';
+                html += `<tr>
+                    <td style="font-weight:700;color:rgba(255,255,255,0.9);">${name}</td>
+                    <td style="font-size:11px;color:rgba(255,255,255,0.55);">${cStr}</td>
+                    <td style="text-align:center;"><span style="background:rgba(33,150,243,0.15);border:1px solid rgba(33,150,243,0.4);color:#5baddf;padding:2px 10px;border-radius:4px;font-weight:900;font-size:13px;">${fmtNum(tot)}</span></td>
+                    <td><div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;">${pills}${more}</div></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            bandWrap.innerHTML = html;
+        }
+    }
 
-    html += '<tr style="border-top:2px solid rgba(255,255,255,0.1);">' +
-        '<td style="font-weight:900;color:white;">الإجمالي الكلي</td>' +
-        '<td class="bdn" style="font-size:14px;font-weight:900;">' + fmtNum(grandTotal) + '</td>' +
-        '</tr></tbody></table></div>';
+    /* ── Matrix ── */
+    const matrixWrap = document.getElementById('eqMatrixWrap');
+    if (matrixWrap) {
+        if (!cKey) {
+            matrixWrap.innerHTML = '<div class="bd-msg bd-msg-load">لا يوجد عمود مقاول في الشيت</div>';
+        } else {
+            const contractorList = [...contractors].sort();
+            const activeCols = cols.filter(col => {
+                let s = 0; allRows.forEach(r => { const v = parseFloat(r[col.key]||0); if(!isNaN(v)) s+=v; });
+                return s > 0;
+            });
+            const byC2 = {};
+            allRows.forEach(row => {
+                const c = (row[cKey]||'').trim();
+                if (!c) return;
+                if (!byC2[c]) byC2[c] = {};
+                activeCols.forEach(col => {
+                    const v = parseFloat(row[col.key]||0);
+                    if (!isNaN(v)) byC2[c][col.name] = (byC2[c][col.name]||0) + v;
+                });
+            });
+            const colMaxes = {};
+            activeCols.forEach(col => {
+                colMaxes[col.name] = Math.max(...contractorList.map(c => (byC2[c]||{})[col.name]||0), 1);
+            });
+            let html = `<table class="bd-tbl" style="min-width:${activeCols.length*75+180}px;">
+                <thead><tr>
+                    <th style="min-width:160px;">المقاول</th>
+                    ${activeCols.map(c => `<th style="min-width:70px;text-align:center;font-size:10px;">${c.name}</th>`).join('')}
+                    <th style="min-width:80px;text-align:center;">المجموع</th>
+                </tr></thead><tbody>`;
+            contractorList.forEach(c => {
+                const cData = byC2[c] || {};
+                const rowTot = activeCols.reduce((a, col) => a + (cData[col.name]||0), 0);
+                html += `<tr>
+                    <td style="font-weight:700;color:rgba(255,255,255,0.85);">${c}</td>
+                    ${activeCols.map(col => {
+                        const v = cData[col.name] || 0;
+                        const pct = v / colMaxes[col.name];
+                        const bg = v > 0 ? `rgba(245,200,66,${0.1 + pct * 0.65})` : 'transparent';
+                        return `<td style="text-align:center;background:${bg};font-variant-numeric:tabular-nums;color:${v>0?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.2)'};">${v>0?fmtNum(v):'—'}</td>`;
+                    }).join('')}
+                    <td style="text-align:center;"><span style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.3);color:var(--gold);padding:2px 8px;border-radius:4px;font-weight:900;font-size:12px;">${fmtNum(rowTot)}</span></td>
+                </tr>`;
+            });
+            /* totals row */
+            html += `<tr style="border-top:1px solid rgba(255,255,255,0.12);">
+                <td style="font-weight:900;color:rgba(255,255,255,0.6);font-size:11px;">الإجمالي الكلي</td>
+                ${activeCols.map(col => {
+                    const s = contractorList.reduce((a,c) => a + ((byC2[c]||{})[col.name]||0), 0);
+                    return `<td style="text-align:center;font-weight:700;color:rgba(255,255,255,0.55);font-size:11px;">${s>0?fmtNum(s):'—'}</td>`;
+                }).join('')}
+                <td style="text-align:center;"><span style="background:rgba(255,152,0,0.15);border:1px solid rgba(255,152,0,0.4);color:#ff9800;padding:2px 8px;border-radius:4px;font-weight:900;">${fmtNum(grandTotal)}</span></td>
+            </tr>`;
+            html += '</tbody></table>';
+            matrixWrap.innerHTML = html;
+        }
+    }
 
-    body.innerHTML = html;
+    /* ── Show active tab ── */
+    eqSwitchTab(_eqActiveTab);
+
+    /* ── Load Chart.js if not loaded yet ── */
+    if (typeof Chart === 'undefined') {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+        s.onload = () => { if (_eqActiveTab === 'overview') eqSwitchTab('overview'); };
+        document.head.appendChild(s);
+    }
 }
 
 /* ── Number helpers ── */
