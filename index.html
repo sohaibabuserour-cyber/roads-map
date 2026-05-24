@@ -3293,14 +3293,14 @@
                                 </details>
                                 <!-- List of types -->
                                 <div id="eqTypesList" style="max-height:240px;overflow-y:auto;padding-right:2px;">
-                                    <div style="text-align:center;color:var(--text-soft);font-size:11px;padding:12px 0;">جاري التحميل...</div>
+                                    <div style="text-align:center;color:var(--text-soft);font-size:11px;padding:12px 0;">افتح الإعدادات لتحميل القائمة</div>
                                 </div>
                                 <!-- Footer actions -->
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);gap:8px;flex-wrap:wrap;">
                                     <span id="eqTypesCount" style="font-size:10px;color:var(--text-soft);font-weight:600;"></span>
                                     <button onclick="resetEquipmentTypesToDefault()"
                                         style="background:rgba(244,67,54,0.07);border:1px solid rgba(244,67,54,0.25);color:#e53935;padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;">
-                                        ↺ إعادة للافتراضي
+                                        🗑 مسح الكل
                                     </button>
                                 </div>
                             </div>
@@ -5483,12 +5483,8 @@ async function loadCategoriesConfig() {
             localStorage.setItem('defaultSubNumber', defaultSubNumber);
         }
         // Load equipmentTypes from config if present (admin-managed list)
-        if (!Array.isArray(data) && data.equipmentTypes && Array.isArray(data.equipmentTypes) && data.equipmentTypes.length) {
+        if (!Array.isArray(data) && data.equipmentTypes && Array.isArray(data.equipmentTypes)) {
             equipmentTypes = data.equipmentTypes;
-            localStorage.setItem('equipmentTypes', JSON.stringify(equipmentTypes));
-        } else {
-            const savedEqTypes = localStorage.getItem('equipmentTypes');
-            if (savedEqTypes) try { equipmentTypes = JSON.parse(savedEqTypes); } catch(e) {}
         }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
@@ -5556,9 +5552,8 @@ function importConfig(e) {
                     defaultSubNumber = data.defaultSubNumber || "";
                     localStorage.setItem('defaultSubNumber', defaultSubNumber);
                 }
-                if (data.equipmentTypes && Array.isArray(data.equipmentTypes) && data.equipmentTypes.length) {
+                if (data.equipmentTypes && Array.isArray(data.equipmentTypes)) {
                     equipmentTypes = data.equipmentTypes;
-                    localStorage.setItem('equipmentTypes', JSON.stringify(equipmentTypes));
                     refreshEquipmentDatalist();
                     if (document.getElementById('eqTypesList')) renderEquipmentTypesList();
                 }
@@ -7759,15 +7754,8 @@ function bdFilterRows() {
 const EQ_FORM_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxn4DbJEjaqBwL04ypHFRKDXIkIxhlrHTR5wlk_5cfux22Ip051n3W03fOZzX7c_KkM/exec";
 
 // Known equipment types for autocomplete
-/* ── قائمة أنواع المعدات — قابلة للتعديل من مدير النظام وتُحفظ في categories.json ── */
-let equipmentTypes = [
-    "حفار", "حفار صغير", "لودر", "لودر صغير",
-    "بلدوزر", "جريدر", "كومباكتر", "رول",
-    "صدمة", "دبابة مياه", "ميكسر خرسانة",
-    "رافعة", "شاحنة", "سيارة نقل",
-    "مضخة مياه", "مضخة خرسانة",
-    "كسارة", "هزاز", "لحام"
-];
+/* ── قائمة أنواع المعدات — تُحمَّل حصراً من categories.json (لا قيم افتراضية) ── */
+let equipmentTypes = [];
 /* alias للتوافق مع الكود القديم */
 const EQ_KNOWN_TYPES = new Proxy([], {
     get(_, key) { return equipmentTypes[key]; }
@@ -8142,26 +8130,39 @@ function eqAddEquipmentRow() {
     var hint = container.querySelector('.eq-empty-hint');
     if (hint) hint.remove();
 
+    // تحقق إن القائمة فيها أنواع
+    if (!equipmentTypes.length) {
+        showAlert('❌ لا توجد أنواع معدات في النظام — أضفها من الإعدادات ⚙️ ← أنواع المعدات');
+        return;
+    }
+
     eqFormEquipmentCount++;
     var rowId = 'eqrow_' + eqFormEquipmentCount;
-    var dlId  = 'eqdl_'  + eqFormEquipmentCount;
 
-    // Build datalist options without nested template literals
-    var optionsHtml = equipmentTypes.map(function(t) {
-        return '<option value="' + t + '">';
-    }).join('');
+    // Build select options
+    var optionsHtml = '<option value="" disabled selected>-- اختر نوع المعدة --</option>' +
+        equipmentTypes.map(function(t) {
+            return '<option value="' + t + '">' + t + '</option>';
+        }).join('');
 
     var row = document.createElement('div');
     row.className = 'eq-item-row';
     row.id = rowId;
     row.innerHTML =
-        '<datalist id="' + dlId + '">' + optionsHtml + '</datalist>' +
-        '<input type="text" placeholder="نوع المعدة (مثال: حفار)" list="' + dlId + '" class="eq-type-inp" id="' + rowId + '_type">' +
+        '<select class="eq-type-inp" id="' + rowId + '_type" ' +
+        'style="background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.08);' +
+        'border-radius:7px;color:white;font-size:12px;font-family:\'Cairo\',sans-serif;' +
+        'padding:7px 10px;outline:none;width:100%;text-align:right;direction:rtl;cursor:pointer;' +
+        'appearance:auto;-webkit-appearance:auto;transition:border-color 0.2s;">' +
+        optionsHtml + '</select>' +
         '<input type="number" placeholder="العدد" min="0" id="' + rowId + '_count" style="text-align:center;">' +
         '<button class="eq-del-row-btn" onclick="eqRemoveEquipmentRow(\'' + rowId + '\')" title="حذف">✕</button>';
 
     container.appendChild(row);
-    row.querySelector('.eq-type-inp').focus();
+
+    // focus على السيليكت
+    var sel = row.querySelector('.eq-type-inp');
+    if (sel) sel.focus();
 }
 /* ── Remove an equipment row ── */
 function eqRemoveEquipmentRow(rowId) {
@@ -8689,14 +8690,21 @@ window.loadEquipmentModal = function() {
    ==================================================== */
 
 function saveEquipmentTypes() {
-    localStorage.setItem('equipmentTypes', JSON.stringify(equipmentTypes));
+    // حفظ مؤقت في الجلسة فقط — المصدر الأساسي هو categories.json
+    // الأدمن يصدّر الملف ليتشاركه مع بقية المستخدمين
     refreshEquipmentDatalist();
     updateEqTypesCount();
 }
 
 function refreshEquipmentDatalist() {
-    document.querySelectorAll('[id^="eqdl_"]').forEach(dl => {
-        dl.innerHTML = equipmentTypes.map(t => `<option value="${t}">`).join('');
+    // أعد بناء كل الـ select الموجودة في نموذج التسجيل
+    document.querySelectorAll('.eq-type-inp').forEach(function(sel) {
+        var currentVal = sel.value;
+        sel.innerHTML = '<option value="" disabled>-- اختر نوع المعدة --</option>' +
+            equipmentTypes.map(function(t) {
+                return '<option value="' + t + '"' + (t === currentVal ? ' selected' : '') + '>' + t + '</option>';
+            }).join('');
+        if (!equipmentTypes.includes(currentVal)) sel.value = '';
     });
 }
 
@@ -8712,8 +8720,9 @@ function renderEquipmentTypesList() {
     updateEqTypesCount();
 
     if (!equipmentTypes.length) {
-        list.innerHTML = `<div style="text-align:center;color:var(--text-soft);font-size:11px;padding:16px 0;">
-            لا توجد أنواع معدات — أضف من الحقل أعلاه
+        list.innerHTML = `<div style="text-align:center;color:var(--text-soft);font-size:11px;padding:16px 0;line-height:1.8;">
+            لا توجد أنواع معدات بعد<br>
+            <span style="opacity:0.7;">أضف من الحقل أعلاه ثم صدّر categories.json ⬇</span>
         </div>`;
         return;
     }
@@ -8832,18 +8841,11 @@ function deleteEquipmentType(idx) {
 }
 
 function resetEquipmentTypesToDefault() {
-    if (!confirm('إعادة تعيين القائمة للقيم الافتراضية؟ سيتم حذف أي تعديلات.')) return;
-    equipmentTypes = [
-        "حفار", "حفار صغير", "لودر", "لودر صغير",
-        "بلدوزر", "جريدر", "كومباكتر", "رول",
-        "صدمة", "دبابة مياه", "ميكسر خرسانة",
-        "رافعة", "شاحنة", "سيارة نقل",
-        "مضخة مياه", "مضخة خرسانة",
-        "كسارة", "هزاز", "لحام"
-    ];
+    if (!confirm('مسح جميع أنواع المعدات؟ ستصبح القائمة فارغة.')) return;
+    equipmentTypes = [];
     saveEquipmentTypes();
     renderEquipmentTypesList();
-    showAlert('✅ تمت إعادة التعيين للافتراضي', 'success');
+    showAlert('✅ تم مسح القائمة', 'success');
 }
 
 function importEquipmentTypesFromCSV() {
