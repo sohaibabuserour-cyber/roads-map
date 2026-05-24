@@ -3220,6 +3220,7 @@
                             <button class="settings-tab active" onclick="switchSettingsTab('coords')">📍 الإحداثيات</button>
                             <button class="settings-tab" onclick="switchSettingsTab('default')">🏁 البند الافتراضي</button>
                             <button class="settings-tab" onclick="switchSettingsTab('similar')">🔗 البنود المتشابهة</button>
+                            <button class="settings-tab" onclick="switchSettingsTab('eqtypes')">🚜 أنواع المعدات</button>
                         </div>
                         <div class="settings-body">
                             <!-- Tab: Default Coordinates -->
@@ -3257,6 +3258,51 @@
                                 </div>
                                 <div class="similar-groups-list" id="similarGroupsList"></div>
                                 <button class="settings-add-group-btn" onclick="openSimilarGroupModal()">+ إضافة مجموعة بنود متشابهة</button>
+                            </div>
+                            <!-- Tab: Equipment Types -->
+                            <div class="settings-section" id="settingsTabEqtypes">
+                                <div style="font-size:11px;color:var(--text-soft);text-align:right;line-height:1.6;background:rgba(39,174,106,0.07);padding:8px 10px;border-radius:7px;border-right:3px solid #27ae6a;margin-bottom:2px;">
+                                    أنواع المعدات التي تظهر في قائمة الاقتراحات عند تسجيل المعدات — تُحفظ في <strong>categories.json</strong> وتشمل جميع المستخدمين.
+                                </div>
+                                <!-- Add new type row -->
+                                <div style="display:flex;gap:7px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px;">
+                                    <input type="text" id="eqTypeNewInput" class="settings-input"
+                                        placeholder="اسم المعدة الجديدة..."
+                                        style="flex:1;"
+                                        onkeydown="if(event.key==='Enter') addEquipmentType()">
+                                    <button onclick="addEquipmentType()"
+                                        style="background:linear-gradient(135deg,#27ae6a,#1a7a4a);border:none;color:white;padding:7px 13px;border-radius:7px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.2s;"
+                                        onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                                        ＋ إضافة
+                                    </button>
+                                </div>
+                                <!-- Import multiple types -->
+                                <details style="margin-bottom:8px;">
+                                    <summary style="font-size:11px;font-weight:700;color:var(--text-soft);cursor:pointer;padding:4px 0;user-select:none;">📥 إضافة متعددة (فصل بفاصلة أو سطر جديد)</summary>
+                                    <div style="margin-top:6px;display:flex;flex-direction:column;gap:5px;">
+                                        <textarea id="eqTypesImportArea"
+                                            placeholder="حفار, لودر, بلدوزر&#10;أو كل نوع في سطر..."
+                                            style="width:100%;height:70px;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:'Cairo',sans-serif;color:var(--text);background:var(--white);text-align:right;resize:vertical;outline:none;direction:rtl;"
+                                            onfocus="this.style.borderColor='var(--purple)'"
+                                            onblur="this.style.borderColor='var(--border)'"></textarea>
+                                        <button onclick="importEquipmentTypesFromCSV()"
+                                            style="align-self:flex-start;background:rgba(39,174,106,0.1);border:1px solid rgba(39,174,106,0.4);color:#27ae6a;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;">
+                                            ＋ إضافة الكل
+                                        </button>
+                                    </div>
+                                </details>
+                                <!-- List of types -->
+                                <div id="eqTypesList" style="max-height:240px;overflow-y:auto;padding-right:2px;">
+                                    <div style="text-align:center;color:var(--text-soft);font-size:11px;padding:12px 0;">جاري التحميل...</div>
+                                </div>
+                                <!-- Footer actions -->
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);gap:8px;flex-wrap:wrap;">
+                                    <span id="eqTypesCount" style="font-size:10px;color:var(--text-soft);font-weight:600;"></span>
+                                    <button onclick="resetEquipmentTypesToDefault()"
+                                        style="background:rgba(244,67,54,0.07);border:1px solid rgba(244,67,54,0.25);color:#e53935;padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;">
+                                        ↺ إعادة للافتراضي
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3831,6 +3877,8 @@ function togglePanel(id) {
             const sz = document.getElementById("settingsZoom"); if(sz) sz.value = defaultCoords.zoom;
             const sd = document.getElementById("settingsDefaultSub"); if(sd) sd.value = defaultSubNumber || "";
             renderDefaultSubPreview();
+            // Pre-render equipment types list so count shows immediately
+            if (document.getElementById('eqTypesList')) { renderEquipmentTypesList(); updateEqTypesCount(); }
         }
         // Refresh group tab if it's the active one
         if (id === 'contractorPanel' && _activeContractorTab === 'group') {
@@ -4324,14 +4372,16 @@ function syncCoordsInputs() {
 
 function switchSettingsTab(tab) {
     document.querySelectorAll('.settings-tab').forEach((t, i) => {
-        const tabs = ['coords', 'default', 'similar'];
+        const tabs = ['coords', 'default', 'similar', 'eqtypes'];
         t.classList.toggle('active', tabs[i] === tab);
     });
     document.getElementById('settingsTabCoords').classList.toggle('active', tab === 'coords');
     document.getElementById('settingsTabDefault').classList.toggle('active', tab === 'default');
     document.getElementById('settingsTabSimilar').classList.toggle('active', tab === 'similar');
+    document.getElementById('settingsTabEqtypes').classList.toggle('active', tab === 'eqtypes');
     if (tab === 'similar') renderSimilarGroupsList();
     if (tab === 'default') renderDefaultSubPreview();
+    if (tab === 'eqtypes') { renderEquipmentTypesList(); updateEqTypesCount(); }
 }
 
 function saveSettingsCoords() {
@@ -5432,6 +5482,14 @@ async function loadCategoriesConfig() {
             defaultSubNumber = data.defaultSubNumber || "";
             localStorage.setItem('defaultSubNumber', defaultSubNumber);
         }
+        // Load equipmentTypes from config if present (admin-managed list)
+        if (!Array.isArray(data) && data.equipmentTypes && Array.isArray(data.equipmentTypes) && data.equipmentTypes.length) {
+            equipmentTypes = data.equipmentTypes;
+            localStorage.setItem('equipmentTypes', JSON.stringify(equipmentTypes));
+        } else {
+            const savedEqTypes = localStorage.getItem('equipmentTypes');
+            if (savedEqTypes) try { equipmentTypes = JSON.parse(savedEqTypes); } catch(e) {}
+        }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
         categories = [];
@@ -5449,6 +5507,7 @@ function exportConfig() {
         defaultCoords: defaultCoords,
         similarGroups: similarGroups,
         defaultSubNumber: defaultSubNumber,
+        equipmentTypes: equipmentTypes,
         // Include current UI state for persistence
         selectedItems: selectedItems,
         selectedStatuses: selectedStatuses,
@@ -5496,6 +5555,12 @@ function importConfig(e) {
                 if (data.defaultSubNumber !== undefined) {
                     defaultSubNumber = data.defaultSubNumber || "";
                     localStorage.setItem('defaultSubNumber', defaultSubNumber);
+                }
+                if (data.equipmentTypes && Array.isArray(data.equipmentTypes) && data.equipmentTypes.length) {
+                    equipmentTypes = data.equipmentTypes;
+                    localStorage.setItem('equipmentTypes', JSON.stringify(equipmentTypes));
+                    refreshEquipmentDatalist();
+                    if (document.getElementById('eqTypesList')) renderEquipmentTypesList();
                 }
                 if (data.selectedItems) selectedItems = data.selectedItems;
                 if (data.selectedStatuses) selectedStatuses = data.selectedStatuses;
@@ -7694,7 +7759,8 @@ function bdFilterRows() {
 const EQ_FORM_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxn4DbJEjaqBwL04ypHFRKDXIkIxhlrHTR5wlk_5cfux22Ip051n3W03fOZzX7c_KkM/exec";
 
 // Known equipment types for autocomplete
-const EQ_KNOWN_TYPES = [
+/* ── قائمة أنواع المعدات — قابلة للتعديل من مدير النظام وتُحفظ في categories.json ── */
+let equipmentTypes = [
     "حفار", "حفار صغير", "لودر", "لودر صغير",
     "بلدوزر", "جريدر", "كومباكتر", "رول",
     "صدمة", "دبابة مياه", "ميكسر خرسانة",
@@ -7702,6 +7768,10 @@ const EQ_KNOWN_TYPES = [
     "مضخة مياه", "مضخة خرسانة",
     "كسارة", "هزاز", "لحام"
 ];
+/* alias للتوافق مع الكود القديم */
+const EQ_KNOWN_TYPES = new Proxy([], {
+    get(_, key) { return equipmentTypes[key]; }
+});
 
 let eqFormEquipmentCount = 0;
 
@@ -8077,7 +8147,7 @@ function eqAddEquipmentRow() {
     var dlId  = 'eqdl_'  + eqFormEquipmentCount;
 
     // Build datalist options without nested template literals
-    var optionsHtml = EQ_KNOWN_TYPES.map(function(t) {
+    var optionsHtml = equipmentTypes.map(function(t) {
         return '<option value="' + t + '">';
     }).join('');
 
@@ -8612,6 +8682,187 @@ window.loadEquipmentModal = function() {
     _eqRegCache = null; // force fresh fetch
     eqMergeNewSheetDataThenLoad();
 };
+
+/* ====================================================
+   EQUIPMENT TYPES MANAGEMENT — Admin Only
+   إدارة قائمة أنواع المعدات — للأدمن فقط
+   ==================================================== */
+
+function saveEquipmentTypes() {
+    localStorage.setItem('equipmentTypes', JSON.stringify(equipmentTypes));
+    refreshEquipmentDatalist();
+    updateEqTypesCount();
+}
+
+function refreshEquipmentDatalist() {
+    document.querySelectorAll('[id^="eqdl_"]').forEach(dl => {
+        dl.innerHTML = equipmentTypes.map(t => `<option value="${t}">`).join('');
+    });
+}
+
+function updateEqTypesCount() {
+    const el = document.getElementById('eqTypesCount');
+    if (el) el.textContent = equipmentTypes.length + ' نوع معدة في القائمة';
+}
+
+function renderEquipmentTypesList() {
+    const list = document.getElementById('eqTypesList');
+    if (!list) return;
+
+    updateEqTypesCount();
+
+    if (!equipmentTypes.length) {
+        list.innerHTML = `<div style="text-align:center;color:var(--text-soft);font-size:11px;padding:16px 0;">
+            لا توجد أنواع معدات — أضف من الحقل أعلاه
+        </div>`;
+        return;
+    }
+
+    list.innerHTML = equipmentTypes.map((type, idx) => `
+        <div class="eq-type-row" id="eqtyperow_${idx}" draggable="true"
+             ondragstart="eqTypeDragStart(event, ${idx})"
+             ondragover="eqTypeDragOver(event)"
+             ondrop="eqTypeDrop(event, ${idx})"
+             ondragend="eqTypeDragEnd(event)"
+             ondragleave="eqTypeDragLeave(event)"
+             style="display:flex;align-items:center;gap:8px;padding:6px 9px;
+                    background:rgba(39,174,106,0.04);border:1px solid rgba(39,174,106,0.12);
+                    border-radius:7px;margin-bottom:4px;cursor:grab;
+                    transition:all 0.15s;user-select:none;">
+            <span style="color:rgba(39,174,106,0.5);font-size:13px;flex-shrink:0;" title="اسحب لإعادة الترتيب">⠿</span>
+            <span style="flex:1;font-size:12px;font-weight:600;color:var(--text);text-align:right;">${type}</span>
+            <button onclick="editEquipmentType(${idx})"
+                title="تعديل الاسم"
+                style="background:rgba(33,150,243,0.08);border:1px solid rgba(33,150,243,0.25);
+                       color:#2196f3;width:24px;height:24px;border-radius:5px;
+                       cursor:pointer;font-size:11px;display:flex;align-items:center;
+                       justify-content:center;flex-shrink:0;transition:all 0.15s;
+                       font-family:'Cairo',sans-serif;"
+                onmouseover="this.style.background='rgba(33,150,243,0.18)'"
+                onmouseout="this.style.background='rgba(33,150,243,0.08)'">✎</button>
+            <button onclick="deleteEquipmentType(${idx})"
+                title="حذف"
+                style="background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.25);
+                       color:#e53935;width:24px;height:24px;border-radius:5px;
+                       cursor:pointer;font-size:11px;display:flex;align-items:center;
+                       justify-content:center;flex-shrink:0;transition:all 0.15s;
+                       font-family:'Cairo',sans-serif;"
+                onmouseover="this.style.background='rgba(244,67,54,0.18)'"
+                onmouseout="this.style.background='rgba(244,67,54,0.08)'">✕</button>
+        </div>`).join('');
+}
+
+/* ── Drag & Drop — إعادة ترتيب أنواع المعدات ── */
+let _eqTypeDragIdx = null;
+
+function eqTypeDragStart(e, idx) {
+    _eqTypeDragIdx = idx;
+    e.currentTarget.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function eqTypeDragEnd(e) {
+    e.currentTarget.style.opacity = '1';
+    document.querySelectorAll('.eq-type-row').forEach(r => {
+        r.style.borderColor = 'rgba(39,174,106,0.12)';
+        r.style.opacity = '1';
+    });
+    _eqTypeDragIdx = null;
+}
+
+function eqTypeDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '#f5c842';
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function eqTypeDragLeave(e) {
+    e.currentTarget.style.borderColor = 'rgba(39,174,106,0.12)';
+}
+
+function eqTypeDrop(e, toIdx) {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = 'rgba(39,174,106,0.12)';
+    if (_eqTypeDragIdx === null || _eqTypeDragIdx === toIdx) return;
+    const moved = equipmentTypes.splice(_eqTypeDragIdx, 1)[0];
+    const adjustedIdx = _eqTypeDragIdx < toIdx ? toIdx - 1 : toIdx;
+    equipmentTypes.splice(adjustedIdx, 0, moved);
+    _eqTypeDragIdx = null;
+    saveEquipmentTypes();
+    renderEquipmentTypesList();
+}
+
+function addEquipmentType() {
+    const inp = document.getElementById('eqTypeNewInput');
+    if (!inp) return;
+    const val = inp.value.trim();
+    if (!val) { showAlert('❌ أدخل اسم المعدة'); return; }
+    if (equipmentTypes.map(t=>t.trim()).includes(val)) { showAlert('⚠️ هذا النوع موجود بالفعل'); return; }
+    equipmentTypes.push(val);
+    saveEquipmentTypes();
+    renderEquipmentTypesList();
+    inp.value = '';
+    inp.focus();
+    showAlert('✅ تمت الإضافة: ' + val, 'success');
+}
+
+function editEquipmentType(idx) {
+    const current = equipmentTypes[idx];
+    const newName = prompt('تعديل نوع المعدة:', current);
+    if (newName === null) return;
+    const trimmed = newName.trim();
+    if (!trimmed) { showAlert('❌ الاسم لا يمكن أن يكون فارغاً'); return; }
+    if (trimmed === current) return;
+    if (equipmentTypes.some((t,i) => i !== idx && t.trim() === trimmed)) {
+        showAlert('⚠️ هذا الاسم موجود بالفعل'); return;
+    }
+    equipmentTypes[idx] = trimmed;
+    saveEquipmentTypes();
+    renderEquipmentTypesList();
+    showAlert('✅ تم التعديل: ' + trimmed, 'success');
+}
+
+function deleteEquipmentType(idx) {
+    const name = equipmentTypes[idx];
+    if (!confirm(`حذف "${name}" من قائمة أنواع المعدات؟`)) return;
+    equipmentTypes.splice(idx, 1);
+    saveEquipmentTypes();
+    renderEquipmentTypesList();
+    showAlert('✅ تم الحذف', 'success');
+}
+
+function resetEquipmentTypesToDefault() {
+    if (!confirm('إعادة تعيين القائمة للقيم الافتراضية؟ سيتم حذف أي تعديلات.')) return;
+    equipmentTypes = [
+        "حفار", "حفار صغير", "لودر", "لودر صغير",
+        "بلدوزر", "جريدر", "كومباكتر", "رول",
+        "صدمة", "دبابة مياه", "ميكسر خرسانة",
+        "رافعة", "شاحنة", "سيارة نقل",
+        "مضخة مياه", "مضخة خرسانة",
+        "كسارة", "هزاز", "لحام"
+    ];
+    saveEquipmentTypes();
+    renderEquipmentTypesList();
+    showAlert('✅ تمت إعادة التعيين للافتراضي', 'success');
+}
+
+function importEquipmentTypesFromCSV() {
+    const area = document.getElementById('eqTypesImportArea');
+    if (!area) return;
+    const raw = area.value.trim();
+    if (!raw) { showAlert('❌ الحقل فارغ'); return; }
+    const items = raw.split(/[\n,،]+/).map(s => s.trim()).filter(Boolean);
+    const existing = equipmentTypes.map(t => t.trim());
+    const newOnes = items.filter(i => !existing.includes(i));
+    if (!newOnes.length) { showAlert('⚠️ جميع الأنواع موجودة بالفعل'); return; }
+    equipmentTypes = [...equipmentTypes, ...newOnes];
+    saveEquipmentTypes();
+    renderEquipmentTypesList();
+    area.value = '';
+    showAlert(`✅ تمت إضافة ${newOnes.length} نوع جديد`, 'success');
+}
+
+
 
 </script>
 
