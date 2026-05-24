@@ -2987,6 +2987,43 @@
         .eq-item-row input:focus { border-color: rgba(39,174,106,0.5); }
         .eq-item-row input::placeholder { color: rgba(255,255,255,0.2); }
         .eq-item-row input[type="number"] { text-align: center; }
+        /* Select نوع المعدة — خلفية صلبة لضمان وضوح النص على كل الأجهزة */
+        .eq-item-row select.eq-type-inp {
+            background: #1e1e35;
+            border: 1.5px solid rgba(255,255,255,0.15);
+            border-radius: 7px;
+            color: #ffffff;
+            font-size: 13px;
+            font-family: 'Cairo', sans-serif;
+            padding: 8px 10px;
+            outline: none;
+            width: 100%;
+            text-align: right;
+            direction: rtl;
+            cursor: pointer;
+            -webkit-appearance: auto;
+            appearance: auto;
+            transition: border-color 0.2s;
+            /* على الموبايل يفتح القائمة النيتف */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .eq-item-row select.eq-type-inp:focus {
+            border-color: rgba(39,174,106,0.7);
+            background: #252542;
+        }
+        .eq-item-row select.eq-type-inp option {
+            background: #1a1a2e;
+            color: #ffffff;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            padding: 8px;
+        }
+        /* موبايل: كبّر الـ select ليكون سهل الضغط */
+        @media (max-width: 768px) {
+            .eq-item-row { grid-template-columns: 1fr 90px 34px; gap: 7px; padding: 8px 10px; }
+            .eq-item-row select.eq-type-inp { font-size: 14px; padding: 10px 8px; min-height: 44px; }
+            .eq-item-row input[type="number"] { font-size: 14px; min-height: 44px; }
+        }
         .eq-del-row-btn {
             width: 32px; height: 32px;
             border-radius: 7px;
@@ -8139,7 +8176,7 @@ function eqAddEquipmentRow() {
     eqFormEquipmentCount++;
     var rowId = 'eqrow_' + eqFormEquipmentCount;
 
-    // Build select options
+    // Build select options — خلفية صلبة لضمان ظهور النص على كل الأجهزة
     var optionsHtml = '<option value="" disabled selected>-- اختر نوع المعدة --</option>' +
         equipmentTypes.map(function(t) {
             return '<option value="' + t + '">' + t + '</option>';
@@ -8149,18 +8186,13 @@ function eqAddEquipmentRow() {
     row.className = 'eq-item-row';
     row.id = rowId;
     row.innerHTML =
-        '<select class="eq-type-inp" id="' + rowId + '_type" ' +
-        'style="background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.08);' +
-        'border-radius:7px;color:white;font-size:12px;font-family:\'Cairo\',sans-serif;' +
-        'padding:7px 10px;outline:none;width:100%;text-align:right;direction:rtl;cursor:pointer;' +
-        'appearance:auto;-webkit-appearance:auto;transition:border-color 0.2s;">' +
+        '<select class="eq-type-inp" id="' + rowId + '_type">' +
         optionsHtml + '</select>' +
         '<input type="number" placeholder="العدد" min="0" id="' + rowId + '_count" style="text-align:center;">' +
         '<button class="eq-del-row-btn" onclick="eqRemoveEquipmentRow(\'' + rowId + '\')" title="حذف">✕</button>';
 
     container.appendChild(row);
 
-    // focus على السيليكت
     var sel = row.querySelector('.eq-type-inp');
     if (sel) sel.focus();
 }
