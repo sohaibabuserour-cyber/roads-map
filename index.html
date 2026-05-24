@@ -5101,6 +5101,11 @@ async function loadCategoriesConfig() {
             // Also store locally
             localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
         }
+        // Load similarGroups from config if present (shared across all users)
+        if (!Array.isArray(data) && data.similarGroups) {
+            similarGroups = data.similarGroups;
+            localStorage.setItem('similarGroups', JSON.stringify(similarGroups));
+        }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
         categories = [];
@@ -5116,6 +5121,7 @@ function exportConfig() {
     const payload = JSON.stringify({
         categories: categories,
         defaultCoords: defaultCoords,
+        similarGroups: similarGroups,
         // Include current UI state for persistence
         selectedItems: selectedItems,
         selectedStatuses: selectedStatuses,
@@ -5156,6 +5162,10 @@ function importConfig(e) {
             }
             // Restore state if present
             if (!Array.isArray(data)) {
+                if (data.similarGroups) {
+                    similarGroups = data.similarGroups;
+                    localStorage.setItem('similarGroups', JSON.stringify(similarGroups));
+                }
                 if (data.selectedItems) selectedItems = data.selectedItems;
                 if (data.selectedStatuses) selectedStatuses = data.selectedStatuses;
                 if (data.activeContractorFilter) {
