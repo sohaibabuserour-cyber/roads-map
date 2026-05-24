@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>الخريطة التفاعلية - مشروع ولي العهد</title>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2924,6 +2925,7 @@
 <base target="_blank">
 </head>
 <body>
+
 <!-- ==================== LOGIN SCREEN ==================== -->
 <div id="loginScreen">
     <div class="login-bg-pattern"></div>
@@ -2934,6 +2936,7 @@
             <h1>مشروع ولي العهد</h1>
             <p>الخريطة التفاعلية لمتابعة التنفيذ</p>
         </div>
+
         <div class="form-field">
             <label>البريد الإلكتروني</label>
             <input type="email" id="loginEmail" placeholder="example@email.com" autocomplete="username">
@@ -2957,8 +2960,10 @@
         </div>
     </div>
 </div>
+
 <!-- ==================== MAIN APP ==================== -->
 <div id="mainApp">
+
     <!-- TOP NAV BAR -->
     <div class="top-nav">
 
@@ -3246,6 +3251,7 @@
         </div>
     </div>
 </div>
+
 <!-- MODAL: ADD CATEGORY -->
 <div class="modal" id="modalAddCategory">
     <div class="modal-box">
@@ -3268,6 +3274,7 @@
         </div>
     </div>
 </div>
+
 <!-- MODAL: ADD SUBITEM -->
 <div class="modal" id="modalAddSubitem">
     <div class="modal-box">
@@ -3298,6 +3305,7 @@
         </div>
     </div>
 </div>
+
 <!-- MODAL: EDIT SUBITEM (double-click, admin only) -->
 <div class="modal" id="modalEditSubitem">
     <div class="modal-box">
@@ -3338,6 +3346,7 @@
 <div class="modal" id="cashflowModal" style="z-index:60000;padding:24px;align-items:center;justify-content:center;">
     <div class="cf-modal-overlay" onclick="closeCashflowModal()" style="position:fixed;inset:0;"></div>
     <div class="cf-modal-wrap">
+
         <!-- Modal Header -->
         <div class="cf-header">
             <div class="cf-header-left">
@@ -3394,6 +3403,7 @@
         </div>
     </div>
 </div>
+
 <!-- MODAL: SIMILAR GROUPS -->
 <div id="similarGroupModal" style="display:none;position:fixed;inset:0;z-index:70000;align-items:center;justify-content:center;">
     <div class="similar-modal-overlay" onclick="closeSimilarGroupModal()" style="position:fixed;inset:0;z-index:1;"></div>
@@ -3416,13 +3426,17 @@
         </div>
     </div>
 </div>
+
 <!-- Hidden file inputs -->
+
 <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importConfig(event)">
 <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+
 <!-- MODAL: BILLS DASHBOARD -->
 <div class="modal" id="billsModal" style="z-index:60001;padding:24px;align-items:center;justify-content:center;">
     <div class="bd-modal-overlay" onclick="closeBillsModal()" style="position:fixed;inset:0;"></div>
     <div class="bd-modal-wrap">
+
         <!-- Header -->
         <div class="bd-hdr">
             <div class="bd-hdr-left">
@@ -3482,6 +3496,7 @@
         </div>
     </div>
 </div>
+
 <!-- MODAL: EQUIPMENT -->
 <div class="modal" id="equipmentModal" style="z-index:60002;padding:24px;align-items:center;justify-content:center;">
     <div class="bd-modal-overlay" onclick="closeEquipmentModal()" style="position:fixed;inset:0;"></div>
@@ -3557,6 +3572,7 @@
         </div>
     </div>
 </div>
+
 <script>
 /* ====================================================
    CONSTANTS & STATE
@@ -7511,5 +7527,6 @@ function bdFilterRows() {
     bdRenderTable(filtered);
     bdComputeKPIs(filtered);
 }
+</script>
 </body>
 </html>
