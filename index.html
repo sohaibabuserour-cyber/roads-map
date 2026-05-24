@@ -2940,9 +2940,24 @@
 
         </div>
 
-        <!-- Bills Dashboard Tab (ثابت خارج navTabs حتى لا يُمسح بـ buildNavTabs) -->
-        <div class="nav-tab" id="navTabBills" onclick="openBillsModal()" title="داشبورد البنود والأسعار" style="flex-shrink:0;">
-            <span>📊 البنود</span>
+
+        <!-- تبويب التقارير (يجمع: داشبورد البنود + التدفقات النقدية + المعدات) -->
+        <div class="nav-tab" id="navTabReports" style="flex-shrink:0;position:relative;" onclick="toggleReportsDropdown(event)">
+            <span>📋 التقارير</span>
+            <div class="tab-sub-dropdown" id="reportsDropdown" style="min-width:200px;">
+                <div class="tab-sub-item" onclick="openBillsModal();closeReportsDropdown()">
+                    <span style="font-size:14px;">📊</span>
+                    <label>داشبورد البنود</label>
+                </div>
+                <div class="tab-sub-item" onclick="openCashflowModal();closeReportsDropdown()">
+                    <span style="font-size:14px;">💰</span>
+                    <label>التدفقات النقدية</label>
+                </div>
+                <div class="tab-sub-item" onclick="openEquipmentModal();closeReportsDropdown()">
+                    <span style="font-size:14px;">🚜</span>
+                    <label>المعدات</label>
+                </div>
+            </div>
         </div>
 
         <!-- Category tabs (dynamic) -->
@@ -2953,10 +2968,6 @@
 
             <!-- Tools Group -->
             <div class="nav-right-group" id="toolsGroup">
-                <!-- Cash Flow button -->
-                <div style="position:relative" title="التدفقات النقدية">
-                    <div class="nav-icon-btn" id="cashflowBtn" onclick="openCashflowModal()">💰</div>
-                </div>
 
                 <!-- Contractor button -->
                 <div style="position:relative" title="المقاولون">
@@ -2986,24 +2997,6 @@
                             <div class="contractor-list" id="contractorGroupList">
                                 <div class="contractor-empty">جاري التحميل...</div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Equipment button -->
-                <div style="position:relative" title="المعدات">
-                    <div class="nav-icon-btn" id="equipmentBtn" onclick="togglePanel('equipmentPanel')">🚜</div>
-                    <div class="equipment-panel" id="equipmentPanel">
-                        <div class="equipment-panel-header">
-                            <span>🚜 المعدات</span>
-                            <span class="equipment-panel-sub" id="equipmentPanelSub">جاري التحميل...</span>
-                        </div>
-                        <div class="equipment-list" id="equipmentList">
-                            <div class="equipment-empty">جاري التحميل...</div>
-                        </div>
-                        <div class="equipment-total-row" id="equipmentTotalRow" style="display:none">
-                            <span class="equipment-total-label">إجمالي المعدات</span>
-                            <span class="equipment-total-val" id="equipmentTotalVal">0</span>
                         </div>
                     </div>
                 </div>
@@ -3470,6 +3463,40 @@
     </div>
 </div>
 
+<!-- MODAL: EQUIPMENT -->
+<div class="modal" id="equipmentModal" style="z-index:60002;padding:24px;align-items:center;justify-content:center;">
+    <div class="bd-modal-overlay" onclick="closeEquipmentModal()" style="position:fixed;inset:0;"></div>
+    <div class="bd-modal-wrap" style="max-width:700px;">
+        <div class="bd-hdr">
+            <div class="bd-hdr-left">
+                <div class="bd-hdr-icon">🚜</div>
+                <div>
+                    <div class="bd-hdr-title">تقرير المعدات</div>
+                    <div class="bd-hdr-sub" id="eqLastUpdate">جاري التحميل...</div>
+                </div>
+            </div>
+            <button class="cf-close-btn" onclick="closeEquipmentModal()">✕</button>
+        </div>
+        <div class="bd-kpi-row-wrap" style="grid-template-columns:repeat(2,1fr);">
+            <div class="bd-kpi-c">
+                <div class="bd-kpi-lbl">إجمالي أنواع المعدات</div>
+                <div class="bd-kpi-val" id="eqKpiTypes">—</div>
+            </div>
+            <div class="bd-kpi-c">
+                <div class="bd-kpi-lbl">إجمالي عدد المعدات</div>
+                <div class="bd-kpi-val" id="eqKpiTotal">—</div>
+            </div>
+        </div>
+        <div class="bd-body-wrap" id="eqBody">
+            <div class="bd-msg bd-msg-load">⏳ جاري تحميل بيانات المعدات...</div>
+        </div>
+        <div class="bd-footer-bar">
+            <div class="bd-footer-note">مصدر البيانات: Google Sheets</div>
+            <button class="bd-refresh-btn" onclick="loadEquipmentModal()">🔄 تحديث</button>
+        </div>
+    </div>
+</div>
+
 <script>
 /* ====================================================
    CONSTANTS & STATE
@@ -3561,11 +3588,9 @@ function togglePanel(id) {
     const panel = document.getElementById(id);
     const isOpen = panel.classList.contains("active");
     // Close all panels first
-    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.equipment-panel,.settings-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.settings-panel').forEach(p => p.classList.remove('active'));
         if (!isOpen) {
         panel.classList.add("active");
-        // Load equipment data when panel opens
-        if (id === 'equipmentPanel') buildEquipmentPanel();
         // Render similar groups when settings opens on similar tab
         if (id === 'settingsPanel') {
             const sl = document.getElementById("settingsLat"); if(sl) sl.value = defaultCoords.lat;
@@ -4899,7 +4924,7 @@ function closeCashflowModal() {
 
 // Close on Escape key
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeCashflowModal();
+    if (e.key === 'Escape') { closeCashflowModal(); closeBillsModal(); closeEquipmentModal(); closeReportsDropdown(); }
 });
 
 function switchCfTab(tab) {
@@ -6733,9 +6758,111 @@ function closeBillsModal() {
     closeModal('billsModal');
 }
 
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeBillsModal();
-});
+/* ── Reports Tab Dropdown ── */
+function toggleReportsDropdown(e) {
+    e.stopPropagation();
+    const dd  = document.getElementById('reportsDropdown');
+    const tab = document.getElementById('navTabReports');
+    const isOpen = dd.style.display === 'flex';
+    // Close all other dropdowns/panels
+    document.querySelectorAll('.tab-sub-dropdown').forEach(d => d.style.display = 'none');
+    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.contractor-panel,.settings-panel').forEach(p => p.classList.remove('active'));
+    if (!isOpen) {
+        const rect = tab.getBoundingClientRect();
+        dd.style.left  = rect.left + 'px';
+        dd.style.right = 'auto';
+        dd.style.display = 'flex';
+        tab.classList.add('active');
+    } else {
+        tab.classList.remove('active');
+    }
+}
+
+function closeReportsDropdown() {
+    const dd  = document.getElementById('reportsDropdown');
+    const tab = document.getElementById('navTabReports');
+    if (dd) dd.style.display = 'none';
+    if (tab) tab.classList.remove('active');
+}
+
+document.addEventListener('click', () => closeReportsDropdown());
+
+/* ── Equipment Modal ── */
+function openEquipmentModal() {
+    openModal('equipmentModal');
+    loadEquipmentModal();
+}
+
+function closeEquipmentModal() {
+    closeModal('equipmentModal');
+}
+
+function loadEquipmentModal() {
+    const body = document.getElementById('eqBody');
+    if (!body) return;
+
+    if (!equipmentRawRows.length) {
+        body.innerHTML = '<div class="bd-msg bd-msg-load">⏳ جاري التحميل...</div>';
+        setTimeout(() => { if (equipmentRawRows.length) loadEquipmentModal(); }, 1200);
+        return;
+    }
+
+    const SKIP = new Set(['ID','BAYAN','البيان','DESCRIPTION','بيان','البند','BAND','ALBND','ITEM']);
+    const idIdx = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
+
+    // جمع أعمدة المعدات مع إجماليها لكل بند
+    const bandColOrig = equipmentRawHeaders.find(h => {
+        const u = h.trim().toUpperCase();
+        return u === 'البند' || u === 'BAND' || u === 'ALBND' || u === 'ITEM';
+    });
+
+    const equipCols = equipmentRawHeaders
+        .map((h, i) => ({ name: h, idx: i }))
+        .filter(c => c.idx !== idIdx && c.name.trim() && !SKIP.has(c.name.trim()) && !SKIP.has(c.name.trim().toUpperCase()));
+
+    // إجمالي كل نوع معدة
+    const totals = {};
+    equipCols.forEach(col => {
+        let sum = 0;
+        equipmentRawRows.forEach(row => {
+            const val = parseFloat(row[col.name.trim().toUpperCase()] || 0);
+            if (!isNaN(val)) sum += val;
+        });
+        if (sum > 0) totals[col.name] = sum;
+    });
+
+    const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+    const grandTotal = entries.reduce((s, [, v]) => s + v, 0);
+
+    // تحديث KPIs
+    const eqTypes = document.getElementById('eqKpiTypes');
+    const eqTotal = document.getElementById('eqKpiTotal');
+    if (eqTypes) eqTypes.textContent = entries.length;
+    if (eqTotal) eqTotal.textContent = fmtNum(grandTotal);
+    const eqLast = document.getElementById('eqLastUpdate');
+    if (eqLast) eqLast.textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-SA');
+
+    if (!entries.length) {
+        body.innerHTML = '<div class="bd-msg bd-msg-load">لا توجد بيانات معدات</div>';
+        return;
+    }
+
+    // بناء جدول
+    let html = '<div class="bd-tbl-wrap"><table class="bd-tbl"><thead><tr>' +
+        '<th>نوع المعدة</th><th style="min-width:100px;">الإجمالي</th>' +
+        '</tr></thead><tbody>';
+
+    entries.forEach(([name, count]) => {
+        html += '<tr><td>' + name + '</td><td class="bdn">' + fmtNum(count) + '</td></tr>';
+    });
+
+    html += '<tr style="border-top:2px solid rgba(255,255,255,0.1);">' +
+        '<td style="font-weight:900;color:white;">الإجمالي الكلي</td>' +
+        '<td class="bdn" style="font-size:14px;font-weight:900;">' + fmtNum(grandTotal) + '</td>' +
+        '</tr></tbody></table></div>';
+
+    body.innerHTML = html;
+}
 
 /* ── Number helpers ── */
 function bdFmt(v) {
