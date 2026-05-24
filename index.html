@@ -7846,12 +7846,20 @@ let _eqMapClickHandler = null;
 
 function eqPickFromMap() {
     if (!map) { showAlert('❌ الخريطة غير جاهزة'); return; }
+
+    // تحقق إن فيه طبقات محملة
+    const hasLayers = Object.keys(allLayers).length > 0;
+    if (!hasLayers) {
+        showAlert('❌ حمّل بنداً على الخريطة أولاً');
+        return;
+    }
+
     _eqPickingFromMap = true;
 
     // ── إخفاء المودال بالكامل ──
     document.getElementById('equipmentFormModal').style.display = 'none';
 
-    // ── شريط تلميح ثابت فوق الخريطة ──
+    // ── شريط تلميح فوق الخريطة ──
     let hint = document.getElementById('eqPickMapHint');
     if (!hint) {
         hint = document.createElement('div');
@@ -7862,7 +7870,8 @@ function eqPickFromMap() {
             'color:white','padding:12px 24px','border-radius:12px',
             'font-size:13px','font-weight:700','font-family:\'Cairo\',sans-serif',
             'box-shadow:0 8px 28px rgba(33,150,243,0.5)',
-            'display:flex','align-items:center','gap:14px','white-space:nowrap'
+            'display:flex','align-items:center','gap:14px','white-space:nowrap',
+            'pointer-events:auto'
         ].join(';');
         hint.innerHTML =
             '<span>🗺 انقر على أي عنصر في الخريطة لاختياره</span>' +
@@ -7871,50 +7880,122 @@ function eqPickFromMap() {
     }
     hint.style.display = 'flex';
 
+    // ── إضافة cursor crosshair على الخريطة ──
+    map.getContainer().style.cursor = 'crosshair';
+
+    // ── ربط click مباشرة على كل feature في كل طبقة ──
     _eqMapClickHandler = function(e) {
         if (!_eqPickingFromMap) return;
-        // Find the nearest feature
+
+        // منع الـ popup من الفتح
+        if (e.originalEvent) {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+        }
+        if (map.closePopup) map.closePopup();
+
+        const row = _eqGetRowFromFeatureEvent(e);
+        eqCancelPickFromMap();
+
+        if (row) {
+            const nameKey = row['ROAD NAME'] ? 'ROAD NAME' : row['BLOCK NAME'] ? 'BLOCK NAME' : 'NAME';
+            const name = (row[nameKey] || '').trim() || row['ID'];
+            const id   = row['ID'] || '';
+            eqSelectElement(id, name);
+            showAlert('✅ تم اختيار: ' + name, 'success');
+        }
+    };
+
+    // ── handler للنقر على المساحة الفارغة من الخريطة ──
+    _eqMapBgClickHandler = function(e) {
+        if (!_eqPickingFromMap) return;
+        // ابحث عن أقرب feature للنقطة المنقورة
         let nearest = null, nearestDist = Infinity;
         Object.entries(allLayers).forEach(([sheetId, layer]) => {
             if (!layer || !allData[sheetId]) return;
             layer.eachLayer(f => {
-                if (!f.getBounds) return;
                 try {
-                    const center = f.getBounds().getCenter();
+                    const center = f.getBounds ? f.getBounds().getCenter()
+                                 : f.getLatLng ? f.getLatLng() : null;
+                    if (!center) return;
                     const d = map.distance(e.latlng, center);
                     if (d < nearestDist) {
                         nearestDist = d;
                         const row = allData[sheetId][f.feature.properties.ID];
-                        if (row) {
-                            const nameKey = row['ROAD NAME'] ? 'ROAD NAME' : row['BLOCK NAME'] ? 'BLOCK NAME' : 'NAME';
-                            nearest = { id: row['ID'], name: row[nameKey] || f.feature.properties.ID };
-                        }
+                        if (row) nearest = row;
                     }
                 } catch(err) {}
             });
         });
-        eqCancelPickFromMap();
-        if (nearest) {
-            eqSelectElement(nearest.id, nearest.name);
-            showAlert('✅ تم اختيار: ' + nearest.name, 'success');
-        } else {
-            showAlert('❌ لم يتم العثور على عنصر — تأكد من تحميل طبقة على الخريطة');
+
+        if (nearest && nearestDist < 500) {
+            // اختار الأقرب إن كان ضمن 500 متر
+            _eqPickingFromMap = false; // منع التكرار
+            map.closePopup();
+            const nameKey = nearest['ROAD NAME'] ? 'ROAD NAME' : nearest['BLOCK NAME'] ? 'BLOCK NAME' : 'NAME';
+            const name = (nearest[nameKey] || '').trim() || nearest['ID'];
+            eqCancelPickFromMap();
+            eqSelectElement(nearest['ID'] || '', name);
+            showAlert('✅ تم اختيار: ' + name, 'success');
         }
     };
 
-    map.once('click', _eqMapClickHandler);
+    // أضف الـ handler على كل feature
+    Object.values(allLayers).forEach(layer => {
+        if (!layer) return;
+        layer.eachLayer(f => {
+            f.on('click', _eqMapClickHandler);
+        });
+    });
+
+    // وعلى الـ map كـ fallback
+    map.on('click', _eqMapBgClickHandler);
 }
+
+function _eqGetRowFromFeatureEvent(e) {
+    const f = e.target || e.layer;
+    if (!f || !f.feature) return null;
+    const fid = f.feature.properties.ID;
+    for (const [sheetId, data] of Object.entries(allData)) {
+        if (data[fid]) return data[fid];
+    }
+    return null;
+}
+
+let _eqMapBgClickHandler = null;
 
 function eqCancelPickFromMap() {
     _eqPickingFromMap = false;
+
     // ── إعادة إظهار المودال ──
     document.getElementById('equipmentFormModal').style.display = '';
+
+    // ── إخفاء الشريط ──
     const hint = document.getElementById('eqPickMapHint');
     if (hint) hint.style.display = 'none';
-    if (map && _eqMapClickHandler) {
-        map.off('click', _eqMapClickHandler);
+
+    // ── إزالة cursor crosshair ──
+    if (map) map.getContainer().style.cursor = '';
+
+    // ── إزالة handlers من كل feature ──
+    if (_eqMapClickHandler) {
+        Object.values(allLayers).forEach(layer => {
+            if (!layer) return;
+            layer.eachLayer(f => {
+                f.off('click', _eqMapClickHandler);
+            });
+        });
         _eqMapClickHandler = null;
     }
+
+    // ── إزالة map background handler ──
+    if (map && _eqMapBgClickHandler) {
+        map.off('click', _eqMapBgClickHandler);
+        _eqMapBgClickHandler = null;
+    }
+
+    // ── إغلاق أي popup مفتوح ──
+    if (map) map.closePopup();
 }
 
 /* ── Band Picker Sub-Modal ── */
