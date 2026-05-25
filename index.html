@@ -7367,7 +7367,15 @@ async function ccfSubmit() {
     const amount       = parseFloat(document.getElementById('ccf_amount').value) || 0;
     const status       = document.getElementById('ccf_status').value.trim();
     const notes        = document.getElementById('ccf_notes').value.trim();
-    const isEdit       = !!_ccfEditingRow;
+    
+    // التحقق مما إذا كان المستخلص موجود ومحاولة تحديثه بدلاً من إضافة جديد
+    let existingRow = _ccfEditingRow;
+    if (!existingRow && _ccfRowsCache && _ccfRowsCache.length > 0) {
+        const noKey = Object.keys(_ccfRowsCache[0] || {}).find(k => /statement|مستخلص|رقم/i.test(k)) || Object.keys(_ccfRowsCache[0] || {})[0];
+        existingRow = _ccfRowsCache.find(r => (r[noKey] || '').toString().trim() === statement_no);
+    }
+    const isEdit = !!existingRow;
+    const rowIndex = isEdit ? (existingRow['__rowIndex'] || null) : null;
 
     if (!statement_no) { ccfShowFeedback('❌ رقم المستخلص غير موجود', 'error'); return; }
     if (!date)         { ccfShowFeedback('❌ يرجى اختيار التاريخ', 'error'); return; }
@@ -7377,9 +7385,6 @@ async function ccfSubmit() {
     btn.disabled = true;
     btn.textContent = '⏳ جاري الحفظ...';
     ccfShowFeedback('⏳ جاري إرسال البيانات...', 'loading');
-
-    // rowIndex = رقم الصف في الشيت (1-based بدون header)
-    const rowIndex = isEdit ? (_ccfEditingRow['__rowIndex'] || null) : null;
 
     try {
         const r = await fetch(COMPANY_CF_SCRIPT_URL, {
@@ -7646,7 +7651,16 @@ async function concfSubmit() {
     const total        = parseFloat(document.getElementById('concf_total').value) || 0;
     const spent        = parseFloat(document.getElementById('concf_spent').value) || 0;
     const notes        = document.getElementById('concf_notes').value.trim();
-    const isEdit       = !!_concfEditingRow;
+    
+    // التحقق مما إذا كان المستخلص موجود لنفس المقاول في السجل، لتحديثه إن وُجد
+    let existingRow = _concfEditingRow;
+    if (!existingRow && _concfRowsCache && _concfRowsCache.length > 0) {
+        const noKey = Object.keys(_concfRowsCache[0] || {}).find(k => /statement|مستخلص|رقم/i.test(k)) || Object.keys(_concfRowsCache[0] || {})[1];
+        const cKey = Object.keys(_concfRowsCache[0] || {}).find(k => /contractor|مقاول/i.test(k)) || Object.keys(_concfRowsCache[0] || {})[0];
+        existingRow = _concfRowsCache.find(r => (r[noKey] || '').toString().trim() === statement_no && (r[cKey] || '').toString().trim() === contractor);
+    }
+    const isEdit = !!existingRow;
+    const rowIndex = isEdit ? (existingRow['__rowIndex'] || null) : null;
 
     if (!contractor)   { concfShowFeedback('❌ يرجى اختيار المقاول', 'error'); return; }
     if (!statement_no) { concfShowFeedback('❌ رقم المستخلص غير موجود', 'error'); return; }
@@ -7657,8 +7671,6 @@ async function concfSubmit() {
     btn.disabled = true;
     btn.textContent = '⏳ جاري الحفظ...';
     concfShowFeedback('⏳ جاري إرسال البيانات...', 'loading');
-
-    const rowIndex = isEdit ? (_concfEditingRow['__rowIndex'] || null) : null;
 
     try {
         const r = await fetch(CONTRACTOR_CF_SCRIPT_URL, {
