@@ -7166,7 +7166,7 @@ document.addEventListener('click', () => { closeReportsDropdown(); closeAddDropd
    COMPANY CASHFLOW FORM
    ==================================================== */
 
-const COMPANY_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9ccymRNt2Ncc2OPJtGffiGRZryWj08Xw6TOTTwA8WG_NdqyFuJ50Z-Vh2f2MWYml0/exec";
+const COMPANY_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGIT6QiwUijkUXHo043WfYLm3GPT5FW592Npg4zo40vUGKXP9wJK1lHepvZxlgznp5/exec";
 
 /* شيت ID للشركة — يُجلب منه آخر رقم مستخلص */
 const COMPANY_CF_SHEET_READ_ID  = "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA";
@@ -7229,7 +7229,10 @@ async function openCompanyCashflowForm() {
         inp.placeholder = '⏳ جاري الجلب...';
         const { rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
         _ccfRowsCache = rows;
-        const next = _cfNextStatementNo(rows, Object.keys(rows[0] || {})[0] || 'statement_no');
+        // ابحث عن عمود رقم المستخلص بالاسم أولاً
+        const keys = Object.keys(rows[0] || {}).filter(k => !k.startsWith('__'));
+        const noKey = keys.find(k => /statement|مستخلص|رقم|no\b|num/i.test(k)) || keys[0] || '';
+        const next = _cfNextStatementNo(rows, noKey);
         inp.value = next;
         inp.style.borderColor = 'rgba(245,200,66,0.6)';
         inp.title = 'رقم تلقائي — للعرض فقط';
@@ -9683,7 +9686,7 @@ function importEquipmentTypesFromCSV() {
 
             <!-- رقم المستخلص + التاريخ في صف واحد -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
-                <div>
+                <div id="ccf_statement_no_wrap">
                     <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;letter-spacing:0.3px;">📄 رقم المستخلص</label>
                     <input type="text" id="ccf_statement_no" class="eq-form-input" readonly style="cursor:not-allowed;opacity:0.75;background:rgba(255,255,255,0.03);border-color:rgba(245,200,66,0.4);" title="رقم تلقائي — للعرض فقط">
                 </div>
@@ -9706,7 +9709,7 @@ function importEquipmentTypesFromCSV() {
                     <option value="مدفوع">مدفوع</option>
                     <option value="معلق">معلق</option>
                     <option value="جاري التدقيق">جاري التدقيق</option>
-                    <option value="مرفوض">مرفوض</option>
+                    <option value="جاهز للرفع">جاهز للرفع</option>
                 </select>
             </div>
 
@@ -9748,12 +9751,9 @@ function importEquipmentTypesFromCSV() {
         </div>
 
         <!-- Footer -->
-        <div style="background:rgba(0,0,0,0.25);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
-            <button onclick="ccfReset()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">🔄 إعادة تعيين</button>
-            <div style="display:flex;gap:10px;align-items:center;">
-                <button onclick="if(_ccfRowsCache) ccfBuildHistory(_ccfRowsCache);document.getElementById('ccf_history_panel').style.display='block';" style="background:rgba(33,150,243,0.12);border:1px solid rgba(33,150,243,0.35);color:#5baddf;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;">📋 استرجاع مستخلص</button>
-                <button onclick="ccfSubmit()" id="ccf_submit_btn" style="background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:white;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(33,150,243,0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">💾 حفظ في السجل</button>
-            </div>
+        <div style="background:rgba(0,0,0,0.25);padding:14px 24px;display:flex;align-items:center;justify-content:flex-end;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;gap:10px;">
+            <button onclick="if(_ccfRowsCache) ccfBuildHistory(_ccfRowsCache);document.getElementById('ccf_history_panel').style.display='block';" style="background:rgba(33,150,243,0.12);border:1px solid rgba(33,150,243,0.35);color:#5baddf;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;">📋 استرجاع مستخلص</button>
+            <button onclick="ccfSubmit()" id="ccf_submit_btn" style="background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:white;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(33,150,243,0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">💾 حفظ في السجل</button>
         </div>
     </div>
 </div>
@@ -9860,7 +9860,6 @@ function importEquipmentTypesFromCSV() {
 
         <!-- Footer -->
         <div style="background:rgba(0,0,0,0.25);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
-            <button onclick="concfReset()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">🔄 إعادة تعيين</button>
             <div style="display:flex;gap:10px;align-items:center;">
                 <button onclick="if(_concfRowsCache){const sel=document.getElementById('concf_contractor_select');concfBuildHistory(_concfRowsCache,sel.value||undefined);document.getElementById('concf_history_panel').style.display='block';}" style="background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.4);color:#f5c842;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;">📋 استرجاع مستخلص</button>
                 <button onclick="concfSubmit()" id="concf_submit_btn" style="background:linear-gradient(135deg,#f5c842,#e8a800);border:none;color:#1a0a2e;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(245,200,66,0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">💾 حفظ في السجل</button>
