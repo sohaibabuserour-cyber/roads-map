@@ -7188,20 +7188,7 @@ function ccfReset(keepDate = false) {
     if (!keepDate) {
         document.getElementById('ccf_date').value = new Date().toISOString().split('T')[0];
     }
-    document.getElementById('ccf_preview').style.display = 'none';
     ccfHideFeedback();
-}
-
-function ccfUpdatePreview() {
-    const amt = parseFloat(document.getElementById('ccf_amount').value) || 0;
-    const preview = document.getElementById('ccf_preview');
-    const prevAmt = document.getElementById('ccf_preview_amount');
-    if (amt > 0) {
-        preview.style.display = 'block';
-        prevAmt.textContent = amt.toLocaleString('en-US', { maximumFractionDigits: 2 });
-    } else {
-        preview.style.display = 'none';
-    }
 }
 
 function ccfShowFeedback(msg, type) {
@@ -7229,7 +7216,7 @@ async function ccfSubmit() {
 
     if (!statement_no) { ccfShowFeedback('❌ يرجى إدخال رقم المستخلص', 'error'); return; }
     if (!date)         { ccfShowFeedback('❌ يرجى اختيار التاريخ', 'error'); return; }
-    if (!amount || amount <= 0) { ccfShowFeedback('❌ يرجى إدخال مبلغ صحيح أكبر من صفر', 'error'); return; }
+    if (!amount || amount <= 0) { ccfShowFeedback('❌ يرجى إدخال قيمة المستخلص', 'error'); return; }
 
     const btn = document.getElementById('ccf_submit_btn');
     btn.disabled = true;
@@ -9357,22 +9344,22 @@ function importEquipmentTypesFromCSV() {
         <!-- Form Body -->
         <div style="flex:1;overflow-y:auto;padding:24px;">
 
-            <!-- رقم المستخلص -->
-            <div style="margin-bottom:16px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;letter-spacing:0.3px;">📄 رقم المستخلص</label>
-                <input type="text" id="ccf_statement_no" placeholder="مثال: 001" class="eq-form-input">
+            <!-- رقم المستخلص + التاريخ في صف واحد -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;letter-spacing:0.3px;">📄 رقم المستخلص</label>
+                    <input type="text" id="ccf_statement_no" placeholder="مثال: 001" class="eq-form-input">
+                </div>
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📅 تاريخ المستخلص</label>
+                    <input type="date" id="ccf_date" class="eq-form-input">
+                </div>
             </div>
 
-            <!-- التاريخ -->
+            <!-- قيمة المستخلص -->
             <div style="margin-bottom:16px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📅 تاريخ المستخلص</label>
-                <input type="date" id="ccf_date" class="eq-form-input" style="max-width:240px;">
-            </div>
-
-            <!-- المبلغ -->
-            <div style="margin-bottom:16px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">💰 المبلغ (ريال سعودي)</label>
-                <input type="number" id="ccf_amount" placeholder="0.00" min="0" step="0.01" class="eq-form-input" oninput="ccfUpdatePreview()">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">💰 قيمة المستخلص (ريال سعودي)</label>
+                <input type="number" id="ccf_amount" placeholder="0.00" min="0" step="0.01" class="eq-form-input">
             </div>
 
             <!-- الحالة -->
@@ -9395,11 +9382,10 @@ function importEquipmentTypesFromCSV() {
                     onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
             </div>
 
-            <!-- معاينة -->
-            <div id="ccf_preview" style="display:none;padding:12px 16px;background:rgba(33,150,243,0.08);border:1px solid rgba(33,150,243,0.25);border-radius:10px;margin-bottom:16px;">
-                <div style="font-size:10px;color:rgba(33,150,243,0.8);font-weight:700;font-family:'Cairo',sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">معاينة</div>
-                <div style="font-size:22px;font-weight:900;color:#5baddf;font-family:'Cairo',sans-serif;" id="ccf_preview_amount">—</div>
-                <div style="font-size:10px;color:rgba(255,255,255,0.35);font-family:'Cairo',sans-serif;margin-top:2px;">ريال سعودي</div>
+            <!-- تنبيه: الترقيم والتراكمي تلقائيان -->
+            <div style="padding:10px 14px;background:rgba(33,150,243,0.07);border:1px solid rgba(33,150,243,0.2);border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:16px;flex-shrink:0;">ℹ️</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.55);font-family:'Cairo',sans-serif;line-height:1.6;">رقم الصف والكمية التراكمية يُحسبان تلقائياً من الشيت عند الحفظ</span>
             </div>
 
             <!-- Feedback -->
