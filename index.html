@@ -7480,34 +7480,27 @@ function concfSyncContractor(val) {
     // أظهر خانة الرقم
     if (noWrap) noWrap.style.display = 'block';
 
-    if (_concfRowsCache && _concfRowsCache.length) {
-        const cKey = Object.keys(_concfRowsCache[0] || {}).find(k => /contractor|مقاول/i.test(k)) || '';
-        const noKey = Object.keys(_concfRowsCache[0] || {})[0] || '';
-        // احسب الرقم التالي بناءً على مستخلصات هذا المقاول فقط
-        const contractorRows = _concfRowsCache.filter(r => (r[cKey] || '').trim() === val.trim());
-        const allRows = _concfRowsCache;
-        // الرقم التالي = أكبر رقم في كل المستخلصات + 1 (لا يتكرر الرقم بين المقاولين)
-        const next = _cfNextStatementNo(allRows, noKey);
+    const _calcAndShow = (rows) => {
+        const cKey  = Object.keys(rows[0] || {}).find(k => /contractor|مقاول/i.test(k)) || '';
+        const noKey = Object.keys(rows[0] || {})[0] || '';
+        const contractorRows = rows.filter(r => (r[cKey] || '').trim() === val.trim());
+        const next = _cfNextStatementNo(contractorRows, noKey);
         if (inp) {
             inp.value = next;
             inp.style.borderColor = 'rgba(245,200,66,0.6)';
-            inp.title = 'رقم تلقائي للمقاول ' + val + ' — للعرض فقط';
+            inp.title = 'آخر مستخلص للمقاول ' + val + ' + 1';
         }
-        // عرض سجل المقاول
-        concfBuildHistory(_concfRowsCache, val);
+        concfBuildHistory(rows, val);
+    };
+
+    if (_concfRowsCache && _concfRowsCache.length) {
+        _calcAndShow(_concfRowsCache);
     } else {
-        // لا يوجد كاش بعد — اجلب البيانات
         if (inp) { inp.value = ''; inp.placeholder = '⏳ جاري الجلب...'; }
         _cfFetchRows(CONTRACTOR_CF_SHEET_READ_ID).then(({ rows }) => {
             _concfRowsCache = rows;
-            const noKey = Object.keys(rows[0] || {})[0] || '';
-            const next = _cfNextStatementNo(rows, noKey);
-            if (inp) {
-                inp.value = next;
-                inp.style.borderColor = 'rgba(245,200,66,0.6)';
-                inp.placeholder = 'مثال: 001';
-            }
-            concfBuildHistory(rows, val);
+            _calcAndShow(rows);
+            if (inp) inp.placeholder = 'مثال: 001';
         }).catch(e => {
             console.warn('concf fetch on contractor select:', e.message);
             if (inp) inp.placeholder = 'مثال: 001';
