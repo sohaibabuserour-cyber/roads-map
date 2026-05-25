@@ -7162,48 +7162,57 @@ function closeAddDropdown() {
 
 document.addEventListener('click', () => { closeReportsDropdown(); closeAddDropdown(); });
 
-/* ====================================================
-   COMPANY CASHFLOW FORM
-   ==================================================== */
+/* =============================================================
+   CASHFLOW FIX — استبدل كل الدوال الموجودة بين
+   "COMPANY CASHFLOW FORM" و "CONTRACTOR CASHFLOW FORM"
+   بهذا الكود كاملاً
+   ============================================================= */
 
-const COMPANY_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGIT6QiwUijkUXHo043WfYLm3GPT5FW592Npg4zo40vUGKXP9wJK1lHepvZxlgznp5/exec";
+/* ── ثوابت الـ endpoints ── */
+const COMPANY_CF_SCRIPT_URL    = "https://script.google.com/macros/s/AKfycbwGIT6QiwUijkUXHo043WfYLm3GPT5FW592Npg4zo40vUGKXP9wJK1lHepvZxlgznp5/exec";
+const CONTRACTOR_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8c2Yo670Z5i472Jr1Fs3NS37qks_3xMuEbWdAfhp9i1hNVCGFYACKQdmZrAvH2AKavQ/exec";
 
-/* شيت ID للشركة — يُجلب منه آخر رقم مستخلص */
-const COMPANY_CF_SHEET_READ_ID  = "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA";
+const COMPANY_CF_SHEET_READ_ID    = "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA";
 const CONTRACTOR_CF_SHEET_READ_ID = "1xmSUQNR02prdGK9P6QiJo8ybVKwdVZAE74yUkUTbVYA";
 
-/* ── كاش لبيانات المستخلصات ── */
-let _ccfRowsCache = null;
+/* ── كاش الصفوف ── */
+let _ccfRowsCache   = null;
 let _concfRowsCache = null;
-let _ccfEditingRow = null;   // null = إضافة جديدة, row-object = تعديل
+
+/* ── الصف قيد التعديل (يحمل __id = قيمة العمود الأول في الشيت) ── */
+let _ccfEditingRow   = null;
 let _concfEditingRow = null;
 
-/* ── جلب صفوف شيت CSV وإرجاعها كـ array of objects ── */
+/* ============================================================
+   HELPER — جلب CSV وتحويله لـ rows مع __id = العمود الأول
+   ============================================================ */
 async function _cfFetchRows(sheetId) {
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
     const r = await fetch(url);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const csv = await r.text();
-    if (csv.trim().startsWith('<')) throw new Error('not public');
+    if (csv.trim().startsWith('<')) throw new Error('الشيت غير مشارك — اضبط المشاركة العامة');
+
     const lines = csv.split('\n').filter(l => l.trim());
     if (lines.length < 2) return { headers: [], rows: [] };
+
     const headers = parseCSVLine(lines[0]);
     const rows = [];
     for (let i = 1; i < lines.length; i++) {
         const vals = parseCSVLine(lines[i]);
         if (!vals.some(v => v.trim())) continue;
         const obj = {};
-        headers.forEach((h, idx) => { obj[h.trim()] = vals[idx] || ''; });
-        obj['__rowIndex'] = i; // 1-based (header=0)
+        headers.forEach((h, idx) => { obj[h.trim()] = (vals[idx] || '').trim(); });
+        obj['__rowIndex'] = i;            // رقم السطر (1-based بدون header)
+        obj['__id']       = vals[0] || ''; // العمود الأول = ID في الشيت
         rows.push(obj);
     }
     return { headers, rows };
 }
 
-/* ── استخراج آخر رقم مستخلص وإرجاع التالي ── */
+/* ── حساب رقم المستخلص التالي ── */
 function _cfNextStatementNo(rows, colName) {
-    let maxNum = 0;
-    let lastVal = '';
+    let maxNum = 0, lastVal = '';
     rows.forEach(row => {
         const v = String(row[colName] || '').trim();
         if (!v) return;
@@ -7216,6 +7225,11 @@ function _cfNextStatementNo(rows, colName) {
     return String(nextNum).padStart(3, '0');
 }
 
+/* ============================================================
+   شيت الشركة — أعمدته:
+   [0] ID  [1] statement_no  [2] date  [3] amount  [4] cumulative  [5] status  [6] notes
+   ============================================================ */
+
 async function openCompanyCashflowForm() {
     openModal('companyCashflowModal');
     const today = new Date().toISOString().split('T')[0];
@@ -7223,20 +7237,19 @@ async function openCompanyCashflowForm() {
     _ccfEditingRow = null;
     ccfSetMode('new');
     ccfReset(true);
-    // جلب آخر رقم مستخلص
+
     try {
         const inp = document.getElementById('ccf_statement_no');
         inp.placeholder = '⏳ جاري الجلب...';
-        const { rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
+        const { headers, rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
         _ccfRowsCache = rows;
-        const next = _cfNextStatementNo(rows, Object.keys(rows[0] || {})[0] || 'statement_no');
-        inp.value = next;
+        // رقم المستخلص = العمود الثاني (index 1)
+        const noKey = headers[1] || headers[0] || 'statement_no';
+        inp.value = _cfNextStatementNo(rows, noKey.trim());
         inp.style.borderColor = 'rgba(245,200,66,0.6)';
-        inp.title = 'رقم تلقائي — للعرض فقط';
-        // ابن قائمة الاسترجاع
-        ccfBuildHistory(rows);
+        ccfBuildHistory(rows, headers);
     } catch(e) {
-        console.warn('ccf fetch last no:', e.message);
+        console.warn('ccf fetch:', e.message);
         document.getElementById('ccf_statement_no').placeholder = 'مثال: 001';
     }
 }
@@ -7246,87 +7259,118 @@ function closeCompanyCashflowForm() {
 }
 
 function ccfSetMode(mode) {
-    const btn = document.getElementById('ccf_submit_btn');
-    // The mode badge is the first .cf-form-mode-badge inside companyCashflowModal
+    const btn    = document.getElementById('ccf_submit_btn');
     const badges = document.querySelectorAll('#companyCashflowModal .cf-form-mode-badge');
     if (mode === 'edit') {
         badges.forEach(b => b.style.display = 'flex');
-        if (btn) { btn.textContent = '💾 حفظ التعديلات'; btn.style.background = 'linear-gradient(135deg,#f5c842,#e8a800)'; btn.style.color = '#1a0a2e'; }
+        if (btn) {
+            btn.textContent = '💾 حفظ التعديلات';
+            btn.style.background = 'linear-gradient(135deg,#f5c842,#e8a800)';
+            btn.style.color = '#1a0a2e';
+        }
     } else {
         badges.forEach(b => b.style.display = 'none');
-        if (btn) { btn.textContent = '💾 حفظ في السجل'; btn.style.background = 'linear-gradient(135deg,#2196f3,#1565c0)'; btn.style.color = 'white'; }
+        if (btn) {
+            btn.textContent = '💾 حفظ في السجل';
+            btn.style.background = 'linear-gradient(135deg,#2196f3,#1565c0)';
+            btn.style.color = 'white';
+        }
     }
 }
 
-function ccfLoadRowForEdit(rowJson) {
-    const row = (typeof rowJson === 'string') ? JSON.parse(rowJson) : rowJson;
-    _ccfEditingRow = row;
+/*
+ * ccfBuildHistory — يبني قائمة المستخلصات في الـ panel
+ * headers مصفوفة أسماء الأعمدة بالترتيب
+ * شيت الشركة: [ID, statement_no, date, amount, cumulative, status, notes]
+ */
+function ccfBuildHistory(rows, headers) {
+    const panel = document.getElementById('ccf_history_panel');
+    const list  = document.getElementById('ccf_history_list');
+    if (!panel || !list || !rows.length) return;
+
+    // حدد مواضع الأعمدة بالاسم الثابت أو بالترتيب
+    const h = (headers || []).map(x => x.trim());
+    const idxId     = 0;                                         // ID
+    const idxNo     = h.findIndex(x => /statement/i.test(x)) !== -1 ? h.findIndex(x => /statement/i.test(x)) : 1;
+    const idxDate   = h.findIndex(x => /date|تاريخ/i.test(x))  !== -1 ? h.findIndex(x => /date|تاريخ/i.test(x)) : 2;
+    const idxAmt    = h.findIndex(x => /amount|قيمة|مبلغ/i.test(x)) !== -1 ? h.findIndex(x => /amount|قيمة|مبلغ/i.test(x)) : 3;
+    const idxStatus = h.findIndex(x => /status|حالة/i.test(x))  !== -1 ? h.findIndex(x => /status|حالة/i.test(x)) : 5;
+    const idxNotes  = h.findIndex(x => /notes|ملاحظ/i.test(x)) !== -1 ? h.findIndex(x => /notes|ملاحظ/i.test(x)) : 6;
+
+    list.innerHTML = rows.slice().reverse().map((row, i) => {
+        const rowId  = row['__id'] || '';
+        const no     = (Object.values(row).filter((v,k)=> k === idxNo)[0]  ) || h[idxNo]   ? row[h[idxNo]]   : '-';
+        const date   = h[idxDate]   ? row[h[idxDate]]   : '-';
+        const amt    = h[idxAmt]    ? row[h[idxAmt]]    : '-';
+        const status = h[idxStatus] ? row[h[idxStatus]] : '';
+        const notes  = h[idxNotes]  ? row[h[idxNotes]]  : '';
+        // استخدم الـ headers مباشرة لجلب القيم الصحيحة
+        const noVal     = h.length > idxNo     ? row[h[idxNo]]     : Object.values(row)[idxNo]     || '-';
+        const dateVal   = h.length > idxDate   ? row[h[idxDate]]   : Object.values(row)[idxDate]   || '-';
+        const amtVal    = h.length > idxAmt    ? row[h[idxAmt]]    : Object.values(row)[idxAmt]    || '-';
+        const statusVal = h.length > idxStatus ? row[h[idxStatus]] : Object.values(row)[idxStatus] || '';
+        const notesVal  = h.length > idxNotes  ? row[h[idxNotes]]  : Object.values(row)[idxNotes]  || '';
+        const amtNum    = parseFloat(String(amtVal).replace(/,/g, '')) || 0;
+        const bg        = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
+
+        // نمرر الـ __id مع كل الحقول الضرورية
+        const payload = JSON.stringify({
+            __id: rowId, __rowIndex: row['__rowIndex'],
+            _no: noVal, _date: dateVal, _amt: amtVal,
+            _status: statusVal, _notes: notesVal
+        }).replace(/"/g, '&quot;');
+
+        return `<div onclick="ccfLoadRowForEdit('${payload}')"
+            style="display:flex;align-items:center;justify-content:space-between;gap:8px;
+                   padding:9px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);
+                   background:${bg};transition:background 0.15s;"
+            onmouseover="this.style.background='rgba(33,150,243,0.12)'"
+            onmouseout="this.style.background='${bg}'">
+            <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);font-family:'Cairo',sans-serif;min-width:28px;">#${rowId}</span>
+            <span style="font-size:12px;font-weight:700;color:#5baddf;font-family:'Cairo',sans-serif;">${noVal}</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.5);font-family:'Cairo',sans-serif;">${dateVal}</span>
+            <span style="font-size:12px;font-weight:700;color:#f5c842;font-family:'Cairo',sans-serif;">${amtNum ? amtNum.toLocaleString('en-US') : amtVal}</span>
+            <span style="font-size:10px;color:rgba(33,150,243,0.8);font-family:'Cairo',sans-serif;">تعديل ✎</span>
+        </div>`;
+    }).join('');
+
+    panel.style.display = 'block';
+}
+
+/*
+ * تحميل صف للتعديل — payload يحمل القيم التي بناها ccfBuildHistory
+ */
+function ccfLoadRowForEdit(payloadJson) {
+    let p;
+    try { p = typeof payloadJson === 'string' ? JSON.parse(payloadJson) : payloadJson; }
+    catch(e) { showAlert('❌ خطأ في تحميل البيانات'); return; }
+
+    _ccfEditingRow = p;   // يحمل __id
     ccfSetMode('edit');
-    const keys = Object.keys(row).filter(k => !k.startsWith('__'));
-    // --- رقم المستخلص (عمود 0) ---
-    const noKey = keys[0];
-    const noVal = row[noKey] || '';
-    const noInp = document.getElementById('ccf_statement_no');
-    noInp.value = noVal;
-    // --- التاريخ (عمود 1) ---
-    const dateKey = keys.find(k => /date|تاريخ/i.test(k)) || keys[1] || '';
-    document.getElementById('ccf_date').value = row[dateKey] || '';
-    // --- القيمة ---
-    const amtKey = keys.find(k => /amount|قيمة|مبلغ/i.test(k));
-    if (amtKey) document.getElementById('ccf_amount').value = String(row[amtKey] || '').replace(/,/g,'');
-    // --- الحالة ---
-    const statusKey = keys.find(k => /status|حالة/i.test(k));
-    if (statusKey) {
-        const sel = document.getElementById('ccf_status');
-        if (sel) {
-            const v = row[statusKey] || 'مدفوع';
-            // حاول مطابقة القيمة مع الخيارات الموجودة
-            const opt = [...sel.options].find(o => o.value === v || o.textContent.trim() === v);
-            sel.value = opt ? opt.value : 'مدفوع';
-        }
+
+    document.getElementById('ccf_statement_no').value = p._no    || '';
+    document.getElementById('ccf_date').value          = p._date  || '';
+    document.getElementById('ccf_amount').value        = String(p._amt || '').replace(/,/g, '');
+    const sel = document.getElementById('ccf_status');
+    if (sel) {
+        const opt = [...sel.options].find(o => o.value === p._status || o.textContent.trim() === p._status);
+        sel.value = opt ? opt.value : 'مدفوع';
     }
-    // --- الملاحظات ---
-    const notesKey = keys.find(k => /notes|ملاحظ/i.test(k));
-    if (notesKey) document.getElementById('ccf_notes').value = row[notesKey] || '';
+    document.getElementById('ccf_notes').value = p._notes || '';
+
     ccfUpdatePreview();
     const hist = document.getElementById('ccf_history_panel');
     if (hist) hist.style.display = 'none';
     showAlert('✏️ تم تحميل المستخلص للتعديل', 'success');
 }
 
-function ccfBuildHistory(rows) {
-    const panel = document.getElementById('ccf_history_panel');
-    const list  = document.getElementById('ccf_history_list');
-    if (!panel || !list || !rows.length) return;
-    const keys = Object.keys(rows[0]).filter(k => !k.startsWith('__'));
-    list.innerHTML = rows.slice().reverse().map((row, i) => {
-        const num  = row[keys[0]] || '-';
-        const date = row[keys[1]] || '-';
-        const amt  = row[keys.find(k => /amount|قيمة|مبلغ/i.test(k))] || '-';
-        const bg   = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
-        return `<div onclick="ccfLoadRowForEdit(${JSON.stringify(row).replace(/"/g,'&quot;')})"
-            style="display:flex;align-items:center;justify-content:space-between;gap:8px;
-                   padding:9px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);
-                   background:${bg};transition:background 0.15s;"
-            onmouseover="this.style.background='rgba(33,150,243,0.12)'"
-            onmouseout="this.style.background='${bg}'">
-            <span style="font-size:12px;font-weight:700;color:#5baddf;font-family:'Cairo',sans-serif;">${num}</span>
-            <span style="font-size:11px;color:rgba(255,255,255,0.5);font-family:'Cairo',sans-serif;">${date}</span>
-            <span style="font-size:12px;font-weight:700;color:#f5c842;font-family:'Cairo',sans-serif;">${parseFloat(String(amt).replace(/,/g,''))||amt}</span>
-            <span style="font-size:10px;color:rgba(33,150,243,0.8);font-family:'Cairo',sans-serif;">تعديل ✎</span>
-        </div>`;
-    }).join('');
-    panel.style.display = 'block';
-}
-
 function ccfReset(keepDate = false) {
     document.getElementById('ccf_statement_no').value = '';
-    document.getElementById('ccf_amount').value = '';
-    document.getElementById('ccf_status').value = 'مدفوع';
+    document.getElementById('ccf_amount').value        = '';
+    const sel = document.getElementById('ccf_status');
+    if (sel) sel.value = 'مدفوع';
     document.getElementById('ccf_notes').value = '';
-    if (!keepDate) {
-        document.getElementById('ccf_date').value = new Date().toISOString().split('T')[0];
-    }
+    if (!keepDate) document.getElementById('ccf_date').value = new Date().toISOString().split('T')[0];
     document.getElementById('ccf_preview').style.display = 'none';
     ccfHideFeedback();
     _ccfEditingRow = null;
@@ -7348,28 +7392,41 @@ function ccfUpdatePreview() {
 function ccfShowFeedback(msg, type) {
     const fb = document.getElementById('ccf_feedback');
     fb.style.display = 'block';
-    fb.style.background = type === 'success' ? 'rgba(39,174,106,0.15)' : type === 'loading' ? 'rgba(245,200,66,0.1)' : 'rgba(244,67,54,0.15)';
-    fb.style.border = type === 'success' ? '1px solid rgba(39,174,106,0.4)' : type === 'loading' ? '1px solid rgba(245,200,66,0.3)' : '1px solid rgba(244,67,54,0.4)';
-    fb.style.color = type === 'success' ? '#5cc890' : type === 'loading' ? '#f5c842' : '#ff8a80';
+    fb.style.background = type === 'success' ? 'rgba(39,174,106,0.15)'
+                        : type === 'loading'  ? 'rgba(245,200,66,0.1)'
+                        : 'rgba(244,67,54,0.15)';
+    fb.style.border = type === 'success' ? '1px solid rgba(39,174,106,0.4)'
+                    : type === 'loading'  ? '1px solid rgba(245,200,66,0.3)'
+                    : '1px solid rgba(244,67,54,0.4)';
+    fb.style.color  = type === 'success' ? '#5cc890'
+                    : type === 'loading'  ? '#f5c842'
+                    : '#ff8a80';
     fb.textContent = msg;
     if (type === 'success') setTimeout(() => ccfHideFeedback(), 4000);
 }
 
 function ccfHideFeedback() {
     const fb = document.getElementById('ccf_feedback');
-    if (fb) fb.style.display = 'none';
+    if (fb) { fb.style.display = 'none'; fb.className = ''; }
 }
 
+/*
+ * ccfSubmit — يرسل للـ Apps Script:
+ *   - insert: action="insert"
+ *   - update: action="update" + id=__id (قيمة العمود الأول في الشيت)
+ * بعد النجاح: يمسح الكاش، يعيد جلب البيانات، يحدث القائمة والداشبورد
+ */
 async function ccfSubmit() {
     ccfHideFeedback();
     const statement_no = document.getElementById('ccf_statement_no').value.trim();
     const date         = document.getElementById('ccf_date').value.trim();
     const amount       = parseFloat(document.getElementById('ccf_amount').value) || 0;
-    const status       = document.getElementById('ccf_status').value.trim();
+    const sel          = document.getElementById('ccf_status');
+    const status       = sel ? sel.value.trim() : 'مدفوع';
     const notes        = document.getElementById('ccf_notes').value.trim();
     const isEdit       = !!_ccfEditingRow;
 
-    if (!statement_no) { ccfShowFeedback('❌ رقم المستخلص غير موجود', 'error'); return; }
+    if (!statement_no) { ccfShowFeedback('❌ رقم المستخلص مفقود', 'error'); return; }
     if (!date)         { ccfShowFeedback('❌ يرجى اختيار التاريخ', 'error'); return; }
     if (!amount || amount <= 0) { ccfShowFeedback('❌ يرجى إدخال قيمة المستخلص', 'error'); return; }
 
@@ -7378,29 +7435,55 @@ async function ccfSubmit() {
     btn.textContent = '⏳ جاري الحفظ...';
     ccfShowFeedback('⏳ جاري إرسال البيانات...', 'loading');
 
-    // rowIndex = رقم الصف في الشيت (1-based بدون header)
-    const rowIndex = isEdit ? (_ccfEditingRow['__rowIndex'] || null) : null;
+    const payload = {
+        action      : isEdit ? 'update' : 'insert',
+        id          : isEdit ? String(_ccfEditingRow['__id'] || '') : '',
+        statement_no, date,
+        amount      : Number(amount),
+        status, notes
+    };
 
     try {
-        const r = await fetch(COMPANY_CF_SCRIPT_URL, {
+        const r    = await fetch(COMPANY_CF_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: isEdit ? 'update' : 'insert',
-                rowIndex,
-                statement_no, date, amount, status, notes
-            }),
+            body: JSON.stringify(payload),
             redirect: 'follow'
         });
         const text = await r.text();
         let resp = {};
         try { resp = JSON.parse(text); } catch(e) {}
+
         if (resp.status === 'success' || r.ok) {
-            const msg = isEdit ? '✅ تم تحديث المستخلص في سجل الشركة!' : '✅ تم حفظ المستخلص في سجل الشركة!';
+            const msg = isEdit ? '✅ تم تحديث المستخلص بنجاح!' : '✅ تم حفظ المستخلص بنجاح!';
             ccfShowFeedback(msg, 'success');
             showAlert(msg, 'success');
-            _ccfRowsCache = null; // مسح الكاش لإعادة الجلب
-            setTimeout(() => ccfReset(), 2500);
+
+            // ── إعادة جلب البيانات وتحديث القائمة والداشبورد ──
+            _ccfRowsCache = null;
+            try {
+                const { headers, rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
+                _ccfRowsCache = rows;
+                // تحديث قائمة الاسترجاع
+                ccfBuildHistory(rows, headers);
+                // تحديث الداشبورد إن كان مفتوحاً على تبويب الشركة
+                if (document.getElementById('cashflowModal')?.classList.contains('active')) {
+                    cashflowData['company'] = null;
+                    if (cfActiveTab === 'company') {
+                        loadCfData('company', CASHFLOW_COMPANY_SHEET);
+                    }
+                }
+                // تحديث رقم المستخلص التالي
+                const noKey = headers[1] ? headers[1].trim() : '';
+                if (noKey && !isEdit) {
+                    document.getElementById('ccf_statement_no').value = _cfNextStatementNo(rows, noKey);
+                }
+            } catch(e) { console.warn('ccf post-save fetch:', e.message); }
+
+            setTimeout(() => {
+                if (!isEdit) ccfReset(true);
+                else { ccfSetMode('new'); _ccfEditingRow = null; }
+            }, 2000);
         } else {
             throw new Error(resp.message || 'فشل الحفظ');
         }
@@ -7413,11 +7496,11 @@ async function ccfSubmit() {
     }
 }
 
-/* ====================================================
-   CONTRACTOR CASHFLOW FORM
-   ==================================================== */
-
-const CONTRACTOR_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8c2Yo670Z5i472Jr1Fs3NS37qks_3xMuEbWdAfhp9i1hNVCGFYACKQdmZrAvH2AKavQ/exec";
+/* ============================================================
+   شيت المقاولين — أعمدته:
+   [0] ID  [1] contractor  [2] statement_no  [3] date
+   [4] total  [5] spent  [6] remaining  [7] notes
+   ============================================================ */
 
 async function openContractorCashflowForm() {
     openModal('contractorCashflowModal');
@@ -7427,23 +7510,25 @@ async function openContractorCashflowForm() {
     concfSetMode('new');
     concfPopulateContractors();
     concfReset(true);
-    // جلب آخر رقم مستخلص
+
     try {
         const inp = document.getElementById('concf_statement_no');
         inp.placeholder = '⏳ جاري الجلب...';
-        const { rows } = await _cfFetchRows(CONTRACTOR_CF_SHEET_READ_ID);
+        const { headers, rows } = await _cfFetchRows(CONTRACTOR_CF_SHEET_READ_ID);
         _concfRowsCache = rows;
-        const noKey = Object.keys(rows[0] || {})[0] || 'statement_no';
-        const next = _cfNextStatementNo(rows, noKey);
-        inp.value = next;
+        _concfHeaders   = headers;
+        // رقم المستخلص = العمود الثالث (index 2)
+        const noKey = headers[2] ? headers[2].trim() : headers[0] || 'statement_no';
+        inp.value = _cfNextStatementNo(rows, noKey);
         inp.style.borderColor = 'rgba(245,200,66,0.6)';
-        inp.title = 'رقم تلقائي — للعرض فقط';
-        concfBuildHistory(rows);
+        concfBuildHistory(rows, headers, null);
     } catch(e) {
-        console.warn('concf fetch last no:', e.message);
+        console.warn('concf fetch:', e.message);
         document.getElementById('concf_statement_no').placeholder = 'مثال: 001';
     }
 }
+
+let _concfHeaders = [];
 
 function closeContractorCashflowForm() {
     closeModal('contractorCashflowModal');
@@ -7451,102 +7536,158 @@ function closeContractorCashflowForm() {
 
 function concfPopulateContractors() {
     const sel = document.getElementById('concf_contractor_select');
-    const currentVal = sel.value;
-    sel.innerHTML = '<option value="">-- اختر من القائمة --</option>';
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- اختر المقاول --</option>';
     const contractors = new Set();
-    Object.values(allData || {}).forEach(sheetData => {
-        Object.values(sheetData).forEach(row => {
+    Object.values(allData || {}).forEach(sd => {
+        Object.values(sd).forEach(row => {
             const c = (row['CONTRACTOR'] || '').trim();
             if (c) contractors.add(c);
         });
     });
-    Object.keys(contractorMap || {}).forEach(name => {
-        if (name.trim()) contractors.add(name.trim());
-    });
+    Object.keys(contractorMap || {}).forEach(name => { if (name.trim()) contractors.add(name.trim()); });
     [...contractors].sort((a,b) => a.localeCompare(b,'ar')).forEach(name => {
         const opt = document.createElement('option');
         opt.value = name; opt.textContent = name;
         sel.appendChild(opt);
     });
-    if (currentVal) sel.value = currentVal;
+    if (cur) sel.value = cur;
 }
 
 function concfSyncContractor(val) {
     document.getElementById('concf_contractor').value = val;
-    // جلب آخر مستخلص لهذا المقاول وعرضه
-    if (val && _concfRowsCache) {
-        const cKey = Object.keys(_concfRowsCache[0] || {}).find(k => /contractor|مقاول/i.test(k)) || '';
-        const noKey = Object.keys(_concfRowsCache[0] || {})[0] || '';
-        const contractorRows = _concfRowsCache.filter(r => (r[cKey] || '').trim() === val.trim());
-        if (contractorRows.length) {
-            const next = _cfNextStatementNo(contractorRows, noKey);
-            const inp = document.getElementById('concf_statement_no');
-            inp.value = next;
-            inp.style.borderColor = 'rgba(245,200,66,0.6)';
-            inp.title = 'رقم تلقائي للمقاول ' + val + ' — للعرض فقط';
-        }
-        // عرض تاريخ المقاول
-        concfBuildHistory(_concfRowsCache, val);
+    if (!val || !_concfRowsCache) return;
+    // جلب آخر مستخلص لهذا المقاول
+    const h    = (_concfHeaders || []).map(x => x.trim());
+    const cKey = h[1] || '';   // contractor = العمود الثاني
+    const noKey = h[2] || '';  // statement_no = العمود الثالث
+    if (!cKey || !noKey) return;
+    const contractorRows = _concfRowsCache.filter(r =>
+        (r[cKey] || '').trim().toLowerCase() === val.trim().toLowerCase()
+    );
+    if (contractorRows.length) {
+        const next = _cfNextStatementNo(contractorRows, noKey);
+        const inp  = document.getElementById('concf_statement_no');
+        inp.value  = next;
+        inp.style.borderColor = 'rgba(245,200,66,0.6)';
     }
-}
-
-function concfSyncContractorText(val) {
-    document.getElementById('concf_contractor').value = val;
+    // حدّث قائمة السجل للمقاول المختار
+    if (_concfRowsCache) concfBuildHistory(_concfRowsCache, _concfHeaders, val);
 }
 
 function concfSetMode(mode) {
     const btn   = document.getElementById('concf_submit_btn');
     const badge = document.getElementById('concf_edit_badge');
     if (mode === 'edit') {
-        if (btn) { btn.textContent = '💾 حفظ التعديلات'; btn.style.background = 'linear-gradient(135deg,#2196f3,#1565c0)'; btn.style.color = 'white'; }
+        if (btn) {
+            btn.textContent = '💾 حفظ التعديلات';
+            btn.style.background = 'linear-gradient(135deg,#2196f3,#1565c0)';
+            btn.style.color = 'white';
+        }
         if (badge) badge.style.display = 'flex';
     } else {
-        if (btn) { btn.textContent = '💾 حفظ في السجل'; btn.style.background = 'linear-gradient(135deg,#f5c842,#e8a800)'; btn.style.color = '#1a0a2e'; }
+        if (btn) {
+            btn.textContent = '💾 حفظ في السجل';
+            btn.style.background = 'linear-gradient(135deg,#f5c842,#e8a800)';
+            btn.style.color = '#1a0a2e';
+        }
         if (badge) badge.style.display = 'none';
     }
 }
 
-function concfLoadRowForEdit(rowJson) {
-    const row = (typeof rowJson === 'string') ? JSON.parse(rowJson) : rowJson;
-    _concfEditingRow = row;
-    concfSetMode('edit');
-    const keys = Object.keys(row).filter(k => !k.startsWith('__'));
-    const cKey     = keys.find(k => /contractor|مقاول/i.test(k))      || keys[0];
-    const noKey    = keys.find(k => /statement|مستخلص|رقم/i.test(k))  || keys[1];
-    const dateKey  = keys.find(k => /date|تاريخ/i.test(k))            || keys[2];
-    const totalKey = keys.find(k => /total|إجمالي/i.test(k));
-    const spentKey = keys.find(k => /spent|مصروف|مدفوع/i.test(k));
-    const notesKey = keys.find(k => /notes|ملاحظ/i.test(k));
+/*
+ * concfBuildHistory — شيت المقاولين:
+ * [0] ID  [1] contractor  [2] statement_no  [3] date  [4] total  [5] spent  [6] remaining  [7] notes
+ */
+function concfBuildHistory(rows, headers, filterContractor) {
+    const panel = document.getElementById('concf_history_panel');
+    const list  = document.getElementById('concf_history_list');
+    if (!panel || !list) return;
 
-    // --- المقاول ---
-    const cVal = row[cKey] || '';
-    const sel  = document.getElementById('concf_contractor_select');
-    if (sel) {
-        // أضف المقاول كخيار مؤقت إن لم يكن موجوداً
-        const existing = [...sel.options].find(o => o.value === cVal.trim());
-        if (!existing && cVal) {
-            const opt = document.createElement('option');
-            opt.value = cVal; opt.textContent = cVal;
-            sel.appendChild(opt);
-        }
-        sel.value = cVal.trim();
+    const h = (headers || []).map(x => x.trim());
+    // مواضع الأعمدة بالاسم أو بالترتيب الثابت
+    const idxId    = 0;
+    const idxCon   = h.findIndex(x => /contractor|مقاول/i.test(x))    !== -1 ? h.findIndex(x => /contractor|مقاول/i.test(x))    : 1;
+    const idxNo    = h.findIndex(x => /statement/i.test(x))            !== -1 ? h.findIndex(x => /statement/i.test(x))            : 2;
+    const idxDate  = h.findIndex(x => /date|تاريخ/i.test(x))          !== -1 ? h.findIndex(x => /date|تاريخ/i.test(x))          : 3;
+    const idxTotal = h.findIndex(x => /total|إجمالي/i.test(x))        !== -1 ? h.findIndex(x => /total|إجمالي/i.test(x))        : 4;
+    const idxSpent = h.findIndex(x => /spent|مصروف|مدفوع/i.test(x))   !== -1 ? h.findIndex(x => /spent|مصروف|مدفوع/i.test(x))   : 5;
+    const idxNotes = h.findIndex(x => /notes|ملاحظ/i.test(x))         !== -1 ? h.findIndex(x => /notes|ملاحظ/i.test(x))         : 7;
+
+    const getV = (row, idx) => h[idx] ? (row[h[idx]] || '') : (Object.values(row).filter((v,k)=>!String(k).startsWith('__'))[idx] || '');
+
+    let displayRows = rows.slice();
+    if (filterContractor) {
+        displayRows = displayRows.filter(r =>
+            (getV(r, idxCon) || '').trim().toLowerCase() === filterContractor.trim().toLowerCase()
+        );
     }
+    if (!displayRows.length) { panel.style.display = 'none'; return; }
+
+    list.innerHTML = displayRows.slice().reverse().map((row, i) => {
+        const rowId    = row['__id']   || '';
+        const conVal   = getV(row, idxCon)   || '-';
+        const noVal    = getV(row, idxNo)    || '-';
+        const dateVal  = getV(row, idxDate)  || '-';
+        const totalVal = getV(row, idxTotal) || '0';
+        const spentVal = getV(row, idxSpent) || '0';
+        const notesVal = getV(row, idxNotes) || '';
+        const totNum   = parseFloat(String(totalVal).replace(/,/g,'')) || 0;
+        const sptNum   = parseFloat(String(spentVal).replace(/,/g,'')) || 0;
+        const bg       = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
+
+        const payload = JSON.stringify({
+            __id: rowId, __rowIndex: row['__rowIndex'],
+            _con: conVal, _no: noVal, _date: dateVal,
+            _total: totalVal, _spent: spentVal, _notes: notesVal
+        }).replace(/"/g, '&quot;');
+
+        return `<div onclick="concfLoadRowForEdit('${payload}')"
+            style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+                   padding:9px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);
+                   background:${bg};transition:background 0.15s;"
+            onmouseover="this.style.background='rgba(245,200,66,0.1)'"
+            onmouseout="this.style.background='${bg}'">
+            <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);font-family:'Cairo',sans-serif;min-width:28px;">#${rowId}</span>
+            <span style="font-size:12px;font-weight:700;color:#f5c842;font-family:'Cairo',sans-serif;">${noVal}</span>
+            ${!filterContractor ? `<span style="font-size:10px;color:rgba(255,255,255,0.45);font-family:'Cairo',sans-serif;">${conVal}</span>` : ''}
+            <span style="font-size:11px;color:rgba(255,255,255,0.5);font-family:'Cairo',sans-serif;">${dateVal}</span>
+            <span style="font-size:12px;font-weight:700;color:#5cc890;font-family:'Cairo',sans-serif;">${totNum ? totNum.toLocaleString('en-US') : totalVal}</span>
+            <span style="font-size:10px;color:rgba(245,200,66,0.8);font-family:'Cairo',sans-serif;">تعديل ✎</span>
+        </div>`;
+    }).join('');
+
+    panel.style.display = 'block';
+}
+
+/*
+ * تحميل صف مقاول للتعديل — يملأ كل الحقول
+ */
+function concfLoadRowForEdit(payloadJson) {
+    let p;
+    try { p = typeof payloadJson === 'string' ? JSON.parse(payloadJson) : payloadJson; }
+    catch(e) { showAlert('❌ خطأ في تحميل البيانات'); return; }
+
+    _concfEditingRow = p;
+    concfSetMode('edit');
+
+    // المقاول
+    const sel = document.getElementById('concf_contractor_select');
+    const cVal = p._con || '';
+    // أضف المقاول كخيار مؤقت إن لم يكن في القائمة
+    if (sel && cVal && ![...sel.options].find(o => o.value === cVal)) {
+        const opt = document.createElement('option');
+        opt.value = cVal; opt.textContent = cVal;
+        sel.appendChild(opt);
+    }
+    if (sel) sel.value = cVal;
     document.getElementById('concf_contractor').value = cVal;
 
-    // --- رقم المستخلص (readonly) ---
-    document.getElementById('concf_statement_no').value = row[noKey] || '';
-
-    // --- التاريخ ---
-    document.getElementById('concf_date').value = row[dateKey] || '';
-
-    // --- القيمة الإجمالية ---
-    if (totalKey) document.getElementById('concf_total').value = String(row[totalKey] || '').replace(/,/g,'');
-
-    // --- القيمة المصروفة ---
-    if (spentKey) document.getElementById('concf_spent').value = String(row[spentKey] || '').replace(/,/g,'');
-
-    // --- الملاحظات ---
-    if (notesKey) document.getElementById('concf_notes').value = row[notesKey] || '';
+    document.getElementById('concf_statement_no').value = p._no    || '';
+    document.getElementById('concf_date').value          = p._date  || '';
+    document.getElementById('concf_total').value         = String(p._total || '').replace(/,/g, '');
+    document.getElementById('concf_spent').value         = String(p._spent || '').replace(/,/g, '');
+    document.getElementById('concf_notes').value         = p._notes || '';
 
     concfUpdatePreview();
     const hist = document.getElementById('concf_history_panel');
@@ -7554,51 +7695,13 @@ function concfLoadRowForEdit(rowJson) {
     showAlert('✏️ تم تحميل مستخلص المقاول للتعديل', 'success');
 }
 
-function concfBuildHistory(rows, filterContractor) {
-    const panel = document.getElementById('concf_history_panel');
-    const list  = document.getElementById('concf_history_list');
-    if (!panel || !list) return;
-    let displayRows = rows.slice();
-    if (filterContractor) {
-        const cKey = Object.keys(rows[0] || {}).find(k => /contractor|مقاول/i.test(k)) || '';
-        displayRows = rows.filter(r => (r[cKey] || '').trim() === filterContractor.trim());
-    }
-    if (!displayRows.length) { panel.style.display = 'none'; return; }
-    const keys = Object.keys(displayRows[0]).filter(k => !k.startsWith('__'));
-    const noKey     = keys.find(k => /statement|مستخلص|رقم/i.test(k)) || keys[0];
-    const dateKey   = keys.find(k => /date|تاريخ/i.test(k)) || keys[1];
-    const totalKey  = keys.find(k => /total|إجمالي/i.test(k));
-    const cKey      = keys.find(k => /contractor|مقاول/i.test(k));
-    list.innerHTML = displayRows.slice().reverse().map((row, i) => {
-        const num  = row[noKey]    || '-';
-        const date = row[dateKey]  || '-';
-        const tot  = totalKey ? row[totalKey] : '-';
-        const con  = cKey ? row[cKey] : '';
-        const bg   = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
-        return `<div onclick="concfLoadRowForEdit(${JSON.stringify(row).replace(/"/g,'&quot;')})"
-            style="display:flex;align-items:center;justify-content:space-between;gap:8px;
-                   padding:9px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);
-                   background:${bg};transition:background 0.15s;"
-            onmouseover="this.style.background='rgba(245,200,66,0.1)'"
-            onmouseout="this.style.background='${bg}'">
-            <span style="font-size:12px;font-weight:700;color:#f5c842;font-family:'Cairo',sans-serif;">${num}</span>
-            ${!filterContractor && con ? `<span style="font-size:10px;color:rgba(255,255,255,0.5);font-family:'Cairo',sans-serif;">${con}</span>` : ''}
-            <span style="font-size:11px;color:rgba(255,255,255,0.5);font-family:'Cairo',sans-serif;">${date}</span>
-            <span style="font-size:12px;font-weight:700;color:#5cc890;font-family:'Cairo',sans-serif;">${parseFloat(String(tot).replace(/,/g,''))||tot}</span>
-            <span style="font-size:10px;color:rgba(245,200,66,0.8);font-family:'Cairo',sans-serif;">تعديل ✎</span>
-        </div>`;
-    }).join('');
-    panel.style.display = 'block';
-}
-
 function concfReset(keepDate = false) {
     document.getElementById('concf_contractor_select').value = '';
-    document.getElementById('concf_contractor').value = '';
-    if (document.getElementById('concf_contractor_text')) document.getElementById('concf_contractor_text').value = '';
-    document.getElementById('concf_statement_no').value = '';
-    document.getElementById('concf_total').value = '';
-    document.getElementById('concf_spent').value = '';
-    document.getElementById('concf_notes').value = '';
+    document.getElementById('concf_contractor').value        = '';
+    document.getElementById('concf_statement_no').value      = '';
+    document.getElementById('concf_total').value             = '';
+    document.getElementById('concf_spent').value             = '';
+    document.getElementById('concf_notes').value             = '';
     if (!keepDate) document.getElementById('concf_date').value = new Date().toISOString().split('T')[0];
     document.getElementById('concf_preview').style.display = 'none';
     concfHideFeedback();
@@ -7609,14 +7712,14 @@ function concfReset(keepDate = false) {
 }
 
 function concfUpdatePreview() {
-    const total   = parseFloat(document.getElementById('concf_total').value) || 0;
-    const spent   = parseFloat(document.getElementById('concf_spent').value) || 0;
+    const total     = parseFloat(document.getElementById('concf_total').value) || 0;
+    const spent     = parseFloat(document.getElementById('concf_spent').value) || 0;
     const remaining = Math.max(0, total - spent);
-    const preview = document.getElementById('concf_preview');
+    const preview   = document.getElementById('concf_preview');
     if (total > 0 || spent > 0) {
         preview.style.display = 'grid';
-        document.getElementById('concf_prev_total').textContent     = total.toLocaleString('en-US', { maximumFractionDigits: 2 });
-        document.getElementById('concf_prev_spent').textContent     = spent.toLocaleString('en-US', { maximumFractionDigits: 2 });
+        document.getElementById('concf_prev_total').textContent     = total.toLocaleString('en-US',     { maximumFractionDigits: 2 });
+        document.getElementById('concf_prev_spent').textContent     = spent.toLocaleString('en-US',     { maximumFractionDigits: 2 });
         document.getElementById('concf_prev_remaining').textContent = remaining.toLocaleString('en-US', { maximumFractionDigits: 2 });
     } else {
         preview.style.display = 'none';
@@ -7626,18 +7729,30 @@ function concfUpdatePreview() {
 function concfShowFeedback(msg, type) {
     const fb = document.getElementById('concf_feedback');
     fb.style.display = 'block';
-    fb.style.background = type === 'success' ? 'rgba(39,174,106,0.15)' : type === 'loading' ? 'rgba(245,200,66,0.1)' : 'rgba(244,67,54,0.15)';
-    fb.style.border = type === 'success' ? '1px solid rgba(39,174,106,0.4)' : type === 'loading' ? '1px solid rgba(245,200,66,0.3)' : '1px solid rgba(244,67,54,0.4)';
-    fb.style.color = type === 'success' ? '#5cc890' : type === 'loading' ? '#f5c842' : '#ff8a80';
+    fb.style.background = type === 'success' ? 'rgba(39,174,106,0.15)'
+                        : type === 'loading'  ? 'rgba(245,200,66,0.1)'
+                        : 'rgba(244,67,54,0.15)';
+    fb.style.border = type === 'success' ? '1px solid rgba(39,174,106,0.4)'
+                    : type === 'loading'  ? '1px solid rgba(245,200,66,0.3)'
+                    : '1px solid rgba(244,67,54,0.4)';
+    fb.style.color  = type === 'success' ? '#5cc890'
+                    : type === 'loading'  ? '#f5c842'
+                    : '#ff8a80';
     fb.textContent = msg;
     if (type === 'success') setTimeout(() => concfHideFeedback(), 4000);
 }
 
 function concfHideFeedback() {
     const fb = document.getElementById('concf_feedback');
-    if (fb) fb.style.display = 'none';
+    if (fb) { fb.style.display = 'none'; }
 }
 
+/*
+ * concfSubmit — يرسل للـ Apps Script:
+ *   - insert: action="insert"
+ *   - update: action="update" + id=__id
+ * بعد النجاح: يمسح الكاش، يعيد جلب البيانات، يحدث القائمة والداشبورد
+ */
 async function concfSubmit() {
     concfHideFeedback();
     const contractor   = document.getElementById('concf_contractor').value.trim();
@@ -7649,7 +7764,7 @@ async function concfSubmit() {
     const isEdit       = !!_concfEditingRow;
 
     if (!contractor)   { concfShowFeedback('❌ يرجى اختيار المقاول', 'error'); return; }
-    if (!statement_no) { concfShowFeedback('❌ رقم المستخلص غير موجود', 'error'); return; }
+    if (!statement_no) { concfShowFeedback('❌ رقم المستخلص مفقود', 'error'); return; }
     if (!date)         { concfShowFeedback('❌ يرجى اختيار التاريخ', 'error'); return; }
     if (!total || total <= 0) { concfShowFeedback('❌ يرجى إدخال قيمة الأعمال الإجمالية', 'error'); return; }
 
@@ -7658,33 +7773,66 @@ async function concfSubmit() {
     btn.textContent = '⏳ جاري الحفظ...';
     concfShowFeedback('⏳ جاري إرسال البيانات...', 'loading');
 
-    const rowIndex = isEdit ? (_concfEditingRow['__rowIndex'] || null) : null;
+    const payload = {
+        action      : isEdit ? 'update' : 'insert',
+        id          : isEdit ? String(_concfEditingRow['__id'] || '') : '',
+        contractor,
+        statement_no, date,
+        total : Number(total),
+        spent : Number(spent),
+        notes
+    };
 
     try {
-        const r = await fetch(CONTRACTOR_CF_SCRIPT_URL, {
+        const r    = await fetch(CONTRACTOR_CF_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: isEdit ? 'update' : 'insert',
-                rowIndex,
-                contractor,
-                statement_no,
-                date,
-                total:  Number(total),
-                spent:  Number(spent),
-                notes
-            }),
+            body: JSON.stringify(payload),
             redirect: 'follow'
         });
         const text = await r.text();
         let resp = {};
         try { resp = JSON.parse(text); } catch(e) {}
+
         if (resp.status === 'success' || r.ok) {
-            const msg = isEdit ? '✅ تم تحديث مستخلص المقاول!' : '✅ تم حفظ المستخلص في سجل المقاولين!';
+            const msg = isEdit ? '✅ تم تحديث مستخلص المقاول بنجاح!' : '✅ تم حفظ المستخلص بنجاح!';
             concfShowFeedback(msg, 'success');
             showAlert(msg, 'success');
+
+            // ── إعادة جلب البيانات وتحديث القائمة والداشبورد ──
             _concfRowsCache = null;
-            setTimeout(() => concfReset(), 2500);
+            try {
+                const { headers, rows } = await _cfFetchRows(CONTRACTOR_CF_SHEET_READ_ID);
+                _concfRowsCache = rows;
+                _concfHeaders   = headers;
+                // تحديث قائمة الاسترجاع (مفلترة بالمقاول الحالي إن وُجد)
+                concfBuildHistory(rows, headers, contractor || null);
+                // تحديث الداشبورد إن كان مفتوحاً على تبويب المقاولين
+                if (document.getElementById('cashflowModal')?.classList.contains('active')) {
+                    cashflowData['contractors'] = null;
+                    if (cfActiveTab === 'contractors') {
+                        loadCfData('contractors', CASHFLOW_CONTRACTORS_SHEET);
+                    }
+                }
+                // تحديث رقم المستخلص التالي للمقاول الحالي
+                if (!isEdit && contractor) {
+                    const h    = headers.map(x => x.trim());
+                    const cKey = h[1] || '';
+                    const noKey = h[2] || '';
+                    if (cKey && noKey) {
+                        const cRows = rows.filter(r =>
+                            (r[cKey] || '').trim().toLowerCase() === contractor.toLowerCase()
+                        );
+                        document.getElementById('concf_statement_no').value =
+                            _cfNextStatementNo(cRows.length ? cRows : rows, noKey);
+                    }
+                }
+            } catch(e) { console.warn('concf post-save fetch:', e.message); }
+
+            setTimeout(() => {
+                if (!isEdit) concfReset(true);
+                else { concfSetMode('new'); _concfEditingRow = null; }
+            }, 2000);
         } else {
             throw new Error(resp.message || 'فشل الحفظ');
         }
