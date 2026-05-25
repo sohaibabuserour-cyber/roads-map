@@ -7584,12 +7584,6 @@ function concfLoadRowForEdit(rowJson) {
     showAlert('✏️ تم تحميل مستخلص المقاول للتعديل', 'success');
 }
 
-    concfUpdatePreview();
-    const hist = document.getElementById('concf_history_panel');
-    if (hist) hist.style.display = 'none';
-    showAlert('✏️ تم تحميل مستخلص المقاول للتعديل', 'success');
-}
-
 function concfBuildHistory(rows, filterContractor) {
     const panel = document.getElementById('concf_history_panel');
     const list  = document.getElementById('concf_history_list');
