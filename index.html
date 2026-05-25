@@ -7427,22 +7427,16 @@ async function openContractorCashflowForm() {
     concfSetMode('new');
     concfPopulateContractors();
     concfReset(true);
-    // جلب آخر رقم مستخلص
+    // جلب كل المستخلصات مسبقاً للكاش — بدون تعيين رقم حتى يختار المقاول
     try {
-        const inp = document.getElementById('concf_statement_no');
-        inp.placeholder = '⏳ جاري الجلب...';
         const { rows } = await _cfFetchRows(CONTRACTOR_CF_SHEET_READ_ID);
         _concfRowsCache = rows;
-        const noKey = Object.keys(rows[0] || {})[0] || 'statement_no';
-        const next = _cfNextStatementNo(rows, noKey);
-        inp.value = next;
-        inp.style.borderColor = 'rgba(245,200,66,0.6)';
-        inp.title = 'رقم تلقائي — للعرض فقط';
-        concfBuildHistory(rows);
     } catch(e) {
-        console.warn('concf fetch last no:', e.message);
-        document.getElementById('concf_statement_no').placeholder = 'مثال: 001';
+        console.warn('concf fetch rows:', e.message);
     }
+    // إخفاء خانة رقم المستخلص حتى يختار المقاول
+    const noWrap = document.getElementById('concf_statement_no_wrap');
+    if (noWrap) noWrap.style.display = 'none';
 }
 
 function closeContractorCashflowForm() {
@@ -7473,20 +7467,51 @@ function concfPopulateContractors() {
 
 function concfSyncContractor(val) {
     document.getElementById('concf_contractor').value = val;
-    // جلب آخر مستخلص لهذا المقاول وعرضه
-    if (val && _concfRowsCache) {
+    const noWrap = document.getElementById('concf_statement_no_wrap');
+    const inp    = document.getElementById('concf_statement_no');
+
+    if (!val) {
+        // أخفِ خانة الرقم عند إلغاء الاختيار
+        if (noWrap) noWrap.style.display = 'none';
+        if (inp) inp.value = '';
+        return;
+    }
+
+    // أظهر خانة الرقم
+    if (noWrap) noWrap.style.display = 'block';
+
+    if (_concfRowsCache && _concfRowsCache.length) {
         const cKey = Object.keys(_concfRowsCache[0] || {}).find(k => /contractor|مقاول/i.test(k)) || '';
         const noKey = Object.keys(_concfRowsCache[0] || {})[0] || '';
+        // احسب الرقم التالي بناءً على مستخلصات هذا المقاول فقط
         const contractorRows = _concfRowsCache.filter(r => (r[cKey] || '').trim() === val.trim());
-        if (contractorRows.length) {
-            const next = _cfNextStatementNo(contractorRows, noKey);
-            const inp = document.getElementById('concf_statement_no');
+        const allRows = _concfRowsCache;
+        // الرقم التالي = أكبر رقم في كل المستخلصات + 1 (لا يتكرر الرقم بين المقاولين)
+        const next = _cfNextStatementNo(allRows, noKey);
+        if (inp) {
             inp.value = next;
             inp.style.borderColor = 'rgba(245,200,66,0.6)';
             inp.title = 'رقم تلقائي للمقاول ' + val + ' — للعرض فقط';
         }
-        // عرض تاريخ المقاول
+        // عرض سجل المقاول
         concfBuildHistory(_concfRowsCache, val);
+    } else {
+        // لا يوجد كاش بعد — اجلب البيانات
+        if (inp) { inp.value = ''; inp.placeholder = '⏳ جاري الجلب...'; }
+        _cfFetchRows(CONTRACTOR_CF_SHEET_READ_ID).then(({ rows }) => {
+            _concfRowsCache = rows;
+            const noKey = Object.keys(rows[0] || {})[0] || '';
+            const next = _cfNextStatementNo(rows, noKey);
+            if (inp) {
+                inp.value = next;
+                inp.style.borderColor = 'rgba(245,200,66,0.6)';
+                inp.placeholder = 'مثال: 001';
+            }
+            concfBuildHistory(rows, val);
+        }).catch(e => {
+            console.warn('concf fetch on contractor select:', e.message);
+            if (inp) inp.placeholder = 'مثال: 001';
+        });
     }
 }
 
@@ -7514,15 +7539,14 @@ function concfLoadRowForEdit(rowJson) {
     const cKey     = keys.find(k => /contractor|مقاول/i.test(k))      || keys[0];
     const noKey    = keys.find(k => /statement|مستخلص|رقم/i.test(k))  || keys[1];
     const dateKey  = keys.find(k => /date|تاريخ/i.test(k))            || keys[2];
-    const totalKey = keys.find(k => /total|إجمالي/i.test(k));
-    const spentKey = keys.find(k => /spent|مصروف|مدفوع/i.test(k));
+    const totalKey = keys.find(k => /total|إجمالي|مستحق/i.test(k));
+    const spentKey = keys.find(k => /spent|مصروف|مدفوع|منصرف/i.test(k));
     const notesKey = keys.find(k => /notes|ملاحظ/i.test(k));
 
     // --- المقاول ---
     const cVal = row[cKey] || '';
     const sel  = document.getElementById('concf_contractor_select');
     if (sel) {
-        // أضف المقاول كخيار مؤقت إن لم يكن موجوداً
         const existing = [...sel.options].find(o => o.value === cVal.trim());
         if (!existing && cVal) {
             const opt = document.createElement('option');
@@ -7533,20 +7557,32 @@ function concfLoadRowForEdit(rowJson) {
     }
     document.getElementById('concf_contractor').value = cVal;
 
-    // --- رقم المستخلص (readonly) ---
-    document.getElementById('concf_statement_no').value = row[noKey] || '';
+    // --- رقم المستخلص: أظهر الخانة وامل القيمة ---
+    const noWrap = document.getElementById('concf_statement_no_wrap');
+    if (noWrap) noWrap.style.display = 'block';
+    const noInp = document.getElementById('concf_statement_no');
+    if (noInp) {
+        noInp.value = row[noKey] || '';
+        noInp.style.borderColor = 'rgba(245,200,66,0.6)';
+    }
 
     // --- التاريخ ---
     document.getElementById('concf_date').value = row[dateKey] || '';
 
-    // --- القيمة الإجمالية ---
+    // --- المستحق صرفه (total) ---
     if (totalKey) document.getElementById('concf_total').value = String(row[totalKey] || '').replace(/,/g,'');
 
-    // --- القيمة المصروفة ---
+    // --- المنصرف سابقاً (spent) ---
     if (spentKey) document.getElementById('concf_spent').value = String(row[spentKey] || '').replace(/,/g,'');
 
     // --- الملاحظات ---
     if (notesKey) document.getElementById('concf_notes').value = row[notesKey] || '';
+
+    concfUpdatePreview();
+    const hist = document.getElementById('concf_history_panel');
+    if (hist) hist.style.display = 'none';
+    showAlert('✏️ تم تحميل مستخلص المقاول للتعديل', 'success');
+}
 
     concfUpdatePreview();
     const hist = document.getElementById('concf_history_panel');
@@ -7596,6 +7632,9 @@ function concfReset(keepDate = false) {
     document.getElementById('concf_contractor').value = '';
     if (document.getElementById('concf_contractor_text')) document.getElementById('concf_contractor_text').value = '';
     document.getElementById('concf_statement_no').value = '';
+    // أخفِ خانة رقم المستخلص حتى يختار المقاول
+    const noWrap = document.getElementById('concf_statement_no_wrap');
+    if (noWrap) noWrap.style.display = 'none';
     document.getElementById('concf_total').value = '';
     document.getElementById('concf_spent').value = '';
     document.getElementById('concf_notes').value = '';
@@ -7651,7 +7690,7 @@ async function concfSubmit() {
     if (!contractor)   { concfShowFeedback('❌ يرجى اختيار المقاول', 'error'); return; }
     if (!statement_no) { concfShowFeedback('❌ رقم المستخلص غير موجود', 'error'); return; }
     if (!date)         { concfShowFeedback('❌ يرجى اختيار التاريخ', 'error'); return; }
-    if (!total || total <= 0) { concfShowFeedback('❌ يرجى إدخال قيمة الأعمال الإجمالية', 'error'); return; }
+    if (!total || total <= 0) { concfShowFeedback('❌ يرجى إدخال المستحق صرفه', 'error'); return; }
 
     const btn = document.getElementById('concf_submit_btn');
     btn.disabled = true;
@@ -9761,7 +9800,7 @@ function importEquipmentTypesFromCSV() {
 
             <!-- رقم المستخلص + التاريخ -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
-                <div>
+                <div id="concf_statement_no_wrap" style="display:none;">
                     <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📄 رقم المستخلص</label>
                     <input type="text" id="concf_statement_no" class="eq-form-input" readonly style="cursor:not-allowed;opacity:0.75;background:rgba(255,255,255,0.03);border-color:rgba(245,200,66,0.4);" title="رقم تلقائي — للعرض فقط">
                 </div>
@@ -9771,26 +9810,26 @@ function importEquipmentTypesFromCSV() {
                 </div>
             </div>
 
-            <!-- قيمة الأعمال الإجمالية -->
+            <!-- المستحق صرفه -->
             <div style="margin-bottom:16px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📊 قيمة الأعمال الإجمالية (ريال)</label>
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📊 المستحق صرفه (ريال)</label>
                 <input type="number" id="concf_total" placeholder="0.00" min="0" step="0.01" class="eq-form-input" oninput="concfUpdatePreview()">
             </div>
 
-            <!-- القيمة المصروفة -->
+            <!-- المنصرف سابقًا -->
             <div style="margin-bottom:16px;">
-                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">✅ القيمة المصروفة (ريال)</label>
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">✅ المنصرف سابقًا (ريال)</label>
                 <input type="number" id="concf_spent" placeholder="0.00" min="0" step="0.01" class="eq-form-input" oninput="concfUpdatePreview()">
             </div>
 
             <!-- معاينة المتبقي -->
             <div id="concf_preview" style="display:none;padding:14px 18px;background:rgba(106,45,145,0.1);border:1px solid rgba(106,45,145,0.3);border-radius:10px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
                 <div>
-                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);font-family:'Cairo',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">الإجمالي</div>
+                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);font-family:'Cairo',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">المستحق صرفه</div>
                     <div style="font-size:16px;font-weight:900;color:#f5c842;font-family:'Cairo',sans-serif;" id="concf_prev_total">—</div>
                 </div>
                 <div>
-                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);font-family:'Cairo',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">المصروف</div>
+                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);font-family:'Cairo',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">المنصرف سابقًا</div>
                     <div style="font-size:16px;font-weight:900;color:#5cc890;font-family:'Cairo',sans-serif;" id="concf_prev_spent">—</div>
                 </div>
                 <div>
