@@ -3188,6 +3188,25 @@
             </div>
         </div>
 
+        <!-- تبويب الإضافة -->
+        <div class="nav-tab" id="navTabAdd" style="flex-shrink:0;position:relative;" onclick="toggleAddDropdown(event)">
+            <span>✏️ إضافة</span>
+            <div class="tab-sub-dropdown" id="addDropdown" style="min-width:220px;">
+                <div class="tab-sub-item" onclick="openEquipmentFormModal();closeAddDropdown()">
+                    <span style="font-size:14px;">🚜</span>
+                    <label>تسجيل معدات</label>
+                </div>
+                <div class="tab-sub-item" onclick="openCompanyCashflowForm();closeAddDropdown()">
+                    <span style="font-size:14px;">🏢</span>
+                    <label>تدفق نقدي - الشركة</label>
+                </div>
+                <div class="tab-sub-item" onclick="openContractorCashflowForm();closeAddDropdown()">
+                    <span style="font-size:14px;">👷</span>
+                    <label>تدفق نقدي - المقاولون</label>
+                </div>
+            </div>
+        </div>
+
         <!-- Category tabs (dynamic) -->
         <div class="nav-tabs" id="navTabs"></div>
 
@@ -5244,7 +5263,7 @@ function closeCashflowModal() {
 
 // Close on Escape key
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeCashflowModal(); closeBillsModal(); closeEquipmentModal(); closeReportsDropdown(); }
+    if (e.key === 'Escape') { closeCashflowModal(); closeBillsModal(); closeEquipmentModal(); closeReportsDropdown(); closeAddDropdown(); closeCompanyCashflowForm(); closeContractorCashflowForm(); }
 });
 
 function switchCfTab(tab) {
@@ -7115,7 +7134,273 @@ function closeReportsDropdown() {
     if (tab) tab.classList.remove('active');
 }
 
-document.addEventListener('click', () => closeReportsDropdown());
+/* ── Add Tab Dropdown ── */
+function toggleAddDropdown(e) {
+    e.stopPropagation();
+    const dd  = document.getElementById('addDropdown');
+    const tab = document.getElementById('navTabAdd');
+    const isOpen = dd.style.display === 'flex';
+    document.querySelectorAll('.tab-sub-dropdown').forEach(d => d.style.display = 'none');
+    document.querySelectorAll('.notif-panel,.theme-panel,.user-dropdown,.contractor-panel,.settings-panel').forEach(p => p.classList.remove('active'));
+    if (!isOpen) {
+        const rect = tab.getBoundingClientRect();
+        dd.style.left  = rect.left + 'px';
+        dd.style.right = 'auto';
+        dd.style.display = 'flex';
+        tab.classList.add('active');
+    } else {
+        tab.classList.remove('active');
+    }
+}
+
+function closeAddDropdown() {
+    const dd  = document.getElementById('addDropdown');
+    const tab = document.getElementById('navTabAdd');
+    if (dd) dd.style.display = 'none';
+    if (tab) tab.classList.remove('active');
+}
+
+document.addEventListener('click', () => { closeReportsDropdown(); closeAddDropdown(); });
+
+/* ====================================================
+   COMPANY CASHFLOW FORM
+   ==================================================== */
+
+const COMPANY_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGIT6QiwUijkUXHo043WfYLm3GPT5FW592Npg4zo40vUGKXP9wJK1lHepvZxlgznp5/exec";
+
+function openCompanyCashflowForm() {
+    openModal('companyCashflowModal');
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('ccf_date').value = today;
+    ccfReset(true);
+}
+
+function closeCompanyCashflowForm() {
+    closeModal('companyCashflowModal');
+}
+
+function ccfReset(keepDate = false) {
+    document.getElementById('ccf_statement_no').value = '';
+    document.getElementById('ccf_amount').value = '';
+    document.getElementById('ccf_status').value = 'مدفوع';
+    document.getElementById('ccf_notes').value = '';
+    if (!keepDate) {
+        document.getElementById('ccf_date').value = new Date().toISOString().split('T')[0];
+    }
+    document.getElementById('ccf_preview').style.display = 'none';
+    ccfHideFeedback();
+}
+
+function ccfUpdatePreview() {
+    const amt = parseFloat(document.getElementById('ccf_amount').value) || 0;
+    const preview = document.getElementById('ccf_preview');
+    const prevAmt = document.getElementById('ccf_preview_amount');
+    if (amt > 0) {
+        preview.style.display = 'block';
+        prevAmt.textContent = amt.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function ccfShowFeedback(msg, type) {
+    const fb = document.getElementById('ccf_feedback');
+    fb.style.display = 'block';
+    fb.style.background = type === 'success' ? 'rgba(39,174,106,0.15)' : type === 'loading' ? 'rgba(245,200,66,0.1)' : 'rgba(244,67,54,0.15)';
+    fb.style.border = type === 'success' ? '1px solid rgba(39,174,106,0.4)' : type === 'loading' ? '1px solid rgba(245,200,66,0.3)' : '1px solid rgba(244,67,54,0.4)';
+    fb.style.color = type === 'success' ? '#5cc890' : type === 'loading' ? '#f5c842' : '#ff8a80';
+    fb.textContent = msg;
+    if (type === 'success') setTimeout(() => ccfHideFeedback(), 4000);
+}
+
+function ccfHideFeedback() {
+    const fb = document.getElementById('ccf_feedback');
+    if (fb) fb.style.display = 'none';
+}
+
+async function ccfSubmit() {
+    ccfHideFeedback();
+    const statement_no = document.getElementById('ccf_statement_no').value.trim();
+    const date         = document.getElementById('ccf_date').value.trim();
+    const amount       = parseFloat(document.getElementById('ccf_amount').value) || 0;
+    const status       = document.getElementById('ccf_status').value.trim();
+    const notes        = document.getElementById('ccf_notes').value.trim();
+
+    if (!statement_no) { ccfShowFeedback('❌ يرجى إدخال رقم المستخلص', 'error'); return; }
+    if (!date)         { ccfShowFeedback('❌ يرجى اختيار التاريخ', 'error'); return; }
+    if (!amount || amount <= 0) { ccfShowFeedback('❌ يرجى إدخال مبلغ صحيح أكبر من صفر', 'error'); return; }
+
+    const btn = document.getElementById('ccf_submit_btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري الحفظ...';
+    ccfShowFeedback('⏳ جاري إرسال البيانات...', 'loading');
+
+    try {
+        const r = await fetch(COMPANY_CF_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ statement_no, date, amount, status, notes }),
+            redirect: 'follow'
+        });
+        const text = await r.text();
+        let resp = {};
+        try { resp = JSON.parse(text); } catch(e) {}
+        if (resp.status === 'success' || r.ok) {
+            ccfShowFeedback('✅ تم حفظ المستخلص بنجاح في سجل الشركة!', 'success');
+            showAlert('✅ تم تسجيل التدفق النقدي للشركة', 'success');
+            setTimeout(() => ccfReset(), 2500);
+        } else {
+            throw new Error(resp.message || 'فشل الحفظ');
+        }
+    } catch(e) {
+        console.error('Company CF submit error:', e);
+        ccfShowFeedback('❌ تعذر الحفظ: ' + (e.message || 'خطأ في الاتصال'), 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 حفظ في السجل';
+    }
+}
+
+/* ====================================================
+   CONTRACTOR CASHFLOW FORM
+   ==================================================== */
+
+const CONTRACTOR_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8c2Yo670Z5i472Jr1Fs3NS37qks_3xMuEbWdAfhp9i1hNVCGFYACKQdmZrAvH2AKavQ/exec";
+
+function openContractorCashflowForm() {
+    openModal('contractorCashflowModal');
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('concf_date').value = today;
+    concfPopulateContractors();
+    concfReset(true);
+}
+
+function closeContractorCashflowForm() {
+    closeModal('contractorCashflowModal');
+}
+
+function concfPopulateContractors() {
+    const sel = document.getElementById('concf_contractor_select');
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">-- اختر من القائمة --</option>';
+    const contractors = new Set();
+    Object.values(allData || {}).forEach(sheetData => {
+        Object.values(sheetData).forEach(row => {
+            const c = (row['CONTRACTOR'] || '').trim();
+            if (c) contractors.add(c);
+        });
+    });
+    Object.keys(contractorMap || {}).forEach(name => {
+        if (name.trim()) contractors.add(name.trim());
+    });
+    [...contractors].sort((a,b) => a.localeCompare(b,'ar')).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name; opt.textContent = name;
+        sel.appendChild(opt);
+    });
+    if (currentVal) sel.value = currentVal;
+}
+
+function concfSyncContractor(val) {
+    document.getElementById('concf_contractor').value = val;
+    document.getElementById('concf_contractor_text').value = val;
+}
+
+function concfSyncContractorText(val) {
+    document.getElementById('concf_contractor').value = val;
+    const sel = document.getElementById('concf_contractor_select');
+    const found = [...sel.options].some(o => o.value === val);
+    sel.value = found ? val : '';
+}
+
+function concfReset(keepDate = false) {
+    document.getElementById('concf_contractor_select').value = '';
+    document.getElementById('concf_contractor_text').value = '';
+    document.getElementById('concf_contractor').value = '';
+    document.getElementById('concf_statement_no').value = '';
+    document.getElementById('concf_total').value = '';
+    document.getElementById('concf_spent').value = '';
+    document.getElementById('concf_notes').value = '';
+    if (!keepDate) document.getElementById('concf_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('concf_preview').style.display = 'none';
+    concfHideFeedback();
+}
+
+function concfUpdatePreview() {
+    const total   = parseFloat(document.getElementById('concf_total').value) || 0;
+    const spent   = parseFloat(document.getElementById('concf_spent').value) || 0;
+    const remaining = Math.max(0, total - spent);
+    const preview = document.getElementById('concf_preview');
+    if (total > 0 || spent > 0) {
+        preview.style.display = 'grid';
+        document.getElementById('concf_prev_total').textContent     = total.toLocaleString('en-US', { maximumFractionDigits: 2 });
+        document.getElementById('concf_prev_spent').textContent     = spent.toLocaleString('en-US', { maximumFractionDigits: 2 });
+        document.getElementById('concf_prev_remaining').textContent = remaining.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function concfShowFeedback(msg, type) {
+    const fb = document.getElementById('concf_feedback');
+    fb.style.display = 'block';
+    fb.style.background = type === 'success' ? 'rgba(39,174,106,0.15)' : type === 'loading' ? 'rgba(245,200,66,0.1)' : 'rgba(244,67,54,0.15)';
+    fb.style.border = type === 'success' ? '1px solid rgba(39,174,106,0.4)' : type === 'loading' ? '1px solid rgba(245,200,66,0.3)' : '1px solid rgba(244,67,54,0.4)';
+    fb.style.color = type === 'success' ? '#5cc890' : type === 'loading' ? '#f5c842' : '#ff8a80';
+    fb.textContent = msg;
+    if (type === 'success') setTimeout(() => concfHideFeedback(), 4000);
+}
+
+function concfHideFeedback() {
+    const fb = document.getElementById('concf_feedback');
+    if (fb) fb.style.display = 'none';
+}
+
+async function concfSubmit() {
+    concfHideFeedback();
+    const contractor   = document.getElementById('concf_contractor').value.trim();
+    const statement_no = document.getElementById('concf_statement_no').value.trim();
+    const date         = document.getElementById('concf_date').value.trim();
+    const total        = parseFloat(document.getElementById('concf_total').value) || 0;
+    const spent        = parseFloat(document.getElementById('concf_spent').value) || 0;
+    const notes        = document.getElementById('concf_notes').value.trim();
+
+    if (!contractor)   { concfShowFeedback('❌ يرجى اختيار أو إدخال اسم المقاول', 'error'); return; }
+    if (!statement_no) { concfShowFeedback('❌ يرجى إدخال رقم المستخلص', 'error'); return; }
+    if (!date)         { concfShowFeedback('❌ يرجى اختيار التاريخ', 'error'); return; }
+    if (!total || total <= 0) { concfShowFeedback('❌ يرجى إدخال قيمة الأعمال الإجمالية', 'error'); return; }
+
+    const btn = document.getElementById('concf_submit_btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري الحفظ...';
+    concfShowFeedback('⏳ جاري إرسال البيانات...', 'loading');
+
+    try {
+        const r = await fetch(CONTRACTOR_CF_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ contractor, statement_no, date, total, spent, notes }),
+            redirect: 'follow'
+        });
+        const text = await r.text();
+        let resp = {};
+        try { resp = JSON.parse(text); } catch(e) {}
+        if (resp.status === 'success' || r.ok) {
+            concfShowFeedback('✅ تم حفظ المستخلص بنجاح في سجل المقاولين!', 'success');
+            showAlert('✅ تم تسجيل التدفق النقدي للمقاول', 'success');
+            setTimeout(() => concfReset(), 2500);
+        } else {
+            throw new Error(resp.message || 'فشل الحفظ');
+        }
+    } catch(e) {
+        console.error('Contractor CF submit error:', e);
+        concfShowFeedback('❌ تعذر الحفظ: ' + (e.message || 'خطأ في الاتصال'), 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 حفظ في السجل';
+    }
+}
 
 /* ── Equipment Modal ── */
 function openEquipmentModal() {
@@ -9048,6 +9333,179 @@ function importEquipmentTypesFromCSV() {
 
         <!-- Band list -->
         <div id="eqBandPickerList" style="flex:1;overflow-y:auto;padding:8px 12px;">
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL: COMPANY CASHFLOW FORM ==================== -->
+<div class="modal" id="companyCashflowModal" style="z-index:65001;padding:20px;align-items:center;justify-content:center;">
+    <div class="bd-modal-overlay" onclick="closeCompanyCashflowForm()" style="position:fixed;inset:0;"></div>
+    <div style="position:relative;z-index:2;display:flex;flex-direction:column;width:min(560px,96vw);max-height:calc(100vh - 40px);background:#0d0d1a;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);box-shadow:0 32px 80px rgba(0,0,0,0.7);animation:cfSlideIn 0.28s cubic-bezier(0.34,1.2,0.64,1);">
+
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#0d1f3c 0%,#1a4a8a 50%,#0a2a50 100%);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:44px;height:44px;background:linear-gradient(135deg,#2196f3,#1565c0);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(33,150,243,0.35);">🏢</div>
+                <div>
+                    <div style="font-size:17px;font-weight:900;color:white;font-family:'Cairo',sans-serif;">تسجيل تدفق نقدي — الشركة</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'Cairo',sans-serif;">إضافة مستخلص جديد للشركة</div>
+                </div>
+            </div>
+            <button class="cf-close-btn" onclick="closeCompanyCashflowForm()">✕</button>
+        </div>
+
+        <!-- Form Body -->
+        <div style="flex:1;overflow-y:auto;padding:24px;">
+
+            <!-- رقم المستخلص -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;letter-spacing:0.3px;">📄 رقم المستخلص</label>
+                <input type="text" id="ccf_statement_no" placeholder="مثال: 001" class="eq-form-input">
+            </div>
+
+            <!-- التاريخ -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📅 تاريخ المستخلص</label>
+                <input type="date" id="ccf_date" class="eq-form-input" style="max-width:240px;">
+            </div>
+
+            <!-- المبلغ -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">💰 المبلغ (ريال سعودي)</label>
+                <input type="number" id="ccf_amount" placeholder="0.00" min="0" step="0.01" class="eq-form-input" oninput="ccfUpdatePreview()">
+            </div>
+
+            <!-- الحالة -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📌 الحالة</label>
+                <select id="ccf_status" class="eq-form-input" style="cursor:pointer;appearance:auto;-webkit-appearance:auto;">
+                    <option value="مدفوع">مدفوع</option>
+                    <option value="معلق">معلق</option>
+                    <option value="جاري التدقيق">جاري التدقيق</option>
+                    <option value="مرفوض">مرفوض</option>
+                </select>
+            </div>
+
+            <!-- ملاحظات -->
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📝 ملاحظات (اختياري)</label>
+                <textarea id="ccf_notes" placeholder="أي ملاحظات إضافية..." rows="3"
+                    style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:9px;color:white;font-size:13px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;text-align:right;direction:rtl;transition:border-color 0.2s;"
+                    onfocus="this.style.borderColor='rgba(33,150,243,0.6)'"
+                    onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+            </div>
+
+            <!-- معاينة -->
+            <div id="ccf_preview" style="display:none;padding:12px 16px;background:rgba(33,150,243,0.08);border:1px solid rgba(33,150,243,0.25);border-radius:10px;margin-bottom:16px;">
+                <div style="font-size:10px;color:rgba(33,150,243,0.8);font-weight:700;font-family:'Cairo',sans-serif;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">معاينة</div>
+                <div style="font-size:22px;font-weight:900;color:#5baddf;font-family:'Cairo',sans-serif;" id="ccf_preview_amount">—</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.35);font-family:'Cairo',sans-serif;margin-top:2px;">ريال سعودي</div>
+            </div>
+
+            <!-- Feedback -->
+            <div id="ccf_feedback" style="display:none;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;text-align:center;margin-bottom:8px;"></div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background:rgba(0,0,0,0.25);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
+            <button onclick="ccfReset()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">🔄 إعادة تعيين</button>
+            <button onclick="ccfSubmit()" id="ccf_submit_btn" style="background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:white;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(33,150,243,0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">💾 حفظ في السجل</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL: CONTRACTOR CASHFLOW FORM ==================== -->
+<div class="modal" id="contractorCashflowModal" style="z-index:65001;padding:20px;align-items:center;justify-content:center;">
+    <div class="bd-modal-overlay" onclick="closeContractorCashflowForm()" style="position:fixed;inset:0;"></div>
+    <div style="position:relative;z-index:2;display:flex;flex-direction:column;width:min(580px,96vw);max-height:calc(100vh - 40px);background:#0d0d1a;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);box-shadow:0 32px 80px rgba(0,0,0,0.7);animation:cfSlideIn 0.28s cubic-bezier(0.34,1.2,0.64,1);">
+
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#1a0a2e 0%,#4a1a6e 50%,#1a0a2e 100%);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:44px;height:44px;background:linear-gradient(135deg,#f5c842,#e8a800);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(245,200,66,0.35);">👷</div>
+                <div>
+                    <div style="font-size:17px;font-weight:900;color:white;font-family:'Cairo',sans-serif;">تسجيل تدفق نقدي — المقاول</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'Cairo',sans-serif;">إضافة مستخلص مقاول جديد</div>
+                </div>
+            </div>
+            <button class="cf-close-btn" onclick="closeContractorCashflowForm()">✕</button>
+        </div>
+
+        <!-- Form Body -->
+        <div style="flex:1;overflow-y:auto;padding:24px;">
+
+            <!-- المقاول -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">👷 المقاول</label>
+                <div style="display:flex;gap:8px;">
+                    <select id="concf_contractor_select" class="eq-form-input" style="flex:1;cursor:pointer;appearance:auto;-webkit-appearance:auto;" onchange="concfSyncContractor(this.value)">
+                        <option value="">-- اختر من القائمة --</option>
+                    </select>
+                    <span style="color:rgba(255,255,255,0.3);font-size:11px;align-self:center;white-space:nowrap;font-family:'Cairo',sans-serif;">أو</span>
+                    <input type="text" id="concf_contractor_text" class="eq-form-input" placeholder="اكتب اسم المقاول..." style="flex:1;" oninput="concfSyncContractorText(this.value)">
+                </div>
+                <input type="hidden" id="concf_contractor">
+            </div>
+
+            <!-- رقم المستخلص + التاريخ -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📄 رقم المستخلص</label>
+                    <input type="text" id="concf_statement_no" placeholder="مثال: 001" class="eq-form-input">
+                </div>
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📅 تاريخ المستخلص</label>
+                    <input type="date" id="concf_date" class="eq-form-input">
+                </div>
+            </div>
+
+            <!-- قيمة الأعمال الإجمالية -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📊 قيمة الأعمال الإجمالية (ريال)</label>
+                <input type="number" id="concf_total" placeholder="0.00" min="0" step="0.01" class="eq-form-input" oninput="concfUpdatePreview()">
+            </div>
+
+            <!-- القيمة المصروفة -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">✅ القيمة المصروفة (ريال)</label>
+                <input type="number" id="concf_spent" placeholder="0.00" min="0" step="0.01" class="eq-form-input" oninput="concfUpdatePreview()">
+            </div>
+
+            <!-- معاينة المتبقي -->
+            <div id="concf_preview" style="display:none;padding:14px 18px;background:rgba(106,45,145,0.1);border:1px solid rgba(106,45,145,0.3);border-radius:10px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
+                <div>
+                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);font-family:'Cairo',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">الإجمالي</div>
+                    <div style="font-size:16px;font-weight:900;color:#f5c842;font-family:'Cairo',sans-serif;" id="concf_prev_total">—</div>
+                </div>
+                <div>
+                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);font-family:'Cairo',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">المصروف</div>
+                    <div style="font-size:16px;font-weight:900;color:#5cc890;font-family:'Cairo',sans-serif;" id="concf_prev_spent">—</div>
+                </div>
+                <div>
+                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);font-family:'Cairo',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">المتبقي</div>
+                    <div style="font-size:16px;font-weight:900;color:#5baddf;font-family:'Cairo',sans-serif;" id="concf_prev_remaining">—</div>
+                </div>
+            </div>
+
+            <!-- ملاحظات -->
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);margin-bottom:7px;font-family:'Cairo',sans-serif;">📝 ملاحظات (اختياري)</label>
+                <textarea id="concf_notes" placeholder="أي ملاحظات إضافية..." rows="3"
+                    style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:9px;color:white;font-size:13px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;text-align:right;direction:rtl;transition:border-color 0.2s;"
+                    onfocus="this.style.borderColor='rgba(245,200,66,0.6)'"
+                    onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+            </div>
+
+            <!-- Feedback -->
+            <div id="concf_feedback" style="display:none;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;text-align:center;margin-bottom:8px;"></div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background:rgba(0,0,0,0.25);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
+            <button onclick="concfReset()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">🔄 إعادة تعيين</button>
+            <button onclick="concfSubmit()" id="concf_submit_btn" style="background:linear-gradient(135deg,#f5c842,#e8a800);border:none;color:#1a0a2e;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(245,200,66,0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">💾 حفظ في السجل</button>
         </div>
     </div>
 </div>
