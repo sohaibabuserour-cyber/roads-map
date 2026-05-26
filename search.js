@@ -1,128 +1,67 @@
-/* ====================================================
-   SEARCH
-   ==================================================== */
+// ====================================================
+// SEARCH
+// ====================================================
 
-function updateSearchDropdown(query) {
+function positionDropdown() {
+    const dd  = document.getElementById("searchDropdown");
+    const box = document.querySelector(".search-wrap");
+    if (!box || !dd.classList.contains("active")) return;
+    const r = box.getBoundingClientRect();
+    dd.style.top   = r.bottom + "px";
+    dd.style.left  = r.left   + "px";
+    dd.style.width = r.width  + "px";
+    dd.style.right = "auto";
+}
 
-    const dd = document.getElementById("searchDropdown");
+function updateSearchDropdown() {
+    const dd    = document.getElementById("searchDropdown");
     const input = document.getElementById("searchInput");
+    const q     = input.value.trim().toLowerCase();
+    dd.innerHTML = "";
 
-    if (!dd || !input) return;
-
-    const q = (query || input.value || "").trim().toLowerCase();
-
-    // empty → hide
-    if (!q) {
-        dd.classList.remove("active");
-        dd.innerHTML = "";
-        return;
-    }
+    if (!q) { dd.classList.remove("active"); return; }
 
     const results = [];
-
     Object.entries(allData).forEach(([sheetId, data]) => {
-
         Object.values(data).forEach(row => {
-
-            const name =
-                row["ROAD NAME"] ||
-                row["BLOCK NAME"] ||
-                row["NAME"] ||
-                "";
-
-            const nameLower = name.toLowerCase();
-
-            if (!nameLower.includes(q)) return;
-
-            const id = row["ID"];
-            const key = `${sheetId}-${name}`;
-
-            const leaf = allFeatures[key];
-
-            results.push({
-                id,
-                name,
-                sheetId,
-                row,
-                leaflet: leaf
-            });
+            const name = (row["ROAD NAME"]||row["BLOCK NAME"]||row["NAME"]||"").trim().toLowerCase();
+            if (name.includes(q)) {
+                const dispName = row["ROAD NAME"]||row["BLOCK NAME"]||row["NAME"]||"بدون اسم";
+                results.push({ name: dispName, status: row["STATUS"]||"", key: `${sheetId}-${dispName}` });
+            }
         });
     });
 
     if (!results.length) {
-        dd.innerHTML = `<div class="search-item">لا يوجد نتائج</div>`;
-        dd.classList.add("active");
-        positionDropdown();
-        return;
+        dd.innerHTML = "<div style='padding:10px;text-align:right;color:#999;font-size:12px'>لا توجد نتائج</div>";
+    } else {
+        results.forEach(item => {
+            const el = document.createElement("div");
+            el.className = "search-item";
+            el.innerHTML = `
+                <span class="search-badge" style="background:${statusColor(item.status)}">${item.status||"-"}</span>
+                <div class="search-item-name">${item.name}</div>`;
+            el.addEventListener("click", () => {
+                const layer = allFeatures[item.key];
+                if (layer) {
+                    if (map && defaultCoords) {
+                        map.setView([defaultCoords.lat, defaultCoords.lng], defaultCoords.zoom);
+                    }
+                    setTimeout(() => {
+                        flashLayer(layer);
+                        setTimeout(() => layer.openPopup(), 700);
+                    }, 100);
+                }
+                input.value = "";
+                dd.classList.remove("active");
+            });
+            dd.appendChild(el);
+        });
     }
-
-    // limit results
-    const sliced = results.slice(0, 20);
-
-    dd.innerHTML = sliced.map(r => {
-
-        const status = r.row["STATUS"] || "";
-        const cls    = statusCls(status);
-
-        return `
-        <div class="search-item"
-             onclick="selectSearchResult('${r.sheetId}','${r.id}','${r.name}')">
-
-            <div class="search-item-name">${r.name}</div>
-
-            <div class="search-badge ${cls}">
-                ${status}
-            </div>
-        </div>`;
-    }).join('');
 
     dd.classList.add("active");
     positionDropdown();
 }
 
-
-/* ====================================================
-   SELECT RESULT
-   ==================================================== */
-
-function selectSearchResult(sheetId, id, name) {
-
-    const dd = document.getElementById("searchDropdown");
-    dd.classList.remove("active");
-
-    const key = `${sheetId}-${name}`;
-    const layer = allFeatures[key];
-
-    if (!layer) return;
-
-    const bounds = layer.getBounds();
-
-    map.fitBounds(bounds, {
-        maxZoom: 17,
-        animate: true
-    });
-
-    flashLayer(layer);
-
-    setTimeout(() => {
-        layer.openPopup();
-    }, 300);
-}
-
-
-/* ====================================================
-   POSITION DROPDOWN
-   ==================================================== */
-
-function positionDropdown() {
-    const input = document.getElementById("searchInput");
-    const dd    = document.getElementById("searchDropdown");
-
-    if (!input || !dd) return;
-
-    const rect = input.getBoundingClientRect();
-
-    dd.style.top  = (rect.bottom + window.scrollY) + "px";
-    dd.style.left = (rect.left + window.scrollX) + "px";
-    dd.style.width = rect.width + "px";
-}
+document.getElementById("searchInput").addEventListener("input", updateSearchDropdown);
+window.addEventListener("resize", () => { if (map) map.invalidateSize(); positionDropdown(); });

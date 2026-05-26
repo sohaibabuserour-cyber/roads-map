@@ -1,100 +1,94 @@
-/* =============================================
-   GLOBALS
-============================================= */
-let map = null;
-let currentUser = null;
+// ====================================================
+// MAIN APPLICATION FLOW
+// ====================================================
 
-/* =============================================
-   INIT
-============================================= */
-document.addEventListener("DOMContentLoaded", () => {
+async function enterApp() {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("mainApp").classList.add("visible");
 
-    const btn = document.getElementById("loginBtn");
-
-    if (btn) {
-        btn.addEventListener("click", doLogin);
+    if (currentUser.isAdmin) {
+        document.body.classList.add("is-admin");
+    } else {
+        document.body.classList.remove("is-admin");
     }
 
+    updateUserUI();
+    initMap();
+    loadEquipmentData();
+
+    await loadCategoriesConfig();
+    await loadDefaultCoords();
+    loadSimilarGroups();
+
+    const savedSel = sessionStorage.getItem("selectedStatuses");
+    if (savedSel) selectedStatuses = JSON.parse(savedSel);
+
+    const savedItems = sessionStorage.getItem("selectedItems");
+    if (savedItems) selectedItems = JSON.parse(savedItems);
+
+    renderItems();
+    renderNavTabs();
+
+    const hasAnySelection = Object.keys(selectedItems).length > 0;
+    if (!hasAnySelection && defaultSubNumber) {
+        const defaultSub = categories.flatMap(c => c.subitems)
+            .find(s => (s.number || "").trim() === defaultSubNumber.trim());
+        if (defaultSub) {
+            selectedItems[defaultSub.id] = true;
+        }
+    }
+
+    categories.forEach(cat => {
+        cat.subitems.forEach(sub => {
+            if (selectedItems[sub.id]) loadLayer(sub.sheetId, sub.name, sub.geoJsonFile, cat.id);
+        });
+    });
+
+    document.querySelectorAll(".status-checkbox").forEach(cb => {
+        cb.checked = selectedStatuses.includes(cb.dataset.status);
+    });
+
+    updateStats();
+    initInactivityWatcher();
+
+    loadNotifications();
+    contractorsLoaded = false;
+    buildContractorPanel();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    ["loginEmail","loginPassword"].forEach(id => {
+        document.getElementById(id).addEventListener("keydown", e => {
+            if (e.key === "Enter") doLogin();
+        });
+    });
+
+    const savedTheme = localStorage.getItem('mapTheme') || '';
+    if (savedTheme) applyTheme(savedTheme);
+
+    const dc = localStorage.getItem('defaultCoords');
+    if (dc) {
+        try { defaultCoords = JSON.parse(dc); } catch(e) {}
+    }
+
+    const restored = await tryRestoreSession();
+    if (restored) {
+        enterApp();
+    }
 });
 
+document.querySelectorAll(".status-checkbox").forEach(cb => {
+    cb.addEventListener("change", function() {
+        const st = this.dataset.status;
+        if (this.checked) { if (!selectedStatuses.includes(st)) selectedStatuses.push(st); }
+        else              { selectedStatuses = selectedStatuses.filter(s => s !== st); }
+        refreshLayerColors();
+        updateStats();
+    });
+});
 
-/* =============================================
-   LOGIN
-============================================= */
-function showLoginError(msg) {
-    const el = document.getElementById("loginError");
-    if (el) {
-        el.textContent = msg;
-        el.style.display = "block";
-    }
-}
+document.querySelectorAll(".modal").forEach(m => {
+    m.addEventListener("click", e => { if (e.target === m) m.classList.remove("active"); });
+});
 
-function doLogin() {
-
-    const email = document.getElementById("loginEmail")?.value.trim();
-    const pass  = document.getElementById("loginPassword")?.value.trim();
-
-    if (!email || !pass) {
-        showLoginError("أدخل البريد وكلمة المرور");
-        return;
-    }
-
-    const load = document.getElementById("loginLoading");
-    if (load) load.style.display = "block";
-
-    // ✅ نسخة بسيطة بدون Google Sheet
-    currentUser = {
-        email: email,
-        name: "User",
-        isAdmin: true
-    };
-
-    setTimeout(() => {
-        enterApp();
-    }, 500);
-}
-
-
-/* =============================================
-   ENTER APP
-============================================= */
-function enterApp() {
-
-    const login = document.getElementById("loginScreen");
-    const main  = document.getElementById("mainApp");
-
-    if (login) login.style.display = "none";
-    if (main)  main.style.display  = "block";
-
-    initMap();
-}
-
-
-/* =============================================
-   MAP
-============================================= */
-function initMap() {
-
-    if (map) return;
-
-    const mapDiv = document.getElementById("map");
-    if (!mapDiv) {
-        console.error("map div not found");
-        return;
-    }
-
-    map = L.map('map').setView([21.5, 39.2], 12);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(map);
-
-}
-
-
-/* =============================================
-   HELPERS
-============================================= */
-function showAlert(msg) {
-    alert(msg);
-}
+document.addEventListener('click', () => { closeReportsDropdown(); closeAddDropdown(); });
