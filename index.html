@@ -7307,21 +7307,26 @@ function ccfBuildHistory(rows) {
 
 async function ccfOpenHistory() {
     const panel = document.getElementById('ccf_history_panel');
-    if (!panel) return;
+    const list  = document.getElementById('ccf_history_list');
+    if (!panel || !list) return;
     // إن الكاش فاضي اجلب أحدث بيانات
     if (!_ccfRowsCache || !_ccfRowsCache.length) {
-        panel.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.4);font-size:12px;font-family:'Cairo',sans-serif;">⏳ جاري التحميل...</div>';
+        list.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.4);font-size:12px;font-family:Cairo,sans-serif;">&#x23F3; جاري التحميل...</div>';
         panel.style.display = 'block';
         try {
             const { rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
             _ccfRowsCache = rows;
             ccfBuildHistory(rows);
         } catch(e) {
-            panel.innerHTML = '<div style="padding:12px 14px;text-align:center;color:#ff8a80;font-size:12px;font-family:'Cairo',sans-serif;">❌ تعذر التحميل</div>';
+            list.innerHTML = '<div style="padding:12px 14px;text-align:center;color:#ff8a80;font-size:12px;">&#x274C; تعذر التحميل</div>';
         }
     } else {
-        ccfBuildHistory(_ccfRowsCache);
-        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        if (panel.style.display === 'block') {
+            panel.style.display = 'none';
+        } else {
+            ccfBuildHistory(_ccfRowsCache);
+            panel.style.display = 'block';
+        }
     }
 }
 
