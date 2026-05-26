@@ -7202,25 +7202,16 @@ async function _cfFetchRows(sheetId) {
 
 /* ── استخراج آخر رقم مستخلص وإرجاع التالي ── */
 function _cfNextStatementNo(rows, colName) {
+    // العمود الأول دايماً هو رقم المستخلص (عمود A في الشيت)
+    // colName = اسم الـ header للعمود الأول
+    const key = colName || (rows[0] ? Object.keys(rows[0]).find(k => !k.startsWith('__')) : '');
     let maxNum = 0;
     let lastVal = '';
-    // جرب الـ colName المعطى + كل أعمدة الصف (fallback شامل)
-    const tryKeys = colName
-        ? [colName, colName.trim(), colName.toLowerCase()]
-        : [];
     rows.forEach(row => {
-        // حاول الـ key المعطى أولاً، ثم جرب كل الأعمدة
-        const allKeys = [...new Set([...tryKeys, ...Object.keys(row)])];
-        for (const k of allKeys) {
-            if (k.startsWith('__')) continue;
-            const v = String(row[k] || '').trim();
-            if (!v) continue;
-            const n = parseInt(v.replace(/\D/g, '')) || 0;
-            if (n > 0) { // وجدنا رقم — استخدمه وتوقف
-                if (n > maxNum) { maxNum = n; lastVal = v; }
-                break;
-            }
-        }
+        const v = String(row[key] || '').trim();
+        if (!v) return;
+        const n = parseInt(v.replace(/\D/g, '')) || 0;
+        if (n > maxNum) { maxNum = n; lastVal = v; }
     });
     if (!maxNum) return '001';
     const nextNum = maxNum + 1;
@@ -7372,9 +7363,9 @@ async function ccfRefreshStatementNo() {
         _ccfRowsCache = null;
         const { rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
         _ccfRowsCache = rows;
-        console.log('[ccf] rows fetched:', rows.length, '| keys:', Object.keys(rows[0]||{}));
-        // جرب كل الأعمدة للعثور على عمود الأرقام
-        const next = _cfNextStatementNo(rows, null);
+        const firstKey = rows[0] ? Object.keys(rows[0]).find(k => !k.startsWith('__')) : '';
+        console.log('[ccf] rows:', rows.length, '| first key:', firstKey, '| sample:', rows[0]?.[firstKey]);
+        const next = _cfNextStatementNo(rows, firstKey);
         console.log('[ccf] next statement no:', next);
         inp.value = next;
         inp.style.borderColor = 'rgba(245,200,66,0.6)';
@@ -7550,10 +7541,10 @@ function concfSyncContractor(val) {
     const _calcAndShow = (rows) => {
         const keys = Object.keys(rows[0] || {}).filter(k => !k.startsWith('__'));
         const cKey  = keys.find(k => /contractor|مقاول/i.test(k)) || '';
-        // عمود رقم المستخلص: ابحث بالاسم أولاً ثم خذ أول عمود
-        const noKey = keys.find(k => /statement|مستخلص|رقم|no|num/i.test(k)) || keys[0] || '';
+        // العمود الأول دايماً = رقم المستخلص (عمود A)
+        const noKey = keys[0] || '';
         const contractorRows = rows.filter(r => (r[cKey] || '').trim() === val.trim());
-        console.log('[concf] contractor:', val, '| noKey:', noKey, '| rows found:', contractorRows.length, '| sample:', contractorRows[0]);
+        console.log('[concf] contractor:', val, '| noKey:', noKey, '| rows found:', contractorRows.length, '| sample no:', contractorRows[0]?.[noKey]);
         const next = _cfNextStatementNo(contractorRows, noKey);
         if (inp) {
             inp.value = next;
