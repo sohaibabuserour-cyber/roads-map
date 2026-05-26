@@ -7204,11 +7204,23 @@ async function _cfFetchRows(sheetId) {
 function _cfNextStatementNo(rows, colName) {
     let maxNum = 0;
     let lastVal = '';
+    // جرب الـ colName المعطى + كل أعمدة الصف (fallback شامل)
+    const tryKeys = colName
+        ? [colName, colName.trim(), colName.toLowerCase()]
+        : [];
     rows.forEach(row => {
-        const v = String(row[colName] || '').trim();
-        if (!v) return;
-        const n = parseInt(v.replace(/\D/g, '')) || 0;
-        if (n > maxNum) { maxNum = n; lastVal = v; }
+        // حاول الـ key المعطى أولاً، ثم جرب كل الأعمدة
+        const allKeys = [...new Set([...tryKeys, ...Object.keys(row)])];
+        for (const k of allKeys) {
+            if (k.startsWith('__')) continue;
+            const v = String(row[k] || '').trim();
+            if (!v) continue;
+            const n = parseInt(v.replace(/\D/g, '')) || 0;
+            if (n > 0) { // وجدنا رقم — استخدمه وتوقف
+                if (n > maxNum) { maxNum = n; lastVal = v; }
+                break;
+            }
+        }
     });
     if (!maxNum) return '001';
     const nextNum = maxNum + 1;
@@ -7283,7 +7295,12 @@ function ccfLoadRowForEdit(rowJson) {
 function ccfBuildHistory(rows) {
     const panel = document.getElementById('ccf_history_panel');
     const list  = document.getElementById('ccf_history_list');
-    if (!panel || !list || !rows.length) return;
+    if (!panel || !list) return;
+    if (!rows || !rows.length) {
+        list.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.35);font-size:12px;font-family:Cairo,sans-serif;">لا توجد مستخلصات سابقة</div>';
+        panel.style.display = 'block';
+        return;
+    }
     const keys = Object.keys(rows[0]).filter(k => !k.startsWith('__'));
     list.innerHTML = rows.slice().reverse().map((row, i) => {
         const num  = row[keys[0]] || '-';
@@ -7348,23 +7365,27 @@ function ccfReset(keepDate = false) {
 async function ccfRefreshStatementNo() {
     const inp = document.getElementById('ccf_statement_no');
     if (!inp) return;
+    inp.value = '';
+    inp.placeholder = '⏳ جاري الجلب...';
     try {
         // امسح الكاش دائماً عشان تجيب أحدث بيانات بعد الحفظ
         _ccfRowsCache = null;
-        inp.value = '';
-        inp.placeholder = '⏳ جاري الجلب...';
         const { rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
         _ccfRowsCache = rows;
-        const keys = Object.keys(rows[0] || {}).filter(k => !k.startsWith('__'));
-        const noKey = keys.find(k => /statement|مستخلص|رقم|no\b|num/i.test(k)) || keys[0] || '';
-        inp.value = _cfNextStatementNo(rows, noKey);
+        console.log('[ccf] rows fetched:', rows.length, '| keys:', Object.keys(rows[0]||{}));
+        // جرب كل الأعمدة للعثور على عمود الأرقام
+        const next = _cfNextStatementNo(rows, null);
+        console.log('[ccf] next statement no:', next);
+        inp.value = next;
         inp.style.borderColor = 'rgba(245,200,66,0.6)';
         inp.placeholder = '';
-        // حدّث سجل المستخلصات تلقائياً
+        inp.title = 'رقم تلقائي — للعرض فقط';
+        // بناء سجل المستخلصات
         ccfBuildHistory(rows);
     } catch(e) {
-        console.warn('ccfRefreshStatementNo:', e.message);
+        console.warn('ccfRefreshStatementNo error:', e.message);
         inp.placeholder = 'مثال: 001';
+        inp.value = '';
     }
 }
 
@@ -7435,7 +7456,18 @@ async function ccfSubmit() {
             ccfShowFeedback(msg, 'success');
             showAlert(msg, 'success');
             _ccfRowsCache = null; // مسح الكاش لإعادة الجلب بأحدث البيانات
-            setTimeout(() => { ccfSetMode('new'); ccfReset(false); }, 2500);
+            // انتظر قليلاً عشان الشيت يتحدث ثم اجلب الرقم الجديد والسجل
+            setTimeout(async () => {
+                ccfSetMode('new');
+                document.getElementById('ccf_amount').value = '';
+                document.getElementById('ccf_status').value = 'مدفوع';
+                document.getElementById('ccf_notes').value = '';
+                document.getElementById('ccf_preview').style.display = 'none';
+                ccfHideFeedback();
+                _ccfEditingRow = null;
+                document.getElementById('ccf_date').value = new Date().toISOString().split('T')[0];
+                await ccfRefreshStatementNo();
+            }, 2500);
         } else {
             throw new Error(resp.message || 'فشل الحفظ');
         }
