@@ -7166,7 +7166,7 @@ document.addEventListener('click', () => { closeReportsDropdown(); closeAddDropd
    COMPANY CASHFLOW FORM
    ==================================================== */
 
-const COMPANY_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9ccymRNt2Ncc2OPJtGffiGRZryWj08Xw6TOTTwA8WG_NdqyFuJ50Z-Vh2f2MWYml0/exec";
+const COMPANY_CF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGIT6QiwUijkUXHo043WfYLm3GPT5FW592Npg4zo40vUGKXP9wJK1lHepvZxlgznp5/exec";
 
 /* شيت ID للشركة — يُجلب منه آخر رقم مستخلص */
 const COMPANY_CF_SHEET_READ_ID  = "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA";
@@ -7223,25 +7223,8 @@ async function openCompanyCashflowForm() {
     _ccfEditingRow = null;
     ccfSetMode('new');
     ccfReset(true);
-    // جلب آخر رقم مستخلص
-    try {
-        const inp = document.getElementById('ccf_statement_no');
-        inp.placeholder = '⏳ جاري الجلب...';
-        const { rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
-        _ccfRowsCache = rows;
-        // ابحث عن عمود رقم المستخلص بالاسم أولاً
-        const keys = Object.keys(rows[0] || {}).filter(k => !k.startsWith('__'));
-        const noKey = keys.find(k => /statement|مستخلص|رقم|no\b|num/i.test(k)) || keys[0] || '';
-        const next = _cfNextStatementNo(rows, noKey);
-        inp.value = next;
-        inp.style.borderColor = 'rgba(245,200,66,0.6)';
-        inp.title = 'رقم تلقائي — للعرض فقط';
-        // ابن قائمة الاسترجاع
-        ccfBuildHistory(rows);
-    } catch(e) {
-        console.warn('ccf fetch last no:', e.message);
-        document.getElementById('ccf_statement_no').placeholder = 'مثال: 001';
-    }
+    // جلب آخر رقم مستخلص وبناء سجل الاسترجاع
+    await ccfRefreshStatementNo();
 }
 
 function closeCompanyCashflowForm() {
@@ -7322,8 +7305,27 @@ function ccfBuildHistory(rows) {
     panel.style.display = 'block';
 }
 
+async function ccfOpenHistory() {
+    const panel = document.getElementById('ccf_history_panel');
+    if (!panel) return;
+    // إن الكاش فاضي اجلب أحدث بيانات
+    if (!_ccfRowsCache || !_ccfRowsCache.length) {
+        panel.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.4);font-size:12px;font-family:'Cairo',sans-serif;">⏳ جاري التحميل...</div>';
+        panel.style.display = 'block';
+        try {
+            const { rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
+            _ccfRowsCache = rows;
+            ccfBuildHistory(rows);
+        } catch(e) {
+            panel.innerHTML = '<div style="padding:12px 14px;text-align:center;color:#ff8a80;font-size:12px;font-family:'Cairo',sans-serif;">❌ تعذر التحميل</div>';
+        }
+    } else {
+        ccfBuildHistory(_ccfRowsCache);
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+}
+
 function ccfReset(keepDate = false) {
-    document.getElementById('ccf_statement_no').value = '';
     document.getElementById('ccf_amount').value = '';
     document.getElementById('ccf_status').value = 'مدفوع';
     document.getElementById('ccf_notes').value = '';
@@ -7334,6 +7336,31 @@ function ccfReset(keepDate = false) {
     ccfHideFeedback();
     _ccfEditingRow = null;
     ccfSetMode('new');
+    // أعد حساب رقم المستخلص التالي تلقائياً
+    ccfRefreshStatementNo();
+}
+
+async function ccfRefreshStatementNo() {
+    const inp = document.getElementById('ccf_statement_no');
+    if (!inp) return;
+    try {
+        // امسح الكاش دائماً عشان تجيب أحدث بيانات بعد الحفظ
+        _ccfRowsCache = null;
+        inp.value = '';
+        inp.placeholder = '⏳ جاري الجلب...';
+        const { rows } = await _cfFetchRows(COMPANY_CF_SHEET_READ_ID);
+        _ccfRowsCache = rows;
+        const keys = Object.keys(rows[0] || {}).filter(k => !k.startsWith('__'));
+        const noKey = keys.find(k => /statement|مستخلص|رقم|no\b|num/i.test(k)) || keys[0] || '';
+        inp.value = _cfNextStatementNo(rows, noKey);
+        inp.style.borderColor = 'rgba(245,200,66,0.6)';
+        inp.placeholder = '';
+        // حدّث سجل المستخلصات تلقائياً
+        ccfBuildHistory(rows);
+    } catch(e) {
+        console.warn('ccfRefreshStatementNo:', e.message);
+        inp.placeholder = 'مثال: 001';
+    }
 }
 
 function ccfUpdatePreview() {
@@ -7402,8 +7429,8 @@ async function ccfSubmit() {
             const msg = isEdit ? '✅ تم تحديث المستخلص في سجل الشركة!' : '✅ تم حفظ المستخلص في سجل الشركة!';
             ccfShowFeedback(msg, 'success');
             showAlert(msg, 'success');
-            _ccfRowsCache = null; // مسح الكاش لإعادة الجلب
-            setTimeout(() => ccfReset(), 2500);
+            _ccfRowsCache = null; // مسح الكاش لإعادة الجلب بأحدث البيانات
+            setTimeout(() => { ccfSetMode('new'); ccfReset(false); }, 2500);
         } else {
             throw new Error(resp.message || 'فشل الحفظ');
         }
@@ -9752,7 +9779,7 @@ function importEquipmentTypesFromCSV() {
 
         <!-- Footer -->
         <div style="background:rgba(0,0,0,0.25);padding:14px 24px;display:flex;align-items:center;justify-content:flex-end;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;gap:10px;">
-            <button onclick="if(_ccfRowsCache) ccfBuildHistory(_ccfRowsCache);document.getElementById('ccf_history_panel').style.display='block';" style="background:rgba(33,150,243,0.12);border:1px solid rgba(33,150,243,0.35);color:#5baddf;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;">📋 استرجاع مستخلص</button>
+            <button onclick="ccfOpenHistory()" style="background:rgba(33,150,243,0.12);border:1px solid rgba(33,150,243,0.35);color:#5baddf;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;">📋 استرجاع مستخلص</button>
             <button onclick="ccfSubmit()" id="ccf_submit_btn" style="background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:white;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(33,150,243,0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">💾 حفظ في السجل</button>
         </div>
     </div>
