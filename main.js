@@ -162,7 +162,7 @@ async function fetchUsers() {
     const csv = await r.text();
 
     const lines   = csv.split('\n').filter(l => l.trim());
-    const parser  = window.Utils?.parseCSVLine || function(line) {
+    const parser = (window.Utils && window.Utils.parseCSVLine) ? window.Utils.parseCSVLine : function(line) {
         const result = [];
         let cur = '', inQ = false;
         for (let i = 0; i < line.length; i++) {
@@ -908,7 +908,7 @@ async function loadCfData(type, sheetId) {
 function parseCfCSV(csv) {
     const lines = csv.split('\n').filter(l => l.trim());
     if (!lines.length) return { headers: [], rows: [] };
-    const parser = window.Utils?.parseCSVLine || function(line) {
+    const parser = (window.Utils && window.Utils.parseCSVLine) ? window.Utils.parseCSVLine : function(line) {
         const result = [];
         let cur = '', inQ = false;
         for (let i = 0; i < line.length; i++) {

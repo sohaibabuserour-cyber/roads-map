@@ -362,7 +362,9 @@
        7. WINDOW RESIZE
        ══════════════════════════════════════════════════════ */
     window.addEventListener('resize', function () {
-        if (window.map) window.map.invalidateSize();
+        if (window.map && typeof window.map.invalidateSize === 'function') {
+            window.map.invalidateSize();
+        }
         window.positionDropdown?.();
         if (!isMobile()) _closeMobilePanelSheet();
     });
