@@ -53,7 +53,7 @@ function toNum(v) { return (!isNaN(v) && v !== "") ? Number(v) : 0; }
 function statusColor(s) {
     const f = STATUSES.find(x => x.value.toLowerCase() === (s||"").trim().toLowerCase());
     return f ? f.color : "#9e9e9e";
-
+}
 function statusCls(s) {
     const f = STATUSES.find(x => x.value.toLowerCase() === (s||"").trim().toLowerCase());
     return f ? f.cls : "";
