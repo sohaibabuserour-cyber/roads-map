@@ -162,10 +162,28 @@ async function fetchUsers() {
     const csv = await r.text();
 
     const lines   = csv.split('\n').filter(l => l.trim());
-    const headers = parseCSVLine(lines[0]).map(h => h.toUpperCase());
+    const parser  = window.Utils?.parseCSVLine || function(line) {
+        const result = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+                else inQ = !inQ;
+            } else if (ch === ',' && !inQ) {
+                result.push(cur.trim()); cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        result.push(cur.trim());
+        return result;
+    };
+
+    const headers = parser(lines[0]).map(h => h.toUpperCase());
     const users   = [];
     for (let i = 1; i < lines.length; i++) {
-        const vals = parseCSVLine(lines[i]);
+        const vals = parser(lines[i]);
         const obj  = {};
         headers.forEach((h, idx) => { obj[h] = vals[idx] || ""; });
         users.push(obj);
@@ -890,10 +908,27 @@ async function loadCfData(type, sheetId) {
 function parseCfCSV(csv) {
     const lines = csv.split('\n').filter(l => l.trim());
     if (!lines.length) return { headers: [], rows: [] };
-    const headers = parseCSVLine(lines[0]);
+    const parser = window.Utils?.parseCSVLine || function(line) {
+        const result = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+                else inQ = !inQ;
+            } else if (ch === ',' && !inQ) {
+                result.push(cur.trim()); cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        result.push(cur.trim());
+        return result;
+    };
+    const headers = parser(lines[0]);
     const rows = [];
     for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]);
+        const values = parser(lines[i]);
         const row = {};
         headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
         rows.push(row);
