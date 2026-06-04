@@ -296,25 +296,124 @@
                 padding: 14px 18px !important;
             }
 
-            /* حقول المستخدم */
-            #mobilePanelModalContent .ud-field {
-                padding: 10px 16px !important;
+            /* ══ user dropdown داخل المودال ══ */
+            #mobilePanelModalContent .user-dropdown {
+                flex-direction: column !important;
             }
-            #mobilePanelModalContent .ud-save-btn,
+
+            /* هيدر الأفاتار: padding أكبر وخلفية جميلة */
+            #mobilePanelModalContent .user-dropdown-header {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                padding: 28px 24px 20px !important;
+                background: linear-gradient(160deg, #1a0a2e 0%, #3d1060 60%, #6a2d91 100%) !important;
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* دائرة زينة خلف الأفاتار */
+            #mobilePanelModalContent .user-dropdown-header::before {
+                content: '';
+                position: absolute;
+                top: -40px; right: -40px;
+                width: 180px; height: 180px;
+                background: radial-gradient(circle, rgba(245,200,66,0.18) 0%, transparent 70%);
+                border-radius: 50%;
+                pointer-events: none;
+            }
+            #mobilePanelModalContent .user-dropdown-header::after {
+                content: '';
+                position: absolute;
+                bottom: -30px; left: -30px;
+                width: 140px; height: 140px;
+                background: radial-gradient(circle, rgba(106,45,145,0.3) 0%, transparent 70%);
+                border-radius: 50%;
+                pointer-events: none;
+            }
+
+            /* الأفاتار: أكبر بكثير */
+            #mobilePanelModalContent .ud-avatar-wrap {
+                width: 110px !important;
+                height: 110px !important;
+                font-size: 44px !important;
+                margin: 0 auto 14px !important;
+                border: 4px solid rgba(245,200,66,0.7) !important;
+                box-shadow: 0 0 0 6px rgba(245,200,66,0.15), 0 8px 32px rgba(0,0,0,0.4) !important;
+                position: relative;
+                z-index: 1;
+            }
+            #mobilePanelModalContent .ud-name {
+                font-size: 18px !important;
+                font-weight: 900 !important;
+                color: white !important;
+                margin-bottom: 4px !important;
+                position: relative; z-index: 1;
+            }
+            #mobilePanelModalContent .ud-role {
+                font-size: 12px !important;
+                color: rgba(255,255,255,0.6) !important;
+                font-weight: 600 !important;
+                background: rgba(245,200,66,0.15);
+                border: 1px solid rgba(245,200,66,0.3);
+                padding: 3px 12px;
+                border-radius: 20px;
+                position: relative; z-index: 1;
+            }
+
+            /* حقول الإدخال */
+            #mobilePanelModalContent .ud-field {
+                padding: 12px 20px !important;
+                border-bottom: 1px solid #f0f0f0 !important;
+            }
+            #mobilePanelModalContent .ud-field label {
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                color: #7a6590 !important;
+                margin-bottom: 7px !important;
+                display: block;
+                text-align: right;
+            }
+            #mobilePanelModalContent .ud-field input {
+                width: 100% !important;
+                padding: 13px 14px !important;
+                font-size: 14px !important;
+                border-radius: 10px !important;
+                min-height: 50px;
+                border: 1.5px solid #d8cfe8 !important;
+                font-family: 'Cairo', sans-serif !important;
+                color: #2a1a40 !important;
+                text-align: right !important;
+                outline: none;
+                transition: border-color 0.2s;
+                background: #faf8fc;
+            }
+            #mobilePanelModalContent .ud-field input:focus {
+                border-color: #6a2d91 !important;
+                box-shadow: 0 0 0 3px rgba(106,45,145,0.1) !important;
+            }
+
+            /* أزرار الحفظ والخروج */
+            #mobilePanelModalContent .ud-save-btn {
+                width: calc(100% - 40px) !important;
+                margin: 16px 20px 8px !important;
+                padding: 15px !important;
+                font-size: 14px !important;
+                font-weight: 900 !important;
+                min-height: 52px;
+                border-radius: 12px !important;
+                background: linear-gradient(135deg, #6a2d91 0%, #8b44b8 100%) !important;
+                box-shadow: 0 4px 16px rgba(106,45,145,0.35) !important;
+                letter-spacing: 0.3px;
+            }
             #mobilePanelModalContent .ud-logout {
-                width: calc(100% - 32px) !important;
-                margin-left: 16px !important;
-                margin-right: 16px !important;
+                width: calc(100% - 40px) !important;
+                margin: 0 20px 20px !important;
                 padding: 13px !important;
                 font-size: 13px !important;
+                font-weight: 700 !important;
                 min-height: 48px;
-                border-radius: 10px !important;
-            }
-            #mobilePanelModalContent .ud-avatar-wrap {
-                width: 88px !important;
-                height: 88px !important;
-                font-size: 36px !important;
-                margin-bottom: 10px !important;
+                border-radius: 12px !important;
             }
         `;
         document.head.appendChild(style);
