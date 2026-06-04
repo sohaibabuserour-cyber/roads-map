@@ -560,7 +560,7 @@ function switchSettingsTab(tab) {
     document.getElementById('settingsTabContractors').classList.toggle('active', tab === 'contractors');
     if (tab === 'similar') renderSimilarGroupsList();
     if (tab === 'default') renderDefaultSubPreview();
-    if (tab === 'eqtypes') { renderEquipmentTypesList(); updateEqTypesCount();
+    if (tab === 'eqtypes') renderEquipmentTypesList(); updateEqTypesCount();
     if (tab === 'contractors') { renderContractorsListSettings(); updateContractorsCount(); }
 }
 
