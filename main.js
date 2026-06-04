@@ -545,23 +545,128 @@ function syncCoordsInputs() {
 }
 
 /* ====================================================
+   SETTINGS MODAL
+   ==================================================== */
+
+function openSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    // Fill sheet IDs
+    _fillSheetIdsInputs();
+    // Render current tab
+    switchSettingsTab('coords');
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function _fillSheetIdsInputs() {
+    const map = {
+        'sheetId_users'         : { const: 'USERS_SHEET_ID',            id: window.USERS_SHEET_ID },
+        'sheetId_equipment'     : { const: 'EQUIPMENT_SHEET_ID',        id: window.EQUIPMENT_SHEET_ID },
+        'sheetId_eqreg'         : { const: 'EQ_REG_SHEET_ID',           id: window.EQ_REG_SHEET_ID },
+        'sheetId_cfCompany'     : { const: 'CASHFLOW_COMPANY_SHEET',    id: window.CASHFLOW_COMPANY_SHEET },
+        'sheetId_cfContractors' : { const: 'CASHFLOW_CONTRACTORS_SHEET',id: window.CASHFLOW_CONTRACTORS_SHEET },
+        'sheetId_notifs'        : { const: 'NOTIFICATIONS_SHEET_ID',    id: window.NOTIFICATIONS_SHEET_ID }
+    };
+    // Also check localStorage overrides
+    const stored = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
+    Object.entries(map).forEach(([inputId, info]) => {
+        const inp  = document.getElementById(inputId);
+        const link = document.getElementById(inputId.replace('sheetId_', 'sheetLink_'));
+        const val  = stored[info.const] || info.id || '';
+        if (inp)  inp.value = val;
+        if (link && val) link.href = 'https://docs.google.com/spreadsheets/d/' + val;
+    });
+}
+
+function saveSheetIds() {
+    const fields = {
+        'USERS_SHEET_ID'             : document.getElementById('sheetId_users')?.value.trim(),
+        'EQUIPMENT_SHEET_ID'         : document.getElementById('sheetId_equipment')?.value.trim(),
+        'EQ_REG_SHEET_ID'            : document.getElementById('sheetId_eqreg')?.value.trim(),
+        'CASHFLOW_COMPANY_SHEET'     : document.getElementById('sheetId_cfCompany')?.value.trim(),
+        'CASHFLOW_CONTRACTORS_SHEET' : document.getElementById('sheetId_cfContractors')?.value.trim(),
+        'NOTIFICATIONS_SHEET_ID'     : document.getElementById('sheetId_notifs')?.value.trim()
+    };
+    // Save to localStorage
+    localStorage.setItem('sheetIdsOverride', JSON.stringify(fields));
+    // Apply immediately to runtime variables
+    if (fields.USERS_SHEET_ID)             window.USERS_SHEET_ID             = fields.USERS_SHEET_ID;
+    if (fields.EQUIPMENT_SHEET_ID)         window.EQUIPMENT_SHEET_ID         = fields.EQUIPMENT_SHEET_ID;
+    if (fields.EQ_REG_SHEET_ID)            window.EQ_REG_SHEET_ID            = fields.EQ_REG_SHEET_ID;
+    if (fields.CASHFLOW_COMPANY_SHEET)     window.CASHFLOW_COMPANY_SHEET     = fields.CASHFLOW_COMPANY_SHEET;
+    if (fields.CASHFLOW_CONTRACTORS_SHEET) window.CASHFLOW_CONTRACTORS_SHEET = fields.CASHFLOW_CONTRACTORS_SHEET;
+    if (fields.NOTIFICATIONS_SHEET_ID)     window.NOTIFICATIONS_SHEET_ID     = fields.NOTIFICATIONS_SHEET_ID;
+    // Update links
+    _fillSheetIdsInputs();
+    // Feedback
+    const fb = document.getElementById('sheetIds_feedback');
+    if (fb) {
+        fb.style.display = 'block';
+        fb.style.background = 'rgba(39,174,106,0.12)';
+        fb.style.border = '1px solid rgba(39,174,106,0.4)';
+        fb.style.color = '#5cc890';
+        fb.textContent = '✅ تم حفظ الروابط وتطبيقها — ستسري عند التحديث القادم للبيانات';
+        setTimeout(() => { fb.style.display = 'none'; }, 4000);
+    }
+    showAlert('✅ تم حفظ روابط الشيتات', 'success');
+}
+
+// Apply saved sheet ID overrides on startup
+(function _applySheetIdsOnLoad() {
+    try {
+        const stored = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
+        if (stored.USERS_SHEET_ID)             window.USERS_SHEET_ID             = stored.USERS_SHEET_ID;
+        if (stored.EQUIPMENT_SHEET_ID)         window.EQUIPMENT_SHEET_ID         = stored.EQUIPMENT_SHEET_ID;
+        if (stored.EQ_REG_SHEET_ID)            window.EQ_REG_SHEET_ID            = stored.EQ_REG_SHEET_ID;
+        if (stored.CASHFLOW_COMPANY_SHEET)     window.CASHFLOW_COMPANY_SHEET     = stored.CASHFLOW_COMPANY_SHEET;
+        if (stored.CASHFLOW_CONTRACTORS_SHEET) window.CASHFLOW_CONTRACTORS_SHEET = stored.CASHFLOW_CONTRACTORS_SHEET;
+        if (stored.NOTIFICATIONS_SHEET_ID)     window.NOTIFICATIONS_SHEET_ID     = stored.NOTIFICATIONS_SHEET_ID;
+    } catch(e) {}
+})();
+
+/* ====================================================
    SETTINGS PANEL
    ==================================================== */
 
 function switchSettingsTab(tab) {
-    document.querySelectorAll('.settings-tab').forEach((t, i) => {
-        const tabs = ['coords', 'default', 'similar', 'eqtypes', 'contractors'];
-        t.classList.toggle('active', tabs[i] === tab);
+    // Update sidebar tab buttons
+    const tabIds = ['coords', 'default', 'similar', 'eqtypes', 'contractors', 'sheets'];
+    tabIds.forEach(t => {
+        const btn = document.getElementById('stab_' + t);
+        if (!btn) return;
+        const isActive = t === tab;
+        btn.classList.toggle('active', isActive);
+        if (isActive) {
+            btn.style.background = 'rgba(106,45,145,0.35)';
+            btn.style.borderColor = 'rgba(106,45,145,0.5)';
+            btn.style.color = 'rgba(255,255,255,0.9)';
+        } else {
+            btn.style.background = 'transparent';
+            btn.style.borderColor = 'transparent';
+            btn.style.color = 'rgba(255,255,255,0.55)';
+        }
     });
-    document.getElementById('settingsTabCoords').classList.toggle('active', tab === 'coords');
-    document.getElementById('settingsTabDefault').classList.toggle('active', tab === 'default');
-    document.getElementById('settingsTabSimilar').classList.toggle('active', tab === 'similar');
-    document.getElementById('settingsTabEqtypes').classList.toggle('active', tab === 'eqtypes');
-    document.getElementById('settingsTabContractors').classList.toggle('active', tab === 'contractors');
-    if (tab === 'similar') renderSimilarGroupsList();
-    if (tab === 'default') renderDefaultSubPreview();
-    if (tab === 'eqtypes') {renderEquipmentTypesList(); updateEqTypesCount();}
-    if (tab === 'contractors') {renderContractorsListSettings(); updateContractorsCount(); }
+    // Show/hide content sections
+    document.getElementById('settingsTabCoords')      && (document.getElementById('settingsTabCoords').style.display      = tab === 'coords'      ? 'block' : 'none');
+    document.getElementById('settingsTabDefault')     && (document.getElementById('settingsTabDefault').style.display     = tab === 'default'     ? 'block' : 'none');
+    document.getElementById('settingsTabSimilar')     && (document.getElementById('settingsTabSimilar').style.display     = tab === 'similar'     ? 'block' : 'none');
+    document.getElementById('settingsTabEqtypes')     && (document.getElementById('settingsTabEqtypes').style.display     = tab === 'eqtypes'     ? 'block' : 'none');
+    document.getElementById('settingsTabContractors') && (document.getElementById('settingsTabContractors').style.display = tab === 'contractors' ? 'block' : 'none');
+    document.getElementById('settingsTabSheets')      && (document.getElementById('settingsTabSheets').style.display      = tab === 'sheets'      ? 'block' : 'none');
+    // Tab-specific logic
+    if (tab === 'similar')      renderSimilarGroupsList();
+    if (tab === 'default')      renderDefaultSubPreview();
+    if (tab === 'eqtypes')      { renderEquipmentTypesList(); updateEqTypesCount(); }
+    if (tab === 'contractors')  { renderContractorsListSettings(); updateContractorsCount(); }
+    if (tab === 'sheets')       _fillSheetIdsInputs();
 }
 
 function saveSettingsCoords() {
@@ -1222,79 +1327,6 @@ function resetContractorsList() {
     renderContractorsListSettings();
     showAlert('✅ تم المسح', 'success');
 }
-
-/* ====================================================
-   EQUIPMENT TYPES — admin managed
-   ==================================================== */
-
-function renderEquipmentTypesList() {
-    const container = document.getElementById('eqTypesList');
-    if (!container) return;
-    if (!equipmentTypes.length) {
-        container.innerHTML = '<div style="text-align:center;color:var(--text-soft);font-size:11px;padding:12px 0;">لا توجد أنواع — أضف من الأعلى</div>';
-        updateEqTypesCount();
-        return;
-    }
-    container.innerHTML = equipmentTypes.map((name, idx) => `
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(39,174,106,0.05);border:1px solid rgba(39,174,106,0.15);border-radius:7px;margin-bottom:5px;">
-            <span style="flex:1;font-size:12px;font-weight:700;color:var(--text);text-align:right;font-family:'Cairo',sans-serif;">🚜 ${name}</span>
-            <button onclick="removeEquipmentType(${idx})"
-                style="background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.25);color:#e53935;width:24px;height:24px;border-radius:6px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;"
-                onmouseover="this.style.background='rgba(244,67,54,0.2)'"
-                onmouseout="this.style.background='rgba(244,67,54,0.08)'">✕</button>
-        </div>`).join('');
-    updateEqTypesCount();
-}
-
-function updateEqTypesCount() {
-    const el = document.getElementById('eqTypesCount');
-    if (el) el.textContent = equipmentTypes.length ? `${equipmentTypes.length} نوع مسجل` : '';
-}
-
-function addEquipmentType() {
-    const inp = document.getElementById('eqTypeNewInput');
-    if (!inp) return;
-    const name = inp.value.trim();
-    if (!name) { showAlert('❌ أدخل اسم المعدة'); return; }
-    if (equipmentTypes.includes(name)) { showAlert('⚠️ هذا النوع موجود مسبقاً'); inp.value = ''; return; }
-    equipmentTypes.push(name);
-    inp.value = '';
-    renderEquipmentTypesList();
-    showAlert('✅ تمت الإضافة', 'success');
-}
-
-function removeEquipmentType(idx) {
-    equipmentTypes.splice(idx, 1);
-    renderEquipmentTypesList();
-}
-
-function importEquipmentTypesFromCSV() {
-    const area = document.getElementById('eqTypesImportArea');
-    if (!area) return;
-    const lines = area.value.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
-    let added = 0;
-    lines.forEach(name => {
-        if (!equipmentTypes.includes(name)) { equipmentTypes.push(name); added++; }
-    });
-    area.value = '';
-    renderEquipmentTypesList();
-    showAlert(`✅ تمت إضافة ${added} نوع`, 'success');
-}
-
-function resetEquipmentTypesToDefault() {
-    if (!confirm('مسح جميع أنواع المعدات؟')) return;
-    equipmentTypes = [];
-    renderEquipmentTypesList();
-    showAlert('✅ تم المسح', 'success');
-}
-
-function refreshEquipmentDatalist() {
-    // يُستدعى بعد تحديث equipmentTypes لتحديث أي datalist مرتبط
-    const dl = document.getElementById('eqTypesDatalist');
-    if (!dl) return;
-    dl.innerHTML = equipmentTypes.map(t => `<option value="${t}">`).join('');
-}
-
 /* ====================================================
    EXPORT / IMPORT CONFIG
    ==================================================== */
