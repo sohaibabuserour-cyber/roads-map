@@ -816,6 +816,10 @@
     "رصاصة كاوتش",
     "رصاصة أسفلت"
   ],
+  "contractorsList": [
+    "الفجر",
+    "المسار الحديث"
+  ],
   "selectedItems": {
     "mpiml7x5b651b": true
   },
@@ -827,7 +831,7 @@
     "متوقف"
   ],
   "activeContractorFilter": [],
-  "currentTheme": "",
+  "currentTheme": "ocean",
   "navRightOrder": [
     "contractorBtn",
     "settingsBtn"
