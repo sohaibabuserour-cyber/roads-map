@@ -30,19 +30,19 @@ const LABELS = {
     "EQUIPMENT"    : "المعدات"
 };
 
-let map;
-let currentUser    = null;
-let categories     = [];
-let selectedItems  = {};   // subitemId → true (only one per category enforced)
-let selectedStatuses = ["جاري","متاح","غير متاح","تم الانتهاء","متوقف"];
-let allLayers      = {};   // sheetId → Leaflet GeoJSON layer
-let allData        = {};   // sheetId → { id: rowObj }
-let allFeatures    = {};   // `${sheetId}-${name}` → Leaflet layer
-let equipmentData  = {};
-let similarGroups  = [];        // [{id, name, subIds:[]}] — مجموعات البنود المتشابهة
-let _editingGroupId = null;     // for editing existing group
-let defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 14 };
-let defaultSubNumber = ""; // رقم البند الافتراضي الذي يُحمَّل عند بدء النظام
+map;
+currentUser    = null;
+categories     = [];
+selectedItems  = {};   // subitemId → true (only one per category enforced)
+selectedStatuses = ["جاري","متاح","غير متاح","تم الانتهاء","متوقف"];
+allLayers      = {};   // sheetId → LeafGeoJSON layer
+allData        = {};   // sheetId → { id: rowObj }
+allFeatures    = {};   // `${sheetId}-${name}` → Leaflayer
+equipmentData  = {};
+similarGroups  = [];        // [{id, name, subIds:[]}] — مجموعات البنود المتشابهة
+_editingGroupId = null;     // for editing existing group
+defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 14 };
+defaultSubNumber = ""; // رقم البند الافتراضي الذي يُحمَّل عند بدء النظام
 
 /* ====================================================
    HELPERS
@@ -164,8 +164,8 @@ async function fetchUsers() {
     const lines   = csv.split('\n').filter(l => l.trim());
     const parser = (window.Utils && window.Utils.parseCSVLine) ? window.Utils.parseCSVLine : function(line) {
         const result = [];
-        let cur = '', inQ = false;
-        for (let i = 0; i < line.length; i++) {
+        cur = '', inQ = false;
+        for (i = 0; i < line.length; i++) {
             const ch = line[i];
             if (ch === '"') {
                 if (inQ && line[i+1] === '"') { cur += '"'; i++; }
@@ -182,7 +182,7 @@ async function fetchUsers() {
 
     const headers = parser(lines[0]).map(h => h.toUpperCase());
     const users   = [];
-    for (let i = 1; i < lines.length; i++) {
+    for (i = 1; i < lines.length; i++) {
         const vals = parser(lines[i]);
         const obj  = {};
         headers.forEach((h, idx) => { obj[h] = vals[idx] || ""; });
@@ -557,9 +557,11 @@ function switchSettingsTab(tab) {
     document.getElementById('settingsTabDefault').classList.toggle('active', tab === 'default');
     document.getElementById('settingsTabSimilar').classList.toggle('active', tab === 'similar');
     document.getElementById('settingsTabEqtypes').classList.toggle('active', tab === 'eqtypes');
+    document.getElementById('settingsTabContractors').classList.toggle('active', tab === 'contractors');
     if (tab === 'similar') renderSimilarGroupsList();
     if (tab === 'default') renderDefaultSubPreview();
-    if (tab === 'eqtypes') { renderEquipmentTypesList(); updateEqTypesCount(); }
+    if (tab === 'eqtypes') { renderEquipmentTypesList(); updateEqTypesCount();
+    if (tab === 'contractors') { renderContractorsListSettings(); updateContractorsCount(); }
 }
 
 function saveSettingsCoords() {
@@ -639,7 +641,7 @@ function renderSimilarGroupsList() {
 
     list.innerHTML = similarGroups.map(group => {
         const subNames = group.subIds.map(sid => {
-            let name = sid;
+            name = sid;
             categories.forEach(c => {
                 const sub = c.subitems.find(s => s.id === sid);
                 if (sub) name = sub.name;
@@ -755,7 +757,7 @@ function saveSimilarGroup() {
 
 // equipmentData: id → last-column string (للـ popup)
 // equipmentRawRows: كل صفوف شيت المعدات كاملة (للتبويب)
-let equipmentRawRows    = [];
+equipmentRawRows    = [];
 let equipmentRawHeaders = [];
 
 function loadEquipmentData() {
@@ -1146,13 +1148,80 @@ async function loadCategoriesConfig() {
         if (!Array.isArray(data) && data.equipmentTypes && Array.isArray(data.equipmentTypes)) {
             equipmentTypes = data.equipmentTypes;
         }
+       if (!Array.isArray(data) && data.contractorsList && Array.isArray(data.contractorsList)) {
+            contractorsList = data.contractorsList;
+        }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
         categories = [];
     }
     categories.forEach(c => { if (!c.subitems) c.subitems = []; if (!c.id) c.id = uid(); });
 }
+/* ====================================================
+   CONTRACTORS LIST — admin managed
+   ==================================================== */
+let contractorsList = [];
 
+function renderContractorsListSettings() {
+    const container = document.getElementById('contractorsList');
+    if (!container) return;
+    if (!contractorsList.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-soft);font-size:11px;padding:12px 0;">لا يوجد مقاولون — أضف من الأعلى</div>';
+        updateContractorsCount();
+        return;
+    }
+    container.innerHTML = contractorsList.map((name, idx) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(245,200,66,0.05);border:1px solid rgba(245,200,66,0.15);border-radius:7px;margin-bottom:5px;">
+            <span style="flex:1;font-size:12px;font-weight:700;color:var(--text);text-align:right;font-family:'Cairo',sans-serif;">👷 ${name}</span>
+            <button onclick="removeContractorFromList(${idx})"
+                style="background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.25);color:#e53935;width:24px;height:24px;border-radius:6px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(244,67,54,0.2)'"
+                onmouseout="this.style.background='rgba(244,67,54,0.08)'">✕</button>
+        </div>`).join('');
+    updateContractorsCount();
+}
+
+function updateContractorsCount() {
+    const el = document.getElementById('contractorsCount');
+    if (el) el.textContent = contractorsList.length ? `${contractorsList.length} مقاول مسجل` : '';
+}
+
+function addContractorToList() {
+    const inp = document.getElementById('contractorNewInput');
+    if (!inp) return;
+    const name = inp.value.trim();
+    if (!name) { showAlert('❌ أدخل اسم المقاول'); return; }
+    if (contractorsList.includes(name)) { showAlert('⚠️ المقاول موجود مسبقاً'); inp.value = ''; return; }
+    contractorsList.push(name);
+    inp.value = '';
+    renderContractorsListSettings();
+    showAlert('✅ تمت الإضافة', 'success');
+}
+
+function removeContractorFromList(idx) {
+    contractorsList.splice(idx, 1);
+    renderContractorsListSettings();
+}
+
+function importContractorsFromCSV() {
+    const area = document.getElementById('contractorsImportArea');
+    if (!area) return;
+    const lines = area.value.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+    let added = 0;
+    lines.forEach(name => {
+        if (!contractorsList.includes(name)) { contractorsList.push(name); added++; }
+    });
+    area.value = '';
+    renderContractorsListSettings();
+    showAlert(`✅ تمت إضافة ${added} مقاول`, 'success');
+}
+
+function resetContractorsList() {
+    if (!confirm('مسح جميع المقاولين؟')) return;
+    contractorsList = [];
+    renderContractorsListSettings();
+    showAlert('✅ تم المسح', 'success');
+}
 /* ====================================================
    EXPORT / IMPORT CONFIG
    ==================================================== */
@@ -1164,6 +1233,7 @@ function exportConfig() {
         similarGroups: similarGroups,
         defaultSubNumber: defaultSubNumber,
         equipmentTypes: equipmentTypes,
+        contractorsList: contractorsList,
         // Include current UI state for persistence
         selectedItems: selectedItems,
         selectedStatuses: selectedStatuses,
@@ -1216,6 +1286,9 @@ function importConfig(e) {
                     equipmentTypes = data.equipmentTypes;
                     refreshEquipmentDatalist();
                     if (document.getElementById('eqTypesList')) renderEquipmentTypesList();
+                }
+               if (data.contractorsList && Array.isArray(data.contractorsList)) {
+                    contractorsList = data.contractorsList;
                 }
                 if (data.selectedItems) selectedItems = data.selectedItems;
                 if (data.selectedStatuses) selectedStatuses = data.selectedStatuses;
