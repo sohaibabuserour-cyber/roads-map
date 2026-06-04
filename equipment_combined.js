@@ -52,33 +52,45 @@ function eqPopulateSubitems() {
     // البنود تُعرض الآن في eqBandPickerModal — لا حاجة لملء select
 }
 
-/* ── Populate contractors select from loaded data ── */
+/* ──  contractors select from LIST ── */
 function eqPopulateContractors() {
-    const sel = document.getElementById('eqf_contractor');
-    const currentVal = sel.value;
-    sel.innerHTML = '<option value="">-- اختر المقاول --</option>';
-    const contractors = new Set();
-    // من allData المحملة
-    Object.values(allData || {}).forEach(sheetData => {
-        Object.values(sheetData).forEach(row => {
-            const c = (row['CONTRACTOR'] || '').trim();
-            if (c) contractors.add(c);
-        });
-    });
-    // من contractorMap
-    Object.keys(contractorMap || {}).forEach(name => {
-        if (name.trim()) contractors.add(name.trim());
-    });
-    const sorted = [...contractors].sort((a, b) => a.localeCompare(b, 'ar'));
-    sorted.forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        sel.appendChild(opt);
-    });
-    if (currentVal) sel.value = currentVal;
-}
+    const sel      = document.getElementById('eqf_contractor');
+    const selCumul = document.getElementById('eqfc_contractor');
 
+    const buildOptions = (s, curVal) => {
+        if (!s) return;
+        s.innerHTML = '<option value="">-- اختر المقاول --</option>';
+        // من القائمة المحفوظة في الإعدادات أولاً
+        const source = (window.contractorsList && contractorsList.length)
+            ? contractorsList
+            : [];
+        // fallback: من allData أو contractorMap لو القائمة فارغة
+        const fallback = new Set();
+        if (!source.length) {
+            Object.values(allData || {}).forEach(sd => {
+                Object.values(sd).forEach(row => {
+                    const c = (row['CONTRACTOR'] || '').trim();
+                    if (c) fallback.add(c);
+                });
+            });
+            Object.keys(contractorMap || {}).forEach(n => { if (n.trim()) fallback.add(n.trim()); });
+        }
+        const names = source.length
+            ? [...source]
+            : [...fallback].sort((a, b) => a.localeCompare(b, 'ar'));
+
+        names.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            s.appendChild(opt);
+        });
+        if (curVal) s.value = curVal;
+    };
+
+    buildOptions(sel,      sel      ? sel.value      : '');
+    buildOptions(selCumul, selCumul ? selCumul.value : '');
+}
 /* ── Element search dropdown ── */
 let _eqAllElements = []; // { id, name, sheetId, subName }
 
