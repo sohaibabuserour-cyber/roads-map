@@ -1222,6 +1222,79 @@ function resetContractorsList() {
     renderContractorsListSettings();
     showAlert('✅ تم المسح', 'success');
 }
+
+/* ====================================================
+   EQUIPMENT TYPES — admin managed
+   ==================================================== */
+
+function renderEquipmentTypesList() {
+    const container = document.getElementById('eqTypesList');
+    if (!container) return;
+    if (!equipmentTypes.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-soft);font-size:11px;padding:12px 0;">لا توجد أنواع — أضف من الأعلى</div>';
+        updateEqTypesCount();
+        return;
+    }
+    container.innerHTML = equipmentTypes.map((name, idx) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(39,174,106,0.05);border:1px solid rgba(39,174,106,0.15);border-radius:7px;margin-bottom:5px;">
+            <span style="flex:1;font-size:12px;font-weight:700;color:var(--text);text-align:right;font-family:'Cairo',sans-serif;">🚜 ${name}</span>
+            <button onclick="removeEquipmentType(${idx})"
+                style="background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.25);color:#e53935;width:24px;height:24px;border-radius:6px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(244,67,54,0.2)'"
+                onmouseout="this.style.background='rgba(244,67,54,0.08)'">✕</button>
+        </div>`).join('');
+    updateEqTypesCount();
+}
+
+function updateEqTypesCount() {
+    const el = document.getElementById('eqTypesCount');
+    if (el) el.textContent = equipmentTypes.length ? `${equipmentTypes.length} نوع مسجل` : '';
+}
+
+function addEquipmentType() {
+    const inp = document.getElementById('eqTypeNewInput');
+    if (!inp) return;
+    const name = inp.value.trim();
+    if (!name) { showAlert('❌ أدخل اسم المعدة'); return; }
+    if (equipmentTypes.includes(name)) { showAlert('⚠️ هذا النوع موجود مسبقاً'); inp.value = ''; return; }
+    equipmentTypes.push(name);
+    inp.value = '';
+    renderEquipmentTypesList();
+    showAlert('✅ تمت الإضافة', 'success');
+}
+
+function removeEquipmentType(idx) {
+    equipmentTypes.splice(idx, 1);
+    renderEquipmentTypesList();
+}
+
+function importEquipmentTypesFromCSV() {
+    const area = document.getElementById('eqTypesImportArea');
+    if (!area) return;
+    const lines = area.value.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+    let added = 0;
+    lines.forEach(name => {
+        if (!equipmentTypes.includes(name)) { equipmentTypes.push(name); added++; }
+    });
+    area.value = '';
+    renderEquipmentTypesList();
+    showAlert(`✅ تمت إضافة ${added} نوع`, 'success');
+}
+
+function resetEquipmentTypesToDefault() {
+    if (!confirm('مسح جميع أنواع المعدات؟')) return;
+    equipmentTypes = [];
+    renderEquipmentTypesList();
+    showAlert('✅ تم المسح', 'success');
+}
+
+function refreshEquipmentDatalist() {
+    // يُستدعى بعد تحديث equipmentTypes لتحديث أي datalist مرتبط
+    const dl = document.getElementById('eqTypesDatalist');
+    if (!dl) return;
+    dl.innerHTML = equipmentTypes.map(t => `<option value="${t}">`).join('');
+}
+
 /* ====================================================
    EXPORT / IMPORT CONFIG
    ==================================================== */
