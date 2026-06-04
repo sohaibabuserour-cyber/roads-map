@@ -567,44 +567,48 @@ function closeSettingsModal() {
 }
 
 function _fillSheetIdsInputs() {
-    const map = {
-        'sheetId_users'         : { const: 'USERS_SHEET_ID',            id: window.USERS_SHEET_ID },
-        'sheetId_equipment'     : { const: 'EQUIPMENT_SHEET_ID',        id: window.EQUIPMENT_SHEET_ID },
-        'sheetId_eqreg'         : { const: 'EQ_REG_SHEET_ID',           id: window.EQ_REG_SHEET_ID },
-        'sheetId_cfCompany'     : { const: 'CASHFLOW_COMPANY_SHEET',    id: window.CASHFLOW_COMPANY_SHEET },
-        'sheetId_cfContractors' : { const: 'CASHFLOW_CONTRACTORS_SHEET',id: window.CASHFLOW_CONTRACTORS_SHEET },
-        'sheetId_notifs'        : { const: 'NOTIFICATIONS_SHEET_ID',    id: window.NOTIFICATIONS_SHEET_ID }
+    const keyMap = {
+        'sheetId_users'         : 'USERS_SHEET_ID',
+        'sheetId_equipment'     : 'EQUIPMENT_SHEET_ID',
+        'sheetId_eqreg'         : 'EQ_REG_SHEET_ID',
+        'sheetId_cfCompany'     : 'CASHFLOW_COMPANY_SHEET',
+        'sheetId_cfContractors' : 'CASHFLOW_CONTRACTORS_SHEET',
+        'sheetId_notifs'        : 'NOTIFICATIONS_SHEET_ID',
+        'sheetId_bills'         : 'BILLS_SHEET_ID',
     };
-    // Also check localStorage overrides
-    const stored = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
-    Object.entries(map).forEach(([inputId, info]) => {
+    // sheetIdsConfig (categories.json) → localStorage legacy → window constant
+    const cfg    = window.sheetIdsConfig || {};
+    const legacy = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
+    Object.entries(keyMap).forEach(([inputId, constName]) => {
         const inp  = document.getElementById(inputId);
         const link = document.getElementById(inputId.replace('sheetId_', 'sheetLink_'));
-        const val  = stored[info.const] || info.id || '';
+        const val  = (cfg[constName] || legacy[constName] || window[constName] || '').toString().trim();
         if (inp)  inp.value = val;
-        if (link && val) link.href = 'https://docs.google.com/spreadsheets/d/' + val;
+        if (link && val) link.href = val.startsWith('http') ? val : 'https://docs.google.com/spreadsheets/d/' + val;
     });
 }
 
 function saveSheetIds() {
-    const fields = {
-        'USERS_SHEET_ID'             : document.getElementById('sheetId_users')?.value.trim(),
-        'EQUIPMENT_SHEET_ID'         : document.getElementById('sheetId_equipment')?.value.trim(),
-        'EQ_REG_SHEET_ID'            : document.getElementById('sheetId_eqreg')?.value.trim(),
-        'CASHFLOW_COMPANY_SHEET'     : document.getElementById('sheetId_cfCompany')?.value.trim(),
-        'CASHFLOW_CONTRACTORS_SHEET' : document.getElementById('sheetId_cfContractors')?.value.trim(),
-        'NOTIFICATIONS_SHEET_ID'     : document.getElementById('sheetId_notifs')?.value.trim()
+    const keyMap = {
+        'USERS_SHEET_ID'             : 'sheetId_users',
+        'EQUIPMENT_SHEET_ID'         : 'sheetId_equipment',
+        'EQ_REG_SHEET_ID'            : 'sheetId_eqreg',
+        'CASHFLOW_COMPANY_SHEET'     : 'sheetId_cfCompany',
+        'CASHFLOW_CONTRACTORS_SHEET' : 'sheetId_cfContractors',
+        'NOTIFICATIONS_SHEET_ID'     : 'sheetId_notifs',
+        'BILLS_SHEET_ID'             : 'sheetId_bills',
     };
-    // Save to localStorage
-    localStorage.setItem('sheetIdsOverride', JSON.stringify(fields));
-    // Apply immediately to runtime variables
-    if (fields.USERS_SHEET_ID)             window.USERS_SHEET_ID             = fields.USERS_SHEET_ID;
-    if (fields.EQUIPMENT_SHEET_ID)         window.EQUIPMENT_SHEET_ID         = fields.EQUIPMENT_SHEET_ID;
-    if (fields.EQ_REG_SHEET_ID)            window.EQ_REG_SHEET_ID            = fields.EQ_REG_SHEET_ID;
-    if (fields.CASHFLOW_COMPANY_SHEET)     window.CASHFLOW_COMPANY_SHEET     = fields.CASHFLOW_COMPANY_SHEET;
-    if (fields.CASHFLOW_CONTRACTORS_SHEET) window.CASHFLOW_CONTRACTORS_SHEET = fields.CASHFLOW_CONTRACTORS_SHEET;
-    if (fields.NOTIFICATIONS_SHEET_ID)     window.NOTIFICATIONS_SHEET_ID     = fields.NOTIFICATIONS_SHEET_ID;
-    // Update links
+    if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
+    Object.entries(keyMap).forEach(([constName, inputId]) => {
+        const val = document.getElementById(inputId)?.value.trim() || '';
+        if (val) {
+            window.sheetIdsConfig[constName] = val;
+            window[constName] = val;
+        }
+    });
+    // حفظ في localStorage
+    localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
+    // تحديث الروابط في الحقول
     _fillSheetIdsInputs();
     // Feedback
     const fb = document.getElementById('sheetIds_feedback');
@@ -613,22 +617,23 @@ function saveSheetIds() {
         fb.style.background = 'rgba(39,174,106,0.12)';
         fb.style.border = '1px solid rgba(39,174,106,0.4)';
         fb.style.color = '#5cc890';
-        fb.textContent = '✅ تم حفظ الروابط وتطبيقها — ستسري عند التحديث القادم للبيانات';
+        fb.textContent = '✅ تم الحفظ — ستُضمَّن في categories.json عند الضغط على ⬇';
         setTimeout(() => { fb.style.display = 'none'; }, 4000);
     }
     showAlert('✅ تم حفظ روابط الشيتات', 'success');
 }
 
-// Apply saved sheet ID overrides on startup
+// تحميل sheetIdsConfig عند بدء التشغيل — يدعم النظام القديم كـ fallback
 (function _applySheetIdsOnLoad() {
     try {
-        const stored = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
-        if (stored.USERS_SHEET_ID)             window.USERS_SHEET_ID             = stored.USERS_SHEET_ID;
-        if (stored.EQUIPMENT_SHEET_ID)         window.EQUIPMENT_SHEET_ID         = stored.EQUIPMENT_SHEET_ID;
-        if (stored.EQ_REG_SHEET_ID)            window.EQ_REG_SHEET_ID            = stored.EQ_REG_SHEET_ID;
-        if (stored.CASHFLOW_COMPANY_SHEET)     window.CASHFLOW_COMPANY_SHEET     = stored.CASHFLOW_COMPANY_SHEET;
-        if (stored.CASHFLOW_CONTRACTORS_SHEET) window.CASHFLOW_CONTRACTORS_SHEET = stored.CASHFLOW_CONTRACTORS_SHEET;
-        if (stored.NOTIFICATIONS_SHEET_ID)     window.NOTIFICATIONS_SHEET_ID     = stored.NOTIFICATIONS_SHEET_ID;
+        if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
+        // النظام الجديد
+        const fresh  = JSON.parse(localStorage.getItem('sheetIdsConfig')   || '{}');
+        // النظام القديم كـ fallback
+        const legacy = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
+        const merged = Object.assign({}, legacy, fresh);
+        Object.assign(window.sheetIdsConfig, merged);
+        Object.entries(merged).forEach(([key, val]) => { if (val) window[key] = val; });
     } catch(e) {}
 })();
 
@@ -1253,8 +1258,15 @@ async function loadCategoriesConfig() {
         if (!Array.isArray(data) && data.equipmentTypes && Array.isArray(data.equipmentTypes)) {
             equipmentTypes = data.equipmentTypes;
         }
-       if (!Array.isArray(data) && data.contractorsList && Array.isArray(data.contractorsList)) {
+        if (!Array.isArray(data) && data.contractorsList && Array.isArray(data.contractorsList)) {
             contractorsList = data.contractorsList;
+        }
+        // Load sheetIdsConfig from config if present — يطبّقها على المتغيرات العالمية
+        if (!Array.isArray(data) && data.sheetIdsConfig && typeof data.sheetIdsConfig === 'object') {
+            if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
+            Object.assign(window.sheetIdsConfig, data.sheetIdsConfig);
+            localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
+            Object.entries(window.sheetIdsConfig).forEach(([key, val]) => { if (val) window[key] = val; });
         }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
@@ -1327,11 +1339,100 @@ function resetContractorsList() {
     renderContractorsListSettings();
     showAlert('✅ تم المسح', 'success');
 }
+
+/* ====================================================
+   EQUIPMENT TYPES — admin managed
+   ==================================================== */
+
+function renderEquipmentTypesList() {
+    const container = document.getElementById('eqTypesList');
+    if (!container) return;
+    if (!equipmentTypes.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-soft);font-size:11px;padding:12px 0;">لا توجد أنواع معدات — أضف من الأعلى</div>';
+        updateEqTypesCount();
+        return;
+    }
+    container.innerHTML = equipmentTypes.map((name, idx) =>
+        `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(39,174,106,0.05);border:1px solid rgba(39,174,106,0.15);border-radius:7px;margin-bottom:5px;">
+            <span style="flex:1;font-size:12px;font-weight:700;color:var(--text);text-align:right;font-family:'Cairo',sans-serif;">🚜 ${name}</span>
+            <button onclick="removeEquipmentType(${idx})"
+                style="background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.25);color:#e53935;width:24px;height:24px;border-radius:6px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(244,67,54,0.2)'"
+                onmouseout="this.style.background='rgba(244,67,54,0.08)'">✕</button>
+        </div>`
+    ).join('');
+    updateEqTypesCount();
+}
+
+function updateEqTypesCount() {
+    const el = document.getElementById('eqTypesCount');
+    if (el) el.textContent = equipmentTypes.length ? `${equipmentTypes.length} نوع مسجل` : '';
+}
+
+function addEquipmentType() {
+    const inp  = document.getElementById('eqTypeNewInput');
+    if (!inp) return;
+    const name = inp.value.trim();
+    if (!name) { showAlert('❌ أدخل اسم المعدة'); return; }
+    if (equipmentTypes.includes(name)) { showAlert('⚠️ المعدة موجودة مسبقاً'); inp.value = ''; return; }
+    equipmentTypes.push(name);
+    inp.value = '';
+    renderEquipmentTypesList();
+    refreshEquipmentDatalist();
+    showAlert('✅ تمت الإضافة', 'success');
+}
+
+function removeEquipmentType(idx) {
+    equipmentTypes.splice(idx, 1);
+    renderEquipmentTypesList();
+    refreshEquipmentDatalist();
+}
+
+function importEquipmentTypesFromCSV() {
+    const area = document.getElementById('eqTypesImportArea');
+    if (!area) return;
+    const lines = area.value.split(/[\n,،]/).map(s => s.trim()).filter(Boolean);
+    let added = 0;
+    lines.forEach(name => {
+        if (!equipmentTypes.includes(name)) { equipmentTypes.push(name); added++; }
+    });
+    area.value = '';
+    renderEquipmentTypesList();
+    refreshEquipmentDatalist();
+    showAlert(`✅ تمت إضافة ${added} نوع`, 'success');
+}
+
+function resetEquipmentTypesToDefault() {
+    if (!confirm('مسح جميع أنواع المعدات؟')) return;
+    equipmentTypes = [];
+    renderEquipmentTypesList();
+    refreshEquipmentDatalist();
+    showAlert('✅ تم المسح', 'success');
+}
+
+function refreshEquipmentDatalist() {
+    const dl = document.getElementById('eqKnownTypesDatalist');
+    if (!dl) return;
+    dl.innerHTML = equipmentTypes.map(t => `<option value="${t}">`).join('');
+}
 /* ====================================================
    EXPORT / IMPORT CONFIG
    ==================================================== */
 
 function exportConfig() {
+    const sheetIds = {};
+    Object.entries({
+        'USERS_SHEET_ID'             : window.USERS_SHEET_ID,
+        'EQUIPMENT_SHEET_ID'         : window.EQUIPMENT_SHEET_ID,
+        'EQ_REG_SHEET_ID'            : window.EQ_REG_SHEET_ID,
+        'CASHFLOW_COMPANY_SHEET'     : window.CASHFLOW_COMPANY_SHEET,
+        'CASHFLOW_CONTRACTORS_SHEET' : window.CASHFLOW_CONTRACTORS_SHEET,
+        'NOTIFICATIONS_SHEET_ID'     : window.NOTIFICATIONS_SHEET_ID,
+        'BILLS_SHEET_ID'             : window.BILLS_SHEET_ID,
+    }).forEach(([k, v]) => { if (v) sheetIds[k] = v; });
+    // دمج مع sheetIdsConfig المحفوظ (يأخذ الأولوية)
+    Object.assign(sheetIds, window.sheetIdsConfig || {});
+
     const payload = JSON.stringify({
         categories: categories,
         defaultCoords: defaultCoords,
@@ -1339,6 +1440,7 @@ function exportConfig() {
         defaultSubNumber: defaultSubNumber,
         equipmentTypes: equipmentTypes,
         contractorsList: contractorsList,
+        sheetIdsConfig: sheetIds,
         // Include current UI state for persistence
         selectedItems: selectedItems,
         selectedStatuses: selectedStatuses,
@@ -1394,6 +1496,13 @@ function importConfig(e) {
                 }
                if (data.contractorsList && Array.isArray(data.contractorsList)) {
                     contractorsList = data.contractorsList;
+                }
+                if (data.sheetIdsConfig && typeof data.sheetIdsConfig === 'object') {
+                    if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
+                    Object.assign(window.sheetIdsConfig, data.sheetIdsConfig);
+                    localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
+                    Object.entries(window.sheetIdsConfig).forEach(([key, val]) => { if (val) window[key] = val; });
+                    if (document.getElementById('sheetId_users')) _fillSheetIdsInputs();
                 }
                 if (data.selectedItems) selectedItems = data.selectedItems;
                 if (data.selectedStatuses) selectedStatuses = data.selectedStatuses;
