@@ -30,7 +30,7 @@ const LABELS = {
     "EQUIPMENT"    : "المعدات"
 };
 
-map;
+let map = null;
 currentUser    = null;
 categories     = [];
 selectedItems  = {};   // subitemId → true (only one per category enforced)
