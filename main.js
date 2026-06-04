@@ -164,7 +164,7 @@ async function fetchUsers() {
     const lines   = csv.split('\n').filter(l => l.trim());
     const parser = (window.Utils && window.Utils.parseCSVLine) ? window.Utils.parseCSVLine : function(line) {
         const result = [];
-        cur = '', inQ = false;
+        let cur = '', inQ = false;
         for (i = 0; i < line.length; i++) {
             const ch = line[i];
             if (ch === '"') {
@@ -550,7 +550,7 @@ function syncCoordsInputs() {
 
 function switchSettingsTab(tab) {
     document.querySelectorAll('.settings-tab').forEach((t, i) => {
-        const tabs = ['coords', 'default', 'similar', 'eqtypes'];
+        const tabs = ['coords', 'default', 'similar', 'eqtypes', 'contractors'];
         t.classList.toggle('active', tabs[i] === tab);
     });
     document.getElementById('settingsTabCoords').classList.toggle('active', tab === 'coords');
@@ -561,7 +561,7 @@ function switchSettingsTab(tab) {
     if (tab === 'similar') renderSimilarGroupsList();
     if (tab === 'default') renderDefaultSubPreview();
     if (tab === 'eqtypes') renderEquipmentTypesList(); updateEqTypesCount();
-    if (tab === 'contractors') { renderContractorsListSettings(); updateContractorsCount(); }
+    if (tab === 'contractors') renderContractorsListSettings(); updateContractorsCount(); }
 }
 
 function saveSettingsCoords() {
