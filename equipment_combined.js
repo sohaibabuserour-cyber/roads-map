@@ -38,6 +38,10 @@ function openEquipmentFormModal() {
     // Set today's date
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('eqf_date').value = today;
+    const eqfcDate = document.getElementById('eqfc_date');
+    if (eqfcDate) eqfcDate.value = today;
+    // Reset to daily tab on open
+    eqSwitchFormTab('daily');
     // Add first row if empty
     if (eqFormEquipmentCount === 0) eqAddEquipmentRow();
 }
@@ -73,7 +77,7 @@ function eqPopulateContractors() {
                     if (c) fallback.add(c);
                 });
             });
-            Object.keys(contractorMap || {}).forEach(n => { if (n.trim()) fallback.add(n.trim()); });
+            Object.keys((window.contractorMap) || {}).forEach(n => { if (n.trim()) fallback.add(n.trim()); });
         }
         const names = source.length
             ? [...source]
@@ -747,6 +751,280 @@ async function eqSubmitForm() {
     } finally {
         btn.disabled    = false;
         btn.textContent = '💾 حفظ في السجل';
+    }
+}
+
+/* ── Tab switching between daily and cumulative forms ── */
+function eqSwitchFormTab(tab) {
+    const bodyDaily = document.getElementById('eqfBodyDaily');
+    const bodyCumul = document.getElementById('eqfBodyCumul');
+    const btnDaily  = document.getElementById('eqfTabDaily');
+    const btnCumul  = document.getElementById('eqfTabCumul');
+    if (!bodyDaily || !bodyCumul) return;
+
+    if (tab === 'daily') {
+        bodyDaily.style.display = 'block';
+        bodyCumul.style.display = 'none';
+        if (btnDaily) {
+            btnDaily.style.background = 'rgba(255,255,255,0.9)';
+            btnDaily.style.color      = '#1a6040';
+        }
+        if (btnCumul) {
+            btnCumul.style.background = 'transparent';
+            btnCumul.style.color      = 'rgba(255,255,255,0.65)';
+        }
+        // تحديث زر الحفظ ليشير لـ eqSubmitForm
+        const submitBtn = document.getElementById('eqf_submit_btn');
+        if (submitBtn) submitBtn.onclick = eqSubmitForm;
+    } else {
+        bodyDaily.style.display = 'none';
+        bodyCumul.style.display = 'block';
+        if (btnCumul) {
+            btnCumul.style.background = 'rgba(255,255,255,0.9)';
+            btnCumul.style.color      = '#1a6040';
+        }
+        if (btnDaily) {
+            btnDaily.style.background = 'transparent';
+            btnDaily.style.color      = 'rgba(255,255,255,0.65)';
+        }
+        // تحديث زر الحفظ ليشير لـ eqSubmitCumulative
+        const submitBtn = document.getElementById('eqf_submit_btn');
+        if (submitBtn) submitBtn.onclick = eqSubmitCumulative;
+        // ملء المقاولين في التبويب التراكمي
+        eqPopulateContractors();
+    }
+}
+
+/* ── Cumulative form: element search ── */
+function eqFilterCumulElementDropdown() {
+    const inp = document.getElementById('eqfc_element_search');
+    const dd  = document.getElementById('eqfc_element_dropdown');
+    const q   = (inp ? inp.value : '').trim().toLowerCase();
+
+    const filtered = q
+        ? _eqAllElements.filter(e => e.name.toLowerCase().includes(q) || e.id.toLowerCase().includes(q))
+        : _eqAllElements;
+
+    if (!filtered.length) {
+        dd.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;font-family:\'Cairo\',sans-serif;">لا توجد عناصر مطابقة</div>';
+    } else {
+        dd.innerHTML = filtered.slice(0, 60).map(e =>
+            '<div onclick="eqSelectCumulElement(\'' + e.id.replace(/'/g,"\\'") + '\',\'' + e.name.replace(/'/g,"\\'") + '\')" ' +
+            'style="padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s;display:flex;flex-direction:column;gap:2px;" ' +
+            'onmouseover="this.style.background=\'rgba(33,150,243,0.12)\'" onmouseout="this.style.background=\'\'">' +
+            '<span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);font-family:\'Cairo\',sans-serif;">' + e.name + '</span>' +
+            '<span style="font-size:10px;color:rgba(255,255,255,0.4);font-family:\'Cairo\',sans-serif;">ID: ' + e.id + ' • ' + e.subName + '</span>' +
+            '</div>'
+        ).join('');
+    }
+    dd.style.display = 'block';
+    setTimeout(() => {
+        document.addEventListener('click', function _close(ev) {
+            if (!dd.contains(ev.target) && ev.target !== inp) dd.style.display = 'none';
+            else document.addEventListener('click', _close, { once: true, capture: true });
+        }, { once: true, capture: true });
+    }, 0);
+}
+
+function eqSelectCumulElement(id, name) {
+    document.getElementById('eqfc_element_id').value    = id;
+    document.getElementById('eqfc_element_name').value  = name;
+    document.getElementById('eqfc_element_search').value = name;
+    document.getElementById('eqfc_element_dropdown').style.display = 'none';
+
+    const info = document.getElementById('eqfc_element_info');
+    document.getElementById('eqfc_element_info_name').textContent = name;
+    document.getElementById('eqfc_element_info_id').textContent   = 'ID: ' + id;
+    info.style.display = 'flex';
+
+    const el = _eqAllElements.find(e => e.id === id && e.name === name)
+            || _eqAllElements.find(e => e.id === id);
+    if (el) {
+        let matchedSub = null, matchedCat = null;
+        (categories || []).forEach(cat => {
+            cat.subitems.forEach(sub => {
+                if (sub.sheetId === el.sheetId) { matchedSub = sub; matchedCat = cat; }
+            });
+        });
+        if (matchedSub && matchedCat) {
+            document.getElementById('eqfc_item_name').value  = matchedSub.name;
+            document.getElementById('eqfc_band_sheet').value = matchedSub.sheetId || '';
+            document.getElementById('eqfc_cat_name').value   = matchedCat.name || '';
+            document.getElementById('eqfc_cat_id').value     = matchedCat.id   || '';
+            const lbl = document.getElementById('eqfc_band_display');
+            if (lbl) { lbl.value = matchedSub.name; lbl.style.color = 'rgba(255,255,255,0.9)'; }
+            const group = getGroupForSub(matchedSub.id);
+            document.getElementById('eqfc_group_name').value = group ? (group.name || '—') : '—';
+            document.getElementById('eqfc_group_id').value   = group ? (group.id   || '')  : '';
+        }
+    }
+}
+
+function eqClearCumulElement() {
+    ['eqfc_element_id','eqfc_element_name','eqfc_element_search',
+     'eqfc_item_name','eqfc_band_sheet','eqfc_cat_name','eqfc_cat_id',
+     'eqfc_group_name','eqfc_group_id'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    const info = document.getElementById('eqfc_element_info');
+    if (info) info.style.display = 'none';
+    const lbl = document.getElementById('eqfc_band_display');
+    if (lbl) { lbl.value = 'يُملأ تلقائياً عند اختيار العنصر'; lbl.style.color = ''; }
+}
+
+/* ── Pick from map for cumulative tab ── */
+let _eqCumulPickingFromMap = false;
+let _eqCumulMapClickHandler = null;
+let _eqCumulMapBgClickHandler = null;
+
+function eqPickFromMapCumul() {
+    if (!map) { showAlert('❌ الخريطة غير جاهزة'); return; }
+    const hasLayers = Object.keys(allLayers).length > 0;
+    if (!hasLayers) { showAlert('❌ حمّل بنداً على الخريطة أولاً'); return; }
+
+    _eqCumulPickingFromMap = true;
+    document.getElementById('equipmentFormModal').style.display = 'none';
+
+    let hint = document.getElementById('eqPickMapHintCumul');
+    if (!hint) {
+        hint = document.createElement('div');
+        hint.id = 'eqPickMapHintCumul';
+        hint.style.cssText = [
+            'position:fixed','top:70px','left:50%','transform:translateX(-50%)',
+            'z-index:99999','background:linear-gradient(135deg,#1a4a8a,#2196f3)',
+            'color:white','padding:12px 24px','border-radius:12px',
+            'font-size:13px','font-weight:700','font-family:\'Cairo\',sans-serif',
+            'box-shadow:0 8px 28px rgba(33,150,243,0.5)',
+            'display:flex','align-items:center','gap:14px','white-space:nowrap',
+            'pointer-events:auto'
+        ].join(';');
+        hint.innerHTML = '<span>🗺 انقر على أي عنصر في الخريطة لاختياره</span>' +
+            '<button onclick="eqCancelPickFromMapCumul()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:4px 12px;border-radius:7px;font-size:12px;font-weight:700;font-family:\'Cairo\',sans-serif;cursor:pointer;">إلغاء</button>';
+        document.body.appendChild(hint);
+    }
+    hint.style.display = 'flex';
+    map.getContainer().style.cursor = 'crosshair';
+
+    _eqCumulMapClickHandler = function(e) {
+        if (!_eqCumulPickingFromMap) return;
+        if (e.originalEvent) { e.originalEvent.stopPropagation(); e.originalEvent.preventDefault(); }
+        if (map.closePopup) map.closePopup();
+        const row = _eqGetRowFromFeatureEvent(e);
+        eqCancelPickFromMapCumul();
+        if (row) {
+            const nameKey = row['ROAD NAME'] ? 'ROAD NAME' : row['BLOCK NAME'] ? 'BLOCK NAME' : 'NAME';
+            const name = (row[nameKey] || '').trim() || row['ID'];
+            eqSelectCumulElement(row['ID'] || '', name);
+            showAlert('✅ تم اختيار: ' + name, 'success');
+        }
+    };
+    Object.values(allLayers).forEach(layer => {
+        if (!layer) return;
+        layer.eachLayer(f => { f.on('click', _eqCumulMapClickHandler); });
+    });
+    _eqCumulMapBgClickHandler = function(e) {
+        if (!_eqCumulPickingFromMap) return;
+        let nearest = null, nearestDist = Infinity;
+        Object.entries(allLayers).forEach(([sheetId, layer]) => {
+            if (!layer || !allData[sheetId]) return;
+            layer.eachLayer(f => {
+                try {
+                    const center = f.getBounds ? f.getBounds().getCenter() : f.getLatLng ? f.getLatLng() : null;
+                    if (!center) return;
+                    const d = map.distance(e.latlng, center);
+                    if (d < nearestDist) { nearestDist = d; const row = allData[sheetId][f.feature.properties.ID]; if (row) nearest = row; }
+                } catch(err) {}
+            });
+        });
+        if (nearest && nearestDist < 500) {
+            _eqCumulPickingFromMap = false;
+            map.closePopup();
+            const nameKey = nearest['ROAD NAME'] ? 'ROAD NAME' : nearest['BLOCK NAME'] ? 'BLOCK NAME' : 'NAME';
+            const name = (nearest[nameKey] || '').trim() || nearest['ID'];
+            eqCancelPickFromMapCumul();
+            eqSelectCumulElement(nearest['ID'] || '', name);
+            showAlert('✅ تم اختيار: ' + name, 'success');
+        }
+    };
+    map.on('click', _eqCumulMapBgClickHandler);
+}
+
+function eqCancelPickFromMapCumul() {
+    _eqCumulPickingFromMap = false;
+    document.getElementById('equipmentFormModal').style.display = '';
+    const hint = document.getElementById('eqPickMapHintCumul');
+    if (hint) hint.style.display = 'none';
+    if (map) map.getContainer().style.cursor = '';
+    if (_eqCumulMapClickHandler) {
+        Object.values(allLayers).forEach(layer => {
+            if (!layer) return;
+            layer.eachLayer(f => { f.off('click', _eqCumulMapClickHandler); });
+        });
+        _eqCumulMapClickHandler = null;
+    }
+    if (map && _eqCumulMapBgClickHandler) {
+        map.off('click', _eqCumulMapBgClickHandler);
+        _eqCumulMapBgClickHandler = null;
+    }
+    if (map) map.closePopup();
+}
+
+/* ── Submit cumulative form ── */
+async function eqSubmitCumulative() {
+    const feedbackEl = document.getElementById('eqfc_feedback');
+    const showFb = (msg, type) => {
+        if (!feedbackEl) return;
+        feedbackEl.className = 'eqf-' + type;
+        feedbackEl.textContent = msg;
+        feedbackEl.style.display = 'block';
+        if (type === 'success') setTimeout(() => { feedbackEl.style.display = 'none'; }, 4000);
+    };
+
+    const element_id   = document.getElementById('eqfc_element_id').value.trim();
+    const element_name = document.getElementById('eqfc_element_name').value.trim();
+    const item_name    = document.getElementById('eqfc_item_name').value.trim();
+    const cat_name     = document.getElementById('eqfc_cat_name').value.trim();
+    const group_name   = document.getElementById('eqfc_group_name').value.trim();
+    const contractor   = document.getElementById('eqfc_contractor').value.trim();
+    const date         = document.getElementById('eqfc_date').value.trim();
+    const total_qty    = parseFloat(document.getElementById('eqfc_total_qty').value) || 0;
+    const cumul_qty    = parseFloat(document.getElementById('eqfc_cumul_qty').value) || 0;
+    const band_sheet   = document.getElementById('eqfc_band_sheet').value.trim();
+
+    if (!element_name) { showFb('❌ يرجى اختيار اسم العنصر', 'error'); return; }
+    if (!item_name)    { showFb('❌ يرجى اختيار البند', 'error'); return; }
+    if (!contractor)   { showFb('❌ يرجى اختيار المقاول', 'error'); return; }
+    if (!date)         { showFb('❌ يرجى اختيار التاريخ', 'error'); return; }
+    if (!band_sheet)   { showFb('❌ البند المختار ليس له شيت مرتبط', 'error'); return; }
+
+    const allSubs = (categories || []).flatMap(c => c.subitems || []);
+    const matchedSub = allSubs.find(s => s.sheetId === band_sheet);
+    const scriptUrl = (matchedSub && matchedSub.scriptUrl) ? matchedSub.scriptUrl.trim() : '';
+    if (!scriptUrl) { showFb('❌ لم يتم العثور على رابط السكريبت — راجع إعدادات البند', 'error'); return; }
+
+    const btn = document.getElementById('eqf_submit_btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري الحفظ...'; }
+    showFb('⏳ جاري إرسال البيانات...', 'loading');
+
+    const added_by = (currentUser && currentUser.email) ? currentUser.email : (currentUser && currentUser.name ? currentUser.name : '');
+    const payload = { form_type: 'cumulative', group_name, cat_name, element_id, element_name, item_name, contractor, date, total_qty, cumul_qty, added_by };
+
+    try {
+        const r    = await fetch(scriptUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), redirect: 'follow' });
+        const text = await r.text();
+        let resp = {};
+        try { resp = JSON.parse(text); } catch(e) {}
+        if (resp.status === 'success' || r.ok) {
+            showFb('✅ تم حفظ الكمية التراكمية بنجاح!', 'success');
+            showAlert('✅ تم تسجيل الكمية التراكمية بنجاح', 'success');
+        } else {
+            throw new Error(resp.message || 'فشل الحفظ');
+        }
+    } catch(e) {
+        showFb('❌ تعذر الحفظ: ' + (e.message || 'خطأ في الاتصال'), 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '💾 حفظ في السجل'; }
     }
 }
 
