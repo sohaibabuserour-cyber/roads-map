@@ -321,10 +321,18 @@ async function enterApp() {
         }
     }
 
-    // Re-load previously selected layers
+    // Re-load previously selected layers (فقط البنود اللي عندها شيت وGeoJSON)
     categories.forEach(cat => {
         cat.subitems.forEach(sub => {
-            if (selectedItems[sub.id]) loadLayer(sub.sheetId, sub.name, sub.geoJsonFile, cat.id);
+            if (selectedItems[sub.id]) {
+                if (sub.sheetId && sub.sheetId.trim() && sub.geoJsonFile && sub.geoJsonFile.trim()) {
+                    loadLayer(sub.sheetId, sub.name, sub.geoJsonFile, cat.id);
+                } else {
+                    // البند محفوظ كمحدد لكن بيانات ناقصة — اشله من الاختيار
+                    console.warn('[enterApp] بند محفوظ بدون بيانات، تم إلغاء اختياره:', sub.name);
+                    delete selectedItems[sub.id];
+                }
+            }
         });
     });
 
@@ -1795,6 +1803,16 @@ function flashLayer(leafletLayer) {
 const loadTokens = {};
 
 function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
+    // ── تحقق من وجود البيانات الأساسية قبل أي محاولة تحميل ──
+    if (!sheetId || !sheetId.trim()) {
+        console.warn('[loadLayer] تم تخطي البند "' + subitemName + '" — لا يوجد رابط شيت');
+        return;
+    }
+    if (!geoJsonFile || !geoJsonFile.trim()) {
+        console.warn('[loadLayer] تم تخطي البند "' + subitemName + '" — لا يوجد ملف GeoJSON');
+        return;
+    }
+
     // Generate a unique token for THIS load request
     const token = Date.now() + '_' + Math.random();
     loadTokens[sheetId] = token;
@@ -1951,15 +1969,18 @@ function buildNavTabs() {
             cat.subitems.forEach(sub => {
                 const subRow = document.createElement("div");
                 subRow.className = "tab-sub-item bunood-sub-item";
+                const _tabMissing = !sub.sheetId || !sub.geoJsonFile;
                 subRow.innerHTML = `
                     <input type="checkbox" id="tabcb_${sub.id}"
                         data-sub-id="${sub.id}"
                         data-cat-id="${cat.id}"
                         data-sheet="${sub.sheetId}"
-                        data-geo="${sub.geoJsonFile}">
-                    <label for="tabcb_${sub.id}">
+                        data-geo="${sub.geoJsonFile}"
+                        ${_tabMissing ? 'title="⚠️ بيانات ناقصة — لن تظهر طبقة على الخريطة"' : ''}>
+                    <label for="tabcb_${sub.id}" style="${_tabMissing ? 'opacity:0.5;' : ''}">
                         ${sub.number ? `<span style="font-size:9px;opacity:0.6;margin-left:4px;">${sub.number}</span>` : ''}
                         ${sub.name}
+                        ${_tabMissing ? '<span style="font-size:9px;color:#ff9800;margin-right:4px;">⚠</span>' : ''}
                     </label>`;
                 subRow.querySelector('input').addEventListener('change', function(e) {
                     e.stopPropagation();
@@ -2117,10 +2138,17 @@ function handleSubitemToggle(catId, subId, sheetId, geoFile, checked) {
             });
         }
 
-        // 2. اختر هذا البند وحمل طبقته
+        // 2. اختر هذا البند وحمل طبقته (فقط لو الشيت والـ GeoJSON موجودين)
         selectedItems[subId] = true;
         const sub = cat.subitems.find(s => s.id === subId);
-        if (sub) loadLayer(sheetId, sub.name, geoFile, catId);
+        if (sub && sub.sheetId && sub.sheetId.trim() && sub.geoJsonFile && sub.geoJsonFile.trim()) {
+            loadLayer(sheetId, sub.name, geoFile, catId);
+        } else if (sub) {
+            // البند محدد لكن بدون بيانات — أظهر تحذير للأدمن فقط
+            if (currentUser && currentUser.isAdmin) {
+                showAlert('⚠️ البند "' + sub.name + '" لا يحتوي على رابط شيت أو GeoJSON — لن تظهر طبقة على الخريطة', 'error');
+            }
+        }
 
     } else {
         delete selectedItems[subId];
@@ -2288,7 +2316,16 @@ function addSubitem() {
     renderItems();
     renderNavTabs();
     closeModal("modalAddSubitem");
-    showAlert("✅ تمت إضافة البند الفرعي" + (!sheetId || !geo ? " — أضف الشيت والـ GeoJSON لاحقاً بدبل كليك" : ""), "success");
+
+    if (!sheetId && !geo) {
+        showAlert('✅ تمت إضافة البند "' + name + '" — ⚠️ لن تظهر طبقة على الخريطة حتى تضيف رابط الشيت وملف GeoJSON (دبل كليك للتعديل)', "success");
+    } else if (!sheetId) {
+        showAlert('✅ تمت إضافة البند "' + name + '" — ⚠️ رابط الشيت ناقص، أضفه بدبل كليك', "success");
+    } else if (!geo) {
+        showAlert('✅ تمت إضافة البند "' + name + '" — ⚠️ ملف GeoJSON ناقص، أضفه بدبل كليك', "success");
+    } else {
+        showAlert('✅ تمت إضافة البند الفرعي "' + name + '"', "success");
+    }
 }
 
 function deleteCategory(catId) {
