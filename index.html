@@ -351,6 +351,14 @@
                         <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم...">
                         <div class="search-dropdown" id="searchDropdown"></div>
                     </div>
+                    <!-- Date Picker -->
+                    <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
+                        <label for="mapDateFilter" style="font-size:9px;font-weight:700;color:var(--text-soft);text-align:center;font-family:'Cairo',sans-serif;letter-spacing:0.3px;">اختر تاريخ</label>
+                        <input type="date" id="mapDateFilter"
+                            style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:'Cairo',sans-serif;color:var(--text);background:var(--white);outline:none;cursor:pointer;transition:border-color 0.2s;height:34px;"
+                            onfocus="this.style.borderColor='var(--purple)'"
+                            onblur="this.style.borderColor='var(--border)'">
+                    </div>
                     <!-- Progress Ring -->
                     <div class="progress-ring-wrap" id="progressRingWrap">
                         <svg class="progress-ring-svg" width="38" height="38" viewBox="0 0 38 38">
