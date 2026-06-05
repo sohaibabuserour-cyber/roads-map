@@ -43,6 +43,7 @@ similarGroups  = [];        // [{id, name, subIds:[]}] — مجموعات الب
 _editingGroupId = null;     // for editing existing group
 defaultCoords  = { lat: 21.292, lng: 39.71, zoom: 14 };
 defaultSubNumber = ""; // رقم البند الافتراضي الذي يُحمَّل عند بدء النظام
+activeGroupFilter = null;   // group.id أو 'solo_'+subId أو null — فلتر مجموعات البنود
 
 /* ====================================================
    HELPERS
@@ -2912,4 +2913,261 @@ const _afterEnterApp = () => {
         await orig.apply(this, arguments);
         _afterEnterApp();
     };
+})();
+
+/* ====================================================
+   GROUPS DROPDOWN — تبويب مجموعات البنود
+   ==================================================== */
+
+function _getGroupSubIds(groupId) {
+    if (!groupId) return [];
+    if (groupId.startsWith('solo_')) {
+        return [groupId.replace('solo_', '')];
+    }
+    const g = (similarGroups || []).find(function(x) { return x.id === groupId; });
+    return g ? (g.subIds || []) : [];
+}
+
+function _getGroupName(groupId) {
+    if (!groupId) return '';
+    if (groupId.startsWith('solo_')) {
+        const sid = groupId.replace('solo_', '');
+        let name = '';
+        (categories || []).forEach(function(cat) {
+            const s = (cat.subitems || []).find(function(x) { return x.id === sid; });
+            if (s) name = s.name;
+        });
+        return name;
+    }
+    const g = (similarGroups || []).find(function(x) { return x.id === groupId; });
+    return g ? (g.name || 'مجموعة') : '';
+}
+
+window.toggleGroupsDropdown = function(e) {
+    if (e) e.stopPropagation();
+    // أغلق باقي الـ dropdowns
+    ['reportsDropdown','addDropdown'].forEach(function(id) {
+        const d = document.getElementById(id);
+        if (d) d.style.display = 'none';
+    });
+    const bunoodDd = document.getElementById('bunoodMainDd');
+    if (bunoodDd) bunoodDd.style.display = 'none';
+    document.querySelectorAll('.bunood-sub-flyout').forEach(function(d) { d.style.display = 'none'; });
+
+    const dd = document.getElementById('groupsDropdown');
+    if (!dd) return;
+    const isOpen = dd.style.display === 'flex';
+    if (isOpen) { dd.style.display = 'none'; return; }
+
+    _buildGroupsDropdownContent();
+
+    const triggerEl = e && e.currentTarget;
+    if (triggerEl) {
+        const rect = triggerEl.getBoundingClientRect();
+        dd.style.position = 'fixed';
+        dd.style.top = rect.bottom + 'px';
+        dd.style.right = 'auto';
+        if (window.innerWidth <= 1024) {
+            dd.style.left  = '8px';
+            dd.style.right = '8px';
+            dd.style.width = 'auto';
+        } else {
+            dd.style.left = rect.left + 'px';
+        }
+    }
+    dd.style.display = 'flex';
+    dd.style.flexDirection = 'column';
+    dd.style.maxHeight = 'calc(100vh - 80px)';
+    dd.style.overflowY = 'auto';
+    dd.style.zIndex = '99999';
+};
+
+window.closeGroupsDropdown = function() {
+    const dd = document.getElementById('groupsDropdown');
+    if (dd) dd.style.display = 'none';
+};
+
+function _buildGroupsDropdownContent() {
+    const list = document.getElementById('groupsDropdownInner');
+    if (!list) return;
+
+    const groups = similarGroups || [];
+
+    // البنود المنفردة (غير المُجمَّعة في أي مجموعة)
+    const groupedSubIds = new Set(groups.flatMap(function(g) { return g.subIds || []; }));
+    const soloSubs = [];
+    (categories || []).forEach(function(cat) {
+        (cat.subitems || []).forEach(function(sub) {
+            if (!groupedSubIds.has(sub.id)) soloSubs.push({ sub: sub, cat: cat });
+        });
+    });
+
+    if (!groups.length && !soloSubs.length) {
+        list.innerHTML = '<div style="padding:20px 14px;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;font-family:\'Cairo\',sans-serif;line-height:1.8;">لا توجد مجموعات بعد<br><span style="font-size:10px;">أضفها من ⚙️ الإعدادات ← البنود المتشابهة</span></div>';
+        return;
+    }
+
+    let html = '';
+
+    // زر إلغاء الفلتر النشط
+    if (activeGroupFilter) {
+        html += '<div onclick="clearGroupFilter()" style="padding:9px 14px;background:rgba(244,67,54,0.12);border-bottom:1px solid rgba(244,67,54,0.2);display:flex;align-items:center;gap:8px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'rgba(244,67,54,0.22)\'" onmouseout="this.style.background=\'rgba(244,67,54,0.12)\'">' +
+            '<span style="font-size:13px;">✕</span>' +
+            '<span style="font-size:12px;font-weight:700;color:#ff8a80;font-family:\'Cairo\',sans-serif;">إلغاء الفلتر الحالي</span>' +
+            '</div>';
+    }
+
+    // ── المجموعات المُعرَّفة ──
+    if (groups.length) {
+        html += '<div style="padding:6px 14px 4px;font-size:9px;font-weight:900;color:rgba(255,255,255,0.35);letter-spacing:.8px;font-family:\'Cairo\',sans-serif;border-bottom:1px solid rgba(255,255,255,0.05);">📦 المجموعات</div>';
+        groups.forEach(function(group) {
+            const isActive = activeGroupFilter === group.id;
+            const subCount = (group.subIds || []).length;
+            const subNames = (group.subIds || []).map(function(sid) {
+                let name = '';
+                (categories || []).forEach(function(cat) {
+                    const s = (cat.subitems || []).find(function(x) { return x.id === sid; });
+                    if (s) name = s.name;
+                });
+                return name;
+            }).filter(Boolean).join(' • ');
+
+            html += '<div onclick="applyGroupFilter(\'' + group.id + '\')" style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s;background:' + (isActive ? 'rgba(245,200,66,0.12)' : 'transparent') + ';border-right:3px solid ' + (isActive ? '#f5c842' : 'transparent') + ';" onmouseover="this.style.background=\'rgba(245,200,66,0.08)\'" onmouseout="this.style.background=\'' + (isActive ? 'rgba(245,200,66,0.12)' : 'transparent') + '\'">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
+                '<div style="display:flex;align-items:center;gap:8px;flex:1;">' +
+                '<span style="font-size:16px;">' + (isActive ? '✅' : '🔗') + '</span>' +
+                '<div style="flex:1;">' +
+                '<div style="font-size:12px;font-weight:700;color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;">' + (group.name || 'مجموعة') + '</div>' +
+                '<div style="font-size:10px;color:rgba(255,255,255,0.4);font-family:\'Cairo\',sans-serif;margin-top:2px;text-align:right;">' + subNames + '</div>' +
+                '</div></div>' +
+                '<span style="background:' + (isActive ? 'rgba(245,200,66,0.2)' : 'rgba(255,255,255,0.08)') + ';border:1px solid ' + (isActive ? 'rgba(245,200,66,0.4)' : 'rgba(255,255,255,0.15)') + ';color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.6)') + ';font-size:9px;font-weight:900;padding:2px 8px;border-radius:10px;white-space:nowrap;font-family:\'Cairo\',sans-serif;">' + subCount + ' بند</span>' +
+                '</div></div>';
+        });
+    }
+
+    // ── البنود المنفردة ──
+    if (soloSubs.length) {
+        html += '<div style="padding:6px 14px 4px;font-size:9px;font-weight:900;color:rgba(255,255,255,0.35);letter-spacing:.8px;font-family:\'Cairo\',sans-serif;border-bottom:1px solid rgba(255,255,255,0.05);border-top:1px solid rgba(255,255,255,0.06);">📌 بنود منفردة</div>';
+        soloSubs.forEach(function(item) {
+            const soloId = 'solo_' + item.sub.id;
+            const isActive = activeGroupFilter === soloId;
+            html += '<div onclick="applyGroupFilter(\'' + soloId + '\')" style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s;background:' + (isActive ? 'rgba(106,45,145,0.18)' : 'transparent') + ';border-right:3px solid ' + (isActive ? 'var(--purple,#6a2d91)' : 'transparent') + ';" onmouseover="this.style.background=\'rgba(106,45,145,0.1)\'" onmouseout="this.style.background=\'' + (isActive ? 'rgba(106,45,145,0.18)' : 'transparent') + '\'">' +
+                '<div style="display:flex;align-items:center;gap:8px;">' +
+                '<span style="font-size:14px;">' + (isActive ? '✅' : item.cat.emoji) + '</span>' +
+                '<div style="flex:1;">' +
+                '<div style="font-size:12px;font-weight:700;color:' + (isActive ? '#c39bd3' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;">' + item.sub.name + '</div>' +
+                '<div style="font-size:10px;color:rgba(255,255,255,0.4);font-family:\'Cairo\',sans-serif;margin-top:1px;text-align:right;">' + item.cat.name + '</div>' +
+                '</div>' +
+                (isActive ? '<span style="font-size:9px;color:#c39bd3;font-weight:900;font-family:\'Cairo\',sans-serif;white-space:nowrap;">● نشط</span>' : '') +
+                '</div></div>';
+        });
+    }
+
+    list.innerHTML = html;
+}
+
+window.applyGroupFilter = function(groupId) {
+    // نفس الفلتر = ألغِ
+    if (activeGroupFilter === groupId) {
+        clearGroupFilter();
+        return;
+    }
+
+    activeGroupFilter = groupId;
+    const subIds = _getGroupSubIds(groupId);
+    if (!subIds.length) return;
+
+    // ── أزل فلتر المقاولين النشط ──
+    if (window.activeContractorFilter && window.activeContractorFilter.size > 0) {
+        const cSheets = new Set([...window.activeContractorFilter].map(function(k) { return k.split('|')[0]; }));
+        window.activeContractorFilter.clear();
+        cSheets.forEach(function(sid) {
+            loadTokens[sid] = null;
+            if (allLayers[sid]) { map.removeLayer(allLayers[sid]); delete allLayers[sid]; }
+            delete allData[sid];
+        });
+    }
+
+    // ── أزل كل الاختيارات الحالية التي ليست ضمن المجموعة ──
+    const allSubItems = (categories || []).flatMap(function(c) { return c.subitems || []; });
+    Object.keys(selectedItems).forEach(function(selId) {
+        if (!subIds.includes(selId)) {
+            const selSub = allSubItems.find(function(s) { return s.id === selId; });
+            if (selSub) {
+                loadTokens[selSub.sheetId] = null;
+                if (allLayers[selSub.sheetId]) { map.removeLayer(allLayers[selSub.sheetId]); delete allLayers[selSub.sheetId]; }
+                delete allData[selSub.sheetId];
+            }
+            delete selectedItems[selId];
+        }
+    });
+
+    // ── حمّل بنود المجموعة ──
+    subIds.forEach(function(sid) {
+        let foundSub = null, foundCat = null;
+        (categories || []).forEach(function(cat) {
+            (cat.subitems || []).forEach(function(sub) {
+                if (sub.id === sid) { foundSub = sub; foundCat = cat; }
+            });
+        });
+        if (!foundSub || !foundSub.sheetId || !foundSub.geoJsonFile) return;
+        selectedItems[foundSub.id] = true;
+        if (!allLayers[foundSub.sheetId]) {
+            loadLayer(foundSub.sheetId, foundSub.name, foundSub.geoJsonFile, foundCat.id);
+        }
+    });
+
+    // ── تحديث الواجهة ──
+    renderItems();
+    updateNavTabsState();
+    updateStats();
+    if (window.contractorsLoaded) renderContractorList && renderContractorList();
+
+    closeGroupsDropdown();
+    _updateGroupsTabState();
+
+    showAlert('✅ تم تفعيل مجموعة: ' + _getGroupName(groupId), 'success');
+};
+
+window.clearGroupFilter = function() {
+    activeGroupFilter = null;
+    _updateGroupsTabState();
+    _buildGroupsDropdownContent();
+    closeGroupsDropdown();
+    showAlert('✅ تم إلغاء فلتر المجموعة', 'success');
+};
+
+function _updateGroupsTabState() {
+    const tab = document.getElementById('navTabGroups');
+    if (!tab) return;
+
+    // أزل/أضف البادج النشط
+    const oldDot = tab.querySelector('.gf-active-dot');
+    if (oldDot) oldDot.remove();
+
+    if (activeGroupFilter) {
+        tab.classList.add('active');
+        const dot = document.createElement('span');
+        dot.className = 'gf-active-dot';
+        dot.style.cssText = 'display:inline-block;width:7px;height:7px;border-radius:50%;background:#f5c842;margin-right:5px;flex-shrink:0;box-shadow:0 0 6px rgba(245,200,66,0.8);animation:gfPulse 1.5s ease-in-out infinite;vertical-align:middle;';
+        tab.insertBefore(dot, tab.firstChild);
+    } else {
+        tab.classList.remove('active');
+    }
+
+    // تحديث بادج الموبايل
+    const mmBadge = document.getElementById('mmGroupsBadge');
+    if (mmBadge) {
+        mmBadge.style.display = activeGroupFilter ? 'inline-block' : 'none';
+        if (activeGroupFilter) mmBadge.textContent = '● نشط';
+    }
+}
+
+// أنيميشن النقطة النابضة
+(function _injectGroupFilterCSS() {
+    if (document.getElementById('groupFilterCSS')) return;
+    const s = document.createElement('style');
+    s.id = 'groupFilterCSS';
+    s.textContent = '@keyframes gfPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(1.4);}}';
+    document.head.appendChild(s);
 })();
