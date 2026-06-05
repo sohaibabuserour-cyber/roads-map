@@ -820,6 +820,12 @@
     "الفجر",
     "المسار الحديث"
   ],
+  "sheetIdsConfig": {
+    "USERS_SHEET_ID": "1maViL4HSsI5XsjnAOGM-2D98g0Ow_pawZ-A_R_Y9I_0",
+    "EQUIPMENT_SHEET_ID": "1Sb4K98Yy5_lj580EgpqLPl7HyjBRZSA4JS_z_Qyh9XI",
+    "CASHFLOW_COMPANY_SHEET": "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA",
+    "CASHFLOW_CONTRACTORS_SHEET": "1xmSUQNR02prdGK9P6QiJo8ybVKwdVZAE74yUkUTbVYA"
+  },
   "selectedItems": {
     "mpiml7x5b651b": true
   },
