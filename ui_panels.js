@@ -402,14 +402,6 @@
         _modalIconEl.textContent  = meta.icon;
         _modalTitleEl.textContent = meta.title;
 
-        /* ══ الملف الشخصي: أخفِ الاسم والدور فقط ══ */
-        if (panelId === 'userDropdown') {
-            const udName = panel.querySelector('#udName');
-            const udRole = panel.querySelector('#udRole');
-            if (udName) udName.style.display = 'none';
-            if (udRole) udRole.style.display = 'none';
-        }
-
         /* انقل محتوى الـ panel جوا المودال */
         _modalContentEl.innerHTML = '';
         _modalContentEl.appendChild(panel);
@@ -438,14 +430,6 @@
         /* أعد الـ panel لمكانه الأصلي في الـ DOM */
         if (panel) {
             panel.classList.remove('active');
-
-            /* أعد الاسم والدور لو كانوا مخفيين */
-            if (_activeMobilePanelId === 'userDropdown') {
-                const udName = panel.querySelector('#udName');
-                const udRole = panel.querySelector('#udRole');
-                if (udName) udName.style.display = '';
-                if (udRole) udRole.style.display = '';
-            }
 
             /* المقاول panel → داخل wrapper خاص به */
             const originalParent = _originalParents[_activeMobilePanelId];
