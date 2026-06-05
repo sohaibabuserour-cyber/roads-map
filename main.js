@@ -3038,7 +3038,6 @@ function _buildGroupsDropdownContent() {
                 '<span style="font-size:16px;">' + (isActive ? '✅' : '🔗') + '</span>' +
                 '<div style="flex:1;">' +
                 '<div style="font-size:12px;font-weight:700;color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;">' + (group.name || 'مجموعة') + '</div>' +
-                '<div style="font-size:10px;color:rgba(255,255,255,0.4);font-family:\'Cairo\',sans-serif;margin-top:2px;text-align:right;">' + subNames + '</div>' +
                 '</div></div>' +
                 '<span style="background:' + (isActive ? 'rgba(245,200,66,0.2)' : 'rgba(255,255,255,0.08)') + ';border:1px solid ' + (isActive ? 'rgba(245,200,66,0.4)' : 'rgba(255,255,255,0.15)') + ';color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.6)') + ';font-size:9px;font-weight:900;padding:2px 8px;border-radius:10px;white-space:nowrap;font-family:\'Cairo\',sans-serif;">' + subCount + ' بند</span>' +
                 '</div></div>';
