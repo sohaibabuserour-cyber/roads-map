@@ -274,12 +274,21 @@
                 overflow: visible !important;
             }
 
-            /* أخفِ رؤوس الـ panels الداخلية (الهيدر في المودال يغنيها) */
+            /* أخفِ رؤوس الـ panels الداخلية (الهيدر في المودال يغنيها) — عدا userDropdown */
             #mobilePanelModalContent .contractor-panel-header,
             #mobilePanelModalContent .notif-panel-header,
-            #mobilePanelModalContent .theme-panel-header,
-            #mobilePanelModalContent .user-dropdown-header {
+            #mobilePanelModalContent .theme-panel-header {
                 display: none !important;
+            }
+
+            /* ══ user-dropdown-header: أظهر الصورة فقط — أخفِ الاسم والدور بالـ JS ══ */
+            #mobilePanelModalContent .user-dropdown-header {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 24px 16px 16px !important;
+                background: linear-gradient(135deg,#1a0a2e 0%,#3d1060 100%) !important;
             }
 
             /* ══ user-dropdown داخل المودال: الصورة فوق ثم الحقول تحتها ══ */
@@ -287,12 +296,12 @@
                 align-items: stretch !important;
             }
 
-            /* الأفاتار: تظهر وحدها فوق في وسط الشاشة */
+            /* الأفاتار: كبيرة في الوسط */
             #mobilePanelModalContent .ud-avatar-wrap {
                 width: 96px !important;
                 height: 96px !important;
                 font-size: 40px !important;
-                margin: 24px auto 20px !important;
+                margin: 0 auto !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
