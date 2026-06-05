@@ -345,13 +345,19 @@
                 <div class="stats-row">
                     <div class="stats-wrapper" id="statsWrapper"></div>
                 </div>
-                <div class="search-row">
-                    <div class="search-wrap" style="flex:1;position:relative">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم...">
-                        <div class="search-dropdown" id="searchDropdown"></div>
+                <div class="search-row" style="align-items:flex-end;gap:8px;">
+
+                    <!-- البحث -->
+                    <div style="display:flex;flex-direction:column;gap:3px;flex:1;position:relative;">
+                        <label style="font-size:9px;font-weight:700;color:var(--text-soft);font-family:'Cairo',sans-serif;letter-spacing:0.3px;padding-right:2px;">بحث</label>
+                        <div class="search-wrap" style="position:relative;">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" class="search-input" id="searchInput" placeholder="ابحث بالاسم..." style="height:34px;">
+                            <div class="search-dropdown" id="searchDropdown"></div>
+                        </div>
                     </div>
-                    <!-- Date Picker -->
+
+                    <!-- التاريخ -->
                     <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
                         <label for="mapDateFilter" style="font-size:9px;font-weight:700;color:var(--text-soft);text-align:center;font-family:'Cairo',sans-serif;letter-spacing:0.3px;">اختر تاريخ</label>
                         <input type="date" id="mapDateFilter"
@@ -359,18 +365,22 @@
                             onfocus="this.style.borderColor='var(--purple)'"
                             onblur="this.style.borderColor='var(--border)'">
                     </div>
-                    <!-- Progress Ring -->
-                    <div class="progress-ring-wrap" id="progressRingWrap">
-                        <svg class="progress-ring-svg" width="38" height="38" viewBox="0 0 38 38">
-                            <circle class="progress-ring-circle-bg" cx="19" cy="19" r="15"/>
-                            <circle class="progress-ring-circle" id="progressRingCircle" cx="19" cy="19" r="15"
-                                stroke-dasharray="94.25" stroke-dashoffset="94.25"/>
-                        </svg>
-                        <div class="progress-ring-text">
-                            <span class="progress-ring-pct" id="progressRingPct">0%</span>
-                            <span class="progress-ring-label">نسبة التنفيذ</span>
+
+                    <!-- نسبة التنفيذ -->
+                    <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;">
+                        <label style="font-size:9px;font-weight:700;color:var(--text-soft);text-align:center;font-family:'Cairo',sans-serif;letter-spacing:0.3px;">نسبة التنفيذ</label>
+                        <div class="progress-ring-wrap" id="progressRingWrap" style="height:34px;padding:0 10px;border-radius:7px;">
+                            <svg class="progress-ring-svg" width="28" height="28" viewBox="0 0 38 38">
+                                <circle class="progress-ring-circle-bg" cx="19" cy="19" r="15"/>
+                                <circle class="progress-ring-circle" id="progressRingCircle" cx="19" cy="19" r="15"
+                                    stroke-dasharray="94.25" stroke-dashoffset="94.25"/>
+                            </svg>
+                            <div class="progress-ring-text">
+                                <span class="progress-ring-pct" id="progressRingPct">0%</span>
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
 
