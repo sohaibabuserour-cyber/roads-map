@@ -274,11 +274,33 @@
                 overflow: visible !important;
             }
 
-            /* أخفِ رؤوس الـ panels الداخلية (الهيدر في المودال يغنيها) — عدا userDropdown */
-            #mobilePanelModalContent .contractor-panel-header,
+            /* أخفِ رؤوس الـ panels الداخلية (الهيدر في المودال يغنيها) */
             #mobilePanelModalContent .notif-panel-header,
             #mobilePanelModalContent .theme-panel-header {
                 display: none !important;
+            }
+
+            /* ══ contractor-panel-header: أظهره عشان فيه تبويبات حسب المقاول/المجموعة ══ */
+            #mobilePanelModalContent .contractor-panel-header {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 8px !important;
+                padding: 10px 14px !important;
+                background: rgba(0,0,0,0.15) !important;
+                border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+                flex-shrink: 0 !important;
+            }
+
+            /* أخفِ نص "👷 المقاولون" لأن هيدر المودال الخارجي بيعرضه */
+            #mobilePanelModalContent .contractor-panel-header > span:first-child {
+                display: none !important;
+            }
+
+            /* أزرار التبويب تأخذ العرض الكامل وتتمركز */
+            #mobilePanelModalContent .contractor-panel-header > div {
+                flex: 1 !important;
+                justify-content: center !important;
             }
 
             /* ══ user-dropdown-header: أظهر الصورة فقط — أخفِ الاسم والدور بالـ JS ══ */
