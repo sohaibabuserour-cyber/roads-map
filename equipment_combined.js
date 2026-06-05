@@ -1037,10 +1037,7 @@ window.openEquipmentModal = function() {
     eqMergeNewSheetDataThenLoad();
 };
 
-/* ── Sheet ID for the new equipment registration sheet ── */
-const EQ_REG_SHEET_ID = "1kPeMj-XDSmIu5nrNmRK6kmlK268LOzRxOm4WUWSkBwU";
-
-/* ── Fetch data from the new registration sheet and merge into equipmentRawRows ── */
+/* ── Fetch data from the new equipment registration sheet ── */
 let _eqRegCache = null;
 let _eqRegLastFetch = 0;
 
@@ -1049,8 +1046,11 @@ async function eqFetchRegistrationSheet() {
     // Cache for 2 minutes
     if (_eqRegCache && (now - _eqRegLastFetch) < 120000) return _eqRegCache;
 
+    const id = window._getSheetId ? window._getSheetId('EQ_REG_SHEET_ID') : '';
+    if (!id) { console.warn('EQ_REG_SHEET_ID غير محدد في الإعدادات'); return []; }
+
     try {
-        const url = `https://docs.google.com/spreadsheets/d/${EQ_REG_SHEET_ID}/export?format=csv&gid=0`;
+        const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0`;
         const r   = await fetch(url);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const csv = await r.text();
