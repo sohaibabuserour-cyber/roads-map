@@ -2,14 +2,9 @@
    CONSTANTS & STATE
    ==================================================== */
 
-const CONFIG_FILE = "categories.json";
-
-// ─── helper مركزي لقراءة أي Sheet ID من sheetIdsConfig ───────────────────────
-// الكل بيقرأ من sheetIdsConfig (categories.json / localStorage) فقط.
-// لو الـ ID مش موجود تُعرض رسالة واضحة بدل صمت أو خطأ غامض.
-function _getSheetId(constName) {
-    return (window.sheetIdsConfig && window.sheetIdsConfig[constName]) || '';
-}
+const USERS_SHEET_ID     = "1maViL4HSsI5XsjnAOGM-2D98g0Ow_pawZ-A_R_Y9I_0";
+const EQUIPMENT_SHEET_ID = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
+const CONFIG_FILE        = "categories.json";
 
 // Inactivity timeout: 2 hours in ms
 const INACTIVITY_MS = 2 * 60 * 60 * 1000;
@@ -162,8 +157,7 @@ async function tryRestoreSession() {
 
 // Robust CSV parser that handles quoted fields — global scope
 async function fetchUsers() {
-    const id  = _getSheetId('USERS_SHEET_ID');
-    if (!id) throw new Error('لم يتم تحديد شيت المستخدمين — أضفه من الإعدادات ⚙️ ← روابط الشيتات');
+    const id  = (window.sheetIdsConfig && window.sheetIdsConfig['USERS_SHEET_ID']) || USERS_SHEET_ID;
     const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0`;
     const r   = await fetch(url);
     const csv = await r.text();
@@ -589,16 +583,16 @@ function _fillSheetIdsInputs() {
         'sheetId_cfCompany'     : 'CASHFLOW_COMPANY_SHEET',
         'sheetId_cfContractors' : 'CASHFLOW_CONTRACTORS_SHEET',
         'sheetId_bills'         : 'BILLS_SHEET_ID',
-        'sheetId_notif'         : 'NOTIFICATIONS_SHEET_ID',
     };
-    // sheetIdsConfig (categories.json / localStorage) هو المصدر الوحيد
+    // sheetIdsConfig (categories.json) → localStorage legacy → window constant
     const cfg    = window.sheetIdsConfig || {};
     const legacy = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
     Object.entries(keyMap).forEach(([inputId, constName]) => {
         const inp  = document.getElementById(inputId);
         const link = document.getElementById(inputId.replace('sheetId_', 'sheetLink_'));
-        const raw  = cfg[constName] || legacy[constName] || '';
+        const raw  = cfg[constName] || legacy[constName] || window[constName] || '';
         const id   = _extractSheetId(raw);
+        // عرض الرابط الكامل في الحقل لو موجود، وإلا ID فقط
         if (inp)  inp.value = id ? 'https://docs.google.com/spreadsheets/d/' + id : '';
         if (link && id) link.href = 'https://docs.google.com/spreadsheets/d/' + id;
     });
@@ -612,7 +606,6 @@ function saveSheetIds() {
         'CASHFLOW_COMPANY_SHEET'     : 'sheetId_cfCompany',
         'CASHFLOW_CONTRACTORS_SHEET' : 'sheetId_cfContractors',
         'BILLS_SHEET_ID'             : 'sheetId_bills',
-        'NOTIFICATIONS_SHEET_ID'     : 'sheetId_notif',
     };
     if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
     Object.entries(keyMap).forEach(([constName, inputId]) => {
@@ -620,12 +613,15 @@ function saveSheetIds() {
         const id  = _extractSheetId(raw);
         if (id) {
             window.sheetIdsConfig[constName] = id;   // احفظ ID فقط
+            window[constName] = id;
         }
     });
     // حفظ في localStorage
     localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
-    // تحديث BILLS_SHEET_ID كـ var عشان viewcashflow.js يستخدمه مباشرة
-    window.BILLS_SHEET_ID = _getSheetId('BILLS_SHEET_ID');
+    // تأكد BILLS_SHEET_ID محدث فوراً
+    if (window.sheetIdsConfig['BILLS_SHEET_ID']) {
+        window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'];
+    }
     // تحديث الحقول بالرابط الكامل والروابط الجانبية
     _fillSheetIdsInputs();
     // Feedback
@@ -641,17 +637,23 @@ function saveSheetIds() {
     showAlert('✅ تم حفظ روابط الشيتات', 'success');
 }
 
-// تحميل sheetIdsConfig عند بدء التشغيل
+// تحميل sheetIdsConfig عند بدء التشغيل — يدعم النظام القديم كـ fallback
 (function _applySheetIdsOnLoad() {
     try {
         if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
-        // النظام الجديد (sheetIdsConfig) يدمج مع النظام القديم (sheetIdsOverride) كـ fallback
+        // النظام الجديد
         const fresh  = JSON.parse(localStorage.getItem('sheetIdsConfig')   || '{}');
+        // النظام القديم كـ fallback
         const legacy = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
         const merged = Object.assign({}, legacy, fresh);
         Object.assign(window.sheetIdsConfig, merged);
-        // BILLS_SHEET_ID كـ var عشان viewcashflow.js يستخدمه مباشرة
-        window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'] || '';
+        Object.entries(merged).forEach(([key, val]) => {
+            if (val) window[key] = _extractSheetId ? _extractSheetId(val) : val;
+        });
+        // تأكد BILLS_SHEET_ID يُحدَّث لو موجود في الـ config
+        if (window.sheetIdsConfig && window.sheetIdsConfig['BILLS_SHEET_ID']) {
+            window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'];
+        }
     } catch(e) {}
 })();
 
@@ -889,8 +891,7 @@ equipmentRawRows    = [];
 let equipmentRawHeaders = [];
 
 function loadEquipmentData() {
-    const id  = _getSheetId('EQUIPMENT_SHEET_ID');
-    if (!id) { console.warn('EQUIPMENT_SHEET_ID غير محدد في الإعدادات'); return; }
+    const id  = (window.sheetIdsConfig && window.sheetIdsConfig['EQUIPMENT_SHEET_ID']) || EQUIPMENT_SHEET_ID;
     const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0`;
     fetch(url).then(r => r.text()).then(csv => {
         const lines   = csv.split('\n').filter(l => l.trim());
@@ -984,12 +985,13 @@ function buildEquipmentPanel() {
    CASH FLOW DASHBOARD MODAL
    ==================================================== */
 
-// IDs التدفق النقدي والبنود تُقرأ حصراً من sheetIdsConfig (categories.json / الإعدادات)
-var BILLS_SHEET_ID = ''; // يُحدَّث من sheetIdsConfig عند التشغيل
+const CASHFLOW_CONTRACTORS_SHEET = "1xmSUQNR02prdGK9P6QiJo8ybVKwdVZAE74yUkUTbVYA";
+const CASHFLOW_COMPANY_SHEET     = "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA";
+var   BILLS_SHEET_ID             = "";   // يُحدَّث من sheetIdsConfig عند التشغيل
 
-// helper — يجيب الـ ID من sheetIdsConfig فقط (لا fallback ثابت)
-function _cfSheetId(constName) {
-    return _getSheetId(constName);
+// helper — يجيب الـ ID من sheetIdsConfig أولاً ثم الـ constant كـ fallback
+function _cfSheetId(constName, fallback) {
+    return (window.sheetIdsConfig && window.sheetIdsConfig[constName]) || fallback || '';
 }
 
 let cashflowData = { contractors: null, company: null };
@@ -1005,8 +1007,8 @@ function switchCfTab(tab) {
     });
     if (!cashflowData[tab]) {
         const sheetId = tab === 'contractors'
-            ? _cfSheetId('CASHFLOW_CONTRACTORS_SHEET')
-            : _cfSheetId('CASHFLOW_COMPANY_SHEET');
+            ? _cfSheetId('CASHFLOW_CONTRACTORS_SHEET', CASHFLOW_CONTRACTORS_SHEET)
+            : _cfSheetId('CASHFLOW_COMPANY_SHEET',     CASHFLOW_COMPANY_SHEET);
         loadCfData(tab, sheetId);
     } else {
         renderCfKpis(tab);
@@ -1202,21 +1204,16 @@ function renderCfTable(type, data) {
    NOTIFICATIONS — from dedicated sheet (column A, each row = one notification)
    ==================================================== */
 
+const NOTIFICATIONS_SHEET_ID = "1AV4umnW_s_bUOIrLBQouCsoAmPJI4yV3aOfPhKfM9C8";
+
 async function loadNotifications() {
     const badge = document.getElementById("notifBadge");
     const list  = document.getElementById("notifList");
 
     list.innerHTML = '<div class="notif-empty">جاري التحميل...</div>';
 
-    const id = _getSheetId('NOTIFICATIONS_SHEET_ID');
-    if (!id) {
-        list.innerHTML = '<div class="notif-empty">⚙️ أضف شيت الإشعارات من الإعدادات ← روابط الشيتات</div>';
-        badge.style.display = 'none';
-        return;
-    }
-
     try {
-        const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0`;
+        const url = `https://docs.google.com/spreadsheets/d/${NOTIFICATIONS_SHEET_ID}/export?format=csv&gid=0`;
         const r   = await fetch(url, { redirect: "follow" });
 
         const csv = await r.text();
@@ -1292,6 +1289,15 @@ async function loadCategoriesConfig() {
         }
        if (!Array.isArray(data) && data.contractorsList && Array.isArray(data.contractorsList)) {
             contractorsList = data.contractorsList;
+        }
+        // تحميل روابط الشيتات من categories.json — تُشارَك على كل الأجهزة
+        if (!Array.isArray(data) && data.sheetIdsConfig && typeof data.sheetIdsConfig === 'object') {
+            if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
+            // categories.json يطغى على localStorage (الملف هو المصدر الرئيسي)
+            Object.assign(window.sheetIdsConfig, data.sheetIdsConfig);
+            localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
+            // BILLS_SHEET_ID كـ var عشان viewcashflow يستخدمه
+            window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'] || '';
         }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
@@ -1376,6 +1382,8 @@ function exportConfig() {
         defaultSubNumber: defaultSubNumber,
         equipmentTypes: equipmentTypes,
         contractorsList: contractorsList,
+        // روابط الشيتات — تُحفَظ دائماً عشان تنتشر على كل الأجهزة
+        sheetIdsConfig: window.sheetIdsConfig || {},
         // Include current UI state for persistence
         selectedItems: selectedItems,
         selectedStatuses: selectedStatuses,
@@ -1431,6 +1439,14 @@ function importConfig(e) {
                 }
                if (data.contractorsList && Array.isArray(data.contractorsList)) {
                     contractorsList = data.contractorsList;
+                }
+                // استيراد روابط الشيتات — الأهم لأنها تشغّل كل الداشبورد
+                if (data.sheetIdsConfig && typeof data.sheetIdsConfig === 'object') {
+                    if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
+                    Object.assign(window.sheetIdsConfig, data.sheetIdsConfig);
+                    localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
+                    // تحديث BILLS_SHEET_ID فوراً
+                    window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'] || '';
                 }
                 if (data.selectedItems) selectedItems = data.selectedItems;
                 if (data.selectedStatuses) selectedStatuses = data.selectedStatuses;
