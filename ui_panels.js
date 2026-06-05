@@ -263,6 +263,7 @@
             #mobilePanelModalContent .user-dropdown {
                 position: static !important;
                 display: flex !important;
+                flex-direction: column !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 max-height: none !important;
@@ -281,6 +282,46 @@
                 display: none !important;
             }
 
+            /* ══ user-dropdown داخل المودال: الصورة فوق ثم الحقول تحتها ══ */
+            #mobilePanelModalContent .user-dropdown {
+                align-items: stretch !important;
+            }
+
+            /* الأفاتار: تظهر وحدها فوق في وسط الشاشة */
+            #mobilePanelModalContent .ud-avatar-wrap {
+                width: 96px !important;
+                height: 96px !important;
+                font-size: 40px !important;
+                margin: 24px auto 20px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            /* الحقول والأزرار: عمود كامل العرض */
+            #mobilePanelModalContent .ud-field {
+                padding: 10px 16px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #mobilePanelModalContent .ud-field input {
+                width: 100% !important;
+                min-height: 44px !important;
+                font-size: 14px !important;
+                box-sizing: border-box !important;
+            }
+            #mobilePanelModalContent .ud-save-btn,
+            #mobilePanelModalContent .ud-logout {
+                width: calc(100% - 32px) !important;
+                margin-left: 16px !important;
+                margin-right: 16px !important;
+                padding: 13px !important;
+                font-size: 13px !important;
+                min-height: 48px !important;
+                border-radius: 10px !important;
+                box-sizing: border-box !important;
+            }
+
             /* قائمة المقاولين: بلا max-height */
             #mobilePanelModalContent .contractor-list {
                 max-height: none !important;
@@ -294,27 +335,6 @@
             /* خيارات الثيمات: padding مريح */
             #mobilePanelModalContent .theme-option {
                 padding: 14px 18px !important;
-            }
-
-            /* حقول المستخدم */
-            #mobilePanelModalContent .ud-field {
-                padding: 10px 16px !important;
-            }
-            #mobilePanelModalContent .ud-save-btn,
-            #mobilePanelModalContent .ud-logout {
-                width: calc(100% - 32px) !important;
-                margin-left: 16px !important;
-                margin-right: 16px !important;
-                padding: 13px !important;
-                font-size: 13px !important;
-                min-height: 48px;
-                border-radius: 10px !important;
-            }
-            #mobilePanelModalContent .ud-avatar-wrap {
-                width: 88px !important;
-                height: 88px !important;
-                font-size: 36px !important;
-                margin-bottom: 10px !important;
             }
         `;
         document.head.appendChild(style);
@@ -373,7 +393,7 @@
         _modalIconEl.textContent  = meta.icon;
         _modalTitleEl.textContent = meta.title;
 
-        /* ══ الملف الشخصي: أخفِ الاسم والدور، الصورة تبقى فوق والحقول تحتها ══ */
+        /* ══ الملف الشخصي: أخفِ الاسم والدور فقط ══ */
         if (panelId === 'userDropdown') {
             const udName = panel.querySelector('#udName');
             const udRole = panel.querySelector('#udRole');
