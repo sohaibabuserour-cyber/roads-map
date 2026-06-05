@@ -10,6 +10,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* مجموعات البنود — صف موبايل */
+        .mmRow-groups {
+            background: rgba(106,45,145,0.1);
+            border-color: rgba(106,45,145,0.25);
+            color: #c39bd3;
+        }
+        /* الـ dropdown نفسه داخل .tab-sub-dropdown */
+        #groupsDropdown {
+            background: #0d0d1a !important;
+            border-top: 2px solid var(--purple, #6a2d91) !important;
+        }
+        #groupsDropdown .tab-sub-item { display: none; } /* مش بنستخدمها هنا */
+    </style>
 
 <base target="_blank">
 </head>
@@ -101,6 +115,14 @@
                     <span style="font-size:14px;">👷</span>
                     <label>تدفق نقدي - المقاولون</label>
                 </div>
+            </div>
+        </div>
+
+        <!-- تبويب مجموعات البنود -->
+        <div class="nav-tab" id="navTabGroups" style="flex-shrink:0;position:relative;" onclick="toggleGroupsDropdown(event)">
+            <span>🔗 مجموعات البنود</span>
+            <div class="tab-sub-dropdown" id="groupsDropdown" style="min-width:260px;display:none;flex-direction:column;background:#0d0d1a;border:1px solid rgba(255,255,255,0.1);border-top:2px solid var(--purple,#6a2d91);">
+                <div id="groupsDropdownInner"></div>
             </div>
         </div>
 
@@ -294,6 +316,13 @@
                     letter-spacing:.8px;padding:10px 2px 4px;border-bottom:1px solid rgba(255,255,255,0.07);
                     margin-bottom:4px;">🔧 الأدوات</div>
 
+        <!-- مجموعات البنود -->
+        <div class="mmRow mmRow-groups" id="mmGroupsRow" onclick="toggleGroupsMobilePanel();closeMobileMenu()">
+            <span>🔗</span>
+            <span>مجموعات البنود</span>
+            <span id="mmGroupsBadge" style="display:none;margin-right:auto;background:rgba(245,200,66,0.2);border:1px solid rgba(245,200,66,0.4);color:#f5c842;font-size:9px;font-weight:900;padding:2px 8px;border-radius:10px;font-family:'Cairo',sans-serif;"></span>
+        </div>
+
         <div class="mmRow" onclick="openPanelFromMobile('contractorPanel')">
             <span>👷</span><span>المقاولون</span>
         </div>
@@ -331,6 +360,13 @@
         if(m){m.style.display='none';}
         if(o){o.style.display='none';}
         if(b){b.innerHTML='☰';b.style.background='rgba(255,255,255,0.07)';}
+    }
+    function toggleGroupsMobilePanel(){
+        // تُشغَّل بعد تحميل main.js — تفتح الـ dropdown كـ overlay فوق الشاشة
+        if(typeof window.toggleGroupsDropdown === 'function'){
+            var fakeEvent = { stopPropagation: function(){}, currentTarget: document.getElementById('mmGroupsRow') };
+            window.toggleGroupsDropdown(fakeEvent);
+        }
     }
     </script>
 
