@@ -554,15 +554,10 @@
         document.getElementById('cashflowModal').classList.add('active');
         document.body.style.overflow = 'hidden';
         const tab = window.cfActiveTab || 'contractors';
-        // استخدم _cfSheetId لو موجودة عشان تحترم sheetIdsConfig — وإلا fallback للـ constants
-        const _getSheetId = (constName, fallback) => {
-            if (typeof window._cfSheetId === 'function') return window._cfSheetId(constName, fallback);
-            return (window.sheetIdsConfig && window.sheetIdsConfig[constName]) || window[constName] || fallback || '';
-        };
         if (!window.cashflowData?.[tab]) {
             const sheetId = tab === 'contractors'
-                ? _getSheetId('CASHFLOW_CONTRACTORS_SHEET', window.CASHFLOW_CONTRACTORS_SHEET)
-                : _getSheetId('CASHFLOW_COMPANY_SHEET',     window.CASHFLOW_COMPANY_SHEET);
+                ? window._getSheetId('CASHFLOW_CONTRACTORS_SHEET')
+                : window._getSheetId('CASHFLOW_COMPANY_SHEET');
             window.loadCfData?.(tab, sheetId);
         } else {
             window.renderCfKpis?.(tab);
@@ -576,10 +571,8 @@
     window.openBillsModal = function () {
         document.getElementById('billsModal').classList.add('active');
         document.body.style.overflow = 'hidden';
-        // تأكد BILLS_SHEET_ID محدث من sheetIdsConfig
-        if (window.sheetIdsConfig && window.sheetIdsConfig['BILLS_SHEET_ID']) {
-            window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'];
-        }
+        // BILLS_SHEET_ID يُحدَّث دائماً من sheetIdsConfig قبل التحميل
+        window.BILLS_SHEET_ID = window._getSheetId('BILLS_SHEET_ID');
         window.loadBillsData?.();
     };
     window.closeBillsModal = function () {
