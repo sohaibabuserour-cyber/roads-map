@@ -92,6 +92,15 @@ async function loadBillsData() {
     const wrap = document.getElementById('bdTableWrap');
     if (!wrap) return;
 
+    // اقرأ الـ ID دائماً من sheetIdsConfig مباشرة (لا تعتمد على الـ var العالمي)
+    const billsId = (window._getSheetId && window._getSheetId('BILLS_SHEET_ID'))
+                 || window.BILLS_SHEET_ID || '';
+    if (!billsId) {
+        wrap.innerHTML = '<div class="bd-msg bd-msg-err">⚙️ أضف شيت البنود من الإعدادات ← روابط الشيتات</div>';
+        document.getElementById('bdCountBadge').textContent = '';
+        return;
+    }
+
     wrap.innerHTML = '<div class="bd-msg bd-msg-load">⏳ جاري تحميل بيانات البنود...</div>';
     document.getElementById('bdCountBadge').textContent = 'جاري التحميل...';
 
@@ -103,7 +112,7 @@ async function loadBillsData() {
     });
 
     try {
-        const url = `https://docs.google.com/spreadsheets/d/${BILLS_SHEET_ID}/export?format=csv&gid=0`;
+        const url = `https://docs.google.com/spreadsheets/d/${billsId}/export?format=csv&gid=0`;
         const r   = await fetch(url);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const csv = await r.text();
@@ -372,4 +381,3 @@ function bdFilterRows() {
     bdRenderTable(filtered);
     bdComputeKPIs(filtered);
 }
-
