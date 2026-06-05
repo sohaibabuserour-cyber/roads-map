@@ -59,6 +59,11 @@
                 if (d) d.style.display = 'none';
             }
         });
+        // أغلق groups dropdown لو فُتح غيره
+        if (ddId !== 'groupsDropdown') {
+            const gd = document.getElementById('groupsDropdown');
+            if (gd) gd.style.display = 'none';
+        }
         const dd = _getDropdown(ddId);
         if (!dd) return;
         const isOpen = dd.style.display === 'flex';
@@ -104,6 +109,9 @@
         }
         if (!e.target.closest('#navTabAdd') && !e.target.closest('#addDropdown')) {
             window.closeAddDropdown();
+        }
+        if (!e.target.closest('#navTabGroups') && !e.target.closest('#groupsDropdown')) {
+            window.closeGroupsDropdown?.();
         }
     });
 
@@ -658,6 +666,7 @@
         window.closeContractorCashflowForm?.();
         window.closeReportsDropdown?.();
         window.closeAddDropdown?.();
+        window.closeGroupsDropdown?.();
         document.querySelectorAll(
             '.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.settings-panel'
         ).forEach(p => p.classList.remove('active'));
