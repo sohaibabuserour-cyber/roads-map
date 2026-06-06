@@ -596,19 +596,26 @@ function _fillSheetIdsInputs() {
         'sheetId_cfCompany'     : 'CASHFLOW_COMPANY_SHEET',
         'sheetId_cfContractors' : 'CASHFLOW_CONTRACTORS_SHEET',
         'sheetId_bills'         : 'BILLS_SHEET_ID',
+        'sheetId_target'        : 'TARGET_SHEET_ID',
     };
-    // sheetIdsConfig (categories.json) → localStorage legacy → window constant
     const cfg    = window.sheetIdsConfig || {};
     const legacy = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
+
     Object.entries(keyMap).forEach(([inputId, constName]) => {
         const inp  = document.getElementById(inputId);
         const link = document.getElementById(inputId.replace('sheetId_', 'sheetLink_'));
         const raw  = cfg[constName] || legacy[constName] || window[constName] || '';
         const id   = _extractSheetId(raw);
-        // عرض الرابط الكامل في الحقل لو موجود، وإلا ID فقط
         if (inp)  inp.value = id ? 'https://docs.google.com/spreadsheets/d/' + id : '';
         if (link && id) link.href = 'https://docs.google.com/spreadsheets/d/' + id;
     });
+
+    // رابط الأسكريبت — يُحفظ كما هو (ليس Sheet ID)
+    const scriptInp = document.getElementById('sheetId_targetScript');
+    if (scriptInp) {
+        scriptInp.value = cfg['TARGET_SCRIPT_URL'] || legacy['TARGET_SCRIPT_URL']
+                       || window.TARGET_SCRIPT_URL || '';
+    }
 }
 
 function saveSheetIds() {
@@ -619,25 +626,42 @@ function saveSheetIds() {
         'CASHFLOW_COMPANY_SHEET'     : 'sheetId_cfCompany',
         'CASHFLOW_CONTRACTORS_SHEET' : 'sheetId_cfContractors',
         'BILLS_SHEET_ID'             : 'sheetId_bills',
+        'TARGET_SHEET_ID'            : 'sheetId_target',
     };
     if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
+
     Object.entries(keyMap).forEach(([constName, inputId]) => {
         const raw = document.getElementById(inputId)?.value.trim() || '';
         const id  = _extractSheetId(raw);
         if (id) {
-            window.sheetIdsConfig[constName] = id;   // احفظ ID فقط
+            window.sheetIdsConfig[constName] = id;
             window[constName] = id;
+        } else {
+            delete window.sheetIdsConfig[constName];
         }
     });
-    // حفظ في localStorage
+
+    // رابط الأسكريبت — يُحفظ كرابط كامل
+    const scriptRaw = document.getElementById('sheetId_targetScript')?.value.trim() || '';
+    if (scriptRaw) {
+        window.sheetIdsConfig['TARGET_SCRIPT_URL'] = scriptRaw;
+        window.TARGET_SCRIPT_URL = scriptRaw;
+    } else {
+        delete window.sheetIdsConfig['TARGET_SCRIPT_URL'];
+        window.TARGET_SCRIPT_URL = '';
+    }
+
     localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
-    // تأكد BILLS_SHEET_ID محدث فوراً
+
     if (window.sheetIdsConfig['BILLS_SHEET_ID']) {
         window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'];
     }
-    // تحديث الحقول بالرابط الكامل والروابط الجانبية
+    if (window.sheetIdsConfig['TARGET_SHEET_ID']) {
+        window.TARGET_SHEET_ID = window.sheetIdsConfig['TARGET_SHEET_ID'];
+    }
+
     _fillSheetIdsInputs();
-    // Feedback
+
     const fb = document.getElementById('sheetIds_feedback');
     if (fb) {
         fb.style.display = 'block';
@@ -649,6 +673,7 @@ function saveSheetIds() {
     }
     showAlert('✅ تم حفظ روابط الشيتات', 'success');
 }
+
 
 // تحميل sheetIdsConfig عند بدء التشغيل — يدعم النظام القديم كـ fallback
 (function _applySheetIdsOnLoad() {
