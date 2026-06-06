@@ -253,7 +253,15 @@ function openTargetFormModal() {
 
 // يُستدعى من زر القائمة "المستهدف الشهري"
 function openTargetFormTab() {
-    openTargetFormModal();
+    // لو equipmentFormModal موجود — افتحه وانتقل لتبويب المستهدف
+    const eqModal = document.getElementById('equipmentFormModal');
+    if (eqModal) {
+        eqModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        if (typeof eqSwitchFormTab === 'function') eqSwitchFormTab('target');
+    } else {
+        openTargetFormModal();
+    }
 }
 
 function closeTargetFormModal() {
@@ -357,6 +365,7 @@ let _tgtAllElements = [];
 
 function tgtBuildElementsList() {
     _tgtAllElements = [];
+    // أولاً: ابنِ من categories + allData
     (window.categories || []).forEach(cat => {
         cat.subitems.forEach(sub => {
             if (!window.allData || !allData[sub.sheetId]) return;
@@ -370,6 +379,23 @@ function tgtBuildElementsList() {
             });
         });
     });
+    // ثانياً: fallback — لو allData محملة بدون ربط بـ categories
+    if (!_tgtAllElements.length && window.allData) {
+        Object.entries(window.allData).forEach(([sheetId, data]) => {
+            let subName = sheetId;
+            (window.categories || []).forEach(cat => {
+                cat.subitems.forEach(sub => { if (sub.sheetId === sheetId) subName = sub.name; });
+            });
+            Object.values(data).forEach(row => {
+                const nameKey = row['ROAD NAME'] ? 'ROAD NAME' : row['BLOCK NAME'] ? 'BLOCK NAME' : 'NAME';
+                const name = (row[nameKey] || '').trim();
+                const id   = (row['ID'] || '').trim();
+                if (name && id) {
+                    _tgtAllElements.push({ id, name, sheetId, subName });
+                }
+            });
+        });
+    }
 }
 
 function tgtShowElementDropdown() {
@@ -476,9 +502,12 @@ function tgtPickFromMap() {
     if (!hasLayers) { window.showAlert && showAlert('❌ حمّل بنداً على الخريطة أولاً'); return; }
 
     _tgtPickingFromMap = true;
-    // أغلق المودال مؤقتاً
-    const modal = tgt('targetFormModal');
-    if (modal) modal.style.display = 'none';
+
+    // أخفِ المودال النشط — إما equipmentFormModal أو targetFormModal
+    const eqModal  = document.getElementById('equipmentFormModal');
+    const tgtModal = tgt('targetFormModal');
+    if (eqModal  && eqModal.classList.contains('active'))  { eqModal.style.display  = 'none'; }
+    if (tgtModal && tgtModal.classList.contains('active')) { tgtModal.style.display = 'none'; }
 
     let hint = tgt('eqtPickMapHint');
     if (!hint) {
@@ -563,9 +592,11 @@ function _tgtGetRowFromFeatureEvent(e) {
 function tgtCancelPickFromMap() {
     _tgtPickingFromMap = false;
 
-    // أعد إظهار المودال
-    const modal = tgt('targetFormModal');
-    if (modal) modal.style.display = 'flex';
+    // أعد إظهار المودال الصحيح
+    const eqModal  = document.getElementById('equipmentFormModal');
+    const tgtModal = tgt('targetFormModal');
+    if (eqModal  && eqModal.classList.contains('active'))  { eqModal.style.display  = 'flex'; }
+    if (tgtModal && tgtModal.classList.contains('active')) { tgtModal.style.display = 'flex'; }
 
     const hint = tgt('eqtPickMapHint');
     if (hint) hint.style.display = 'none';
