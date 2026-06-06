@@ -1,12 +1,284 @@
 /* ====================================================
-   addtarget.js — تبويب المستهدف
-   يُدار من خلال مودال equipmentFormModal (تبويب ثالث)
+   addtarget.js — شاشة المستهدف الشهري (مودال مستقل)
    ==================================================== */
 
 const TARGET_MONTHS_AR = [
     'يناير','فبراير','مارس','أبريل','مايو','يونيو',
     'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'
 ];
+
+/* ══════════════════════════════════════
+   إنشاء المودال في الـ DOM تلقائياً
+══════════════════════════════════════ */
+(function _injectTargetModal() {
+    if (document.getElementById('targetFormModal')) return;
+
+    const html = `
+<div id="targetFormModal" style="display:none;position:fixed;inset:0;z-index:65500;padding:20px;align-items:center;justify-content:center;background:rgba(10,5,20,0.75);backdrop-filter:blur(6px);">
+    <div id="tgtFormBox" style="position:relative;z-index:2;display:flex;flex-direction:column;width:min(780px,96vw);max-height:calc(100vh - 40px);background:#0d0d1a;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);box-shadow:0 32px 80px rgba(0,0,0,0.7);animation:tgtSlideIn 0.28s cubic-bezier(0.34,1.2,0.64,1);">
+
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#1a0a2e 0%,#4a1470 50%,#1a0a2e 100%);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;gap:12px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:44px;height:44px;background:linear-gradient(135deg,#f5c842,#e8a800);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 16px rgba(245,200,66,0.35);">🎯</div>
+                <div>
+                    <div style="font-size:17px;font-weight:900;color:white;font-family:'Cairo',sans-serif;">تسجيل المستهدف الشهري</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'Cairo',sans-serif;">إضافة مستهدف إنتاج لعنصر وشهر محدد</div>
+                </div>
+            </div>
+            <button onclick="closeTargetFormModal()" style="width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.18s;" onmouseover="this.style.background='rgba(244,67,54,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">✕</button>
+        </div>
+
+        <!-- Body -->
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;" id="tgtFormBody">
+
+            <!-- عنصر البحث -->
+            <div style="margin-bottom:16px;">
+                <div class="eq-form-field">
+                    <label class="eq-form-label">📍 اسم العنصر</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div style="position:relative;flex:1;">
+                            <input type="text" id="eqft_element_search" class="eq-form-input"
+                                placeholder="ابحث باسم العنصر أو اختر من القائمة..."
+                                oninput="tgtFilterElementDropdown()"
+                                onfocus="tgtShowElementDropdown()"
+                                autocomplete="off"
+                                style="padding-left:32px;">
+                            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;opacity:0.4;pointer-events:none;">🔍</span>
+                            <div id="eqft_element_dropdown"
+                                style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:#1a1a2e;border:1px solid rgba(106,45,145,0.4);border-radius:10px;z-index:9999;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+                            </div>
+                        </div>
+                        <button onclick="tgtPickFromMap()"
+                            title="اختر عنصراً من الخريطة"
+                            style="flex-shrink:0;padding:10px 14px;background:linear-gradient(135deg,#3d1060,#6a2d91);border:none;border-radius:9px;color:white;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:all 0.2s;box-shadow:0 2px 10px rgba(106,45,145,0.35);">
+                            🗺 من الخريطة
+                        </button>
+                    </div>
+                    <div id="eqft_element_info" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(106,45,145,0.1);border:1px solid rgba(106,45,145,0.3);border-radius:8px;align-items:center;gap:10px;">
+                        <span style="font-size:16px;">✅</span>
+                        <div style="flex:1;">
+                            <div id="eqft_element_info_name" style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Cairo',sans-serif;"></div>
+                            <div id="eqft_element_info_id" style="font-size:10px;color:rgba(255,255,255,0.45);font-family:'Cairo',sans-serif;margin-top:2px;"></div>
+                        </div>
+                        <button onclick="tgtClearElement()" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:16px;padding:2px 6px;">✕</button>
+                    </div>
+                    <input type="hidden" id="eqft_element_id">
+                    <input type="hidden" id="eqft_element_name">
+                </div>
+            </div>
+
+            <!-- المجموعة + البند الرئيسي -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div class="eq-form-field">
+                    <label class="eq-form-label">🗂 المجموعة</label>
+                    <input type="text" id="eqft_group_name" class="eq-form-input" readonly placeholder="—" style="opacity:0.65;cursor:default;background:rgba(255,255,255,0.03);">
+                    <input type="hidden" id="eqft_group_id">
+                </div>
+                <div class="eq-form-field">
+                    <label class="eq-form-label">📁 البند الرئيسي</label>
+                    <input type="text" id="eqft_cat_name" class="eq-form-input" readonly placeholder="—" style="opacity:0.65;cursor:default;background:rgba(255,255,255,0.03);">
+                    <input type="hidden" id="eqft_cat_id">
+                </div>
+            </div>
+
+            <!-- البند + المقاول -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                <div class="eq-form-field">
+                    <label class="eq-form-label">📋 البند الفرعي</label>
+                    <input type="hidden" id="eqft_item_name">
+                    <input type="hidden" id="eqft_band_sheet">
+                    <input type="text" id="eqft_band_display" class="eq-form-input" readonly
+                        placeholder="يُملأ تلقائياً عند اختيار العنصر"
+                        style="opacity:0.7;cursor:default;background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08);">
+                </div>
+                <div class="eq-form-field">
+                    <label class="eq-form-label">👷 المقاول</label>
+                    <select id="eqft_contractor" class="eq-form-input" style="cursor:pointer;appearance:auto;-webkit-appearance:auto;">
+                        <option value="">-- اختر المقاول --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- الشهر -->
+            <div style="margin-bottom:16px;">
+                <div class="eq-form-field">
+                    <label class="eq-form-label">📅 الشهر المستهدف</label>
+                    <select id="eqft_month" class="eq-form-input" style="cursor:pointer;appearance:auto;-webkit-appearance:auto;max-width:300px;">
+                        <option value="">-- اختر الشهر --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- بيانات الكمية والسعر -->
+            <div style="border:1px solid rgba(245,200,66,0.25);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+                <div style="background:linear-gradient(135deg,rgba(245,200,66,0.15),rgba(184,134,11,0.1));padding:12px 16px;border-bottom:1px solid rgba(245,200,66,0.15);">
+                    <span style="font-size:13px;font-weight:800;color:rgba(255,255,255,0.9);font-family:'Cairo',sans-serif;">🎯 بيانات المستهدف</span>
+                </div>
+                <div style="padding:16px;">
+                    <!-- السعر -->
+                    <div class="eq-form-field" style="margin-bottom:14px;">
+                        <label class="eq-form-label" style="color:rgba(255,200,66,0.9);">
+                            💵 السعر
+                            <span style="font-size:9px;opacity:0.6;margin-right:4px;">(ريال / وحدة)</span>
+                        </label>
+                        <input type="number" id="eqft_price" placeholder="0.00" min="0" step="0.01"
+                            class="eq-form-input"
+                            style="border-color:rgba(255,200,66,0.35);max-width:260px;"
+                            oninput="tgtCalcTargetValue()"
+                            onfocus="this.style.borderColor='rgba(255,200,66,0.75)'"
+                            onblur="this.style.borderColor='rgba(255,200,66,0.35)'">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+                        <!-- الكمية المستهدفة -->
+                        <div class="eq-form-field">
+                            <label class="eq-form-label" style="color:rgba(92,200,144,0.9);">
+                                🎯 الكمية المستهدفة
+                                <span style="font-size:9px;opacity:0.6;margin-right:4px;">(TARGET-QTY)</span>
+                            </label>
+                            <input type="number" id="eqft_target_qty" placeholder="0.00" min="0" step="0.01"
+                                class="eq-form-input"
+                                style="border-color:rgba(92,200,144,0.35);"
+                                oninput="tgtCalcTargetValue()"
+                                onfocus="this.style.borderColor='rgba(92,200,144,0.75)'"
+                                onblur="this.style.borderColor='rgba(92,200,144,0.35)'">
+                        </div>
+                        <!-- الكمية المتبقية -->
+                        <div class="eq-form-field">
+                            <label class="eq-form-label" style="color:rgba(91,173,223,0.9);">
+                                📦 الكمية المتبقية
+                                <span style="font-size:9px;opacity:0.6;margin-right:4px;">(REMAINING-QTY)</span>
+                            </label>
+                            <input type="number" id="eqft_remaining_qty" placeholder="0.00" min="0" step="0.01"
+                                class="eq-form-input"
+                                style="border-color:rgba(91,173,223,0.35);"
+                                oninput="tgtCalcTargetValue()"
+                                onfocus="this.style.borderColor='rgba(91,173,223,0.75)'"
+                                onblur="this.style.borderColor='rgba(91,173,223,0.35)'">
+                        </div>
+                    </div>
+                    <!-- القيم المحسوبة -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div class="eq-form-field">
+                            <label class="eq-form-label" style="color:rgba(245,200,66,0.7);">
+                                💰 القيمة المستهدفة
+                                <span style="font-size:9px;opacity:0.5;margin-right:4px;">(محسوبة تلقائياً)</span>
+                            </label>
+                            <input type="text" id="eqft_target_value" class="eq-form-input" readonly
+                                placeholder="السعر × الكمية المستهدفة"
+                                style="opacity:0.85;cursor:default;background:rgba(245,200,66,0.05);border-color:rgba(245,200,66,0.2);font-weight:700;">
+                        </div>
+                        <div class="eq-form-field">
+                            <label class="eq-form-label" style="color:rgba(91,173,223,0.7);">
+                                💸 القيمة المتبقية
+                                <span style="font-size:9px;opacity:0.5;margin-right:4px;">(محسوبة تلقائياً)</span>
+                            </label>
+                            <input type="text" id="eqft_remaining_value" class="eq-form-input" readonly
+                                placeholder="السعر × الكمية المتبقية"
+                                style="opacity:0.85;cursor:default;background:rgba(91,173,223,0.05);border-color:rgba(91,173,223,0.2);font-weight:700;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ملاحظات -->
+            <div style="margin-bottom:20px;">
+                <div class="eq-form-field">
+                    <label class="eq-form-label">📝 ملاحظات (اختياري)</label>
+                    <textarea id="eqft_notes" placeholder="أي ملاحظات إضافية..." rows="2"
+                        style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:9px;color:white;font-size:13px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;text-align:right;direction:rtl;transition:border-color 0.2s;"
+                        onfocus="this.style.borderColor='rgba(245,200,66,0.5)'"
+                        onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div id="eqft_feedback" style="display:none;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;text-align:center;margin-bottom:8px;"></div>
+
+        </div><!-- end body -->
+
+        <!-- Footer -->
+        <div style="background:rgba(0,0,0,0.25);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;gap:12px;">
+            <button onclick="tgtResetForm()" class="eq-reset-btn">🔄 إعادة تعيين</button>
+            <button onclick="tgtSubmitForm()" id="eqft_submit_btn" style="background:linear-gradient(135deg,#f5c842,#e8a800);border:none;color:#1a0a2e;padding:11px 28px;border-radius:10px;font-size:14px;font-weight:900;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(245,200,66,0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">💾 حفظ المستهدف</button>
+        </div>
+    </div>
+</div>`;
+
+    // حقن المودال في body
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    document.body.appendChild(wrapper.firstElementChild);
+
+    // حقن CSS الأنيميشن
+    if (!document.getElementById('tgtModalCSS')) {
+        const style = document.createElement('style');
+        style.id = 'tgtModalCSS';
+        style.textContent = `
+            @keyframes tgtSlideIn {
+                from { opacity:0; transform:translateY(24px) scale(0.97); }
+                to   { opacity:1; transform:translateY(0) scale(1); }
+            }
+            #targetFormModal { display: none; }
+            #targetFormModal.active { display: flex !important; }
+
+            /* موبايل: bottom-sheet */
+            @media (max-width: 640px) {
+                #targetFormModal {
+                    padding: 0 !important;
+                    align-items: flex-end !important;
+                }
+                #tgtFormBox {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    max-height: 94vh !important;
+                    border-radius: 20px 20px 0 0 !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+})();
+
+/* ══════════════════════════════════════
+   فتح / إغلاق المودال
+══════════════════════════════════════ */
+function openTargetFormModal() {
+    const modal = document.getElementById('targetFormModal');
+    if (!modal) return;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    tgtInitTab();
+}
+
+// يُستدعى من زر القائمة "المستهدف الشهري"
+function openTargetFormTab() {
+    openTargetFormModal();
+}
+
+function closeTargetFormModal() {
+    const modal = document.getElementById('targetFormModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    tgtCancelPickFromMap();
+}
+
+// إغلاق عند الضغط خارج الـ box
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('targetFormModal');
+    if (!modal || !modal.classList.contains('active')) return;
+    if (e.target === modal) closeTargetFormModal();
+});
+
+// Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('targetFormModal');
+        if (modal && modal.classList.contains('active')) closeTargetFormModal();
+    }
+});
+
 
 /* ══════════════════════════════════════
    DOM Helpers
@@ -40,6 +312,7 @@ function tgtPopulateContractors() {
     if (!sel) return;
     const cur = sel.value;
     sel.innerHTML = '<option value="">-- اختر المقاول --</option>';
+
     const source = (window.contractorsList && contractorsList.length) ? contractorsList : [];
     const fallback = new Set();
     if (!source.length) {
@@ -65,7 +338,6 @@ function tgtPopulateMonths() {
     if (!sel) return;
     sel.innerHTML = '<option value="">-- اختر الشهر --</option>';
     const now = new Date();
-    // عرض 12 شهراً (الحالي + السابقين + المقبلين)
     for (let i = -3; i <= 8; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
         const monthIdx = d.getMonth();
@@ -79,7 +351,7 @@ function tgtPopulateMonths() {
 }
 
 /* ══════════════════════════════════════
-   Element selection (shared with main form)
+   Element selection
 ══════════════════════════════════════ */
 let _tgtAllElements = [];
 
@@ -127,6 +399,7 @@ function tgtFilterElementDropdown() {
         ).join('');
     }
     dd.style.display = 'block';
+
     setTimeout(() => {
         document.addEventListener('click', function _close(ev) {
             if (!dd.contains(ev.target) && ev.target !== inp) {
@@ -153,7 +426,7 @@ function tgtSelectElement(id, name, sheetId) {
     if (infoId)   infoId.textContent   = 'ID: ' + id;
     if (info) info.style.display = 'flex';
 
-    // Auto-fill band from element
+    // Auto-fill بيانات البند من العنصر
     const el = _tgtAllElements.find(e => e.id === id && e.name === name)
             || _tgtAllElements.find(e => e.id === id);
     if (el) {
@@ -203,7 +476,9 @@ function tgtPickFromMap() {
     if (!hasLayers) { window.showAlert && showAlert('❌ حمّل بنداً على الخريطة أولاً'); return; }
 
     _tgtPickingFromMap = true;
-    tgt('equipmentFormModal').style.display = 'none';
+    // أغلق المودال مؤقتاً
+    const modal = tgt('targetFormModal');
+    if (modal) modal.style.display = 'none';
 
     let hint = tgt('eqtPickMapHint');
     if (!hint) {
@@ -249,7 +524,11 @@ function tgtPickFromMap() {
                     const center = f.getBounds ? f.getBounds().getCenter() : f.getLatLng ? f.getLatLng() : null;
                     if (!center) return;
                     const d = map.distance(e.latlng, center);
-                    if (d < nearestDist) { nearestDist = d; const row = allData[sheetId][f.feature.properties.ID]; if (row) nearest = row; }
+                    if (d < nearestDist) {
+                        nearestDist = d;
+                        const row = allData[sheetId][f.feature.properties.ID];
+                        if (row) nearest = row;
+                    }
                 } catch(err) {}
             });
         });
@@ -283,11 +562,15 @@ function _tgtGetRowFromFeatureEvent(e) {
 
 function tgtCancelPickFromMap() {
     _tgtPickingFromMap = false;
-    const modal = tgt('equipmentFormModal');
-    if (modal) modal.style.display = '';
+
+    // أعد إظهار المودال
+    const modal = tgt('targetFormModal');
+    if (modal) modal.style.display = 'flex';
+
     const hint = tgt('eqtPickMapHint');
     if (hint) hint.style.display = 'none';
     if (window.map) map.getContainer().style.cursor = '';
+
     if (_tgtMapClickHandler) {
         Object.values(window.allLayers || {}).forEach(layer => {
             if (!layer) return;
@@ -332,10 +615,9 @@ function tgtResetForm() {
     tgtClearElement();
     ['eqft_month','eqft_contractor',
      'eqft_target_qty','eqft_remaining_qty',
-     'eqft_price','eqft_target_value','eqft_remaining_value'].forEach(id => {
+     'eqft_price','eqft_target_value','eqft_remaining_value','eqft_notes'].forEach(id => {
         const el = tgt(id); if (el) el.value = '';
     });
-    // إعادة الشهر الحالي
     tgtPopulateMonths();
     tgtHideFeedback();
 }
@@ -346,17 +628,18 @@ function tgtResetForm() {
 async function tgtSubmitForm() {
     tgtHideFeedback();
 
-    const element_id   = (tgt('eqft_element_id')   || {}).value?.trim() || '';
-    const element_name = (tgt('eqft_element_name') || {}).value?.trim() || '';
-    const item_name    = (tgt('eqft_item_name')    || {}).value?.trim() || '';
-    const cat_name     = (tgt('eqft_cat_name')     || {}).value?.trim() || '';
-    const group_name   = (tgt('eqft_group_name')   || {}).value?.trim() || '';
-    const contractor   = (tgt('eqft_contractor')   || {}).value?.trim() || '';
-    const month        = (tgt('eqft_month')         || {}).value?.trim() || '';
-    const target_qty   = parseFloat((tgt('eqft_target_qty')   || {}).value) || 0;
+    const element_id    = (tgt('eqft_element_id')   || {}).value?.trim() || '';
+    const element_name  = (tgt('eqft_element_name') || {}).value?.trim() || '';
+    const item_name     = (tgt('eqft_item_name')    || {}).value?.trim() || '';
+    const cat_name      = (tgt('eqft_cat_name')     || {}).value?.trim() || '';
+    const group_name    = (tgt('eqft_group_name')   || {}).value?.trim() || '';
+    const contractor    = (tgt('eqft_contractor')   || {}).value?.trim() || '';
+    const month         = (tgt('eqft_month')         || {}).value?.trim() || '';
+    const target_qty    = parseFloat((tgt('eqft_target_qty')   || {}).value) || 0;
     const remaining_qty = parseFloat((tgt('eqft_remaining_qty') || {}).value) || 0;
-    const price        = parseFloat((tgt('eqft_price')         || {}).value) || 0;
-    const band_sheet   = (tgt('eqft_band_sheet')   || {}).value?.trim() || '';
+    const price         = parseFloat((tgt('eqft_price')         || {}).value) || 0;
+    const band_sheet    = (tgt('eqft_band_sheet')   || {}).value?.trim() || '';
+    const notes         = (tgt('eqft_notes')        || {}).value?.trim() || '';
 
     // Validation
     if (!element_name) { tgtShowFeedback('❌ يرجى اختيار اسم العنصر', 'error'); return; }
@@ -365,23 +648,12 @@ async function tgtSubmitForm() {
     if (!month)        { tgtShowFeedback('❌ يرجى اختيار الشهر', 'error'); return; }
     if (!target_qty || target_qty <= 0) { tgtShowFeedback('❌ يرجى إدخال الكمية المستهدفة', 'error'); return; }
 
-    // Get script URL
-    const allSubs = (window.categories || []).flatMap(c => c.subitems || []);
-    const matchedSub = allSubs.find(s => s.sheetId === band_sheet);
+    // جلب رابط السكريبت
+    const targetScriptUrl = (window.sheetIdsConfig && window.sheetIdsConfig['TARGET_SCRIPT_URL'])
+                          || window.TARGET_SCRIPT_URL || '';
 
-    // Check for TARGET_SHEET_ID
-    const targetSheetId = (window.sheetIdsConfig && window.sheetIdsConfig['TARGET_SHEET_ID']) || window.TARGET_SHEET_ID || '';
-
-    let scriptUrl = '';
-    if (matchedSub && matchedSub.scriptUrl) {
-        scriptUrl = matchedSub.scriptUrl.trim();
-    }
-
-    // fallback: use a general target script if defined
-    const targetScriptUrl = (window.sheetIdsConfig && window.sheetIdsConfig['TARGET_SCRIPT_URL']) || window.TARGET_SCRIPT_URL || scriptUrl;
-
-    if (!targetScriptUrl && !targetSheetId) {
-        tgtShowFeedback('❌ لم يتم إعداد شيت المستهدف — راجع الإعدادات ← روابط الشيتات', 'error');
+    if (!targetScriptUrl) {
+        tgtShowFeedback('❌ لم يتم إعداد رابط سكريبت المستهدف — الإعدادات ← روابط الشيتات', 'error');
         return;
     }
 
@@ -389,7 +661,8 @@ async function tgtSubmitForm() {
     if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري الحفظ...'; }
     tgtShowFeedback('⏳ جاري إرسال البيانات...', 'loading');
 
-    const added_by = (window.currentUser && currentUser.email) ? currentUser.email : (window.currentUser && currentUser.name ? currentUser.name : '');
+    const added_by = (window.currentUser && currentUser.email) ? currentUser.email
+                   : (window.currentUser && currentUser.name ? currentUser.name : '');
     const target_value    = target_qty * price;
     const remaining_value = remaining_qty * price;
 
@@ -401,13 +674,12 @@ async function tgtSubmitForm() {
         item_name, contractor,
         month, target_qty, remaining_qty,
         price, target_value, remaining_value,
-        band_sheet, added_by,
+        band_sheet, added_by, notes,
         timestamp: new Date().toISOString()
     };
 
     try {
-        const endpointUrl = targetScriptUrl || scriptUrl;
-        const r = await fetch(endpointUrl, {
+        const r = await fetch(targetScriptUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(payload),
@@ -428,12 +700,12 @@ async function tgtSubmitForm() {
         console.error('Target submit error:', e);
         tgtShowFeedback('❌ تعذر الحفظ: ' + (e.message || 'خطأ في الاتصال'), 'error');
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '💾 حفظ في السجل'; }
+        if (btn) { btn.disabled = false; btn.textContent = '💾 حفظ المستهدف'; }
     }
 }
 
 /* ══════════════════════════════════════
-   Init when tab is switched to
+   Init
 ══════════════════════════════════════ */
 function tgtInitTab() {
     tgtBuildElementsList();
@@ -444,14 +716,17 @@ function tgtInitTab() {
 /* ══════════════════════════════════════
    Expose to window
 ══════════════════════════════════════ */
-window.tgtSelectElement        = tgtSelectElement;
-window.tgtClearElement         = tgtClearElement;
-window.tgtShowElementDropdown  = tgtShowElementDropdown;
+window.openTargetFormModal      = openTargetFormModal;
+window.openTargetFormTab        = openTargetFormTab;
+window.closeTargetFormModal     = closeTargetFormModal;
+window.tgtSelectElement         = tgtSelectElement;
+window.tgtClearElement          = tgtClearElement;
+window.tgtShowElementDropdown   = tgtShowElementDropdown;
 window.tgtFilterElementDropdown = tgtFilterElementDropdown;
-window.tgtPickFromMap          = tgtPickFromMap;
-window.tgtCancelPickFromMap    = tgtCancelPickFromMap;
-window.tgtCalcTargetValue      = tgtCalcTargetValue;
-window.tgtResetForm            = tgtResetForm;
-window.tgtSubmitForm           = tgtSubmitForm;
-window.tgtInitTab              = tgtInitTab;
-window.tgtPopulateMonths       = tgtPopulateMonths;
+window.tgtPickFromMap           = tgtPickFromMap;
+window.tgtCancelPickFromMap     = tgtCancelPickFromMap;
+window.tgtCalcTargetValue       = tgtCalcTargetValue;
+window.tgtResetForm             = tgtResetForm;
+window.tgtSubmitForm            = tgtSubmitForm;
+window.tgtInitTab               = tgtInitTab;
+window.tgtPopulateMonths        = tgtPopulateMonths;
