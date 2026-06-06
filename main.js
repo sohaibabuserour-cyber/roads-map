@@ -2961,25 +2961,46 @@ window.toggleGroupsDropdown = function(e) {
 
     _buildGroupsDropdownContent();
 
+    // أظهر مؤقتاً لحساب الأبعاد
+    dd.style.visibility = 'hidden';
+    dd.style.display = 'flex';
+    dd.style.flexDirection = 'column';
+    dd.style.position = 'fixed';
+    dd.style.zIndex = '99999';
+
     const triggerEl = e && e.currentTarget;
     if (triggerEl) {
         const rect = triggerEl.getBoundingClientRect();
-        dd.style.position = 'fixed';
-        dd.style.top = rect.bottom + 'px';
-        dd.style.right = 'auto';
-        if (window.innerWidth <= 1024) {
+        const ddW  = 280; // العرض المحدد
+        const vw   = window.innerWidth;
+        const vh   = window.innerHeight;
+
+        // الارتفاع المتاح
+        const spaceBelow = vh - rect.bottom - 8;
+        dd.style.maxHeight = Math.max(200, spaceBelow) + 'px';
+        dd.style.overflowY = 'auto';
+        dd.style.top = rect.bottom + 4 + 'px';
+
+        if (vw <= 1024) {
+            // موبايل: ممتد بين الجانبين
             dd.style.left  = '8px';
             dd.style.right = '8px';
             dd.style.width = 'auto';
         } else {
-            dd.style.left = rect.left + 'px';
+            dd.style.width = ddW + 'px';
+            // هل يخرج من اليمين؟
+            if (rect.left + ddW > vw - 8) {
+                // اضبطه من اليمين
+                dd.style.left  = 'auto';
+                dd.style.right = (vw - rect.right) + 'px';
+            } else {
+                dd.style.left  = rect.left + 'px';
+                dd.style.right = 'auto';
+            }
         }
     }
-    dd.style.display = 'flex';
-    dd.style.flexDirection = 'column';
-    dd.style.maxHeight = 'calc(100vh - 80px)';
-    dd.style.overflowY = 'auto';
-    dd.style.zIndex = '99999';
+
+    dd.style.visibility = 'visible';
 };
 
 window.closeGroupsDropdown = function() {
@@ -3019,33 +3040,31 @@ function _buildGroupsDropdownContent() {
 
     // ── المجموعات المُعرَّفة ──
     if (groups.length) {
-        html += '<div style="padding:6px 14px 4px;font-size:9px;font-weight:900;color:rgba(255,255,255,0.35);letter-spacing:.8px;font-family:\'Cairo\',sans-serif;border-bottom:1px solid rgba(255,255,255,0.05);">📦 المجموعات</div>';
+        html += '<div style="padding:6px 14px 5px;font-size:9px;font-weight:900;color:rgba(255,255,255,0.35);letter-spacing:.8px;font-family:\'Cairo\',sans-serif;border-bottom:1px solid rgba(255,255,255,0.07);">📦 المجموعات</div>';
         groups.forEach(function(group) {
             const isActive = activeGroupFilter === group.id;
             const subCount = (group.subIds || []).length;
 
-            html += '<div onclick="applyGroupFilter(\'' + group.id + '\')" style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s;background:' + (isActive ? 'rgba(245,200,66,0.12)' : 'transparent') + ';border-right:3px solid ' + (isActive ? '#f5c842' : 'transparent') + ';" onmouseover="this.style.background=\'rgba(245,200,66,0.08)\'" onmouseout="this.style.background=\'' + (isActive ? 'rgba(245,200,66,0.12)' : 'transparent') + '\'">' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
-                '<div style="display:flex;align-items:center;gap:8px;flex:1;">' +
-                '<span style="font-size:16px;">' + (isActive ? '✅' : '🔗') + '</span>' +
-                '<span style="font-size:12px;font-weight:700;color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;">' + (group.name || 'مجموعة') + '</span>' +
-                '</div>' +
-                '<span style="background:' + (isActive ? 'rgba(245,200,66,0.2)' : 'rgba(255,255,255,0.08)') + ';border:1px solid ' + (isActive ? 'rgba(245,200,66,0.4)' : 'rgba(255,255,255,0.15)') + ';color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.6)') + ';font-size:9px;font-weight:900;padding:2px 8px;border-radius:10px;white-space:nowrap;font-family:\'Cairo\',sans-serif;">' + subCount + ' بند</span>' +
+            html += '<div onclick="applyGroupFilter(\'' + group.id + '\')" style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:all 0.15s;background:' + (isActive ? 'rgba(245,200,66,0.12)' : 'transparent') + ';border-right:3px solid ' + (isActive ? '#f5c842' : 'transparent') + ';" onmouseover="this.style.background=\'rgba(245,200,66,0.08)\'" onmouseout="this.style.background=\'' + (isActive ? 'rgba(245,200,66,0.12)' : 'transparent') + '\'">' +
+                '<div style="display:flex;align-items:center;gap:8px;">' +
+                '<span style="font-size:15px;flex-shrink:0;">' + (isActive ? '✅' : '🔗') + '</span>' +
+                '<span style="flex:1;font-size:12px;font-weight:700;color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;white-space:normal;word-break:break-word;line-height:1.5;">' + (group.name || 'مجموعة') + '</span>' +
+                '<span style="flex-shrink:0;background:' + (isActive ? 'rgba(245,200,66,0.2)' : 'rgba(255,255,255,0.08)') + ';border:1px solid ' + (isActive ? 'rgba(245,200,66,0.4)' : 'rgba(255,255,255,0.15)') + ';color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.55)') + ';font-size:9px;font-weight:900;padding:2px 7px;border-radius:10px;white-space:nowrap;font-family:\'Cairo\',sans-serif;">' + subCount + ' بند</span>' +
                 '</div></div>';
         });
     }
 
     // ── البنود المنفردة ──
     if (soloSubs.length) {
-        html += '<div style="padding:6px 14px 4px;font-size:9px;font-weight:900;color:rgba(255,255,255,0.35);letter-spacing:.8px;font-family:\'Cairo\',sans-serif;border-bottom:1px solid rgba(255,255,255,0.05);border-top:1px solid rgba(255,255,255,0.06);">📌 بنود منفردة</div>';
+        html += '<div style="padding:6px 14px 5px;font-size:9px;font-weight:900;color:rgba(255,255,255,0.35);letter-spacing:.8px;font-family:\'Cairo\',sans-serif;border-bottom:1px solid rgba(255,255,255,0.07);border-top:1px solid rgba(255,255,255,0.07);">📌 بنود منفردة</div>';
         soloSubs.forEach(function(item) {
             const soloId = 'solo_' + item.sub.id;
             const isActive = activeGroupFilter === soloId;
-            html += '<div onclick="applyGroupFilter(\'' + soloId + '\')" style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s;background:' + (isActive ? 'rgba(106,45,145,0.18)' : 'transparent') + ';border-right:3px solid ' + (isActive ? 'var(--purple,#6a2d91)' : 'transparent') + ';" onmouseover="this.style.background=\'rgba(106,45,145,0.1)\'" onmouseout="this.style.background=\'' + (isActive ? 'rgba(106,45,145,0.18)' : 'transparent') + '\'">' +
-                '<div style="display:flex;align-items:center;gap:8px;">' +
-                '<span style="font-size:14px;">' + (isActive ? '✅' : item.cat.emoji) + '</span>' +
-                '<span style="flex:1;font-size:12px;font-weight:700;color:' + (isActive ? '#c39bd3' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;">' + item.sub.name + '</span>' +
-                (isActive ? '<span style="font-size:9px;color:#c39bd3;font-weight:900;font-family:\'Cairo\',sans-serif;white-space:nowrap;">● نشط</span>' : '') +
+            html += '<div onclick="applyGroupFilter(\'' + soloId + '\')" style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:all 0.15s;background:' + (isActive ? 'rgba(106,45,145,0.18)' : 'transparent') + ';border-right:3px solid ' + (isActive ? 'var(--purple,#6a2d91)' : 'transparent') + ';" onmouseover="this.style.background=\'rgba(106,45,145,0.1)\'" onmouseout="this.style.background=\'' + (isActive ? 'rgba(106,45,145,0.18)' : 'transparent') + '\'">' +
+                '<div style="display:flex;align-items:flex-start;gap:8px;">' +
+                '<span style="font-size:14px;flex-shrink:0;margin-top:1px;">' + (isActive ? '✅' : item.cat.emoji) + '</span>' +
+                '<span style="flex:1;font-size:12px;font-weight:700;color:' + (isActive ? '#c39bd3' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;white-space:normal;word-break:break-word;line-height:1.55;">' + item.sub.name + '</span>' +
+                (isActive ? '<span style="flex-shrink:0;font-size:9px;color:#c39bd3;font-weight:900;font-family:\'Cairo\',sans-serif;margin-top:2px;">●</span>' : '') +
                 '</div></div>';
         });
     }
