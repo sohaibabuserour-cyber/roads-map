@@ -754,44 +754,43 @@ async function eqSubmitForm() {
     }
 }
 
-/* ── Tab switching between daily and cumulative forms ── */
+/* ── Tab switching between daily, cumulative, and target forms ── */
 function eqSwitchFormTab(tab) {
-    const bodyDaily = document.getElementById('eqfBodyDaily');
-    const bodyCumul = document.getElementById('eqfBodyCumul');
-    const btnDaily  = document.getElementById('eqfTabDaily');
-    const btnCumul  = document.getElementById('eqfTabCumul');
+    const bodyDaily  = document.getElementById('eqfBodyDaily');
+    const bodyCumul  = document.getElementById('eqfBodyCumul');
+    const bodyTarget = document.getElementById('eqfBodyTarget');
+    const btnDaily   = document.getElementById('eqfTabDaily');
+    const btnCumul   = document.getElementById('eqfTabCumul');
+    const btnTarget  = document.getElementById('eqfTabTarget');
     if (!bodyDaily || !bodyCumul) return;
 
+    // أخفِ كل التبويبات وأعد ألوان الأزرار
+    [bodyDaily, bodyCumul, bodyTarget].forEach(b => { if (b) b.style.display = 'none'; });
+    [btnDaily, btnCumul, btnTarget].forEach(b => {
+        if (b) { b.style.background = 'transparent'; b.style.color = 'rgba(255,255,255,0.65)'; }
+    });
+
+    const submitBtn = document.getElementById('eqf_submit_btn');
+
     if (tab === 'daily') {
-        bodyDaily.style.display = 'block';
-        bodyCumul.style.display = 'none';
-        if (btnDaily) {
-            btnDaily.style.background = 'rgba(255,255,255,0.9)';
-            btnDaily.style.color      = '#1a6040';
-        }
-        if (btnCumul) {
-            btnCumul.style.background = 'transparent';
-            btnCumul.style.color      = 'rgba(255,255,255,0.65)';
-        }
-        // تحديث زر الحفظ ليشير لـ eqSubmitForm
-        const submitBtn = document.getElementById('eqf_submit_btn');
+        if (bodyDaily) bodyDaily.style.display = 'block';
+        if (btnDaily)  { btnDaily.style.background = 'rgba(255,255,255,0.9)'; btnDaily.style.color = '#1a6040'; }
         if (submitBtn) submitBtn.onclick = eqSubmitForm;
-    } else {
-        bodyDaily.style.display = 'none';
-        bodyCumul.style.display = 'block';
-        if (btnCumul) {
-            btnCumul.style.background = 'rgba(255,255,255,0.9)';
-            btnCumul.style.color      = '#1a6040';
-        }
-        if (btnDaily) {
-            btnDaily.style.background = 'transparent';
-            btnDaily.style.color      = 'rgba(255,255,255,0.65)';
-        }
-        // تحديث زر الحفظ ليشير لـ eqSubmitCumulative
-        const submitBtn = document.getElementById('eqf_submit_btn');
+
+    } else if (tab === 'cumulative') {
+        if (bodyCumul) bodyCumul.style.display = 'block';
+        if (btnCumul)  { btnCumul.style.background = 'rgba(255,255,255,0.9)'; btnCumul.style.color = '#1a6040'; }
         if (submitBtn) submitBtn.onclick = eqSubmitCumulative;
-        // ملء المقاولين في التبويب التراكمي
         eqPopulateContractors();
+
+    } else if (tab === 'target') {
+        if (bodyTarget) bodyTarget.style.display = 'block';
+        if (btnTarget)  { btnTarget.style.background = 'rgba(255,255,255,0.9)'; btnTarget.style.color = '#1a6040'; }
+        if (submitBtn) submitBtn.onclick = function() { if (typeof tgtSubmitForm === 'function') tgtSubmitForm(); };
+        // ملّئ بيانات تبويب المستهدف
+        if (typeof tgtBuildElementsList  === 'function') tgtBuildElementsList();
+        if (typeof tgtPopulateContractors === 'function') tgtPopulateContractors();
+        if (typeof tgtPopulateMonths      === 'function') tgtPopulateMonths();
     }
 }
 
