@@ -826,10 +826,12 @@
     "CASHFLOW_COMPANY_SHEET": "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA",
     "CASHFLOW_CONTRACTORS_SHEET": "1xmSUQNR02prdGK9P6QiJo8ybVKwdVZAE74yUkUTbVYA",
     "TARGET_SHEET_ID": "1lJCDCO4NOjI7QSSu_eeNfxkq-_6lS6hFQl4VjHSyrKY",
-    "TARGET_SCRIPT_URL": "https://script.google.com/macros/s/AKfycbyTOBSuOpuEHSgdlMnfyhO70cH_1uMvNLYxug1hpeR4svxFaBvUUKoIEVICDV9RIZUx/exec"
+    "TARGET_SCRIPT_URL": "https://script.google.com/macros/s/AKfycbyTOBSuOpuEHSgdlMnfyhO70cH_1uMvNLYxug1hpeR4svxFaBvUUKoIEVICDV9RIZUx/exec",
+    "BOQ_SHEET_ID": "1zHPCiw-3TH3TUvdJlKz1a2VjycN2PVXs8jw_yUPVDNs",
+    "BOQ_SCRIPT_URL": "https://script.google.com/macros/s/AKfycby2W6xsahPoJhmoRSq_-XXXoiQtcELs7WhZ8NNNJywEmn4I7KU8MBVOZOQxEjWJPptw/exec"
   },
   "selectedItems": {
-    "mpiml7x5b651b": true
+    "mpimlmznpvvui": true
   },
   "selectedStatuses": [
     "جاري",
