@@ -2977,7 +2977,7 @@ window.toggleGroupsDropdown = function(e) {
 
         // الارتفاع المتاح
         const spaceBelow = vh - rect.bottom - 8;
-        dd.style.maxHeight = Math.max(200, spaceBelow) + 'px';
+        dd.style.maxHeight = Math.min(320, Math.max(160, spaceBelow)) + 'px';
         dd.style.overflowY = 'auto';
         dd.style.top = rect.bottom + 4 + 'px';
 
