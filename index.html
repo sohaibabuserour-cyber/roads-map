@@ -17,12 +17,17 @@
             border-color: rgba(106,45,145,0.25);
             color: #c39bd3;
         }
-        /* الـ dropdown نفسه داخل .tab-sub-dropdown */
+        /* الـ dropdown */
         #groupsDropdown {
             background: #0d0d1a !important;
             border-top: 2px solid var(--purple, #6a2d91) !important;
+            border-radius: 0 0 12px 12px !important;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.07) !important;
         }
-        #groupsDropdown .tab-sub-item { display: none; } /* مش بنستخدمها هنا */
+        #groupsDropdown::-webkit-scrollbar { width: 4px; }
+        #groupsDropdown::-webkit-scrollbar-track { background: transparent; }
+        #groupsDropdown::-webkit-scrollbar-thumb { background: rgba(106,45,145,0.5); border-radius: 4px; }
+        #groupsDropdown .tab-sub-item { display: none; }
     </style>
 
 <base target="_blank">
