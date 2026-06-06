@@ -597,6 +597,7 @@ function _fillSheetIdsInputs() {
         'sheetId_cfContractors' : 'CASHFLOW_CONTRACTORS_SHEET',
         'sheetId_bills'         : 'BILLS_SHEET_ID',
         'sheetId_target'        : 'TARGET_SHEET_ID',
+        'sheetId_boq'           : 'BOQ_SHEET_ID',
     };
     const cfg    = window.sheetIdsConfig || {};
     const legacy = JSON.parse(localStorage.getItem('sheetIdsOverride') || '{}');
@@ -616,6 +617,11 @@ function _fillSheetIdsInputs() {
         scriptInp.value = cfg['TARGET_SCRIPT_URL'] || legacy['TARGET_SCRIPT_URL']
                        || window.TARGET_SCRIPT_URL || '';
     }
+    const boqScriptInp = document.getElementById('sheetId_boqScript');
+    if (boqScriptInp) {
+        boqScriptInp.value = cfg['BOQ_SCRIPT_URL'] || legacy['BOQ_SCRIPT_URL']
+                          || window.BOQ_SCRIPT_URL || '';
+    }
 }
 
 function saveSheetIds() {
@@ -627,6 +633,7 @@ function saveSheetIds() {
         'CASHFLOW_CONTRACTORS_SHEET' : 'sheetId_cfContractors',
         'BILLS_SHEET_ID'             : 'sheetId_bills',
         'TARGET_SHEET_ID'            : 'sheetId_target',
+        'BOQ_SHEET_ID'               : 'sheetId_boq',
     };
     if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
 
@@ -649,6 +656,16 @@ function saveSheetIds() {
     } else {
         delete window.sheetIdsConfig['TARGET_SCRIPT_URL'];
         window.TARGET_SCRIPT_URL = '';
+    }
+
+    // رابط سكريبت جدول الكميات
+    const boqScriptRaw = document.getElementById('sheetId_boqScript')?.value.trim() || '';
+    if (boqScriptRaw) {
+        window.sheetIdsConfig['BOQ_SCRIPT_URL'] = boqScriptRaw;
+        window.BOQ_SCRIPT_URL = boqScriptRaw;
+    } else {
+        delete window.sheetIdsConfig['BOQ_SCRIPT_URL'];
+        window.BOQ_SCRIPT_URL = '';
     }
 
     localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
@@ -3202,3 +3219,105 @@ function _updateGroupsTabState() {
     s.textContent = '@keyframes gfPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(1.4);}}';
     document.head.appendChild(s);
 })();
+
+
+/* ====================================================
+   BOQ FORM (جدول الكميات)
+   ==================================================== */
+window._boqRevisedCount = 0;
+
+window.openBOQFormModal = function () {
+    const m = document.getElementById('boqFormModal');
+    if (!m) return;
+    // reset fields
+    ['boqItemNo','boqUnit','boqDesc','boqPrice','boqContractQty'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    const list = document.getElementById('boqRevisedList');
+    if (list) list.innerHTML = '';
+    window._boqRevisedCount = 0;
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeBOQFormModal = function () {
+    const m = document.getElementById('boqFormModal');
+    if (m) m.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+window.addBOQRevisedColumn = function () {
+    const list = document.getElementById('boqRevisedList');
+    if (!list) return;
+    window._boqRevisedCount = (window._boqRevisedCount || 0) + 1;
+    const idx = window._boqRevisedCount;
+    const row = document.createElement('div');
+    row.className = 'boq-rev-row';
+    row.dataset.revIdx = String(idx);
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;';
+    row.innerHTML = `
+        <div style="font-size:12px;font-weight:800;color:#5cc890;font-family:'Cairo',sans-serif;white-space:nowrap;min-width:120px;">
+            كمية جدول معدل ${idx}
+        </div>
+        <input type="number" step="any" class="settings-input boq-rev-qty"
+               placeholder="الكمية" style="flex:1;">
+        <button type="button" onclick="this.parentNode.remove()" title="حذف"
+            style="background:rgba(244,67,54,0.12);border:1px solid rgba(244,67,54,0.35);color:#ff8a80;width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:14px;">✕</button>
+    `;
+    list.appendChild(row);
+};
+
+window.submitBOQForm = async function () {
+    const itemNo      = document.getElementById('boqItemNo')?.value.trim() || '';
+    const desc        = document.getElementById('boqDesc')?.value.trim() || '';
+    const unit        = document.getElementById('boqUnit')?.value.trim() || '';
+    const price       = document.getElementById('boqPrice')?.value.trim() || '';
+    const contractQty = document.getElementById('boqContractQty')?.value.trim() || '';
+
+    if (!itemNo || !desc) {
+        if (typeof showAlert === 'function') showAlert('⚠️ أدخل رقم البند والوصف', 'warning');
+        else alert('أدخل رقم البند والوصف');
+        return;
+    }
+
+    const revised = {};
+    document.querySelectorAll('#boqRevisedList .boq-rev-row').forEach(row => {
+        const idx = row.dataset.revIdx;
+        const val = row.querySelector('.boq-rev-qty')?.value.trim() || '';
+        if (val !== '') revised['revisedQty' + idx] = val;
+    });
+
+    const payload = {
+        action      : 'addBOQ',
+        itemNo      : itemNo,
+        description : desc,
+        unit        : unit,
+        price       : price,
+        contractQty : contractQty,
+        ...revised,
+        timestamp   : new Date().toISOString(),
+        user        : (currentUser && currentUser.email) || ''
+    };
+
+    const url = (window.sheetIdsConfig && window.sheetIdsConfig['BOQ_SCRIPT_URL']) || window.BOQ_SCRIPT_URL || '';
+    if (!url) {
+        if (typeof showAlert === 'function') showAlert('⚠️ أضف رابط سكريبت جدول الكميات في الإعدادات أولاً', 'warning');
+        else alert('أضف رابط سكريبت جدول الكميات في الإعدادات أولاً');
+        return;
+    }
+
+    try {
+        await fetch(url, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        });
+        if (typeof showAlert === 'function') showAlert('✅ تم إرسال البند إلى جدول الكميات', 'success');
+        closeBOQFormModal();
+    } catch (e) {
+        if (typeof showAlert === 'function') showAlert('❌ فشل الإرسال: ' + e.message, 'error');
+        else alert('فشل الإرسال: ' + e.message);
+    }
+};

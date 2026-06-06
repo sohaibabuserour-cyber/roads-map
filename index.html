@@ -124,6 +124,10 @@
                     <span style="font-size:14px;">🎯</span>
                     <label>المستهدف الشهري</label>
                 </div>
+                <div class="tab-sub-item" onclick="openBOQFormModal();closeAddDropdown()">
+                    <span style="font-size:14px;">📋</span>
+                    <label>جدول الكميات</label>
+                </div>
             </div>
         </div>
 
@@ -1577,6 +1581,39 @@
                             Web App يتلقى بيانات المستهدف ويكتبها في الشيت
                         </div>
                     </div>
+                    <!-- شيت جدول الكميات -->
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:6px;font-family:'Cairo',sans-serif;">
+                            📋 شيت جدول الكميات
+                            <span style="font-size:9px;opacity:0.5;margin-right:4px;">(BOQ_SHEET_ID)</span>
+                        </label>
+                        <div style="display:flex;gap:7px;align-items:center;">
+                            <input type="text" id="sheetId_boq" class="settings-input"
+                                style="flex:1;font-size:11px;font-family:monospace;"
+                                placeholder="https://docs.google.com/spreadsheets/d/...">
+                            <a id="sheetLink_boq" href="#" target="_blank"
+                                style="flex-shrink:0;padding:8px 10px;background:rgba(39,174,106,0.1);border:1px solid rgba(39,174,106,0.3);border-radius:7px;color:#5cc890;font-size:11px;text-decoration:none;white-space:nowrap;"
+                                title="فتح الشيت">🔗</a>
+                        </div>
+                        <div style="margin-top:5px;font-size:10px;color:rgba(255,255,255,0.3);font-family:'Cairo',sans-serif;text-align:right;line-height:1.6;">
+                            شيت يُخزَّن فيه جدول الكميات (رقم البند، الوحدة، السعر، الكميات التعاقدية والمعدّلة)
+                        </div>
+                    </div>
+                    <!-- رابط سكريبت جدول الكميات -->
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:6px;font-family:'Cairo',sans-serif;">
+                            🔧 رابط سكريبت جدول الكميات (Apps Script)
+                            <span style="font-size:9px;opacity:0.5;margin-right:4px;">(BOQ_SCRIPT_URL)</span>
+                        </label>
+                        <div style="display:flex;gap:7px;align-items:center;">
+                            <input type="text" id="sheetId_boqScript" class="settings-input"
+                                style="flex:1;font-size:11px;font-family:monospace;"
+                                placeholder="https://script.google.com/macros/s/...">
+                        </div>
+                        <div style="margin-top:5px;font-size:10px;color:rgba(255,255,255,0.3);font-family:'Cairo',sans-serif;text-align:right;line-height:1.6;">
+                            Web App يتلقى بيانات جدول الكميات ويكتبها في الشيت
+                        </div>
+                    </div>
                     <button onclick="saveSheetIds()" style="background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:white;padding:10px 24px;border-radius:9px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;width:100%;margin-top:4px;transition:all 0.2s;box-shadow:0 4px 14px rgba(33,150,243,0.3);" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
                         💾 حفظ الروابط وتطبيقها
                     </button>
@@ -1585,6 +1622,67 @@
 
             </div><!-- end content -->
         </div><!-- end body -->
+    </div>
+</div>
+
+
+<!-- ==================== MODAL: BOQ (جدول الكميات) ==================== -->
+<div id="boqFormModal" style="display:none;position:fixed;inset:0;z-index:70002;align-items:center;justify-content:center;">
+    <div onclick="closeBOQFormModal()" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);"></div>
+    <div style="position:relative;width:min(720px,94vw);max-height:92vh;background:linear-gradient(180deg,#1a0a2e 0%,#2d1245 100%);border:1px solid rgba(255,255,255,0.1);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,0.6);display:flex;flex-direction:column;overflow:hidden;">
+        <!-- Header -->
+        <div style="padding:16px 22px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#3aaa5c,#1a7a4a);">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:22px;">📋</span>
+                <div>
+                    <div style="font-size:16px;font-weight:900;color:white;font-family:'Cairo',sans-serif;">جدول الكميات</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:'Cairo',sans-serif;">إضافة بند جديد إلى جدول الكميات</div>
+                </div>
+            </div>
+            <button onclick="closeBOQFormModal()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        <!-- Body -->
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="settings-field">
+                    <label class="settings-label">رقم البند</label>
+                    <input type="text" class="settings-input" id="boqItemNo" placeholder="مثال: 1-1">
+                </div>
+                <div class="settings-field">
+                    <label class="settings-label">الوحدة</label>
+                    <input type="text" class="settings-input" id="boqUnit" placeholder="م³ / م² / طن ...">
+                </div>
+                <div class="settings-field" style="grid-column:1 / -1;">
+                    <label class="settings-label">البند (الوصف)</label>
+                    <input type="text" class="settings-input" id="boqDesc" placeholder="وصف البند">
+                </div>
+                <div class="settings-field">
+                    <label class="settings-label">السعر</label>
+                    <input type="number" step="any" class="settings-input" id="boqPrice" placeholder="0.00">
+                </div>
+                <div class="settings-field">
+                    <label class="settings-label">الكمية التعاقدية</label>
+                    <input type="number" step="any" class="settings-input" id="boqContractQty" placeholder="0">
+                </div>
+            </div>
+
+            <!-- Revised quantities -->
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);font-family:'Cairo',sans-serif;">📊 الكميات المعدّلة (اختياري)</div>
+                    <button type="button" onclick="addBOQRevisedColumn()" style="background:rgba(58,170,92,0.15);border:1px solid rgba(58,170,92,0.4);color:#5cc890;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;">＋ إضافة جدول معدل</button>
+                </div>
+                <div id="boqRevisedList" style="display:flex;flex-direction:column;gap:8px;"></div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:6px;font-family:'Cairo',sans-serif;text-align:right;">
+                    اضغط "إضافة جدول معدل" لكل تعديل (جدول معدل 1، 2، 3 ...)
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div style="padding:14px 22px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:10px;justify-content:flex-end;background:rgba(0,0,0,0.2);">
+            <button onclick="closeBOQFormModal()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;">إلغاء</button>
+            <button onclick="submitBOQForm()" style="background:linear-gradient(135deg,#3aaa5c,#1a7a4a);border:none;color:white;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(58,170,92,0.35);">💾 حفظ</button>
+        </div>
     </div>
 </div>
 
