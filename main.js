@@ -3023,22 +3023,13 @@ function _buildGroupsDropdownContent() {
         groups.forEach(function(group) {
             const isActive = activeGroupFilter === group.id;
             const subCount = (group.subIds || []).length;
-            const subNames = (group.subIds || []).map(function(sid) {
-                let name = '';
-                (categories || []).forEach(function(cat) {
-                    const s = (cat.subitems || []).find(function(x) { return x.id === sid; });
-                    if (s) name = s.name;
-                });
-                return name;
-            }).filter(Boolean).join(' • ');
 
             html += '<div onclick="applyGroupFilter(\'' + group.id + '\')" style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s;background:' + (isActive ? 'rgba(245,200,66,0.12)' : 'transparent') + ';border-right:3px solid ' + (isActive ? '#f5c842' : 'transparent') + ';" onmouseover="this.style.background=\'rgba(245,200,66,0.08)\'" onmouseout="this.style.background=\'' + (isActive ? 'rgba(245,200,66,0.12)' : 'transparent') + '\'">' +
                 '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
                 '<div style="display:flex;align-items:center;gap:8px;flex:1;">' +
                 '<span style="font-size:16px;">' + (isActive ? '✅' : '🔗') + '</span>' +
-                '<div style="flex:1;">' +
-                '<div style="font-size:12px;font-weight:700;color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;">' + (group.name || 'مجموعة') + '</div>' +
-                '</div></div>' +
+                '<span style="font-size:12px;font-weight:700;color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;">' + (group.name || 'مجموعة') + '</span>' +
+                '</div>' +
                 '<span style="background:' + (isActive ? 'rgba(245,200,66,0.2)' : 'rgba(255,255,255,0.08)') + ';border:1px solid ' + (isActive ? 'rgba(245,200,66,0.4)' : 'rgba(255,255,255,0.15)') + ';color:' + (isActive ? '#f5c842' : 'rgba(255,255,255,0.6)') + ';font-size:9px;font-weight:900;padding:2px 8px;border-radius:10px;white-space:nowrap;font-family:\'Cairo\',sans-serif;">' + subCount + ' بند</span>' +
                 '</div></div>';
         });
@@ -3053,10 +3044,7 @@ function _buildGroupsDropdownContent() {
             html += '<div onclick="applyGroupFilter(\'' + soloId + '\')" style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s;background:' + (isActive ? 'rgba(106,45,145,0.18)' : 'transparent') + ';border-right:3px solid ' + (isActive ? 'var(--purple,#6a2d91)' : 'transparent') + ';" onmouseover="this.style.background=\'rgba(106,45,145,0.1)\'" onmouseout="this.style.background=\'' + (isActive ? 'rgba(106,45,145,0.18)' : 'transparent') + '\'">' +
                 '<div style="display:flex;align-items:center;gap:8px;">' +
                 '<span style="font-size:14px;">' + (isActive ? '✅' : item.cat.emoji) + '</span>' +
-                '<div style="flex:1;">' +
-                '<div style="font-size:12px;font-weight:700;color:' + (isActive ? '#c39bd3' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;">' + item.sub.name + '</div>' +
-                '<div style="font-size:10px;color:rgba(255,255,255,0.4);font-family:\'Cairo\',sans-serif;margin-top:1px;text-align:right;">' + item.cat.name + '</div>' +
-                '</div>' +
+                '<span style="flex:1;font-size:12px;font-weight:700;color:' + (isActive ? '#c39bd3' : 'rgba(255,255,255,0.9)') + ';font-family:\'Cairo\',sans-serif;text-align:right;">' + item.sub.name + '</span>' +
                 (isActive ? '<span style="font-size:9px;color:#c39bd3;font-weight:900;font-family:\'Cairo\',sans-serif;white-space:nowrap;">● نشط</span>' : '') +
                 '</div></div>';
         });
