@@ -251,17 +251,9 @@ function openTargetFormModal() {
     tgtInitTab();
 }
 
-// يُستدعى من زر القائمة "المستهدف الشهري"
+// يُستدعى من زر القائمة "المستهدف الشهري" — يفتح المودال المستقل دائماً
 function openTargetFormTab() {
-    // لو equipmentFormModal موجود — افتحه وانتقل لتبويب المستهدف
-    const eqModal = document.getElementById('equipmentFormModal');
-    if (eqModal) {
-        eqModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        if (typeof eqSwitchFormTab === 'function') eqSwitchFormTab('target');
-    } else {
-        openTargetFormModal();
-    }
+    openTargetFormModal();
 }
 
 function closeTargetFormModal() {
