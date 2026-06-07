@@ -1020,79 +1020,14 @@ async function eqSubmitCumulative() {
     }
 }
 
-/* ── Override openEquipmentModal to also load from the new sheet ── */
-const _origOpenEquipmentModal = openEquipmentModal;
+/* openEquipmentModal — يفتح مودال المعدات */
 window.openEquipmentModal = function() {
     _eqActiveTab = 'overview';
     openModal('equipmentModal');
-    // If new sheet data is available, merge it in before loading
-    eqMergeNewSheetDataThenLoad();
+    loadEquipmentModal();
 };
 
-/* ── Fetch data from the new equipment registration sheet ── */
-let _eqRegCache = null;
-let _eqRegLastFetch = 0;
 
-async function eqFetchRegistrationSheet() {
-    const now = Date.now();
-    // Cache for 2 minutes
-    if (_eqRegCache && (now - _eqRegLastFetch) < 120000) return _eqRegCache;
-
-    const id = window._getSheetId ? window._getSheetId('EQ_REG_SHEET_ID') : '';
-    if (!id) { console.warn('EQ_REG_SHEET_ID غير محدد في الإعدادات'); return []; }
-
-    try {
-        const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0`;
-        const r   = await fetch(url);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const csv = await r.text();
-        if (csv.trim().startsWith('<')) throw new Error('not public');
-
-        const lines = csv.split('\n').filter(l => l.trim());
-        if (lines.length < 2) return [];
-
-        /*
-         * الشيت الجديد له أعمدة بالترتيب:
-         *  element_id | element_name | item_name | contractor | date | type1 | count1 | type2 | count2 | ...
-         *
-         * نحوّله لصفوف بصيغة {ID, البند, CONTRACTOR, [معدة]: عدد, ...}
-         * حتى يتوافق مع نظام equipmentRawRows الحالي
-         */
-        const rows = [];
-        const baseHeaders = ['ID', 'ELEMENT_NAME', 'البند', 'CONTRACTOR', 'DATE'];
-
-        for (let i = 1; i < lines.length; i++) {
-            const vals = lines[i].split(',').map(v => v.trim());
-            if (!vals[0]) continue;
-
-            const row = {
-                'ID':           vals[0] || '',
-                'ELEMENT_NAME': vals[1] || '',
-                'البند':        vals[2] || '',
-                'CONTRACTOR':   vals[3] || '',
-                'DATE':         vals[4] || '',
-            };
-
-            // Equipment pairs: type, count starting at index 5
-            for (let j = 5; j < vals.length - 1; j += 2) {
-                const typeName = (vals[j] || '').trim();
-                const count    = parseInt(vals[j+1] || '0') || 0;
-                if (typeName) {
-                    row[typeName.toUpperCase()] = String(count);
-                }
-            }
-            rows.push(row);
-        }
-
-        _eqRegCache    = rows;
-        _eqRegLastFetch = now;
-        return rows;
-
-    } catch(e) {
-        console.warn('eqFetchRegistrationSheet failed:', e.message);
-        return [];
-    }
-}
 
 /* =================== equipment_autofill_patch.js =================== */
 

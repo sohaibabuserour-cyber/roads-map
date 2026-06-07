@@ -374,9 +374,6 @@ async function concfSyncContractor(val) {
     }
 }
 
-function concfSyncContractorText(val) {
-    document.getElementById('concf_contractor').value = val;
-}
 
 function _concfSetMode(mode) {
     const btn   = document.getElementById('concf_submit_btn');
@@ -602,6 +599,3 @@ window.concfUpdatePreview          = concfUpdatePreview;
 window.concfLoadRowForEdit         = concfLoadRowForEdit;
 window.concfReset                  = concfReset;
 window.concfSyncContractor         = concfSyncContractor;
-window.concfSyncContractorText     = concfSyncContractorText;
-window.concfSetMode                = _concfSetMode;
-window.concfBuildHistory           = _concfBuildHistory;

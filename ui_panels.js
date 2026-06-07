@@ -615,9 +615,10 @@
         document.body.style.overflow = 'hidden';
         const tab = window.cfActiveTab || 'contractors';
         if (!window.cashflowData?.[tab]) {
+            const cfg = window.sheetIdsConfig || {};
             const sheetId = tab === 'contractors'
-                ? window._getSheetId('CASHFLOW_CONTRACTORS_SHEET')
-                : window._getSheetId('CASHFLOW_COMPANY_SHEET');
+                ? (cfg['CASHFLOW_CONTRACTORS_SHEET'] || window.CASHFLOW_CONTRACTORS_SHEET || '')
+                : (cfg['CASHFLOW_COMPANY_SHEET']     || window.CASHFLOW_COMPANY_SHEET     || '');
             window.loadCfData?.(tab, sheetId);
         } else {
             window.renderCfKpis?.(tab);

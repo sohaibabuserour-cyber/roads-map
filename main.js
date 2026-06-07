@@ -3,7 +3,6 @@
    ==================================================== */
 
 const USERS_SHEET_ID     = "1maViL4HSsI5XsjnAOGM-2D98g0Ow_pawZ-A_R_Y9I_0";
-const EQUIPMENT_SHEET_ID = "1v40HIukVDqs6KBmQnl6HqlbS6IS4WmNKS87rFxbl63c";
 const CONFIG_FILE        = "categories.json";
 
 // Inactivity timeout: 2 hours in ms
@@ -156,36 +155,16 @@ async function tryRestoreSession() {
    LOGIN
    ==================================================== */
 
-// Robust CSV parser that handles quoted fields — global scope
 async function fetchUsers() {
     const id  = (window.sheetIdsConfig && window.sheetIdsConfig['USERS_SHEET_ID']) || USERS_SHEET_ID;
     const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0`;
     const r   = await fetch(url);
     const csv = await r.text();
-
     const lines   = csv.split('\n').filter(l => l.trim());
-    const parser = (window.Utils && window.Utils.parseCSVLine) ? window.Utils.parseCSVLine : function(line) {
-        const result = [];
-        let cur = '', inQ = false;
-        for (i = 0; i < line.length; i++) {
-            const ch = line[i];
-            if (ch === '"') {
-                if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-                else inQ = !inQ;
-            } else if (ch === ',' && !inQ) {
-                result.push(cur.trim()); cur = '';
-            } else {
-                cur += ch;
-            }
-        }
-        result.push(cur.trim());
-        return result;
-    };
-
-    const headers = parser(lines[0]).map(h => h.toUpperCase());
+    const headers = parseCSVLine(lines[0]).map(h => h.toUpperCase());
     const users   = [];
-    for (i = 1; i < lines.length; i++) {
-        const vals = parser(lines[i]);
+    for (let i = 1; i < lines.length; i++) {
+        const vals = parseCSVLine(lines[i]);
         const obj  = {};
         headers.forEach((h, idx) => { obj[h] = vals[idx] || ""; });
         users.push(obj);
@@ -309,8 +288,6 @@ async function enterApp() {
 
     // Init map
     initMap();
-    loadEquipmentData();
-
     await loadCategoriesConfig();
     await loadDefaultCoords();
     loadSimilarGroups();
@@ -376,12 +353,8 @@ function updateUserUI() {
     document.getElementById("udNameInput").value     = currentUser.name;
     document.getElementById("udPassInput").value     = "";
 
-    // Default coords inputs (nav panel only)
+    // تحديث حقول الإعدادات
     if (defaultCoords) {
-        const l2 = document.getElementById("defLat2"); if(l2) l2.value = defaultCoords.lat;
-        const g2 = document.getElementById("defLng2"); if(g2) g2.value = defaultCoords.lng;
-        const z2 = document.getElementById("defZoom2"); if(z2) z2.value = defaultCoords.zoom;
-        // Settings panel
         const sl = document.getElementById("settingsLat"); if(sl) sl.value = defaultCoords.lat;
         const sg = document.getElementById("settingsLng"); if(sg) sg.value = defaultCoords.lng;
         const sz = document.getElementById("settingsZoom"); if(sz) sz.value = defaultCoords.zoom;
@@ -533,29 +506,6 @@ async function loadDefaultCoords() {
     // تحميل رقم البند الافتراضي من localStorage كـ fallback
     const dsn = localStorage.getItem('defaultSubNumber');
     if (dsn !== null && !defaultSubNumber) defaultSubNumber = dsn;
-}
-
-function saveDefaultCoordsNav() {
-    const lat  = parseFloat(document.getElementById("defLat2").value);
-    const lng  = parseFloat(document.getElementById("defLng2").value);
-    const zoom = parseInt(document.getElementById("defZoom2").value);
-    if (isNaN(lat) || isNaN(lng) || isNaN(zoom)) { showAlert("❌ أدخل إحداثيات صحيحة"); return; }
-    defaultCoords = { lat, lng, zoom };
-    localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
-    if (map) map.setView([lat, lng], zoom);
-    syncCoordsInputs();
-    document.getElementById("coordsPanel").classList.remove("active");
-    showAlert("✅ تم حفظ الإحداثيات — اضغط ⬇ في البنود لتصدير categories.json ليتشاركها الجميع", "success");
-}
-
-function syncCoordsInputs() {
-    const l2 = document.getElementById("defLat2"); if(l2) l2.value = defaultCoords.lat;
-    const g2 = document.getElementById("defLng2"); if(g2) g2.value = defaultCoords.lng;
-    const z2 = document.getElementById("defZoom2"); if(z2) z2.value = defaultCoords.zoom;
-    // Also sync new settings panel inputs
-    const sl = document.getElementById("settingsLat"); if(sl) sl.value = defaultCoords.lat;
-    const sg = document.getElementById("settingsLng"); if(sg) sg.value = defaultCoords.lng;
-    const sz = document.getElementById("settingsZoom"); if(sz) sz.value = defaultCoords.zoom;
 }
 
 /* ====================================================
@@ -774,7 +724,6 @@ function saveSettingsCoords() {
     defaultCoords = { lat, lng, zoom };
     localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
     if (map) map.setView([lat, lng], zoom);
-    syncCoordsInputs();
     showAlert("✅ تم حفظ الإحداثيات الافتراضية", "success");
 }
 
@@ -957,101 +906,7 @@ function saveSimilarGroup() {
    EQUIPMENT DATA
    ==================================================== */
 
-// equipmentData: id → last-column string (للـ popup)
-// equipmentRawRows: كل صفوف شيت المعدات كاملة (للتبويب)
-equipmentRawRows    = [];
-let equipmentRawHeaders = [];
 
-function loadEquipmentData() {
-    const id  = (window.sheetIdsConfig && window.sheetIdsConfig['EQUIPMENT_SHEET_ID']) || EQUIPMENT_SHEET_ID;
-    const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0`;
-    fetch(url).then(r => r.text()).then(csv => {
-        const lines   = csv.split('\n').filter(l => l.trim());
-        if (!lines.length) return;
-        equipmentRawHeaders = lines[0].split(',').map(h => h.trim());
-        const headers = equipmentRawHeaders.map(h => h.toUpperCase());
-        const idIdx   = headers.findIndex(h => h === 'ID');
-        equipmentRawRows = [];
-        for (let i = 1; i < lines.length; i++) {
-            const v = lines[i].split(',').map(x => x.trim());
-            if (!v[idIdx]) continue;
-            // للـ popup: آخر عمود
-            equipmentData[v[idIdx]] = v[v.length - 1] || "غير محدد";
-            // للتبويب: كل الصف
-            const row = {};
-            headers.forEach((h, idx) => { row[h] = v[idx] || ""; });
-            equipmentRawRows.push(row);
-        }
-    }).catch(e => console.warn("equipment load failed:", e));
-}
-
-/* ── بناء تبويب المعدات: إجمالي عدد كل معدة ── */
-function buildEquipmentPanel() {
-    const list     = document.getElementById("equipmentList");
-    const subEl    = document.getElementById("equipmentPanelSub");
-    const totalRow = document.getElementById("equipmentTotalRow");
-    const totalVal = document.getElementById("equipmentTotalVal");
-    if (!list) return;
-
-    if (!equipmentRawRows.length) {
-        list.innerHTML = '<div class="equipment-empty">⏳ جاري التحميل...</div>';
-        subEl.textContent = "";
-        totalRow.style.display = "none";
-        setTimeout(() => { if (equipmentRawRows.length) buildEquipmentPanel(); }, 1200);
-        return;
-    }
-
-    // الأعمدة المستثناة من العرض
-    const SKIP_COLS = new Set(['ID', 'BAYAN', 'البيان', 'DESCRIPTION', 'بيان', 'البند', 'ALBND', 'BAND', 'ITEM']);
-
-    // التبويب يعرض كل المعدات بغض النظر عن البند المحدد
-    const rows = equipmentRawRows;
-
-    const idCol    = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');
-    const equipCols = equipmentRawHeaders
-        .map((h, i) => ({ name: h, idx: i }))
-        .filter(c => c.idx !== idCol
-                  && c.name.trim() !== ""
-                  && !SKIP_COLS.has(c.name.trim())
-                  && !SKIP_COLS.has(c.name.trim().toUpperCase()));
-
-    // مجموع كل عمود معدة
-    const totals = {};
-    equipCols.forEach(col => {
-        let sum = 0;
-        rows.forEach(row => {
-            const val = parseFloat(row[col.name.trim().toUpperCase()] || 0);
-            if (!isNaN(val)) sum += val;
-        });
-        if (sum > 0) totals[col.name] = sum;
-    });
-
-    const entries = Object.entries(totals).sort((a,b) => b[1] - a[1]);
-
-    if (!entries.length) {
-        list.innerHTML = '<div class="equipment-empty">لا توجد بيانات معدات</div>';
-        subEl.textContent = "";
-        totalRow.style.display = "none";
-        return;
-    }
-
-    const grandTotal = entries.reduce((s, [,v]) => s + v, 0);
-    subEl.textContent = `${entries.length} نوع — إجمالي كل المعدات`;
-
-    list.innerHTML = entries.map(([name, count]) => `
-        <div class="equipment-row">
-            <div class="equipment-row-name">${name}</div>
-            <div class="equipment-row-count">${fmtNum(count)}</div>
-        </div>`).join('');
-
-    totalRow.style.display = "flex";
-    totalVal.textContent = fmtNum(grandTotal);
-}
-
-/* ════════════════════════════════════════════════════════════════════════════════
-   CONTRACTOR PANEL  →  contractors.js
-   All contractor-related functionality has been extracted to contractors.js
-   ════════════════════════════════════════════════════════════════════════════════ */
 
 /* ====================================================
    CASH FLOW DASHBOARD MODAL
@@ -1121,27 +976,10 @@ async function loadCfData(type, sheetId) {
 function parseCfCSV(csv) {
     const lines = csv.split('\n').filter(l => l.trim());
     if (!lines.length) return { headers: [], rows: [] };
-    const parser = (window.Utils && window.Utils.parseCSVLine) ? window.Utils.parseCSVLine : function(line) {
-        const result = [];
-        let cur = '', inQ = false;
-        for (let i = 0; i < line.length; i++) {
-            const ch = line[i];
-            if (ch === '"') {
-                if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-                else inQ = !inQ;
-            } else if (ch === ',' && !inQ) {
-                result.push(cur.trim()); cur = '';
-            } else {
-                cur += ch;
-            }
-        }
-        result.push(cur.trim());
-        return result;
-    };
-    const headers = parser(lines[0]);
+    const headers = parseCSVLine(lines[0]);
     const rows = [];
     for (let i = 1; i < lines.length; i++) {
-        const values = parser(lines[i]);
+        const values = parseCSVLine(lines[i]);
         const row = {};
         headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
         rows.push(row);
@@ -1492,8 +1330,7 @@ function importConfig(e) {
                 defaultCoords = data.defaultCoords;
                 localStorage.setItem('defaultCoords', JSON.stringify(defaultCoords));
                 if (map) map.setView([defaultCoords.lat, defaultCoords.lng], defaultCoords.zoom);
-                syncCoordsInputs();
-            }
+                        }
             // Restore state if present
             if (!Array.isArray(data)) {
                 if (data.similarGroups) {
@@ -2808,11 +2645,6 @@ function makeDraggable(items, getKey, onReorder, getLabel, options = {}) {
     });
 }
 
-/* ── 1. NAV TABS (category order) ── */
-function initNavTabsDrag() {
-    // تاب البنود الآن عنصر واحد فقط — الترتيب يتم عبر السايدبار
-}
-
 /* ── 2. SIDEBAR SECTIONS (category order, same as tabs) ── */
 function initSidebarSectionsDrag() {
     if (!currentUser || !currentUser.isAdmin) return;
@@ -2867,12 +2699,6 @@ function initSubitemsDrag() {
             { silent: true }
         );
     });
-}
-
-/* ── 4. STATUS LEGEND — DRAG DISABLED per user request ── */
-function initLegendDrag() {
-    // Legend drag & drop has been disabled.
-    // Status order is fixed: جاري التنفيذ → متاح → غير متاح → تم الانتهاء → متوقف
 }
 
 /* ── 5. NAV-RIGHT GROUPS (Tools, Settings, User) ── */
@@ -2958,7 +2784,6 @@ window.renderNavTabs = function() {
 // Also hook enterApp to init all drag systems after login
 const _afterEnterApp = () => {
     setTimeout(() => {
-        initNavTabsDrag();
         initSidebarSectionsDrag();
         initSubitemsDrag();
         initNavRightDrag();
