@@ -828,7 +828,9 @@
     "TARGET_SHEET_ID": "1lJCDCO4NOjI7QSSu_eeNfxkq-_6lS6hFQl4VjHSyrKY",
     "TARGET_SCRIPT_URL": "https://script.google.com/macros/s/AKfycbyTOBSuOpuEHSgdlMnfyhO70cH_1uMvNLYxug1hpeR4svxFaBvUUKoIEVICDV9RIZUx/exec",
     "BOQ_SHEET_ID": "1zHPCiw-3TH3TUvdJlKz1a2VjycN2PVXs8jw_yUPVDNs",
-    "BOQ_SCRIPT_URL": "https://script.google.com/macros/s/AKfycby2W6xsahPoJhmoRSq_-XXXoiQtcELs7WhZ8NNNJywEmn4I7KU8MBVOZOQxEjWJPptw/exec"
+    "BOQ_SCRIPT_URL": "https://script.google.com/macros/s/AKfycby2W6xsahPoJhmoRSq_-XXXoiQtcELs7WhZ8NNNJywEmn4I7KU8MBVOZOQxEjWJPptw/exec",
+    "SCHEDULE_SHEET_ID": "1b3kVCEqC-4iYSvMug0INT3Qg1QWvJ6Loa2tgv3aIyQc",
+    "SCHEDULE_SCRIPT_URL": "https://script.google.com/macros/s/AKfycbweDAI29tjVFlr_ZJzxW4yo79bU-5th3LIeXGljSCgsZY92hmDe-FS5xBh5x0TWDEBypA/exec"
   },
   "selectedItems": {
     "mpiml7x5b651b": true
