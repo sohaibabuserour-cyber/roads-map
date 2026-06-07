@@ -50,8 +50,6 @@ activeGroupFilter = null;   // group.id أو 'solo_'+subId أو null — فلت�
    HELPERS
    ==================================================== */
 
-function toNum(v) { return (!isNaN(v) && v !== "") ? Number(v) : 0; }
-
 function statusColor(s) {
     const f = STATUSES.find(x => x.value.toLowerCase() === (s||"").trim().toLowerCase());
     return f ? f.color : "#9e9e9e";
@@ -964,7 +962,16 @@ async function loadCfData(type, sheetId) {
             container.innerHTML = '<div class="cf-error">⚠️ الشيت يحتاج إعداد المشاركة العامة</div>';
             return;
         }
-        const data = parseCfCSV(csv);
+        const _cfLines = csv.split('\n').filter(l => l.trim());
+        const _cfHdrs  = _cfLines.length ? parseCSVLine(_cfLines[0]) : [];
+        const _cfRows  = [];
+        for (let _ci = 1; _ci < _cfLines.length; _ci++) {
+            const _cfVals = parseCSVLine(_cfLines[_ci]);
+            const _cfRow  = {};
+            _cfHdrs.forEach((h, idx) => { _cfRow[h] = _cfVals[idx] || ''; });
+            _cfRows.push(_cfRow);
+        }
+        const data = { headers: _cfHdrs, rows: _cfRows };
         cashflowData[type] = data;
         renderCfKpis(type);
         renderCfTable(type, data);
@@ -975,19 +982,6 @@ async function loadCfData(type, sheetId) {
     }
 }
 
-function parseCfCSV(csv) {
-    const lines = csv.split('\n').filter(l => l.trim());
-    if (!lines.length) return { headers: [], rows: [] };
-    const headers = parseCSVLine(lines[0]);
-    const rows = [];
-    for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]);
-        const row = {};
-        headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
-        rows.push(row);
-    }
-    return { headers, rows };
-}
 
 /* ── Smart KPI detection: scan all columns for money-like totals ── */
 function renderCfKpis(type) {
@@ -1140,14 +1134,7 @@ async function loadNotifications() {
         const lines = csv.split('\n').map(l => l.trim()).filter(l => l);
 
         // Read ALL rows from column A (no header skip — treat every row as a notification)
-        const items = lines.map(line => {
-            if (line.startsWith('"')) {
-                // Quoted field
-                const end = line.indexOf('"', 1);
-                return line.slice(1, end === -1 ? undefined : end).trim();
-            }
-            return line.split(',')[0].trim();
-        }).filter(v => v);
+        const items = lines.map(line => parseCSVLine(line)[0] || '').filter(v => v);
 
         if (!items.length) {
             list.innerHTML = '<div class="notif-empty">لا توجد إشعارات</div>';
@@ -1416,8 +1403,8 @@ function calcSubTotals(sub) {
             if (!activeContractorsForSheet.includes(featureCon)) return;
         }
 
-        total += toNum(row["TOTAL-QTY"]);
-        done  += toNum(row["DONE-QTY"]);
+        total += parseNum(row["TOTAL-QTY"]);
+        done  += parseNum(row["DONE-QTY"]);
     });
 
     return { total, done };
@@ -1596,8 +1583,8 @@ function updateStats() {
                 const st = (row["STATUS"] || "").trim().toLowerCase();
                 if (!selectedStatuses.some(s => s.toLowerCase() === st)) return;
                 if (!cLow.includes((row["CONTRACTOR"] || "").trim().toLowerCase())) return;
-                total += toNum(row["TOTAL-QTY"]);
-                done  += toNum(row["DONE-QTY"]);
+                total += parseNum(row["TOTAL-QTY"]);
+                done  += parseNum(row["DONE-QTY"]);
             });
             const title = contractors.length === 1
                 ? ("👷 " + contractors[0])
@@ -1754,12 +1741,12 @@ function loadLayer(sheetId, subitemName, geoJsonFile, catId) {
             const data  = {};
             const lines = csv.split('\n').filter(l => l.trim());
             if (!lines.length) return;
-            const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+            const headers = parseCSVLine(lines[0]).map(h => h.toUpperCase());
             const idIdx   = headers.findIndex(h => h === 'ID');
             if (idIdx === -1) { showAlert("❌ لا يوجد عمود ID في الشيت"); return; }
 
             for (let i = 1; i < lines.length; i++) {
-                const vals = lines[i].split(',').map(v => v.trim());
+                const vals = parseCSVLine(lines[i]);
                 if (!vals[idIdx]) continue;
                 const id = vals[idIdx];
                 data[id] = {};

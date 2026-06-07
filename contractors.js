@@ -78,11 +78,11 @@ async function fetchSheetContractors(sub) {
         if (csv.trim().startsWith('<')) return;
         var lines   = csv.split('\n').filter(function (l) { return l.trim(); });
         if (!lines.length) return;
-        var headers = lines[0].split(',').map(function (h) { return h.trim().toUpperCase(); });
+        var headers = parseCSVLine(lines[0]).map(function (h) { return h.toUpperCase(); });
         var cIdx    = headers.findIndex(function (h) { return h === 'CONTRACTOR'; });
         if (cIdx === -1) return;
         for (var i = 1; i < lines.length; i++) {
-            var vals  = lines[i].split(',').map(function (v) { return v.trim(); });
+            var vals  = parseCSVLine(lines[i]);
             var cname = (vals[cIdx] || "").trim();
             if (cname) addEntry(cname);
         }

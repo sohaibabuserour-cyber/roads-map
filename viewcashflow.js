@@ -16,27 +16,6 @@ function closeBillsModal() {
     closeModal('billsModal');
 }
 
-function bdFmt(v) {
-    const raw = String(v || '').replace(/,/g, '').trim();
-    const n = parseFloat(raw);
-    if (isNaN(n) || raw === '') return '—';
-    if (Math.abs(n) >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + ' مليار';
-    if (Math.abs(n) >= 1_000_000)     return (n / 1_000_000).toFixed(2) + ' م';
-    if (Math.abs(n) >= 1_000)         return (n / 1_000).toFixed(1) + ' ك';
-    return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
-}
-
-function bdFmtFull(v) {
-    const raw = String(v || '').replace(/,/g, '').trim();
-    const n = parseFloat(raw);
-    if (isNaN(n) || raw === '') return '—';
-    return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
-}
-
-function bdNum(v) {
-    const n = parseFloat(String(v || '').replace(/,/g, ''));
-    return isNaN(n) ? 0 : n;
-}
 
 // Fetch DONE-QTY and TOTAL-QTY from a sheet, with per-sheet caching
 async function bdFetchSheetTotals(sheetId) {
@@ -53,15 +32,15 @@ async function bdFetchSheetTotals(sheetId) {
         const lines   = csv.split('\n').filter(l => l.trim());
         if (lines.length < 2) { bdSheetCache[sheetId] = { doneQty: 0, totalQty: 0 }; return bdSheetCache[sheetId]; }
 
-        const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+        const headers = parseCSVLine(lines[0]).map(h => h.toUpperCase());
         const doneIdx  = headers.findIndex(h => h === 'DONE-QTY'  || h === 'DONE_QTY');
         const totalIdx = headers.findIndex(h => h === 'TOTAL-QTY' || h === 'TOTAL_QTY');
 
         let doneQty = 0, totalQty = 0;
         for (let i = 1; i < lines.length; i++) {
-            const vals = lines[i].split(',').map(v => v.trim());
-            if (doneIdx  !== -1) doneQty  += bdNum(vals[doneIdx]  || 0);
-            if (totalIdx !== -1) totalQty += bdNum(vals[totalIdx] || 0);
+            const vals = parseCSVLine(lines[i]);
+            if (doneIdx  !== -1) doneQty  += parseNum(vals[doneIdx]  || 0);
+            if (totalIdx !== -1) totalQty += parseNum(vals[totalIdx] || 0);
         }
 
         bdSheetCache[sheetId] = { doneQty, totalQty };
@@ -159,8 +138,8 @@ async function loadBillsData() {
             bdHeaders.forEach((h, idx) => { row[h] = vals[idx] || ''; });
 
             const billNum  = String(row[bdColMap.num]      || '').trim();
-            const price    = bdNum(row[bdColMap.price]    || 0);
-            const totalQty = bdNum(row[bdColMap.totalQty] || 0);
+            const price    = parseNum(row[bdColMap.price]    || 0);
+            const totalQty = parseNum(row[bdColMap.totalQty] || 0);
             const totalVal = price * totalQty;
 
             // ابحث عن البند الفرعي المرتبط
@@ -250,10 +229,10 @@ function bdComputeKPIs(rows) {
     const donePct = totalVal > 0 ? Math.min(100, Math.round((doneVal / totalVal) * 100)) : 0;
 
     const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    setEl('bdKpiTotalVal', bdFmt(totalVal));
-    setEl('bdKpiDoneVal',  bdFmt(doneVal));
+    setEl('bdKpiTotalVal', fmtNumShort(totalVal));
+    setEl('bdKpiDoneVal',  fmtNumShort(doneVal));
     setEl('bdKpiDoneUnit', donePct + '% من الإجمالي');
-    setEl('bdKpiRemVal',   bdFmt(remVal));
+    setEl('bdKpiRemVal',   fmtNumShort(remVal));
     setEl('bdKpiPct',      donePct + '%');
     setEl('bdKpiCount',    rows.length);
 
@@ -317,23 +296,23 @@ function bdRenderTable(rows) {
         const pctColor = pctRnd < 30 ? '#ff8a80' : pctRnd < 70 ? '#ffb74d' : '#5cc890';
 
         const statusDone = linked
-            ? bdFmtFull(dQty)
+            ? fmtNum(dQty)
             : errored
             ? '<span style="color:#ff8a80;font-size:10px;">⚠ خطأ في الشيت</span>'
             : '<span style="opacity:0.3;font-size:11px;">غير مرتبط</span>';
 
         const statusVal = linked
-            ? bdFmtFull(dVal)
+            ? fmtNum(dVal)
             : errored
             ? '<span style="color:#ff8a80;font-size:10px;">⚠</span>'
             : '<span style="opacity:0.3;">—</span>';
 
         const statusRemQ = linked
-            ? bdFmtFull(rQty)
+            ? fmtNum(rQty)
             : '<span style="opacity:0.3;">—</span>';
 
         const statusRemV = linked
-            ? bdFmtFull(rVal)
+            ? fmtNum(rVal)
             : '<span style="opacity:0.3;">—</span>';
 
         const statusPct = linked
@@ -354,9 +333,9 @@ function bdRenderTable(rows) {
             <td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
                 title="${nameVal.replace(/"/g,"'")}">${nameVal}</td>
             <td style="color:rgba(255,255,255,0.5);font-size:11px;">${unit}</td>
-            <td class="bdn">${bdFmtFull(price)}</td>
-            <td class="bdn">${bdFmtFull(tQty)}</td>
-            <td class="bdn">${bdFmtFull(tVal)}</td>
+            <td class="bdn">${fmtNum(price)}</td>
+            <td class="bdn">${fmtNum(tQty)}</td>
+            <td class="bdn">${fmtNum(tVal)}</td>
             <td class="bdg">${statusDone}</td>
             <td class="bdg">${statusVal}</td>
             <td class="bdb">${statusRemQ}</td>
