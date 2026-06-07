@@ -43,6 +43,9 @@ var _activeContractorTab   = 'contractor';
    FETCH  —  جلب المقاولين من شيت بند فرعي واحد
    ══════════════════════════════════════════════════════════ */
 async function fetchSheetContractors(sub) {
+    // بند بدون شيت — تجاهل بدون أي طلب شبكة
+    if (!sub.sheetId || !sub.sheetId.trim()) return;
+
     const cat = categories.find(c => c.subitems.some(s => s.id === sub.id));
 
     const addEntry = function (cname) {
@@ -110,12 +113,15 @@ async function buildContractorPanel({ forceRefresh = false } = {}) {
         cat.subitems.forEach(function (sub) { allSubs.push(sub); });
     });
 
+    // استبعاد البنود التي لم يُضَف لها شيت بعد
+    var subsWithSheet = allSubs.filter(function (sub) { return sub.sheetId && sub.sheetId.trim(); });
+
     if (!allSubs.length) {
         list.innerHTML = '<div class="contractor-empty">لا توجد بنود مضافة بعد</div>';
         return;
     }
 
-    await Promise.all(allSubs.map(function (sub) { return fetchSheetContractors(sub); }));
+    await Promise.all(subsWithSheet.map(function (sub) { return fetchSheetContractors(sub); }));
     contractorsLoaded = true;
     renderContractorList();
 }
