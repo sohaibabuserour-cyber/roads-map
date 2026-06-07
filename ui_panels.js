@@ -631,8 +631,8 @@
     window.openBillsModal = function () {
         document.getElementById('billsModal').classList.add('active');
         document.body.style.overflow = 'hidden';
-        // BILLS_SHEET_ID يُحدَّث دائماً من sheetIdsConfig قبل التحميل
-        window.BILLS_SHEET_ID = window._getSheetId('BILLS_SHEET_ID');
+        // داشبورد البنود يستخدم BOQ_SHEET_ID مباشرة
+        window.BILLS_SHEET_ID = (window.sheetIdsConfig && window.sheetIdsConfig['BOQ_SHEET_ID']) || '';
         window.loadBillsData?.();
     };
     window.closeBillsModal = function () {
