@@ -595,7 +595,6 @@ function _fillSheetIdsInputs() {
         'sheetId_eqreg'         : 'EQ_REG_SHEET_ID',
         'sheetId_cfCompany'     : 'CASHFLOW_COMPANY_SHEET',
         'sheetId_cfContractors' : 'CASHFLOW_CONTRACTORS_SHEET',
-        'sheetId_bills'         : 'BILLS_SHEET_ID',
         'sheetId_target'        : 'TARGET_SHEET_ID',
         'sheetId_boq'           : 'BOQ_SHEET_ID',
     };
@@ -631,7 +630,6 @@ function saveSheetIds() {
         'EQ_REG_SHEET_ID'            : 'sheetId_eqreg',
         'CASHFLOW_COMPANY_SHEET'     : 'sheetId_cfCompany',
         'CASHFLOW_CONTRACTORS_SHEET' : 'sheetId_cfContractors',
-        'BILLS_SHEET_ID'             : 'sheetId_bills',
         'TARGET_SHEET_ID'            : 'sheetId_target',
         'BOQ_SHEET_ID'               : 'sheetId_boq',
     };
@@ -670,9 +668,8 @@ function saveSheetIds() {
 
     localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
 
-    if (window.sheetIdsConfig['BILLS_SHEET_ID']) {
-        window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'];
-    }
+    // داشبورد البنود يستخدم BOQ_SHEET_ID مباشرة
+    window.BILLS_SHEET_ID = window.sheetIdsConfig['BOQ_SHEET_ID'] || '';
     if (window.sheetIdsConfig['TARGET_SHEET_ID']) {
         window.TARGET_SHEET_ID = window.sheetIdsConfig['TARGET_SHEET_ID'];
     }
@@ -705,10 +702,9 @@ function saveSheetIds() {
         Object.entries(merged).forEach(([key, val]) => {
             if (val) window[key] = _extractSheetId ? _extractSheetId(val) : val;
         });
-        // تأكد BILLS_SHEET_ID يُحدَّث لو موجود في الـ config
-        if (window.sheetIdsConfig && window.sheetIdsConfig['BILLS_SHEET_ID']) {
-            window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'];
-        }
+        // داشبورد البنود يستخدم BOQ_SHEET_ID مباشرة
+        window.BILLS_SHEET_ID = window.sheetIdsConfig['BOQ_SHEET_ID']
+            || window.sheetIdsConfig['BILLS_SHEET_ID'] || '';
     } catch(e) {}
 })();
 
@@ -1351,8 +1347,8 @@ async function loadCategoriesConfig() {
             // categories.json يطغى على localStorage (الملف هو المصدر الرئيسي)
             Object.assign(window.sheetIdsConfig, data.sheetIdsConfig);
             localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
-            // BILLS_SHEET_ID كـ var عشان viewcashflow يستخدمه
-            window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'] || '';
+            // داشبورد البنود يستخدم BOQ_SHEET_ID مباشرة
+            window.BILLS_SHEET_ID = window.sheetIdsConfig['BOQ_SHEET_ID'] || '';
         }
     } catch(e) {
         console.warn("categories.json not found — starting empty");
@@ -1500,8 +1496,8 @@ function importConfig(e) {
                     if (!window.sheetIdsConfig) window.sheetIdsConfig = {};
                     Object.assign(window.sheetIdsConfig, data.sheetIdsConfig);
                     localStorage.setItem('sheetIdsConfig', JSON.stringify(window.sheetIdsConfig));
-                    // تحديث BILLS_SHEET_ID فوراً
-                    window.BILLS_SHEET_ID = window.sheetIdsConfig['BILLS_SHEET_ID'] || '';
+                    // داشبورد البنود يستخدم BOQ_SHEET_ID مباشرة
+                    window.BILLS_SHEET_ID = window.sheetIdsConfig['BOQ_SHEET_ID'] || '';
                 }
                 if (data.selectedItems) selectedItems = data.selectedItems;
                 if (data.selectedStatuses) selectedStatuses = data.selectedStatuses;
