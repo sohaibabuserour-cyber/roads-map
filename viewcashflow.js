@@ -92,11 +92,11 @@ async function loadBillsData() {
     const wrap = document.getElementById('bdTableWrap');
     if (!wrap) return;
 
-    // داشبورد البنود يقرأ من BOQ_SHEET_ID مباشرة
+    // اقرأ BOQ_SHEET_ID من sheetIdsConfig
     const billsId = (window.sheetIdsConfig && window.sheetIdsConfig['BOQ_SHEET_ID'])
                  || window.BILLS_SHEET_ID || '';
     if (!billsId) {
-        wrap.innerHTML = '<div class="bd-msg bd-msg-err">⚙️ أضف شيت البنود من الإعدادات ← روابط الشيتات</div>';
+        wrap.innerHTML = '<div class="bd-msg bd-msg-err">⚙️ أضف شيت جدول الكميات من الإعدادات ← روابط الشيتات</div>';
         document.getElementById('bdCountBadge').textContent = '';
         return;
     }
@@ -112,8 +112,11 @@ async function loadBillsData() {
     });
 
     try {
-        const url = `https://docs.google.com/spreadsheets/d/${billsId}/export?format=csv&gid=0`;
-        const r   = await fetch(url);
+        // جرب بدون gid أولاً ثم gid=0 كـ fallback
+        let r = await fetch(`https://docs.google.com/spreadsheets/d/${billsId}/export?format=csv`);
+        if (!r.ok) {
+            r = await fetch(`https://docs.google.com/spreadsheets/d/${billsId}/export?format=csv&gid=0`);
+        }
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const csv = await r.text();
 
