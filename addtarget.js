@@ -495,11 +495,9 @@ function tgtPickFromMap() {
 
     _tgtPickingFromMap = true;
 
-    // أخفِ المودال النشط — إما equipmentFormModal أو targetFormModal
-    const eqModal  = document.getElementById('equipmentFormModal');
+    // أخفِ مودال المستهدف المستقل
     const tgtModal = tgt('targetFormModal');
-    if (eqModal  && eqModal.classList.contains('active'))  { eqModal.style.display  = 'none'; }
-    if (tgtModal && tgtModal.classList.contains('active')) { tgtModal.style.display = 'none'; }
+    if (tgtModal) { tgtModal.style.setProperty('display', 'none', 'important'); }
 
     let hint = tgt('eqtPickMapHint');
     if (!hint) {
@@ -584,11 +582,11 @@ function _tgtGetRowFromFeatureEvent(e) {
 function tgtCancelPickFromMap() {
     _tgtPickingFromMap = false;
 
-    // أعد إظهار المودال الصحيح
-    const eqModal  = document.getElementById('equipmentFormModal');
+    // أعد إظهار مودال المستهدف المستقل
     const tgtModal = tgt('targetFormModal');
-    if (eqModal  && eqModal.classList.contains('active'))  { eqModal.style.display  = 'flex'; }
-    if (tgtModal && tgtModal.classList.contains('active')) { tgtModal.style.display = 'flex'; }
+    if (tgtModal && tgtModal.classList.contains('active')) {
+        tgtModal.style.removeProperty('display');
+    }
 
     const hint = tgt('eqtPickMapHint');
     if (hint) hint.style.display = 'none';
