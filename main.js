@@ -3307,17 +3307,49 @@ window.submitBOQForm = async function () {
         return;
     }
 
+    // مؤشر تحميل على زر الحفظ
+    const saveBtn = document.querySelector('#boqFormModal [onclick*="submitBOQForm"]');
+    const oldText = saveBtn ? saveBtn.textContent : '';
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ جاري الحفظ...'; }
+
     try {
-        await fetch(url, {
+        const res = await fetch(url, {
             method: 'POST',
-            mode: 'no-cors',
+            redirect: 'follow',
+            // text/plain يمنع preflight ويوصّل الـ body لـ Apps Script
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
         });
-        if (typeof showAlert === 'function') showAlert('✅ تم إرسال البند إلى جدول الكميات', 'success');
-        closeBOQFormModal();
+
+        const text = await res.text();
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (_e) {
+            throw new Error(
+                'السكريبت رجّع استجابة غير صالحة. تأكد أن الـ Deploy:\n' +
+                '• Execute as: Me\n' +
+                '• Who has access: Anyone\n' +
+                'وأنك عملت "New version" بعد آخر تعديل.\n\n' +
+                'الاستجابة: ' + text.substring(0, 200)
+            );
+        }
+
+        if (result && result.success) {
+            if (typeof showAlert === 'function') showAlert('✅ ' + (result.message || 'تم الحفظ'), 'success');
+            else alert(result.message || 'تم الحفظ');
+            closeBOQFormModal();
+        } else {
+            const msg = '❌ فشل الحفظ: ' + (result?.message || 'خطأ غير معروف') + (result?.error ? '\n' + result.error : '');
+            if (typeof showAlert === 'function') showAlert(msg, 'error');
+            else alert(msg);
+        }
     } catch (e) {
-        if (typeof showAlert === 'function') showAlert('❌ فشل الإرسال: ' + e.message, 'error');
-        else alert('فشل الإرسال: ' + e.message);
+        const msg = '❌ خطأ في الاتصال بالسكريبت:\n' + e.message;
+        if (typeof showAlert === 'function') showAlert(msg, 'error');
+        else alert(msg);
+        console.error('BOQ submit error:', e);
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = oldText; }
     }
 };
