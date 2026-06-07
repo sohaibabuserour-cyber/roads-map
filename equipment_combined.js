@@ -758,15 +758,13 @@ async function eqSubmitForm() {
 function eqSwitchFormTab(tab) {
     const bodyDaily  = document.getElementById('eqfBodyDaily');
     const bodyCumul  = document.getElementById('eqfBodyCumul');
-    const bodyTarget = document.getElementById('eqfBodyTarget');
     const btnDaily   = document.getElementById('eqfTabDaily');
     const btnCumul   = document.getElementById('eqfTabCumul');
-    const btnTarget  = document.getElementById('eqfTabTarget');
     if (!bodyDaily || !bodyCumul) return;
 
     // أخفِ كل التبويبات وأعد ألوان الأزرار
-    [bodyDaily, bodyCumul, bodyTarget].forEach(b => { if (b) b.style.display = 'none'; });
-    [btnDaily, btnCumul, btnTarget].forEach(b => {
+    [bodyDaily, bodyCumul].forEach(b => { if (b) b.style.display = 'none'; });
+    [btnDaily, btnCumul].forEach(b => {
         if (b) { b.style.background = 'transparent'; b.style.color = 'rgba(255,255,255,0.65)'; }
     });
 
@@ -784,13 +782,8 @@ function eqSwitchFormTab(tab) {
         eqPopulateContractors();
 
     } else if (tab === 'target') {
-        if (bodyTarget) bodyTarget.style.display = 'block';
-        if (btnTarget)  { btnTarget.style.background = 'rgba(255,255,255,0.9)'; btnTarget.style.color = '#1a6040'; }
-        if (submitBtn) submitBtn.onclick = function() { if (typeof tgtSubmitForm === 'function') tgtSubmitForm(); };
-        // ملّئ بيانات تبويب المستهدف
-        if (typeof tgtBuildElementsList  === 'function') tgtBuildElementsList();
-        if (typeof tgtPopulateContractors === 'function') tgtPopulateContractors();
-        if (typeof tgtPopulateMonths      === 'function') tgtPopulateMonths();
+        // المستهدف الآن في مودال مستقل — افتحه مباشرة
+        if (typeof openTargetFormModal === 'function') openTargetFormModal();
     }
 }
 
