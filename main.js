@@ -3498,45 +3498,87 @@ window.submitScheduleForm = async function () {
         return;
     }
 
-    const user = (window.currentUser && window.currentUser.name) || (currentUser && currentUser.name) || 'unknown';
+    const sheetId = (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SHEET_ID)
+                 || window.SCHEDULE_SHEET_ID || '';
 
+    const user = (window.currentUser && (window.currentUser.name || window.currentUser.email))
+              || (typeof currentUser !== 'undefined' && currentUser && (currentUser.name || currentUser.email))
+              || 'unknown';
+
+    // 1) جمع البنود — أسماء الحقول مطابقة للـ Apps Script
     const items = [...document.querySelectorAll('#schedItemsBody tr')].map(r => ({
-        item : r.querySelector('.sch-item')?.value.trim() || '',
-        start: r.querySelector('.sch-start')?.value || '',
-        end  : r.querySelector('.sch-end')?.value || ''
-    })).filter(x => x.item && x.start && x.end);
+        item     : r.querySelector('.sch-item')?.value.trim() || '',
+        startDate: r.querySelector('.sch-start')?.value || '',
+        endDate  : r.querySelector('.sch-end')?.value || ''
+    })).filter(x => x.item && x.startDate && x.endDate);
 
+    // إعادة حساب الخطة قبل الإرسال
     recalcSchedulePlan();
 
+    // 2) جمع صفوف الخطة — أسماء الحقول مطابقة للـ Apps Script
     const planRows = [...document.querySelectorAll('#schedPlanBody tr')].map(r => ({
-        date    : r.querySelector('.sp-date')?.value || '',
-        value   : Number(r.querySelector('.sp-val')?.value || 0),
-        cumValue: Number((r.querySelector('.sp-cum')?.textContent || '0').replace(/,/g, '')) || 0,
-        dailyPct: parseFloat(r.querySelector('.sp-pct')?.textContent || '0') || 0,
-        cumPct  : parseFloat(r.querySelector('.sp-cumpct')?.textContent || '0') || 0
+        date            : r.querySelector('.sp-date')?.value || '',
+        plannedValue    : Number(r.querySelector('.sp-val')?.value || 0),
+        cumPlannedValue : Number((r.querySelector('.sp-cum')?.textContent || '0').replace(/,/g, '')) || 0,
+        dailyPct        : parseFloat(r.querySelector('.sp-pct')?.textContent || '0') || 0,
+        cumDailyPct     : parseFloat(r.querySelector('.sp-cumpct')?.textContent || '0') || 0
     })).filter(x => x.date);
 
     if (!items.length && !planRows.length) {
-        (window.showAlert || alert)('⚠️ أضف بنداً واحداً على الأقل');
+        (window.showAlert || alert)('⚠️ أضف بنداً واحداً على الأقل أو صف خطة');
         return;
     }
 
-    const post = payload => fetch(url, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-    });
+    // مؤشر تحميل على زر الحفظ
+    const saveBtn = document.querySelector('#scheduleFormModal [onclick*="submitScheduleForm"]');
+    const oldText = saveBtn ? saveBtn.textContent : '';
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ جاري الحفظ...'; }
+
+    // POST بدون mode:no-cors — text/plain يتفادى الـ preflight ويسمح بقراءة الرد
+    const post = async (payload) => {
+        const res = await fetch(url, {
+            method  : 'POST',
+            redirect: 'follow',
+            headers : { 'Content-Type': 'text/plain;charset=utf-8' },
+            body    : JSON.stringify({ ...payload, sheetId })
+        });
+        const text = await res.text();
+        let result;
+        try { result = JSON.parse(text); }
+        catch (_e) {
+            throw new Error(
+                'السكريبت رجّع استجابة غير صالحة. تأكد أن الـ Deploy:\n' +
+                '• Execute as: Me\n' +
+                '• Who has access: Anyone\n' +
+                'وأنك عملت "Manage deployments → New version" بعد آخر تعديل.\n\n' +
+                'الاستجابة: ' + text.substring(0, 200)
+            );
+        }
+        if (!result || !result.success) {
+            throw new Error((result && (result.message || result.error)) || 'فشل غير معروف من السكريبت');
+        }
+        return result;
+    };
 
     try {
-        for (const it of items) await post({ action: 'addScheduleItem', ...it, user });
-        if (planRows.length) await post({ action: 'bulkSchedulePlan', rows: planRows, user });
+        let savedItems = 0, savedRows = 0;
+        for (const it of items) {
+            await post({ action: 'addScheduleItem', ...it, user });
+            savedItems++;
+        }
+        if (planRows.length) {
+            const r = await post({ action: 'bulkSchedulePlan', rows: planRows, user });
+            savedRows = planRows.length;
+            console.log('Schedule plan saved:', r);
+        }
 
-        (window.showAlert || alert)('✅ تم حفظ البرنامج الزمني');
+        (window.showAlert || alert)(`✅ تم الحفظ: ${savedItems} بند و ${savedRows} يوم خطة`);
         closeScheduleFormModal();
     } catch (e) {
-        console.error(e);
+        console.error('Schedule submit error:', e);
         (window.showAlert || alert)('❌ فشل الحفظ: ' + e.message);
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = oldText; }
     }
 };
 
