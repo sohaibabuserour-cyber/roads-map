@@ -92,8 +92,8 @@ async function loadBillsData() {
     const wrap = document.getElementById('bdTableWrap');
     if (!wrap) return;
 
-    // اقرأ الـ ID دائماً من sheetIdsConfig مباشرة (لا تعتمد على الـ var العالمي)
-    const billsId = (window._getSheetId && window._getSheetId('BILLS_SHEET_ID'))
+    // داشبورد البنود يقرأ من BOQ_SHEET_ID مباشرة
+    const billsId = (window.sheetIdsConfig && window.sheetIdsConfig['BOQ_SHEET_ID'])
                  || window.BILLS_SHEET_ID || '';
     if (!billsId) {
         wrap.innerHTML = '<div class="bd-msg bd-msg-err">⚙️ أضف شيت البنود من الإعدادات ← روابط الشيتات</div>';
