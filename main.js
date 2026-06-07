@@ -3370,3 +3370,173 @@ window.submitBOQForm = async function () {
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = oldText; }
     }
 };
+
+/* ====================================================
+   SCHEDULE UI HANDLERS — ADDITION ONLY
+   ==================================================== */
+window.openScheduleFormModal = function () {
+    const m = document.getElementById('scheduleFormModal');
+    if (!m) {
+        console.error('scheduleFormModal not found in DOM');
+        (window.showAlert || alert)('شاشة البرنامج الزمني غير موجودة في index.html');
+        return;
+    }
+
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    const ib = document.getElementById('schedItemsBody');
+    const pb = document.getElementById('schedPlanBody');
+
+    if (ib && !ib.children.length) addScheduleItemRow();
+    if (pb && !pb.children.length) addSchedulePlanRow();
+
+    switchScheduleTab('items');
+};
+
+window.closeScheduleFormModal = function () {
+    const m = document.getElementById('scheduleFormModal');
+    if (m) m.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+window.switchScheduleTab = function (tab) {
+    const isItems = tab === 'items';
+
+    const pItems = document.getElementById('schedPanelItems');
+    const pPlan  = document.getElementById('schedPanelPlan');
+    const bItems = document.getElementById('schedTabItemsBtn');
+    const bPlan  = document.getElementById('schedTabPlanBtn');
+
+    if (pItems) pItems.style.display = isItems ? '' : 'none';
+    if (pPlan)  pPlan.style.display  = isItems ? 'none' : '';
+
+    if (bItems) {
+        bItems.style.background = isItems ? 'rgba(33,150,243,0.18)' : 'transparent';
+        bItems.style.color = isItems ? '#90caf9' : 'rgba(255,255,255,0.6)';
+    }
+    if (bPlan) {
+        bPlan.style.background = !isItems ? 'rgba(33,150,243,0.18)' : 'transparent';
+        bPlan.style.color = !isItems ? '#90caf9' : 'rgba(255,255,255,0.6)';
+    }
+};
+
+window.addScheduleItemRow = function () {
+    const tb = document.getElementById('schedItemsBody');
+    if (!tb) return;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input class="sch-item" type="text" placeholder="اسم البند" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
+        <td><input class="sch-start" type="date" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
+        <td><input class="sch-end" type="date" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
+        <td><button type="button" onclick="this.closest('tr').remove()" style="padding:6px 10px;border-radius:6px;border:0;background:#c0392b;color:#fff;cursor:pointer">✕</button></td>
+    `;
+    tb.appendChild(tr);
+};
+
+window.addSchedulePlanRow = function () {
+    const tb = document.getElementById('schedPlanBody');
+    if (!tb) return;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input class="sp-date" type="date" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
+        <td><input class="sp-val" type="number" step="0.01" placeholder="0" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
+        <td class="sp-cum">—</td>
+        <td class="sp-pct">—</td>
+        <td class="sp-cumpct">—</td>
+        <td><button type="button" onclick="this.closest('tr').remove();recalcSchedulePlan();" style="padding:6px 10px;border-radius:6px;border:0;background:#c0392b;color:#fff;cursor:pointer">✕</button></td>
+    `;
+    tb.appendChild(tr);
+    tr.querySelectorAll('input').forEach(i => i.addEventListener('input', recalcSchedulePlan));
+};
+
+window.recalcSchedulePlan = function () {
+    if (!window.Schedule || typeof window.Schedule.processPlanTab !== 'function') {
+        console.warn('SCHEDULE.js not loaded');
+        return;
+    }
+
+    const rows = [...document.querySelectorAll('#schedPlanBody tr')];
+    const raw = rows.map(r => ({
+        date: r.querySelector('.sp-date')?.value || '',
+        plannedValue: r.querySelector('.sp-val')?.value || 0
+    }));
+
+    const out = window.Schedule.processPlanTab(raw);
+    const list = Array.isArray(out) ? out : (out.rows || []);
+    const byDate = {};
+    list.forEach(o => { byDate[o.date] = o; });
+
+    rows.forEach(r => {
+        const d = r.querySelector('.sp-date')?.value || '';
+        const o = byDate[d];
+        if (!o) return;
+
+        const cumValue = o.cumValue ?? o.cumPlannedValue ?? 0;
+        const cumPct   = o.cumPct ?? o.cumDailyPct ?? 0;
+
+        const cumEl = r.querySelector('.sp-cum');
+        const pctEl = r.querySelector('.sp-pct');
+        const cpEl  = r.querySelector('.sp-cumpct');
+
+        if (cumEl) cumEl.textContent = Number(cumValue).toLocaleString('en-US');
+        if (pctEl) pctEl.textContent = Number(o.dailyPct || 0).toFixed(2) + '%';
+        if (cpEl)  cpEl.textContent  = Number(cumPct || 0).toFixed(2) + '%';
+    });
+};
+
+window.submitScheduleForm = async function () {
+    const url = (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SCRIPT_URL)
+             || window.SCHEDULE_SCRIPT_URL
+             || localStorage.getItem('SCHEDULE_SCRIPT_URL')
+             || '';
+
+    if (!url) {
+        (window.showAlert || alert)('⚠️ أضف رابط سكريبت البرنامج الزمني في الإعدادات أولاً');
+        return;
+    }
+
+    const user = (window.currentUser && window.currentUser.name) || (currentUser && currentUser.name) || 'unknown';
+
+    const items = [...document.querySelectorAll('#schedItemsBody tr')].map(r => ({
+        item : r.querySelector('.sch-item')?.value.trim() || '',
+        start: r.querySelector('.sch-start')?.value || '',
+        end  : r.querySelector('.sch-end')?.value || ''
+    })).filter(x => x.item && x.start && x.end);
+
+    recalcSchedulePlan();
+
+    const planRows = [...document.querySelectorAll('#schedPlanBody tr')].map(r => ({
+        date    : r.querySelector('.sp-date')?.value || '',
+        value   : Number(r.querySelector('.sp-val')?.value || 0),
+        cumValue: Number((r.querySelector('.sp-cum')?.textContent || '0').replace(/,/g, '')) || 0,
+        dailyPct: parseFloat(r.querySelector('.sp-pct')?.textContent || '0') || 0,
+        cumPct  : parseFloat(r.querySelector('.sp-cumpct')?.textContent || '0') || 0
+    })).filter(x => x.date);
+
+    if (!items.length && !planRows.length) {
+        (window.showAlert || alert)('⚠️ أضف بنداً واحداً على الأقل');
+        return;
+    }
+
+    const post = payload => fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+    });
+
+    try {
+        for (const it of items) await post({ action: 'addScheduleItem', ...it, user });
+        if (planRows.length) await post({ action: 'bulkSchedulePlan', rows: planRows, user });
+
+        (window.showAlert || alert)('✅ تم حفظ البرنامج الزمني');
+        closeScheduleFormModal();
+    } catch (e) {
+        console.error(e);
+        (window.showAlert || alert)('❌ فشل الحفظ: ' + e.message);
+    }
+};
+
