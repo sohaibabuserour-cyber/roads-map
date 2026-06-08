@@ -1699,10 +1699,25 @@ async function _loadBoqItems() {
                || window.BILLS_SHEET_ID || '';
     if (!boqId) { window._boqItemsList = []; return; }
     try {
-        const url = `https://docs.google.com/spreadsheets/d/${boqId}/export?format=csv&gid=0`;
-        const r = await fetch(url + '&_t=' + Date.now());
-        if (!r.ok) throw new Error('boq fetch fail');
-        const csv = await r.text();
+        // جرّب gviz بأسماء تبويب شائعة، وإلا fallback إلى gid=0
+        const tabs = ['BOQ', 'boq', 'جدول الكميات', 'Sheet1'];
+        let csv = '';
+        for (const tab of tabs) {
+            const u = `https://docs.google.com/spreadsheets/d/${boqId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}&_t=${Date.now()}`;
+            try {
+                const rr = await fetch(u);
+                if (rr.ok) {
+                    const t = await rr.text();
+                    if (t && !t.trim().startsWith('<') && t.includes(',')) { csv = t; break; }
+                }
+            } catch (_) {}
+        }
+        if (!csv) {
+            const url = `https://docs.google.com/spreadsheets/d/${boqId}/export?format=csv&gid=0&_t=${Date.now()}`;
+            const r = await fetch(url);
+            if (!r.ok) throw new Error('boq fetch fail');
+            csv = await r.text();
+        }
         if (csv.trim().startsWith('<')) { window._boqItemsList = []; return; }
         const lines = csv.split('\n').filter(l => l.trim());
         if (!lines.length) { window._boqItemsList = []; return; }
