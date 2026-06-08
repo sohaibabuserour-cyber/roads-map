@@ -1691,10 +1691,10 @@ window.addScheduleItemRow = function () {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td><input class="sch-item" type="text" placeholder="اسم البند" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
-        <td><input class="sch-start" type="date" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
-        <td><input class="sch-end" type="date" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
-        <td><button type="button" onclick="this.closest('tr').remove()" style="padding:6px 10px;border-radius:6px;border:0;background:#c0392b;color:#fff;cursor:pointer">✕</button></td>
+        <td><input class="sch-item" type="text" placeholder="اسم البند"></td>
+        <td><input class="sch-start" type="date"></td>
+        <td><input class="sch-end" type="date"></td>
+        <td style="text-align:center"><button type="button" class="sched-del" onclick="this.closest('tr').remove()">✕</button></td>
     `;
     tb.appendChild(tr);
 };
@@ -1705,12 +1705,12 @@ window.addSchedulePlanRow = function () {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td><input class="sp-date" type="date" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
-        <td><input class="sp-val" type="number" step="0.01" placeholder="0" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff"></td>
+        <td><input class="sp-date" type="date"></td>
+        <td><input class="sp-val" type="number" step="0.01" placeholder="0"></td>
         <td class="sp-cum">—</td>
         <td class="sp-pct">—</td>
         <td class="sp-cumpct">—</td>
-        <td><button type="button" onclick="this.closest('tr').remove();recalcSchedulePlan();" style="padding:6px 10px;border-radius:6px;border:0;background:#c0392b;color:#fff;cursor:pointer">✕</button></td>
+        <td style="text-align:center"><button type="button" class="sched-del" onclick="this.closest('tr').remove();recalcSchedulePlan();">✕</button></td>
     `;
     tb.appendChild(tr);
     tr.querySelectorAll('input').forEach(i => i.addEventListener('input', recalcSchedulePlan));
@@ -1762,14 +1762,23 @@ window.submitScheduleForm = async function () {
         return;
     }
 
-    const sheetId = (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SHEET_ID)
-                 || window.SCHEDULE_SHEET_ID || '';
+    // sheetId يجب أن يكون ID فقط (وليس رابط كامل) — نستخرجه إن كان رابط
+    let sheetId = (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SHEET_ID)
+               || window.SCHEDULE_SHEET_ID || '';
+    if (sheetId && /\/d\//.test(sheetId)) {
+        const m = sheetId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (m) sheetId = m[1];
+    }
+    if (!sheetId) {
+        (window.showAlert || alert)('⚠️ أضف SCHEDULE_SHEET_ID (معرّف شيت البرنامج الزمني) في الإعدادات أولاً');
+        return;
+    }
 
     const user = (window.currentUser && (window.currentUser.name || window.currentUser.email))
               || (typeof currentUser !== 'undefined' && currentUser && (currentUser.name || currentUser.email))
               || 'unknown';
 
-    // 1) جمع البنود — أسماء الحقول مطابقة للـ Apps Script
+    // 1) جمع البنود
     const items = [...document.querySelectorAll('#schedItemsBody tr')].map(r => ({
         item     : r.querySelector('.sch-item')?.value.trim() || '',
         startDate: r.querySelector('.sch-start')?.value || '',
@@ -1779,7 +1788,7 @@ window.submitScheduleForm = async function () {
     // إعادة حساب الخطة قبل الإرسال
     recalcSchedulePlan();
 
-    // 2) جمع صفوف الخطة — أسماء الحقول مطابقة للـ Apps Script
+    // 2) جمع صفوف الخطة
     const planRows = [...document.querySelectorAll('#schedPlanBody tr')].map(r => ({
         date            : r.querySelector('.sp-date')?.value || '',
         plannedValue    : Number(r.querySelector('.sp-val')?.value || 0),
@@ -1798,7 +1807,6 @@ window.submitScheduleForm = async function () {
     const oldText = saveBtn ? saveBtn.textContent : '';
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ جاري الحفظ...'; }
 
-    // POST بدون mode:no-cors — text/plain يتفادى الـ preflight ويسمح بقراءة الرد
     const post = async (payload) => {
         const res = await fetch(url, {
             method  : 'POST',
@@ -1825,18 +1833,51 @@ window.submitScheduleForm = async function () {
     };
 
     try {
+        // (أ) تحقّق من الاتصال ومن أن السكريبت يفتح نفس الشيت
+        const ping = await post({ action: 'ping' });
+        console.log('Schedule ping:', ping);
+        if (ping.sheetId && ping.sheetId !== sheetId) {
+            console.warn('⚠️ السكريبت فتح شيت مختلف:', ping.sheetId, 'بدل', sheetId);
+        }
+
+        // (ب) عدد الصفوف قبل الحفظ — للتحقق الفعلي
+        let beforeItems = 0, beforePlan = 0;
+        try {
+            const snap = await post({ action: 'getSchedule' });
+            beforeItems = (snap.items || []).length;
+            beforePlan  = (snap.plan  || []).length;
+        } catch (_) { /* تجاهل لو السكريبت قديم */ }
+
+        // (ج) إرسال البنود
         let savedItems = 0, savedRows = 0;
         for (const it of items) {
-            await post({ action: 'addScheduleItem', ...it, user });
-            savedItems++;
+            const r = await post({ action: 'addScheduleItem', ...it, user });
+            if (r && r.row) savedItems++;
         }
         if (planRows.length) {
             const r = await post({ action: 'bulkSchedulePlan', rows: planRows, user });
-            savedRows = planRows.length;
+            savedRows = (r && r.count) || planRows.length;
             console.log('Schedule plan saved:', r);
         }
 
-        (window.showAlert || alert)(`✅ تم الحفظ: ${savedItems} بند و ${savedRows} يوم خطة`);
+        // (د) تحقّق فعلي بعد الحفظ
+        let verified = '';
+        try {
+            const snap2 = await post({ action: 'getSchedule' });
+            const afterItems = (snap2.items || []).length;
+            const afterPlan  = (snap2.plan  || []).length;
+            const okItems = afterItems - beforeItems;
+            const okPlan  = afterPlan  - beforePlan;
+            verified = ` (مؤكَّد: +${okItems} بند / +${okPlan} يوم في الشيت)`;
+            if (items.length && okItems === 0 && planRows.length && okPlan === 0) {
+                throw new Error('السكريبت رجّع نجاح لكن لم تُضَف أي صفوف فعلياً في الشيت. تأكد من SCHEDULE_SHEET_ID وأن حساب الـ Deploy له صلاحية الكتابة.');
+            }
+        } catch (verr) {
+            // لو فشل التحقق فقط — نخبر المستخدم
+            console.warn('تعذّر التحقق من الحفظ:', verr);
+        }
+
+        (window.showAlert || alert)(`✅ تم الحفظ: ${savedItems} بند و ${savedRows} يوم خطة${verified}`);
         closeScheduleFormModal();
     } catch (e) {
         console.error('Schedule submit error:', e);
@@ -1845,4 +1886,3 @@ window.submitScheduleForm = async function () {
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = oldText; }
     }
 };
-
