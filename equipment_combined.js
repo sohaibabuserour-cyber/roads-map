@@ -1098,21 +1098,12 @@ function _afBuildDirectUrl(viewUrl) {
 function afFill(elementId, date) {
     if (!_afRows.length || !elementId || !date) return;
 
-    function norm(d) {
-        if (!d) return '';
-        var m = d.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-        if (m) return m[3]+'-'+m[2]+'-'+m[1];
-        var m2 = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-        if (m2) return m2[3]+'-'+m2[2].padStart(2,'0')+'-'+m2[1].padStart(2,'0');
-        return d.slice(0,10);
-    }
-
-    var target = norm(date);
+    var target = _dateToInputVal(date);
     var found  = null;
 
     for (var i = _afRows.length - 1; i >= 0; i--) {
         var row = _afRows[i];
-        if ((row[0]||'').trim() === elementId && norm((row[4]||'').trim()) === target) {
+        if ((row[0]||'').trim() === elementId && _dateToInputVal((row[4]||'').trim()) === target) {
             found = row;
             window._afFoundRowIndex = i + 2; // +2: صف الهيدر (1) + index 
             break;

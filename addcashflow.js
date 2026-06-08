@@ -41,57 +41,6 @@ function _nextNo(rows, colName) {
     return String(max + 1).padStart(3, '0');
 }
 
-function _parseAnyDate(val) {
-    if (!val && val !== 0) return null;
-    if (typeof val === 'number') {
-        if (val < 100000) {
-            const d = new Date(Date.UTC(1899, 11, 30) + val * 86400000);
-            return isNaN(d.getTime()) ? null : d;
-        }
-        const d = new Date(val);
-        return isNaN(d.getTime()) ? null : d;
-    }
-    const s = String(val).trim();
-    if (!s) return null;
-    const dmy = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-    if (dmy) return new Date(`${dmy[3]}-${dmy[2]}-${dmy[1]}`);
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s);
-    const dmy2 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (dmy2) return new Date(`${dmy2[3]}-${dmy2[2].padStart(2,'0')}-${dmy2[1].padStart(2,'0')}`);
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-}
-
-function _fmtDate(val) {
-    if (!val && val !== 0) return '—';
-    const d = _parseAnyDate(val);
-    if (!d) return String(val);
-    const day   = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year  = d.getFullYear();
-    return `${day}-${month}-${year}`;
-}
-
-function _dateToStorage(val) {
-    if (!val && val !== 0) return '';
-    const d = _parseAnyDate(val);
-    if (!d) return String(val);
-    const day   = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    return `${day}-${month}-${d.getFullYear()}`;
-}
-
-function _dateToInputVal(val) {
-    if (!val && val !== 0) return '';
-    const d = _parseAnyDate(val);
-    if (!d) return '';
-    const day   = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    return `${d.getFullYear()}-${month}-${day}`;
-}
-
-
-
 async function openCompanyCashflowForm() {
     openModal('companyCashflowModal');
     _ccfEditing = null;
