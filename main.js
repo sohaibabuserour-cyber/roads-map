@@ -1,12 +1,9 @@
 /* ====================================================
    CONSTANTS & STATE
+   (الثوابت والـ URLs مُعرَّفة في config.js)
    ==================================================== */
 
-const USERS_SHEET_ID     = "1maViL4HSsI5XsjnAOGM-2D98g0Ow_pawZ-A_R_Y9I_0";
-const CONFIG_FILE        = "categories.json";
-
-// Inactivity timeout: 2 hours in ms
-const INACTIVITY_MS = 2 * 60 * 60 * 1000;
+// مؤقت الخمول — يُدار هنا، قيمته من INACTIVITY_MS في config.js
 let inactivityTimer = null;
 
 const STATUSES = [
@@ -377,9 +374,7 @@ function doLogout() {
 }
 
 // Apps Script Web App URL for writing back to the Users sheet.
-// Admin must deploy an Apps Script with doPost(e) that handles: action, email, name, password, avatar.
-// Leave empty string if not configured — changes will only persist in session.
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXQqn8MfdZOozZgPlNSNFS4Ji4jY0jy24FNB1aIyzIdaYQz3eTMQ6_ORBU2hGowMld/exec";
+// APPS_SCRIPT_URL مُعرَّف في config.js
 
 async function writeUserToSheet(payload) {
     if (!APPS_SCRIPT_URL) return false;
@@ -912,9 +907,8 @@ function saveSimilarGroup() {
    CASH FLOW DASHBOARD MODAL
    ==================================================== */
 
-const CASHFLOW_CONTRACTORS_SHEET = "1xmSUQNR02prdGK9P6QiJo8ybVKwdVZAE74yUkUTbVYA";
-const CASHFLOW_COMPANY_SHEET     = "1HTV35zXKroQdPJJ0XDew5rFgLwRX73-16AbtI1IymYA";
-var   BILLS_SHEET_ID             = "";   // يُحدَّث من sheetIdsConfig عند التشغيل
+// CASHFLOW_CONTRACTORS_SHEET, CASHFLOW_COMPANY_SHEET مُعرَّفان في config.js
+// BILLS_SHEET_ID مُعرَّف في config.js ويُحدَّث ديناميكياً من sheetIdsConfig
 
 // helper — يجيب الـ ID من sheetIdsConfig أولاً ثم الـ constant كـ fallback
 function _cfSheetId(constName, fallback) {
@@ -1110,7 +1104,7 @@ function renderCfTable(type, data) {
    NOTIFICATIONS — from dedicated sheet (column A, each row = one notification)
    ==================================================== */
 
-const NOTIFICATIONS_SHEET_ID = "1AV4umnW_s_bUOIrLBQouCsoAmPJI4yV3aOfPhKfM9C8";
+// NOTIFICATIONS_SHEET_ID مُعرَّف في config.js
 
 async function loadNotifications() {
     const badge = document.getElementById("notifBadge");

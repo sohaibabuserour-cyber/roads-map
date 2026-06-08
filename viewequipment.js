@@ -10,8 +10,7 @@ function closeEquipmentModal() {
 
 let _eqActiveTab   = 'overview';
 let _eqChartInst   = null;
-const EQ_PALETTE   = ['#f5c842','#27ae6a','#2196f3','#9c27b0','#ff9800','#e91e63','#00bcd4','#8bc34a','#ff5722','#607d8b'];
-const EQ_SKIP      = new Set(['ID','BAYAN','البيان','DESCRIPTION','بيان','البند','BAND','ALBND','ITEM','ALBAYAN']);
+// EQ_PALETTE و EQ_SKIP مُعرَّفان في config.js
 
 function _eqGetCols() {
     const idIdx = equipmentRawHeaders.findIndex(h => h.toUpperCase() === 'ID');

@@ -1,5 +1,4 @@
-const CCF_URL  = 'https://script.google.com/macros/s/AKfycbz3QFPW-Sd7OhC5WeIuY0H9pnrfy1fApXghA8hhh8I_svbMHp9Kc39CPAs6v05lOkhE/exec';
-const CONCF_URL = 'https://script.google.com/macros/s/AKfycbwJCZePc58kGZI3ta3aoHOZ6JjCWi-tSI67mz6Hrcy9wvGyZlXDvZIy0bjxuhUYZQkrXA/exec';
+// CCF_URL و CONCF_URL مُعرَّفان في config.js
 
 let _ccfEditing  = null;
 let _concfEditing = null;
