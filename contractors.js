@@ -23,11 +23,11 @@
    • السطر ~1383-1387: syncContractorCheckboxes()
    • السطر ~1389-1400: toggleContractor()
 
-   المتغيرات والدوال التي يعتمد عليها من main.js (تبقى هناك):
-       categories, similarGroups, selectedItems
-       allData, allLayers, loadTokens, map
-       getGroupForSub(), loadLayer(), refreshLayerColors()
-       featureStyle(), renderItems(), updateNavTabsState(), updateStats()
+   المتغيرات والدوال التي يعتمد عليها من main.js / map.js:
+       categories, similarGroups, selectedItems — main.js
+       allData, allLayers, loadTokens, map — map.js
+       getGroupForSub(), renderItems(), updateNavTabsState(), updateStats() — main.js
+       loadLayer(), removeLayer(), refreshLayerColors(), featureStyle() — map.js
    ============================================================ */
 
 /* ══════════════════════════════════════════════════════════
