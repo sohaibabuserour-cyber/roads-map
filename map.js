@@ -14,7 +14,7 @@
        showAlert, parseCSVLine, fmtNum — utils.js / main.js
        activeContractorFilter, applyContractorFilter,
        contractorsLoaded, renderContractorList, buildContractorPanel — contractors.js
-       updateStats — main.js
+       updateStats — stats.js
    ============================================================ */
 
 let map = null;

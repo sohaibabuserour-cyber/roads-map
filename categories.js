@@ -11,7 +11,7 @@
        uid, sheetIdFromUrl, showAlert, openModal, closeModal — main.js
        defaultCoords, defaultSubNumber, similarGroups, selectedItems,
        selectedStatuses, applyTheme, renderItems, renderNavTabs,
-       updateStats — main.js
+       updateStats — stats.js
        equipmentTypes, contractorsList, refreshEquipmentDatalist,
        renderEquipmentTypesList — settings.js
        map, allLayers, allData, loadTokens, loadLayer, removeLayer — map.js

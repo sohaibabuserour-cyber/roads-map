@@ -26,7 +26,8 @@
    المتغيرات والدوال التي يعتمد عليها من main.js / map.js:
        categories, similarGroups, selectedItems — main.js
        allData, allLayers, loadTokens, map — map.js
-       getGroupForSub(), renderItems(), updateNavTabsState(), updateStats() — main.js
+       getGroupForSub(), renderItems(), updateNavTabsState() — main.js
+       updateStats() — stats.js
        loadLayer(), removeLayer(), refreshLayerColors(), featureStyle() — map.js
    ============================================================ */
 

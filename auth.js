@@ -14,8 +14,8 @@
        allLayers, allData, allFeatures, map, initMap, loadLayer — map.js
        defaultCoords, defaultSubNumber, categories, selectedItems,
        selectedStatuses, initMap, loadCategoriesConfig, loadDefaultCoords,
-       loadSimilarGroups, renderItems, renderNavTabs, updateStats,
-       loadNotifications — main.js
+       loadSimilarGroups, renderItems, renderNavTabs, loadNotifications — main.js
+       updateStats — stats.js
    ============================================================ */
 
 var currentUser = null;
