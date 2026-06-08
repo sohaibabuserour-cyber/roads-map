@@ -187,7 +187,7 @@ function saveSheetIds() {
    ==================================================== */
 
 function switchSettingsTab(tab) {
-    const tabIds = ['coords', 'default', 'similar', 'eqtypes', 'contractors', 'sheets'];
+    const tabIds = ['coords', 'default', 'similar', 'eqtypes', 'contractors', 'sheets', 'users'];
     tabIds.forEach(t => {
         const btn = document.getElementById('stab_' + t);
         if (btn) btn.classList.toggle('active', t === tab);
@@ -198,7 +198,8 @@ function switchSettingsTab(tab) {
         similar: 'settingsTabSimilar',
         eqtypes: 'settingsTabEqtypes',
         contractors: 'settingsTabContractors',
-        sheets: 'settingsTabSheets'
+        sheets: 'settingsTabSheets',
+        users: 'settingsTabUsers'
     };
     Object.entries(sectionMap).forEach(([t, id]) => {
         const el = document.getElementById(id);
@@ -209,6 +210,7 @@ function switchSettingsTab(tab) {
     if (tab === 'eqtypes')      { renderEquipmentTypesList(); updateEqTypesCount(); }
     if (tab === 'contractors')  { renderContractorsListSettings(); updateContractorsCount(); }
     if (tab === 'sheets')       _fillSheetIdsInputs();
+    if (tab === 'users')        { if (typeof upInit === 'function') upInit(); }
 }
 
 function saveSettingsCoords() {

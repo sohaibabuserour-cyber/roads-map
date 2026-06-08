@@ -121,7 +121,8 @@ async function doLogin() {
             name   : found["NAME"]  || found["EMAIL"],
             role   : found["ROLE"]  || "2",
             isAdmin: (found["ROLE"] || "").toString().trim() === "1",
-            avatar : found["PHOTO"] || found["AVATAR"] || ""
+            avatar : found["PHOTO"] || found["AVATAR"] || "",
+            permissions: parsePermissionsField(found["PERMISSIONS"] || found["PERMS"] || "")
         };
 
         saveSession(currentUser);
@@ -215,6 +216,13 @@ async function enterApp() {
     updateStats();
     initInactivityWatcher();
     loadNotifications();
+    if (typeof applyUserPermissions === 'function') applyUserPermissions();
+}
+
+function parsePermissionsField(raw) {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    return String(raw).split(/[,;|]/).map(s => s.trim()).filter(Boolean);
 }
 
 function updateUserUI() {
@@ -266,6 +274,12 @@ function doLogout() {
 async function writeUserToSheet(payload) {
     if (!APPS_SCRIPT_URL) return false;
     try {
+        // أضف الإيميل تلقائياً ليُحدِّد Code.gs الصف الصحيح
+        if (!payload.email && currentUser && currentUser.email) {
+            payload.email = currentUser.email;
+        }
+        if (!payload.action) payload.action = "updateUser";
+
         const r = await fetch(APPS_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain" },
