@@ -19,8 +19,7 @@
 
 
 // Known equipment types for autocomplete
-/* ── قائمة أنواع المعدات — تُحمَّل حصراً من categories.json (لا قيم افتراضية) ── */
-let equipmentTypes = [];
+/* ── equipmentTypes مُعرَّف في settings.js — يُحمَّل من categories.json ── */
 /* alias للتوافق مع الكود القديم */
 const EQ_KNOWN_TYPES = new Proxy([], {
     get(_, key) { return equipmentTypes[key]; }
