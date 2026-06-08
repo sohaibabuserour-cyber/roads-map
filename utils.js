@@ -41,13 +41,6 @@ function fmtNumShort(v) {
     return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-// Date helpers
-function parseDateISO(s) {
-    if (!s) return null;
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-}
-
 // Parse dates from sheets, Excel serials, DD-MM-YYYY, YYYY-MM-DD, M/D/YYYY, etc.
 function _parseAnyDate(val) {
     if (!val && val !== 0) return null;
@@ -102,13 +95,6 @@ function _dateToInputVal(val) {
     return `${d.getFullYear()}-${month}-${day}`;
 }
 
-function formatTimeLocalized(date, locale = 'ar-SA') {
-    if (!date) return '—';
-    const d = (date instanceof Date) ? date : new Date(date);
-    if (isNaN(d.getTime())) return '—';
-    return d.toLocaleTimeString(locale);
-}
-
 function parseNum(v) {
     const n = parseFloat(String(v || '').replace(/,/g, '').trim());
     return isNaN(n) ? 0 : n;
@@ -118,15 +104,13 @@ function parseNum(v) {
 window.parseCSVLine        = parseCSVLine;
 window.fmtNum              = fmtNum;
 window.fmtNumShort         = fmtNumShort;
-window.parseDateISO        = parseDateISO;
 window._parseAnyDate       = _parseAnyDate;
 window._fmtDate            = _fmtDate;
 window._dateToStorage      = _dateToStorage;
 window._dateToInputVal     = _dateToInputVal;
-window.formatTimeLocalized = formatTimeLocalized;
 window.parseNum            = parseNum;
 window.Utils = {
-    parseCSVLine, fmtNum, fmtNumShort, parseDateISO,
+    parseCSVLine, fmtNum, fmtNumShort,
     _parseAnyDate, _fmtDate, _dateToStorage, _dateToInputVal,
-    formatTimeLocalized, parseNum
+    parseNum
 };

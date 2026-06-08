@@ -14,19 +14,20 @@ const TARGET_MONTHS_AR = [
     if (document.getElementById('targetFormModal')) return;
 
     const html = `
-<div id="targetFormModal" style="display:none;position:fixed;inset:0;z-index:65500;padding:20px;align-items:center;justify-content:center;background:rgba(10,5,20,0.75);backdrop-filter:blur(6px);">
-    <div id="tgtFormBox" style="position:relative;z-index:2;display:flex;flex-direction:column;width:min(780px,96vw);max-height:calc(100vh - 40px);background:#0d0d1a;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);box-shadow:0 32px 80px rgba(0,0,0,0.7);animation:tgtSlideIn 0.28s cubic-bezier(0.34,1.2,0.64,1);">
+<div class="modal" id="targetFormModal" style="z-index:65500;padding:20px;align-items:center;justify-content:center;">
+    <div class="bd-modal-overlay" onclick="closeTargetFormModal()"></div>
+    <div id="tgtFormBox" class="dark-modal-shell" style="width:min(780px,96vw);">
 
         <!-- Header -->
-        <div style="background:linear-gradient(135deg,#1a0a2e 0%,#4a1470 50%,#1a0a2e 100%);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;gap:12px;">
+        <div class="dark-modal-header">
             <div style="display:flex;align-items:center;gap:14px;">
-                <div style="width:44px;height:44px;background:linear-gradient(135deg,#f5c842,#e8a800);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 16px rgba(245,200,66,0.35);">🎯</div>
+                <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--gold),#e8a800);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 16px rgba(245,200,66,0.35);">🎯</div>
                 <div>
-                    <div style="font-size:17px;font-weight:900;color:white;font-family:'Cairo',sans-serif;">تسجيل المستهدف الشهري</div>
-                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'Cairo',sans-serif;">إضافة مستهدف إنتاج لعنصر وشهر محدد</div>
+                    <div class="dark-modal-title" style="font-size:17px;">تسجيل المستهدف الشهري</div>
+                    <div class="dark-modal-subtitle">إضافة مستهدف إنتاج لعنصر وشهر محدد</div>
                 </div>
             </div>
-            <button onclick="closeTargetFormModal()" style="width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.18s;" onmouseover="this.style.background='rgba(244,67,54,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">✕</button>
+            <button type="button" class="app-modal-close" onclick="closeTargetFormModal()" aria-label="إغلاق">✕</button>
         </div>
 
         <!-- Body -->
@@ -45,8 +46,7 @@ const TARGET_MONTHS_AR = [
                                 autocomplete="off"
                                 style="padding-left:32px;">
                             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;opacity:0.4;pointer-events:none;">🔍</span>
-                            <div id="eqft_element_dropdown"
-                                style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:#1a1a2e;border:1px solid rgba(106,45,145,0.4);border-radius:10px;z-index:9999;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+                            <div id="eqft_element_dropdown" class="app-dropdown-menu--dark" style="display:none;">
                             </div>
                         </div>
                         <button onclick="tgtPickFromMap()"
@@ -215,11 +215,6 @@ const TARGET_MONTHS_AR = [
         const style = document.createElement('style');
         style.id = 'tgtModalCSS';
         style.textContent = `
-            @keyframes tgtSlideIn {
-                from { opacity:0; transform:translateY(24px) scale(0.97); }
-                to   { opacity:1; transform:translateY(0) scale(1); }
-            }
-            #targetFormModal { display: none; }
             #targetFormModal.active { display: flex !important; }
 
             /* موبايل: bottom-sheet */
@@ -405,14 +400,12 @@ function tgtFilterElementDropdown() {
         : _tgtAllElements;
 
     if (!filtered.length) {
-        dd.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;font-family:\'Cairo\',sans-serif;">لا توجد عناصر مطابقة</div>';
+        dd.innerHTML = '<div class="app-dropdown-empty">لا توجد عناصر مطابقة</div>';
     } else {
         dd.innerHTML = filtered.slice(0, 60).map(e =>
-            `<div onclick="tgtSelectElement('${e.id.replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.sheetId}')"
-                style="padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s;display:flex;flex-direction:column;gap:2px;"
-                onmouseover="this.style.background='rgba(106,45,145,0.15)'" onmouseout="this.style.background=''">
-                <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);font-family:'Cairo',sans-serif;">${e.name}</span>
-                <span style="font-size:10px;color:rgba(255,255,255,0.4);font-family:'Cairo',sans-serif;">ID: ${e.id} • ${e.subName}</span>
+            `<div class="app-dropdown-item" onclick="tgtSelectElement('${e.id.replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.sheetId}')">
+                <span class="app-dropdown-item__title">${e.name}</span>
+                <span class="app-dropdown-item__meta">ID: ${e.id} • ${e.subName}</span>
             </div>`
         ).join('');
     }

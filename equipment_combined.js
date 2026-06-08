@@ -18,12 +18,7 @@
    ==================================================== */
 
 
-// Known equipment types for autocomplete
-/* ── equipmentTypes مُعرَّف في settings.js — يُحمَّل من categories.json ── */
-/* alias للتوافق مع الكود القديم */
-const EQ_KNOWN_TYPES = new Proxy([], {
-    get(_, key) { return equipmentTypes[key]; }
-});
+// equipmentTypes مُعرَّف في settings.js — يُحمَّل من categories.json
 
 let eqFormEquipmentCount = 0;
 
@@ -129,14 +124,12 @@ function eqFilterElementDropdown() {
         : _eqAllElements;
 
     if (!filtered.length) {
-        dd.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;font-family:\'Cairo\',sans-serif;">لا توجد عناصر مطابقة</div>';
+        dd.innerHTML = '<div class="app-dropdown-empty">لا توجد عناصر مطابقة</div>';
     } else {
         dd.innerHTML = filtered.slice(0, 60).map(e =>
-            '<div onclick="eqSelectElement(\'' + e.id.replace(/'/g,"\\'") + '\',\'' + e.name.replace(/'/g,"\\'") + '\')" ' +
-            'style="padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s;display:flex;flex-direction:column;gap:2px;" ' +
-            'onmouseover="this.style.background=\'rgba(39,174,106,0.12)\'" onmouseout="this.style.background=\'' + '\'">'+
-            '<span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);font-family:\'Cairo\',sans-serif;">' + e.name + '</span>' +
-            '<span style="font-size:10px;color:rgba(255,255,255,0.4);font-family:\'Cairo\',sans-serif;">ID: ' + e.id + ' • ' + e.subName + '</span>' +
+            '<div class="app-dropdown-item" onclick="eqSelectElement(\'' + e.id.replace(/'/g,"\\'") + '\',\'' + e.name.replace(/'/g,"\\'") + '\')">' +
+            '<span class="app-dropdown-item__title">' + e.name + '</span>' +
+            '<span class="app-dropdown-item__meta">ID: ' + e.id + ' • ' + e.subName + '</span>' +
             '</div>'
         ).join('');
     }
@@ -797,14 +790,12 @@ function eqFilterCumulElementDropdown() {
         : _eqAllElements;
 
     if (!filtered.length) {
-        dd.innerHTML = '<div style="padding:12px 14px;text-align:center;color:rgba(255,255,255,0.3);font-size:12px;font-family:\'Cairo\',sans-serif;">لا توجد عناصر مطابقة</div>';
+        dd.innerHTML = '<div class="app-dropdown-empty">لا توجد عناصر مطابقة</div>';
     } else {
         dd.innerHTML = filtered.slice(0, 60).map(e =>
-            '<div onclick="eqSelectCumulElement(\'' + e.id.replace(/'/g,"\\'") + '\',\'' + e.name.replace(/'/g,"\\'") + '\')" ' +
-            'style="padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s;display:flex;flex-direction:column;gap:2px;" ' +
-            'onmouseover="this.style.background=\'rgba(33,150,243,0.12)\'" onmouseout="this.style.background=\'\'">' +
-            '<span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);font-family:\'Cairo\',sans-serif;">' + e.name + '</span>' +
-            '<span style="font-size:10px;color:rgba(255,255,255,0.4);font-family:\'Cairo\',sans-serif;">ID: ' + e.id + ' • ' + e.subName + '</span>' +
+            '<div class="app-dropdown-item" onclick="eqSelectCumulElement(\'' + e.id.replace(/'/g,"\\'") + '\',\'' + e.name.replace(/'/g,"\\'") + '\')">' +
+            '<span class="app-dropdown-item__title">' + e.name + '</span>' +
+            '<span class="app-dropdown-item__meta">ID: ' + e.id + ' • ' + e.subName + '</span>' +
             '</div>'
         ).join('');
     }

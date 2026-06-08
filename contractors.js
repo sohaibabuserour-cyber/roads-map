@@ -8,21 +8,6 @@
        <script src="contractors.js"></script>
        <script src="ui_panels.js"></script>
 
-   ما يُحذف من main.js ويُستبدل بـ  // → contractors.js :
-   ──────────────────────────────────────────────────────────
-   • السطر ~904-906  : تعريفات contractorMap / activeContractorFilter / contractorsLoaded
-   • السطر ~909-953  : fetchSheetContractors()
-   • السطر ~956-979  : buildContractorPanel()
-   • السطر ~983-1053 : renderContractorList()
-   • السطر ~1057-1129: handleContractorCheckbox()
-   • السطر ~1132-1153: _activeContractorTab + switchContractorTab()
-   • السطر ~1156-1227: renderContractorGroupList()
-   • السطر ~1230-1337: toggleGroupFilter()
-   • السطر ~1340-1346: getContractorsForSheet()
-   • السطر ~1349-1380: applyContractorFilter()
-   • السطر ~1383-1387: syncContractorCheckboxes()
-   • السطر ~1389-1400: toggleContractor()
-
    المتغيرات والدوال التي يعتمد عليها من main.js / map.js:
        categories, similarGroups, selectedItems — main.js
        allData, allLayers, loadTokens, map — map.js

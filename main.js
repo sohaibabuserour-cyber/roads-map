@@ -23,17 +23,7 @@ const LABELS = {
     "EQUIPMENT"    : "المعدات"
 };
 
-// → map.js: map, allLayers, allData, allFeatures, loadTokens,
-//           initMap, loadLayer, removeLayer, featureStyle,
-//           refreshLayerColors, flashLayer
-// → auth.js: currentUser, inactivityTimer, doLogin, doLogout,
-//            enterApp, saveSession, clearSession, tryRestoreSession,
-//            fetchUsers, saveUserProfile, handleAvatarUpload
-// → categories.js: categories, loadCategoriesConfig, exportConfig,
-//                  importConfig, addCategory, addSubitem, deleteCategory,
-//                  deleteSubitem, openEditSubitemModal, saveSubitemEdit
-// → stats.js: updateStats, makeStatCard, makeContractorsCard,
-//             makeEquipmentCard, calcSubTotals, updateProgressRing
+// وحدات مُستخرجة: map.js | auth.js | settings.js | categories.js | stats.js
 selectedItems  = {};   // subitemId → true (only one per category enforced)
 selectedStatuses = ["جاري","متاح","غير متاح","تم الانتهاء","متوقف"];
 equipmentData      = {};
@@ -140,10 +130,6 @@ async function loadDefaultCoords() {
     const dsn = localStorage.getItem('defaultSubNumber');
     if (dsn !== null && !defaultSubNumber) defaultSubNumber = dsn;
 }
-
-// → settings.js: openSettingsModal, closeSettingsModal, saveSheetIds,
-//               switchSettingsTab, saveSettingsCoords, equipmentTypes,
-//               contractorsList, دوال أنواع المعدات والمقاولين في الإعدادات
 
 function saveSettingsDefaultSub() {
     const num = document.getElementById("settingsDefaultSub").value.trim();
@@ -907,17 +893,6 @@ document.querySelectorAll(".status-checkbox").forEach(cb => {
    SEARCH — no zoom, use defaultCoords, flash + popup
    ==================================================== */
 
-function positionDropdown() {
-    const dd  = document.getElementById("searchDropdown");
-    const box = document.querySelector(".search-wrap");
-    if (!box || !dd.classList.contains("active")) return;
-    const r = box.getBoundingClientRect();
-    dd.style.top   = r.bottom + "px";
-    dd.style.left  = r.left   + "px";
-    dd.style.width = r.width  + "px";
-    dd.style.right = "auto";
-}
-
 function updateSearchDropdown() {
     const dd    = document.getElementById("searchDropdown");
     const input = document.getElementById("searchInput");
@@ -967,14 +942,10 @@ function updateSearchDropdown() {
     }
 
     dd.classList.add("active");
-    positionDropdown();
+    window.positionDropdown?.();
 }
 
 
-
-/* ====================================================
-   CLOSE MODALS ON BACKDROP CLICK
-   ==================================================== */
 
 /* ====================================================
    DRAG & DROP — ADMIN ONLY
@@ -982,79 +953,7 @@ function updateSearchDropdown() {
              Nav-Right Icons (contractors, equipment, notifications, themes, coords, user)
    ==================================================== */
 
-/* ── CSS for drag states (injected once) ── */
-(function injectDragCSS() {
-    const style = document.createElement('style');
-    style.textContent = `
-        /* Drag handle indicator for admin */
-        body.is-admin .nav-tab          { cursor: grab; }
-        body.is-admin .sidebar-section  { cursor: grab; }
-        body.is-admin .dropdown-item    { cursor: grab; }
-        body.is-admin .legend-item      { cursor: grab; }
-        body.is-admin .nav-right > div  { cursor: grab; }
-
-        .drag-dragging {
-            opacity: 0.38;
-            transform: scale(0.97);
-            transition: opacity 0.15s, transform 0.15s;
-        }
-        .drag-over-top {
-            border-top: 2.5px solid var(--gold) !important;
-        }
-        .drag-over-bottom {
-            border-bottom: 2.5px solid var(--gold) !important;
-        }
-        .drag-over-left {
-            border-left: 2.5px solid var(--gold) !important;
-        }
-        .drag-over-right {
-            border-right: 2.5px solid var(--gold) !important;
-        }
-        .drag-ghost {
-            position: fixed;
-            z-index: 999999;
-            pointer-events: none;
-            background: var(--white, white);
-            border: 2px solid var(--gold, #f5c842);
-            border-radius: 8px;
-            padding: 6px 14px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text, #2a1a40);
-            box-shadow: 0 8px 28px rgba(0,0,0,0.25);
-            white-space: nowrap;
-            max-width: 240px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            opacity: 0.92;
-        }
-        /* Drag handle icon shown on hover for admin */
-        body.is-admin .nav-tab::before,
-        body.is-admin .sidebar-section > .section-title::before,
-        body.is-admin .dropdown-item::before,
-        body.is-admin .legend-item::before,
-        body.is-admin .nav-right > div > .nav-icon-btn::before,
-        body.is-admin .nav-right > div > .user-chip::before {
-            content: '⠿';
-            font-size: 13px;
-            opacity: 0;
-            transition: opacity 0.2s;
-            margin-left: 4px;
-            color: var(--gold, #f5c842);
-            flex-shrink: 0;
-        }
-        body.is-admin .nav-tab:hover::before,
-        body.is-admin .sidebar-section:hover > .section-title::before,
-        body.is-admin .dropdown-item:hover::before,
-        body.is-admin .legend-item:hover::before,
-        body.is-admin .nav-right > div:hover > .nav-icon-btn::before,
-        body.is-admin .nav-right > div:hover > .user-chip::before {
-            opacity: 0.7;
-        }
-    `;
-    document.head.appendChild(style);
-})();
+/* Drag & drop styles: styles.css (DRAG & DROP section) */
 
 /* ── Ghost element ── */
 let dragGhost = null;
@@ -1312,14 +1211,7 @@ window.renderItems = function() {
     }, 50);
 };
 
-const _origRenderNavTabs = renderNavTabs;
-window.renderNavTabs = function() {
-    _origRenderNavTabs();
-};
-
-/* ── Legend drag removed per user request ── */
-
-// Also hook enterApp to init all drag systems after login
+// Hook enterApp to init drag systems after login
 const _afterEnterApp = () => {
     setTimeout(() => {
         initSidebarSectionsDrag();
@@ -1364,6 +1256,15 @@ function _getGroupName(groupId) {
     const g = (similarGroups || []).find(function(x) { return x.id === groupId; });
     return g ? (g.name || 'مجموعة') : '';
 }
+
+window.toggleGroupsMobilePanel = function() {
+    if (typeof window.toggleGroupsDropdown === 'function') {
+        window.toggleGroupsDropdown({
+            stopPropagation: function() {},
+            currentTarget: document.getElementById('mmGroupsRow')
+        });
+    }
+};
 
 window.toggleGroupsDropdown = function(e) {
     if (e) e.stopPropagation();

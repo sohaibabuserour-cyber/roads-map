@@ -30,7 +30,7 @@ const DEFAULT_EQUIPMENT_TYPES = [
 function openSettingsModal() {
     const modal = document.getElementById('settingsModal');
     if (!modal) return;
-    modal.style.display = 'flex';
+    modal.classList.add('open');
     document.body.style.overflow = 'hidden';
     _fillSheetIdsInputs();
     switchSettingsTab('coords');
@@ -39,7 +39,7 @@ function openSettingsModal() {
 function closeSettingsModal() {
     const modal = document.getElementById('settingsModal');
     if (!modal) return;
-    modal.style.display = 'none';
+    modal.classList.remove('open');
     document.body.style.overflow = '';
 }
 
@@ -190,25 +190,20 @@ function switchSettingsTab(tab) {
     const tabIds = ['coords', 'default', 'similar', 'eqtypes', 'contractors', 'sheets'];
     tabIds.forEach(t => {
         const btn = document.getElementById('stab_' + t);
-        if (!btn) return;
-        const isActive = t === tab;
-        btn.classList.toggle('active', isActive);
-        if (isActive) {
-            btn.style.background = 'rgba(106,45,145,0.35)';
-            btn.style.borderColor = 'rgba(106,45,145,0.5)';
-            btn.style.color = 'rgba(255,255,255,0.9)';
-        } else {
-            btn.style.background = 'transparent';
-            btn.style.borderColor = 'transparent';
-            btn.style.color = 'rgba(255,255,255,0.55)';
-        }
+        if (btn) btn.classList.toggle('active', t === tab);
     });
-    document.getElementById('settingsTabCoords')      && (document.getElementById('settingsTabCoords').style.display      = tab === 'coords'      ? 'block' : 'none');
-    document.getElementById('settingsTabDefault')     && (document.getElementById('settingsTabDefault').style.display     = tab === 'default'     ? 'block' : 'none');
-    document.getElementById('settingsTabSimilar')     && (document.getElementById('settingsTabSimilar').style.display     = tab === 'similar'     ? 'block' : 'none');
-    document.getElementById('settingsTabEqtypes')     && (document.getElementById('settingsTabEqtypes').style.display     = tab === 'eqtypes'     ? 'block' : 'none');
-    document.getElementById('settingsTabContractors') && (document.getElementById('settingsTabContractors').style.display = tab === 'contractors' ? 'block' : 'none');
-    document.getElementById('settingsTabSheets')      && (document.getElementById('settingsTabSheets').style.display      = tab === 'sheets'      ? 'block' : 'none');
+    const sectionMap = {
+        coords: 'settingsTabCoords',
+        default: 'settingsTabDefault',
+        similar: 'settingsTabSimilar',
+        eqtypes: 'settingsTabEqtypes',
+        contractors: 'settingsTabContractors',
+        sheets: 'settingsTabSheets'
+    };
+    Object.entries(sectionMap).forEach(([t, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', t === tab);
+    });
     if (tab === 'similar')      renderSimilarGroupsList();
     if (tab === 'default')      renderDefaultSubPreview();
     if (tab === 'eqtypes')      { renderEquipmentTypesList(); updateEqTypesCount(); }
