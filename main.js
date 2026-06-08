@@ -1636,26 +1636,156 @@ window.submitBOQForm = async function () {
 };
 
 /* ====================================================
-   SCHEDULE UI HANDLERS — ADDITION ONLY
+   SCHEDULE UI HANDLERS — لائحة منسدلة من BOQ + عرض/تحديث الصفوف
    ==================================================== */
-window.openScheduleFormModal = function () {
+
+// State for editing
+window._schedEditItemRow = null;   // sheet row number being edited (Items)
+window._schedEditPlanRow = null;   // sheet row number being edited (Plan)
+window._schedItems = [];           // existing items {row, item, startDate, endDate, days}
+window._schedPlan  = [];           // existing plan rows
+window._boqItemsList = [];         // BOQ items strings
+
+function _schedScriptUrl() {
+    return (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SCRIPT_URL)
+        || window.SCHEDULE_SCRIPT_URL
+        || localStorage.getItem('SCHEDULE_SCRIPT_URL')
+        || '';
+}
+
+function _schedSheetId() {
+    let id = (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SHEET_ID)
+          || window.SCHEDULE_SHEET_ID || '';
+    if (id && /\/d\//.test(id)) {
+        const m = id.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (m) id = m[1];
+    }
+    return id;
+}
+
+function _schedCurrentUser() {
+    return (window.currentUser && (window.currentUser.name || window.currentUser.email))
+        || (typeof currentUser !== 'undefined' && currentUser && (currentUser.name || currentUser.email))
+        || 'unknown';
+}
+
+function _schedSetStatus(msg) {
+    const el = document.getElementById('schedStatusMsg');
+    if (el) el.textContent = msg || '';
+}
+
+async function _schedPost(payload) {
+    const url = _schedScriptUrl();
+    if (!url) throw new Error('⚠️ أضف رابط سكريبت البرنامج الزمني في الإعدادات');
+    const sheetId = _schedSheetId();
+    if (!sheetId) throw new Error('⚠️ أضف SCHEDULE_SHEET_ID في الإعدادات');
+    const res = await fetch(url, {
+        method: 'POST', redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ ...payload, sheetId })
+    });
+    const text = await res.text();
+    let result;
+    try { result = JSON.parse(text); }
+    catch (_e) { throw new Error('استجابة غير صالحة من السكريبت: ' + text.substring(0, 200)); }
+    if (!result || !result.success) throw new Error((result && (result.message || result.error)) || 'فشل غير معروف');
+    return result;
+}
+
+/* ──────── BOQ items loader ──────── */
+async function _loadBoqItems() {
+    const boqId = (window.sheetIdsConfig && window.sheetIdsConfig.BOQ_SHEET_ID)
+               || window.BOQ_SHEET_ID
+               || window.BILLS_SHEET_ID || '';
+    if (!boqId) { window._boqItemsList = []; return; }
+    try {
+        const url = `https://docs.google.com/spreadsheets/d/${boqId}/export?format=csv&gid=0`;
+        const r = await fetch(url + '&_t=' + Date.now());
+        if (!r.ok) throw new Error('boq fetch fail');
+        const csv = await r.text();
+        if (csv.trim().startsWith('<')) { window._boqItemsList = []; return; }
+        const lines = csv.split('\n').filter(l => l.trim());
+        if (!lines.length) { window._boqItemsList = []; return; }
+        const headers = parseCSVLine(lines[0]).map(h => h.trim());
+        // Choose first column that looks like description/item
+        const descKeys = ['الوصف', 'وصف البند', 'description', 'Description', 'البند', 'item', 'Item'];
+        let descIdx = -1;
+        for (const k of descKeys) {
+            const i = headers.findIndex(h => h.toLowerCase() === k.toLowerCase());
+            if (i !== -1) { descIdx = i; break; }
+        }
+        if (descIdx === -1) descIdx = headers.length > 1 ? 1 : 0;
+        const itemNoIdx = headers.findIndex(h => /رقم|item.*no|^no$|كود/i.test(h));
+        const items = [];
+        for (let i = 1; i < lines.length; i++) {
+            const v = parseCSVLine(lines[i]);
+            const desc = (v[descIdx] || '').trim();
+            if (!desc) continue;
+            const no = itemNoIdx !== -1 ? (v[itemNoIdx] || '').trim() : '';
+            const label = no ? `${no} — ${desc}` : desc;
+            items.push(label);
+        }
+        // Unique
+        window._boqItemsList = [...new Set(items)];
+    } catch (e) {
+        console.warn('فشل تحميل بنود BOQ:', e);
+        window._boqItemsList = [];
+    }
+}
+
+function _refreshBoqDropdown() {
+    const sel = document.getElementById('schedItemSelect');
+    if (!sel) return;
+    const usedSet = new Set(
+        (window._schedItems || [])
+            .filter(it => !window._schedEditItemRow || it.row !== window._schedEditItemRow)
+            .map(it => (it.item || '').trim())
+    );
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">— اختر بنداً —</option>';
+    (window._boqItemsList || []).forEach(name => {
+        if (usedSet.has(name)) return;
+        const o = document.createElement('option');
+        o.value = name; o.textContent = name;
+        sel.appendChild(o);
+    });
+    // If editing, ensure current item appears even if not in BOQ list
+    if (window._schedEditItemRow) {
+        const editing = (window._schedItems || []).find(i => i.row === window._schedEditItemRow);
+        if (editing && editing.item && !sel.querySelector(`option[value="${CSS.escape(editing.item)}"]`)) {
+            const o = document.createElement('option');
+            o.value = editing.item; o.textContent = editing.item + ' (مخصّص)';
+            sel.appendChild(o);
+        }
+        if (editing) sel.value = editing.item;
+    } else if (currentVal && sel.querySelector(`option[value="${CSS.escape(currentVal)}"]`)) {
+        sel.value = currentVal;
+    }
+}
+
+/* ──────── Open / close modal ──────── */
+window.openScheduleFormModal = async function () {
     const m = document.getElementById('scheduleFormModal');
     if (!m) {
-        console.error('scheduleFormModal not found in DOM');
         (window.showAlert || alert)('شاشة البرنامج الزمني غير موجودة في index.html');
         return;
     }
-
     m.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
-    const ib = document.getElementById('schedItemsBody');
-    const pb = document.getElementById('schedPlanBody');
-
-    if (ib && !ib.children.length) addScheduleItemRow();
-    if (pb && !pb.children.length) addSchedulePlanRow();
-
+    cancelScheduleItemEdit();
+    cancelSchedulePlanEdit();
     switchScheduleTab('items');
+    _schedSetStatus('⏳ جاري تحميل البيانات...');
+
+    try {
+        await _loadBoqItems();
+        await refreshScheduleData();
+        _schedSetStatus('✅ جاهز');
+    } catch (e) {
+        console.error(e);
+        _schedSetStatus('⚠️ ' + e.message);
+    }
 };
 
 window.closeScheduleFormModal = function () {
@@ -1666,15 +1796,12 @@ window.closeScheduleFormModal = function () {
 
 window.switchScheduleTab = function (tab) {
     const isItems = tab === 'items';
-
     const pItems = document.getElementById('schedPanelItems');
     const pPlan  = document.getElementById('schedPanelPlan');
     const bItems = document.getElementById('schedTabItemsBtn');
     const bPlan  = document.getElementById('schedTabPlanBtn');
-
     if (pItems) pItems.style.display = isItems ? '' : 'none';
     if (pPlan)  pPlan.style.display  = isItems ? 'none' : '';
-
     if (bItems) {
         bItems.style.background = isItems ? 'rgba(33,150,243,0.18)' : 'transparent';
         bItems.style.color = isItems ? '#90caf9' : 'rgba(255,255,255,0.6)';
@@ -1685,204 +1812,202 @@ window.switchScheduleTab = function (tab) {
     }
 };
 
-window.addScheduleItemRow = function () {
+/* ──────── Data fetch + render ──────── */
+async function refreshScheduleData() {
+    const snap = await _schedPost({ action: 'getSchedule' });
+    // server returns rows with header keys; normalize
+    const items = (snap.items || []).map(r => ({
+        row      : r._row || r.row,
+        item     : r['البند'] || r.item || '',
+        startDate: _normDateInput(r['تاريخ البداية'] || r.startDate),
+        endDate  : _normDateInput(r['تاريخ النهاية'] || r.endDate),
+        days     : r['المدة (يوم)'] || r.days || ''
+    })).filter(x => x.row);
+    const plan = (snap.plan || []).map(r => ({
+        row        : r._row || r.row,
+        date       : _normDateInput(r['التاريخ'] || r.date),
+        plannedValue : Number(r['القيمة المخططة'] ?? r.plannedValue) || 0,
+        cumValue   : Number(r['تراكمي القيمة المخططة'] ?? r.cumValue) || 0,
+        dailyPct   : Number(r['نسبة المخطط اليومي %'] ?? r.dailyPct) || 0,
+        cumPct     : Number(r['تراكمي نسبة المخطط اليومي %'] ?? r.cumPct) || 0
+    })).filter(x => x.row);
+    window._schedItems = items;
+    window._schedPlan  = plan;
+    _renderItemsTable();
+    _renderPlanTable();
+    _refreshBoqDropdown();
+    _autofillPlanDate();
+}
+
+function _normDateInput(v) {
+    if (!v) return '';
+    if (v instanceof Date) return _dateToInputVal(v);
+    const d = _parseAnyDate(v);
+    return d ? _dateToInputVal(d) : String(v);
+}
+
+function _renderItemsTable() {
     const tb = document.getElementById('schedItemsBody');
+    const cnt = document.getElementById('schedItemsCount');
     if (!tb) return;
+    if (cnt) cnt.textContent = window._schedItems.length ? `(${window._schedItems.length})` : '';
+    if (!window._schedItems.length) {
+        tb.innerHTML = '<tr><td colspan="4" class="sched-empty">لا توجد بنود محفوظة</td></tr>';
+        return;
+    }
+    tb.innerHTML = window._schedItems.map(it => `
+        <tr data-row="${it.row}" onclick="loadScheduleItemForEdit(${it.row})" class="${window._schedEditItemRow === it.row ? 'active-edit' : ''}">
+            <td>${_esc(it.item)}</td>
+            <td>${_esc(it.startDate)}</td>
+            <td>${_esc(it.endDate)}</td>
+            <td>${_esc(it.days)}</td>
+        </tr>
+    `).join('');
+}
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td><input class="sch-item" type="text" placeholder="اسم البند"></td>
-        <td><input class="sch-start" type="date"></td>
-        <td><input class="sch-end" type="date"></td>
-        <td style="text-align:center"><button type="button" class="sched-del" onclick="this.closest('tr').remove()">✕</button></td>
-    `;
-    tb.appendChild(tr);
-};
-
-window.addSchedulePlanRow = function () {
+function _renderPlanTable() {
     const tb = document.getElementById('schedPlanBody');
+    const cnt = document.getElementById('schedPlanCount');
     if (!tb) return;
+    if (cnt) cnt.textContent = window._schedPlan.length ? `(${window._schedPlan.length})` : '';
+    if (!window._schedPlan.length) {
+        tb.innerHTML = '<tr><td colspan="5" class="sched-empty">لا توجد صفوف خطة محفوظة</td></tr>';
+        return;
+    }
+    const fmt = n => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+    tb.innerHTML = window._schedPlan.map(p => `
+        <tr data-row="${p.row}" onclick="loadSchedulePlanForEdit(${p.row})" class="${window._schedEditPlanRow === p.row ? 'active-edit' : ''}">
+            <td>${_esc(p.date)}</td>
+            <td>${fmt(p.plannedValue)}</td>
+            <td>${fmt(p.cumValue)}</td>
+            <td>${Number(p.dailyPct || 0).toFixed(2)}%</td>
+            <td>${Number(p.cumPct || 0).toFixed(2)}%</td>
+        </tr>
+    `).join('');
+}
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td><input class="sp-date" type="date"></td>
-        <td><input class="sp-val" type="number" step="0.01" placeholder="0"></td>
-        <td class="sp-cum">—</td>
-        <td class="sp-pct">—</td>
-        <td class="sp-cumpct">—</td>
-        <td style="text-align:center"><button type="button" class="sched-del" onclick="this.closest('tr').remove();recalcSchedulePlan();">✕</button></td>
-    `;
-    tb.appendChild(tr);
-    tr.querySelectorAll('input').forEach(i => i.addEventListener('input', recalcSchedulePlan));
+function _esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function _autofillPlanDate() {
+    const dateInp = document.getElementById('schedPlanDate');
+    if (!dateInp) return;
+    if (window._schedEditPlanRow) return; // don't override during edit
+    if (!window._schedPlan.length) { dateInp.value = ''; return; }
+    // find max date
+    const sorted = [...window._schedPlan].map(p => p.date).filter(Boolean).sort();
+    const last = sorted[sorted.length - 1];
+    if (!last) { dateInp.value = ''; return; }
+    const d = _parseAnyDate(last);
+    if (!d) return;
+    const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+    dateInp.value = _dateToInputVal(next);
+}
+
+/* ──────── Items form ──────── */
+window.loadScheduleItemForEdit = function (row) {
+    const it = window._schedItems.find(x => x.row === row);
+    if (!it) return;
+    window._schedEditItemRow = row;
+    document.getElementById('schedItemsFormWrap').classList.add('edit-mode');
+    _refreshBoqDropdown();
+    const sel = document.getElementById('schedItemSelect');
+    if (sel) sel.value = it.item;
+    document.getElementById('schedItemStart').value = it.startDate || '';
+    document.getElementById('schedItemEnd').value = it.endDate || '';
+    _renderItemsTable();
 };
 
-window.recalcSchedulePlan = function () {
-    if (!window.Schedule || typeof window.Schedule.processPlanTab !== 'function') {
-        console.warn('SCHEDULE.js not loaded');
-        return;
-    }
-
-    const rows = [...document.querySelectorAll('#schedPlanBody tr')];
-    const raw = rows.map(r => ({
-        date: r.querySelector('.sp-date')?.value || '',
-        plannedValue: r.querySelector('.sp-val')?.value || 0
-    }));
-
-    const out = window.Schedule.processPlanTab(raw);
-    const list = Array.isArray(out) ? out : (out.rows || []);
-    const byDate = {};
-    list.forEach(o => { byDate[o.date] = o; });
-
-    rows.forEach(r => {
-        const d = r.querySelector('.sp-date')?.value || '';
-        const o = byDate[d];
-        if (!o) return;
-
-        const cumValue = o.cumValue ?? o.cumPlannedValue ?? 0;
-        const cumPct   = o.cumPct ?? o.cumDailyPct ?? 0;
-
-        const cumEl = r.querySelector('.sp-cum');
-        const pctEl = r.querySelector('.sp-pct');
-        const cpEl  = r.querySelector('.sp-cumpct');
-
-        if (cumEl) cumEl.textContent = Number(cumValue).toLocaleString('en-US');
-        if (pctEl) pctEl.textContent = Number(o.dailyPct || 0).toFixed(2) + '%';
-        if (cpEl)  cpEl.textContent  = Number(cumPct || 0).toFixed(2) + '%';
-    });
+window.cancelScheduleItemEdit = function () {
+    window._schedEditItemRow = null;
+    const wrap = document.getElementById('schedItemsFormWrap');
+    if (wrap) wrap.classList.remove('edit-mode');
+    _resetItemForm();
+    _refreshBoqDropdown();
+    _renderItemsTable();
 };
 
-window.submitScheduleForm = async function () {
-    const url = (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SCRIPT_URL)
-             || window.SCHEDULE_SCRIPT_URL
-             || localStorage.getItem('SCHEDULE_SCRIPT_URL')
-             || '';
+function _resetItemForm() {
+    const sel = document.getElementById('schedItemSelect');
+    if (sel) sel.value = '';
+    const s = document.getElementById('schedItemStart');
+    const e = document.getElementById('schedItemEnd');
+    if (s) s.value = ''; if (e) e.value = '';
+}
 
-    if (!url) {
-        (window.showAlert || alert)('⚠️ أضف رابط سكريبت البرنامج الزمني في الإعدادات أولاً');
+window.saveScheduleItem = async function () {
+    const item = document.getElementById('schedItemSelect')?.value || '';
+    const startDate = document.getElementById('schedItemStart')?.value || '';
+    const endDate = document.getElementById('schedItemEnd')?.value || '';
+    if (!item || !startDate || !endDate) {
+        (window.showAlert || alert)('⚠️ اختر البند وأدخل التاريخين');
         return;
     }
-
-    // sheetId يجب أن يكون ID فقط (وليس رابط كامل) — نستخرجه إن كان رابط
-    let sheetId = (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SHEET_ID)
-               || window.SCHEDULE_SHEET_ID || '';
-    if (sheetId && /\/d\//.test(sheetId)) {
-        const m = sheetId.match(/\/d\/([a-zA-Z0-9-_]+)/);
-        if (m) sheetId = m[1];
-    }
-    if (!sheetId) {
-        (window.showAlert || alert)('⚠️ أضف SCHEDULE_SHEET_ID (معرّف شيت البرنامج الزمني) في الإعدادات أولاً');
-        return;
-    }
-
-    const user = (window.currentUser && (window.currentUser.name || window.currentUser.email))
-              || (typeof currentUser !== 'undefined' && currentUser && (currentUser.name || currentUser.email))
-              || 'unknown';
-
-    // 1) جمع البنود
-    const items = [...document.querySelectorAll('#schedItemsBody tr')].map(r => ({
-        item     : r.querySelector('.sch-item')?.value.trim() || '',
-        startDate: r.querySelector('.sch-start')?.value || '',
-        endDate  : r.querySelector('.sch-end')?.value || ''
-    })).filter(x => x.item && x.startDate && x.endDate);
-
-    // إعادة حساب الخطة قبل الإرسال
-    recalcSchedulePlan();
-
-    // 2) جمع صفوف الخطة
-    const planRows = [...document.querySelectorAll('#schedPlanBody tr')].map(r => ({
-        date            : r.querySelector('.sp-date')?.value || '',
-        plannedValue    : Number(r.querySelector('.sp-val')?.value || 0),
-        cumPlannedValue : Number((r.querySelector('.sp-cum')?.textContent || '0').replace(/,/g, '')) || 0,
-        dailyPct        : parseFloat(r.querySelector('.sp-pct')?.textContent || '0') || 0,
-        cumDailyPct     : parseFloat(r.querySelector('.sp-cumpct')?.textContent || '0') || 0
-    })).filter(x => x.date);
-
-    if (!items.length && !planRows.length) {
-        (window.showAlert || alert)('⚠️ أضف بنداً واحداً على الأقل أو صف خطة');
-        return;
-    }
-
-    // مؤشر تحميل على زر الحفظ
-    const saveBtn = document.querySelector('#scheduleFormModal [onclick*="submitScheduleForm"]');
-    const oldText = saveBtn ? saveBtn.textContent : '';
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ جاري الحفظ...'; }
-
-    const post = async (payload) => {
-        const res = await fetch(url, {
-            method  : 'POST',
-            redirect: 'follow',
-            headers : { 'Content-Type': 'text/plain;charset=utf-8' },
-            body    : JSON.stringify({ ...payload, sheetId })
-        });
-        const text = await res.text();
-        let result;
-        try { result = JSON.parse(text); }
-        catch (_e) {
-            throw new Error(
-                'السكريبت رجّع استجابة غير صالحة. تأكد أن الـ Deploy:\n' +
-                '• Execute as: Me\n' +
-                '• Who has access: Anyone\n' +
-                'وأنك عملت "Manage deployments → New version" بعد آخر تعديل.\n\n' +
-                'الاستجابة: ' + text.substring(0, 200)
-            );
-        }
-        if (!result || !result.success) {
-            throw new Error((result && (result.message || result.error)) || 'فشل غير معروف من السكريبت');
-        }
-        return result;
-    };
-
+    _schedSetStatus('⏳ جاري الحفظ...');
     try {
-        // (أ) تحقّق من الاتصال ومن أن السكريبت يفتح نفس الشيت
-        const ping = await post({ action: 'ping' });
-        console.log('Schedule ping:', ping);
-        if (ping.sheetId && ping.sheetId !== sheetId) {
-            console.warn('⚠️ السكريبت فتح شيت مختلف:', ping.sheetId, 'بدل', sheetId);
+        const user = _schedCurrentUser();
+        if (window._schedEditItemRow) {
+            await _schedPost({ action: 'updateScheduleItem', row: window._schedEditItemRow, item, startDate, endDate, user });
+        } else {
+            await _schedPost({ action: 'addScheduleItem', item, startDate, endDate, user });
         }
-
-        // (ب) عدد الصفوف قبل الحفظ — للتحقق الفعلي
-        let beforeItems = 0, beforePlan = 0;
-        try {
-            const snap = await post({ action: 'getSchedule' });
-            beforeItems = (snap.items || []).length;
-            beforePlan  = (snap.plan  || []).length;
-        } catch (_) { /* تجاهل لو السكريبت قديم */ }
-
-        // (ج) إرسال البنود
-        let savedItems = 0, savedRows = 0;
-        for (const it of items) {
-            const r = await post({ action: 'addScheduleItem', ...it, user });
-            if (r && r.row) savedItems++;
-        }
-        if (planRows.length) {
-            const r = await post({ action: 'bulkSchedulePlan', rows: planRows, user });
-            savedRows = (r && r.count) || planRows.length;
-            console.log('Schedule plan saved:', r);
-        }
-
-        // (د) تحقّق فعلي بعد الحفظ
-        let verified = '';
-        try {
-            const snap2 = await post({ action: 'getSchedule' });
-            const afterItems = (snap2.items || []).length;
-            const afterPlan  = (snap2.plan  || []).length;
-            const okItems = afterItems - beforeItems;
-            const okPlan  = afterPlan  - beforePlan;
-            verified = ` (مؤكَّد: +${okItems} بند / +${okPlan} يوم في الشيت)`;
-            if (items.length && okItems === 0 && planRows.length && okPlan === 0) {
-                throw new Error('السكريبت رجّع نجاح لكن لم تُضَف أي صفوف فعلياً في الشيت. تأكد من SCHEDULE_SHEET_ID وأن حساب الـ Deploy له صلاحية الكتابة.');
-            }
-        } catch (verr) {
-            // لو فشل التحقق فقط — نخبر المستخدم
-            console.warn('تعذّر التحقق من الحفظ:', verr);
-        }
-
-        (window.showAlert || alert)(`✅ تم الحفظ: ${savedItems} بند و ${savedRows} يوم خطة${verified}`);
-        closeScheduleFormModal();
+        window._schedEditItemRow = null;
+        document.getElementById('schedItemsFormWrap').classList.remove('edit-mode');
+        _resetItemForm();
+        await refreshScheduleData();
+        _schedSetStatus('✅ تم الحفظ');
     } catch (e) {
-        console.error('Schedule submit error:', e);
-        (window.showAlert || alert)('❌ فشل الحفظ: ' + e.message);
-    } finally {
-        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = oldText; }
+        console.error(e);
+        _schedSetStatus('❌ ' + e.message);
+        (window.showAlert || alert)('❌ ' + e.message);
+    }
+};
+
+/* ──────── Plan form ──────── */
+window.loadSchedulePlanForEdit = function (row) {
+    const p = window._schedPlan.find(x => x.row === row);
+    if (!p) return;
+    window._schedEditPlanRow = row;
+    document.getElementById('schedPlanFormWrap').classList.add('edit-mode');
+    document.getElementById('schedPlanDate').value = p.date || '';
+    document.getElementById('schedPlanValue').value = p.plannedValue || '';
+    _renderPlanTable();
+};
+
+window.cancelSchedulePlanEdit = function () {
+    window._schedEditPlanRow = null;
+    const wrap = document.getElementById('schedPlanFormWrap');
+    if (wrap) wrap.classList.remove('edit-mode');
+    const v = document.getElementById('schedPlanValue');
+    if (v) v.value = '';
+    _autofillPlanDate();
+    _renderPlanTable();
+};
+
+window.saveSchedulePlan = async function () {
+    const date = document.getElementById('schedPlanDate')?.value || '';
+    const valStr = document.getElementById('schedPlanValue')?.value || '';
+    if (!date) { (window.showAlert || alert)('⚠️ أدخل التاريخ'); return; }
+    const plannedValue = Number(valStr) || 0;
+    _schedSetStatus('⏳ جاري الحفظ وإعادة الحساب...');
+    try {
+        const user = _schedCurrentUser();
+        if (window._schedEditPlanRow) {
+            await _schedPost({ action: 'updateSchedulePlan', row: window._schedEditPlanRow, date, plannedValue, user });
+        } else {
+            await _schedPost({ action: 'addSchedulePlan', date, plannedValue, user });
+        }
+        // recalc cumulative on server
+        await _schedPost({ action: 'recalcSchedulePlan', user });
+        window._schedEditPlanRow = null;
+        document.getElementById('schedPlanFormWrap').classList.remove('edit-mode');
+        const v = document.getElementById('schedPlanValue'); if (v) v.value = '';
+        await refreshScheduleData();
+        _schedSetStatus('✅ تم الحفظ');
+    } catch (e) {
+        console.error(e);
+        _schedSetStatus('❌ ' + e.message);
+        (window.showAlert || alert)('❌ ' + e.message);
     }
 };

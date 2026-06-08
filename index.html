@@ -1592,47 +1592,42 @@
 
 <!-- ==================== MODAL: SCHEDULE (البرنامج الزمني) ==================== -->
 <style>
-  #scheduleFormModal .sched-table{width:100%;border-collapse:separate;border-spacing:0 8px;font-family:'Cairo',sans-serif;table-layout:fixed;}
-  #scheduleFormModal .sched-table th,
-  #scheduleFormModal .sched-table td{padding:4px 6px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;}
-  #scheduleFormModal .sched-table input{width:100%;box-sizing:border-box;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:12px;min-width:0;}
-  #scheduleFormModal .sched-table .sp-cum,
-  #scheduleFormModal .sched-table .sp-pct,
-  #scheduleFormModal .sched-table .sp-cumpct{color:#cfd8e3;font-size:12px;text-align:center;white-space:nowrap;}
-  #scheduleFormModal .sched-del{padding:6px 9px;border-radius:6px;border:0;background:#c0392b;color:#fff;cursor:pointer;font-size:12px;}
-  /* Column widths — items */
-  #scheduleFormModal .col-item-name {width:auto;}
-  #scheduleFormModal .col-date      {width:140px;}
-  #scheduleFormModal .col-del       {width:44px;text-align:center;}
-  /* Column widths — plan */
-  #scheduleFormModal .col-pdate     {width:130px;}
-  #scheduleFormModal .col-pval      {width:120px;}
-  #scheduleFormModal .col-pcum      {width:110px;}
-  #scheduleFormModal .col-ppct      {width:90px;}
-  #scheduleFormModal .col-pcumpct   {width:90px;}
-  /* Tabs row wraps */
   #scheduleFormModal .sched-tabs{flex-wrap:wrap;}
-  /* Responsive — small screens */
+  #scheduleFormModal .sched-form{display:grid;grid-template-columns:1fr 160px 160px auto auto;gap:8px;align-items:end;background:rgba(0,0,0,0.18);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);margin-bottom:14px;}
+  #scheduleFormModal .sched-form.plan-form{grid-template-columns:160px 1fr auto auto;}
+  #scheduleFormModal .sched-form label{display:block;font-size:11px;color:rgba(255,255,255,0.65);font-family:'Cairo',sans-serif;margin-bottom:4px;font-weight:700;}
+  #scheduleFormModal .sched-form input,
+  #scheduleFormModal .sched-form select{width:100%;box-sizing:border-box;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;}
+  #scheduleFormModal .sched-form select option{background:#162548;color:#fff;}
+  #scheduleFormModal .btn-save{background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:#fff;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;}
+  #scheduleFormModal .btn-cancel-edit{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;display:none;}
+  #scheduleFormModal .edit-mode .btn-cancel-edit{display:inline-block;}
+  #scheduleFormModal .edit-badge{display:none;font-size:11px;color:#f5c842;font-weight:800;font-family:'Cairo',sans-serif;margin-bottom:8px;}
+  #scheduleFormModal .edit-mode .edit-badge{display:block;}
+  #scheduleFormModal .sched-data{width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;background:rgba(0,0,0,0.12);border-radius:10px;overflow:hidden;}
+  #scheduleFormModal .sched-data th{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-size:11px;padding:9px;text-align:right;font-weight:800;}
+  #scheduleFormModal .sched-data td{padding:9px;font-size:12px;color:#e0e6ef;border-top:1px solid rgba(255,255,255,0.05);}
+  #scheduleFormModal .sched-data tbody tr{cursor:pointer;transition:background 0.15s;}
+  #scheduleFormModal .sched-data tbody tr:hover{background:rgba(33,150,243,0.12);}
+  #scheduleFormModal .sched-data tbody tr.active-edit{background:rgba(245,200,66,0.15);}
+  #scheduleFormModal .sched-empty{text-align:center;padding:24px;color:rgba(255,255,255,0.45);font-size:12px;}
+  #scheduleFormModal .sched-section-title{font-size:12px;font-weight:800;color:rgba(255,255,255,0.75);font-family:'Cairo',sans-serif;margin:14px 0 8px;display:flex;align-items:center;gap:6px;}
   @media (max-width: 720px){
-    #scheduleFormModal .sched-table{display:block;overflow-x:auto;}
-    #scheduleFormModal .col-date{width:120px;}
-    #scheduleFormModal .col-pdate{width:115px;}
-    #scheduleFormModal .col-pval{width:95px;}
-    #scheduleFormModal .col-pcum{width:90px;}
-    #scheduleFormModal .col-ppct,
-    #scheduleFormModal .col-pcumpct{width:75px;}
-    #scheduleFormModal .sched-table input{font-size:11px;padding:6px;}
+    #scheduleFormModal .sched-form{grid-template-columns:1fr 1fr;}
+    #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr 1fr;}
+    #scheduleFormModal .sched-form > .form-actions{grid-column:1 / -1;display:flex;gap:8px;}
+    #scheduleFormModal .sched-data{display:block;overflow-x:auto;}
   }
 </style>
 <div id="scheduleFormModal" style="display:none;position:fixed;inset:0;z-index:70003;align-items:center;justify-content:center;">
     <div onclick="closeScheduleFormModal()" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);"></div>
-    <div style="position:relative;width:min(980px,96vw);max-height:92vh;background:linear-gradient(180deg,#10182f 0%,#162548 100%);border:1px solid rgba(255,255,255,0.1);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,0.6);display:flex;flex-direction:column;overflow:hidden;">
+    <div style="position:relative;width:min(1080px,96vw);max-height:92vh;background:linear-gradient(180deg,#10182f 0%,#162548 100%);border:1px solid rgba(255,255,255,0.1);border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,0.6);display:flex;flex-direction:column;overflow:hidden;">
         <div style="padding:16px 22px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1565c0,#0d47a1);">
             <div style="display:flex;align-items:center;gap:10px;min-width:0;">
                 <span style="font-size:22px;">📅</span>
                 <div style="min-width:0;">
                     <div style="font-size:16px;font-weight:900;color:white;font-family:'Cairo',sans-serif;">البرنامج الزمني</div>
-                    <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:'Cairo',sans-serif;">إدخال البنود وخطة القيم اليومية</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.75);font-family:'Cairo',sans-serif;">إدخال وتعديل البنود وخطة القيم اليومية</div>
                 </div>
             </div>
             <button onclick="closeScheduleFormModal()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0;">✕</button>
@@ -1642,47 +1637,70 @@
             <button id="schedTabPlanBtn" onclick="switchScheduleTab('plan')" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.6);font-family:'Cairo',sans-serif;font-weight:800;cursor:pointer;">📈 الخطة اليومية</button>
         </div>
         <div style="flex:1;overflow-y:auto;padding:18px 22px;">
+            <!-- ITEMS PANEL -->
             <div id="schedPanelItems">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-                    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.85);font-family:'Cairo',sans-serif;">البند • تاريخ البداية • تاريخ النهاية</div>
-                    <button onclick="addScheduleItemRow()" style="background:rgba(33,150,243,0.15);border:1px solid rgba(33,150,243,0.4);color:#90caf9;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;">＋ صف جديد</button>
+                <div id="schedItemsFormWrap" class="">
+                    <div class="edit-badge">✏️ تعديل بند موجود — اضغط حفظ لتحديثه</div>
+                    <div class="sched-form">
+                        <div>
+                            <label>البند</label>
+                            <select id="schedItemSelect">
+                                <option value="">— اختر بنداً —</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>تاريخ البداية</label>
+                            <input type="date" id="schedItemStart">
+                        </div>
+                        <div>
+                            <label>تاريخ النهاية</label>
+                            <input type="date" id="schedItemEnd">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-save" onclick="saveScheduleItem()">💾 حفظ</button>
+                            <button class="btn-cancel-edit" onclick="cancelScheduleItemEdit()">إلغاء التعديل</button>
+                        </div>
+                    </div>
                 </div>
-                <table class="sched-table">
-                    <colgroup>
-                        <col class="col-item-name"><col class="col-date"><col class="col-date"><col class="col-del">
-                    </colgroup>
+                <div class="sched-section-title">📊 البنود المحفوظة <span id="schedItemsCount" style="color:#90caf9;"></span></div>
+                <table class="sched-data">
                     <thead>
-                        <tr style="color:rgba(255,255,255,0.55);font-size:11px;text-align:right;">
-                            <th>البند</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th></th>
-                        </tr>
+                        <tr><th>البند</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>المدة (يوم)</th></tr>
                     </thead>
                     <tbody id="schedItemsBody"></tbody>
                 </table>
             </div>
+            <!-- PLAN PANEL -->
             <div id="schedPanelPlan" style="display:none;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-                    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.85);font-family:'Cairo',sans-serif;">التاريخ • القيمة • التراكمي • % يومي • % تراكمي</div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button onclick="addSchedulePlanRow()" style="background:rgba(33,150,243,0.15);border:1px solid rgba(33,150,243,0.4);color:#90caf9;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;">＋ صف يوم</button>
-                        <button onclick="recalcSchedulePlan()" style="background:rgba(58,170,92,0.15);border:1px solid rgba(58,170,92,0.4);color:#5cc890;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;">🔄 إعادة حساب</button>
+                <div id="schedPlanFormWrap" class="">
+                    <div class="edit-badge">✏️ تعديل صف موجود — اضغط حفظ لتحديثه</div>
+                    <div class="sched-form plan-form">
+                        <div>
+                            <label>التاريخ</label>
+                            <input type="date" id="schedPlanDate">
+                        </div>
+                        <div>
+                            <label>القيمة المخططة</label>
+                            <input type="number" step="0.01" id="schedPlanValue" placeholder="0">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-save" onclick="saveSchedulePlan()">💾 حفظ</button>
+                            <button class="btn-cancel-edit" onclick="cancelSchedulePlanEdit()">إلغاء التعديل</button>
+                        </div>
                     </div>
                 </div>
-                <table class="sched-table">
-                    <colgroup>
-                        <col class="col-pdate"><col class="col-pval"><col class="col-pcum"><col class="col-ppct"><col class="col-pcumpct"><col class="col-del">
-                    </colgroup>
+                <div class="sched-section-title">📊 الخطة اليومية المحفوظة <span id="schedPlanCount" style="color:#90caf9;"></span></div>
+                <table class="sched-data">
                     <thead>
-                        <tr style="color:rgba(255,255,255,0.55);font-size:11px;text-align:right;">
-                            <th>التاريخ</th><th>القيمة</th><th>تراكمي القيمة</th><th>% اليومي</th><th>% التراكمي</th><th></th>
-                        </tr>
+                        <tr><th>التاريخ</th><th>القيمة</th><th>تراكمي القيمة</th><th>% اليومي</th><th>% التراكمي</th></tr>
                     </thead>
                     <tbody id="schedPlanBody"></tbody>
                 </table>
             </div>
         </div>
-        <div style="padding:14px 22px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:10px;justify-content:flex-end;background:rgba(0,0,0,0.2);flex-wrap:wrap;">
-            <button onclick="closeScheduleFormModal()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;">إلغاء</button>
-            <button onclick="submitScheduleForm()" style="background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:white;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(33,150,243,0.35);">💾 حفظ في الشيت</button>
+        <div style="padding:14px 22px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:10px;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.2);flex-wrap:wrap;">
+            <div id="schedStatusMsg" style="font-size:11px;color:rgba(255,255,255,0.55);font-family:'Cairo',sans-serif;"></div>
+            <button onclick="closeScheduleFormModal()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;">إغلاق</button>
         </div>
     </div>
 </div>
