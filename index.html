@@ -1643,8 +1643,14 @@
                     <div class="edit-badge">✏️ تعديل بند موجود — اضغط حفظ لتحديثه</div>
                     <div class="sched-form">
                         <div>
+                            <label>رقم البند</label>
+                            <select id="schedItemNoSelect" onchange="onSchedItemNoChange()">
+                                <option value="">— اختر رقم —</option>
+                            </select>
+                        </div>
+                        <div>
                             <label>البند</label>
-                            <select id="schedItemSelect">
+                            <select id="schedItemSelect" onchange="onSchedItemDescChange()">
                                 <option value="">— اختر بنداً —</option>
                             </select>
                         </div>
@@ -1665,7 +1671,7 @@
                 <div class="sched-section-title">📊 البنود المحفوظة <span id="schedItemsCount" style="color:#90caf9;"></span></div>
                 <table class="sched-data">
                     <thead>
-                        <tr><th>البند</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>المدة (يوم)</th></tr>
+                        <tr><th>رقم البند</th><th>البند</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>المدة (يوم)</th></tr>
                     </thead>
                     <tbody id="schedItemsBody"></tbody>
                 </table>

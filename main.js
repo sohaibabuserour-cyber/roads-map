@@ -1706,27 +1706,20 @@ async function _loadBoqItems() {
         if (csv.trim().startsWith('<')) { window._boqItemsList = []; return; }
         const lines = csv.split('\n').filter(l => l.trim());
         if (!lines.length) { window._boqItemsList = []; return; }
-        const headers = parseCSVLine(lines[0]).map(h => h.trim());
-        // Choose first column that looks like description/item
-        const descKeys = ['الوصف', 'وصف البند', 'description', 'Description', 'البند', 'item', 'Item'];
-        let descIdx = -1;
-        for (const k of descKeys) {
-            const i = headers.findIndex(h => h.toLowerCase() === k.toLowerCase());
-            if (i !== -1) { descIdx = i; break; }
-        }
-        if (descIdx === -1) descIdx = headers.length > 1 ? 1 : 0;
-        const itemNoIdx = headers.findIndex(h => /رقم|item.*no|^no$|كود/i.test(h));
+        // العمود الأول = رقم البند، العمود الثاني = البند
         const items = [];
+        const seen = new Set();
         for (let i = 1; i < lines.length; i++) {
             const v = parseCSVLine(lines[i]);
-            const desc = (v[descIdx] || '').trim();
-            if (!desc) continue;
-            const no = itemNoIdx !== -1 ? (v[itemNoIdx] || '').trim() : '';
-            const label = no ? `${no} — ${desc}` : desc;
-            items.push(label);
+            const no = (v[0] || '').trim();
+            const desc = (v[1] || '').trim();
+            if (!no && !desc) continue;
+            const key = no + '||' + desc;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            items.push({ no, desc });
         }
-        // Unique
-        window._boqItemsList = [...new Set(items)];
+        window._boqItemsList = items;
     } catch (e) {
         console.warn('فشل تحميل بنود BOQ:', e);
         window._boqItemsList = [];
@@ -1734,34 +1727,75 @@ async function _loadBoqItems() {
 }
 
 function _refreshBoqDropdown() {
-    const sel = document.getElementById('schedItemSelect');
-    if (!sel) return;
-    const usedSet = new Set(
+    const selNo = document.getElementById('schedItemNoSelect');
+    const selDesc = document.getElementById('schedItemSelect');
+    if (!selNo || !selDesc) return;
+    const editingRow = window._schedEditItemRow;
+    const usedKeys = new Set(
         (window._schedItems || [])
-            .filter(it => !window._schedEditItemRow || it.row !== window._schedEditItemRow)
-            .map(it => (it.item || '').trim())
+            .filter(it => !editingRow || it.row !== editingRow)
+            .map(it => (it.itemNo || '').trim() + '||' + (it.item || '').trim())
     );
-    const currentVal = sel.value;
-    sel.innerHTML = '<option value="">— اختر بنداً —</option>';
-    (window._boqItemsList || []).forEach(name => {
-        if (usedSet.has(name)) return;
-        const o = document.createElement('option');
-        o.value = name; o.textContent = name;
-        sel.appendChild(o);
+    const prevNo = selNo.value, prevDesc = selDesc.value;
+    selNo.innerHTML = '<option value="">— اختر رقم —</option>';
+    selDesc.innerHTML = '<option value="">— اختر بنداً —</option>';
+    (window._boqItemsList || []).forEach(({ no, desc }) => {
+        if (usedKeys.has((no || '').trim() + '||' + (desc || '').trim())) return;
+        const o1 = document.createElement('option');
+        o1.value = no; o1.textContent = no || '—';
+        o1.dataset.desc = desc;
+        selNo.appendChild(o1);
+        const o2 = document.createElement('option');
+        o2.value = desc; o2.textContent = desc || '—';
+        o2.dataset.no = no;
+        selDesc.appendChild(o2);
     });
-    // If editing, ensure current item appears even if not in BOQ list
-    if (window._schedEditItemRow) {
-        const editing = (window._schedItems || []).find(i => i.row === window._schedEditItemRow);
-        if (editing && editing.item && !sel.querySelector(`option[value="${CSS.escape(editing.item)}"]`)) {
-            const o = document.createElement('option');
-            o.value = editing.item; o.textContent = editing.item + ' (مخصّص)';
-            sel.appendChild(o);
+    if (editingRow) {
+        const editing = (window._schedItems || []).find(i => i.row === editingRow);
+        if (editing) {
+            if (editing.itemNo && !selNo.querySelector(`option[value="${CSS.escape(editing.itemNo)}"]`)) {
+                const o = document.createElement('option');
+                o.value = editing.itemNo; o.textContent = editing.itemNo + ' (مخصّص)';
+                o.dataset.desc = editing.item || '';
+                selNo.appendChild(o);
+            }
+            if (editing.item && !selDesc.querySelector(`option[value="${CSS.escape(editing.item)}"]`)) {
+                const o = document.createElement('option');
+                o.value = editing.item; o.textContent = editing.item + ' (مخصّص)';
+                o.dataset.no = editing.itemNo || '';
+                selDesc.appendChild(o);
+            }
+            selNo.value = editing.itemNo || '';
+            selDesc.value = editing.item || '';
+            return;
         }
-        if (editing) sel.value = editing.item;
-    } else if (currentVal && sel.querySelector(`option[value="${CSS.escape(currentVal)}"]`)) {
-        sel.value = currentVal;
     }
+    if (prevNo && selNo.querySelector(`option[value="${CSS.escape(prevNo)}"]`)) selNo.value = prevNo;
+    if (prevDesc && selDesc.querySelector(`option[value="${CSS.escape(prevDesc)}"]`)) selDesc.value = prevDesc;
 }
+
+window.onSchedItemNoChange = function () {
+    const selNo = document.getElementById('schedItemNoSelect');
+    const selDesc = document.getElementById('schedItemSelect');
+    if (!selNo || !selDesc) return;
+    const opt = selNo.selectedOptions[0];
+    const desc = opt ? (opt.dataset.desc || '') : '';
+    if (desc && selDesc.querySelector(`option[value="${CSS.escape(desc)}"]`)) {
+        selDesc.value = desc;
+    }
+};
+
+window.onSchedItemDescChange = function () {
+    const selNo = document.getElementById('schedItemNoSelect');
+    const selDesc = document.getElementById('schedItemSelect');
+    if (!selNo || !selDesc) return;
+    const opt = selDesc.selectedOptions[0];
+    const no = opt ? (opt.dataset.no || '') : '';
+    if (no && selNo.querySelector(`option[value="${CSS.escape(no)}"]`)) {
+        selNo.value = no;
+    }
+};
+
 
 /* ──────── Open / close modal ──────── */
 window.openScheduleFormModal = async function () {
@@ -1818,6 +1852,7 @@ async function refreshScheduleData() {
     // server returns rows with header keys; normalize
     const items = (snap.items || []).map(r => ({
         row      : r._row || r.row,
+        itemNo   : String(r['رقم البند'] || r.itemNo || ''),
         item     : r['البند'] || r.item || '',
         startDate: _normDateInput(r['تاريخ البداية'] || r.startDate),
         endDate  : _normDateInput(r['تاريخ النهاية'] || r.endDate),
@@ -1852,11 +1887,12 @@ function _renderItemsTable() {
     if (!tb) return;
     if (cnt) cnt.textContent = window._schedItems.length ? `(${window._schedItems.length})` : '';
     if (!window._schedItems.length) {
-        tb.innerHTML = '<tr><td colspan="4" class="sched-empty">لا توجد بنود محفوظة</td></tr>';
+        tb.innerHTML = '<tr><td colspan="5" class="sched-empty">لا توجد بنود محفوظة</td></tr>';
         return;
     }
     tb.innerHTML = window._schedItems.map(it => `
         <tr data-row="${it.row}" onclick="loadScheduleItemForEdit(${it.row})" class="${window._schedEditItemRow === it.row ? 'active-edit' : ''}">
+            <td>${_esc(it.itemNo)}</td>
             <td>${_esc(it.item)}</td>
             <td>${_esc(it.startDate)}</td>
             <td>${_esc(it.endDate)}</td>
@@ -1912,8 +1948,10 @@ window.loadScheduleItemForEdit = function (row) {
     window._schedEditItemRow = row;
     document.getElementById('schedItemsFormWrap').classList.add('edit-mode');
     _refreshBoqDropdown();
+    const selNo = document.getElementById('schedItemNoSelect');
     const sel = document.getElementById('schedItemSelect');
-    if (sel) sel.value = it.item;
+    if (selNo) selNo.value = it.itemNo || '';
+    if (sel) sel.value = it.item || '';
     document.getElementById('schedItemStart').value = it.startDate || '';
     document.getElementById('schedItemEnd').value = it.endDate || '';
     _renderItemsTable();
@@ -1929,6 +1967,8 @@ window.cancelScheduleItemEdit = function () {
 };
 
 function _resetItemForm() {
+    const selNo = document.getElementById('schedItemNoSelect');
+    if (selNo) selNo.value = '';
     const sel = document.getElementById('schedItemSelect');
     if (sel) sel.value = '';
     const s = document.getElementById('schedItemStart');
@@ -1937,6 +1977,7 @@ function _resetItemForm() {
 }
 
 window.saveScheduleItem = async function () {
+    const itemNo = document.getElementById('schedItemNoSelect')?.value || '';
     const item = document.getElementById('schedItemSelect')?.value || '';
     const startDate = document.getElementById('schedItemStart')?.value || '';
     const endDate = document.getElementById('schedItemEnd')?.value || '';
@@ -1948,9 +1989,9 @@ window.saveScheduleItem = async function () {
     try {
         const user = _schedCurrentUser();
         if (window._schedEditItemRow) {
-            await _schedPost({ action: 'updateScheduleItem', row: window._schedEditItemRow, item, startDate, endDate, user });
+            await _schedPost({ action: 'updateScheduleItem', row: window._schedEditItemRow, itemNo, item, startDate, endDate, user });
         } else {
-            await _schedPost({ action: 'addScheduleItem', item, startDate, endDate, user });
+            await _schedPost({ action: 'addScheduleItem', itemNo, item, startDate, endDate, user });
         }
         window._schedEditItemRow = null;
         document.getElementById('schedItemsFormWrap').classList.remove('edit-mode');
