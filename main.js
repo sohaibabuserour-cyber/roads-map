@@ -1997,6 +1997,7 @@ function _renderBOQTable(){
             <th>الكمية التعاقدية</th>
             ${revHeads}
             <th>الإجمالي</th>
+            <th class="col-actions">حذف</th>
         </tr>`;
     }
 
@@ -2005,7 +2006,7 @@ function _renderBOQTable(){
         : `(${items.length} / ${all.length})`;
     if (cnt) cnt.textContent = totalLbl;
 
-    const colspan = 6 + maxRev; // 5 ثابتة + إجمالي + maxRev
+    const colspan = 7 + maxRev; // 5 ثابتة + إجمالي + حذف + maxRev
     if (!items.length) {
         tb.innerHTML = '<tr><td colspan="' + colspan + '" class="boq-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة — أضف بنداً أو ارفع ملف CSV') + '</td></tr>';
         return;
@@ -2037,6 +2038,7 @@ function _renderBOQTable(){
             <td>${_boqFmt(it.contractQty)}</td>
             ${revCells.join('')}
             <td style="color:#f5c842;font-weight:700;">${_boqFmt(total)}</td>
+            <td class="col-actions"><button type="button" class="row-del-btn" title="حذف البند" onclick="event.stopPropagation();deleteBOQItem(${it.row}, ${JSON.stringify(it.itemNo||'').replace(/"/g,'&quot;')})">🗑</button></td>
         </tr>`;
     }).join('');
 }
@@ -2462,7 +2464,8 @@ async function _loadBoqItems() {
         const seen = new Set();
         for (let i = 1; i < lines.length; i++) {
             const v = parseCSVLine(lines[i]);
-            const no = (v[0] || '').trim();
+            const noRaw = (v[0] || '').trim();
+            const no = (typeof _normItemNo === 'function') ? _normItemNo(noRaw) : noRaw;
             const desc = (v[1] || '').trim();
             if (!no && !desc) continue;
             const key = no + '||' + desc;
@@ -2775,7 +2778,7 @@ function _renderItemsTable() {
     if (cnt) cnt.textContent = lbl;
 
     if (!items.length) {
-        tb.innerHTML = '<tr><td colspan="5" class="sched-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة') + '</td></tr>';
+        tb.innerHTML = '<tr><td colspan="6" class="sched-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة') + '</td></tr>';
         return;
     }
     tb.innerHTML = items.map(it => `
@@ -2785,6 +2788,7 @@ function _renderItemsTable() {
             <td>${_esc(it.startDate)}</td>
             <td>${_esc(it.endDate)}</td>
             <td>${_esc(it.days)}</td>
+            <td class="col-actions"><button type="button" class="row-del-btn" title="حذف الصف" onclick="event.stopPropagation();deleteScheduleItem(${it.row})">🗑</button></td>
         </tr>
     `).join('');
 }
@@ -2809,7 +2813,7 @@ function _renderPlanTable() {
     if (cnt) cnt.textContent = lbl;
 
     if (!plan.length) {
-        tb.innerHTML = '<tr><td colspan="5" class="sched-empty">' + (all.length ? 'لا توجد صفوف مطابقة للفلتر' : 'لا توجد صفوف خطة محفوظة') + '</td></tr>';
+        tb.innerHTML = '<tr><td colspan="6" class="sched-empty">' + (all.length ? 'لا توجد صفوف مطابقة للفلتر' : 'لا توجد صفوف خطة محفوظة') + '</td></tr>';
         return;
     }
     const fmt = n => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -2820,6 +2824,7 @@ function _renderPlanTable() {
             <td>${fmt(p.cumValue)}</td>
             <td>${Number(p.dailyPct || 0).toFixed(2)}%</td>
             <td>${Number(p.cumPct || 0).toFixed(2)}%</td>
+            <td class="col-actions"><button type="button" class="row-del-btn" title="حذف الصف" onclick="event.stopPropagation();deleteSchedulePlan(${p.row})">🗑</button></td>
         </tr>
     `).join('');
 }
@@ -3155,6 +3160,35 @@ window.importScheduleItemsFromFile = async function (inputEl) {
             LV.hideOverlay();
             _schedToast(`✅ تم رفع ${ok2} بند${fail2 ? ' — فشل ' + fail2 : ''}`, fail2 ? 'warning' : 'success');
         };
+
+        // ──────── BOQ validation: ensure every itemNo exists in جدول الكميات ────────
+        // نتأكد إن قائمة BOQ متحملة (قد تكون فاضية لو الشيت متحملش بعد)
+        try { if (typeof _loadBoqItems === 'function' && !(window._boqItemsList && window._boqItemsList.length)) await _loadBoqItems(); } catch(_){}
+        const boqNoSet = new Set((window._boqItemsList || []).map(b => _normItemNo(String(b.no||'').trim())).filter(Boolean));
+        if (boqNoSet.size && toAdd.length){
+            const okList = [];
+            const missingList = [];
+            toAdd.forEach(p => {
+                if (boqNoSet.has(_normItemNo(p.itemNo))) okList.push(p);
+                else missingList.push(p);
+            });
+            if (missingList.length){
+                // اعرض مودال يطلب من المستخدم اختيار رقم بند بديل لكل صف، أو تجاوز
+                const remapped = await _schedShowMissingBOQ(missingList, window._boqItemsList || []);
+                // remapped: { confirmed: [payload...], skipped: [payload...] }
+                if (remapped && Array.isArray(remapped.confirmed)){
+                    // أضف الصفوف التى أكدها المستخدم
+                    remapped.confirmed.forEach(p => okList.push(p));
+                }
+                if (remapped && Array.isArray(remapped.skipped)){
+                    remapped.skipped.forEach(p => skipped.push({ row: '—', itemNo: p.itemNo, item: p.item, reason: 'رقم البند غير موجود فى جدول الكميات — تم تخطيه' }));
+                }
+            }
+            // استبدل toAdd بالقائمة المصفّاة
+            toAdd.length = 0;
+            okList.forEach(p => toAdd.push(p));
+        }
+
         if (!toAdd.length) {
             _schedSetStatus('⚠️ لا توجد صفوف صالحة للإضافة (تم تخطي ' + skipped.length + ')');
             if (skipped.length) LV.showSkipped('صفوف تم تخطيها أثناء رفع بنود البرنامج الزمني', skipped, { onAddSelected: retryItems });
@@ -3346,3 +3380,148 @@ window.importSchedulePlanFromFile = async function (inputEl) {
     document.addEventListener('DOMContentLoaded', () => setTimeout(wireAll, 200));
     setTimeout(wireAll, 1000);
 })();
+
+/* ============================================================
+   NEW: حذف صفوف من جدول الكميات / البرنامج الزمني
+   + مودال إعادة تعيين رقم البند للصفوف غير الموجودة فى BOQ
+   ============================================================ */
+
+window.deleteBOQItem = async function(row, itemNo){
+    if (!row) return;
+    const ok = confirm(`هل أنت متأكد من حذف البند رقم "${itemNo||''}" من جدول الكميات؟\nهذا الإجراء لا يمكن التراجع عنه.`);
+    if (!ok) return;
+    const url = _boqScriptUrl();
+    if (!url) { (window.showAlert||alert)('⚠️ أضف رابط سكريبت جدول الكميات فى الإعدادات'); return; }
+    LV.showOverlay('جارى حذف البند...', 'يتم إرسال الطلب إلى الشيت');
+    LV.updateOverlay(0, 1);
+    try {
+        const res = await fetch(url, {
+            method:'POST', redirect:'follow',
+            headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body: JSON.stringify({
+                action: 'deleteBOQ', row: row,
+                user: (window.currentUser && (currentUser.name||currentUser.email)) || ''
+            })
+        });
+        const t = await res.text();
+        let rr; try{ rr=JSON.parse(t); }catch(_){ throw new Error('استجابة غير صالحة: ' + t.slice(0,200)); }
+        if (!rr || !rr.success) throw new Error((rr && rr.message) || 'فشل الحذف');
+        LV.updateOverlay(1, 1, 'تم — جارى تحديث الجدول...');
+        await refreshBOQData();
+        LV.hideOverlay();
+        (window.showAlert||alert)('✅ تم حذف البند');
+    } catch(e){
+        LV.hideOverlay();
+        (window.showAlert||alert)('❌ ' + e.message);
+    }
+};
+
+window.deleteScheduleItem = async function(row){
+    if (!row) return;
+    if (!confirm('هل أنت متأكد من حذف هذا البند من البرنامج الزمنى؟')) return;
+    LV.showOverlay('جارى حذف البند...', '');
+    try {
+        await _schedPost({ action:'deleteScheduleItem', row: row, user: _schedCurrentUser() });
+        LV.setOverlayMsg('جارى تحديث الجدول...');
+        await refreshScheduleData();
+        LV.hideOverlay();
+        _schedToast('✅ تم حذف البند', 'success');
+    } catch(e){
+        LV.hideOverlay();
+        (window.showAlert||alert)('❌ ' + (e.message||'فشل الحذف'));
+    }
+};
+
+window.deleteSchedulePlan = async function(row){
+    if (!row) return;
+    if (!confirm('هل أنت متأكد من حذف هذا الصف من الخطة اليومية؟\nسيتم إعادة حساب التراكمى تلقائياً.')) return;
+    LV.showOverlay('جارى حذف الصف...', '');
+    try {
+        await _schedPost({ action:'deleteSchedulePlan', row: row, user: _schedCurrentUser() });
+        LV.setOverlayMsg('إعادة حساب التراكمى...');
+        try { await _schedPost({ action:'recalcSchedulePlan', user: _schedCurrentUser() }); } catch(_){}
+        LV.setOverlayMsg('جارى تحديث الجدول...');
+        await refreshScheduleData();
+        LV.hideOverlay();
+        _schedToast('✅ تم حذف الصف', 'success');
+    } catch(e){
+        LV.hideOverlay();
+        (window.showAlert||alert)('❌ ' + (e.message||'فشل الحذف'));
+    }
+};
+
+/* مودال: الصفوف اللى رقم بندها غير موجود فى جدول الكميات
+   يسمح بإعادة تعيين رقم البند من قائمة موجودة، أو تخطّى الصف. */
+async function _schedShowMissingBOQ(missingPayloads, boqList){
+    return new Promise(resolve => {
+        const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        // اجمع قائمة فريدة من أرقام البنود فى BOQ
+        const boqOptions = (boqList||[])
+            .map(b => ({ no: String(b.no||'').trim(), desc: String(b.desc||'').trim() }))
+            .filter(b => b.no);
+
+        const id = 'missingBoqModal_' + Date.now();
+        const wrap = document.createElement('div');
+        wrap.id = id;
+        wrap.style.cssText = 'position:fixed;inset:0;z-index:2147483640;display:flex;align-items:center;justify-content:center;background:rgba(5,8,16,0.78);backdrop-filter:blur(4px);font-family:Cairo,sans-serif;direction:rtl;';
+        wrap.innerHTML = `
+          <div style="background:linear-gradient(180deg,#10182f,#162548);border:1px solid rgba(255,200,80,0.35);border-radius:14px;width:min(900px,96vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 70px rgba(0,0,0,0.7);overflow:hidden;">
+            <div style="padding:14px 20px;background:linear-gradient(135deg,#b76a00,#ff9800);color:#fff;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:15px;font-weight:900;">⚠️ بنود غير موجودة فى جدول الكميات</div>
+                <div style="font-size:11px;opacity:0.9;margin-top:3px;">عدد الصفوف: <b>${missingPayloads.length}</b> — اختر لكل صف رقم بند بديل من جدول الكميات، أو اضغط "تخطّى" لإهمال الصف</div>
+              </div>
+              <button id="${id}_x" style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.2);color:#fff;width:30px;height:30px;border-radius:7px;cursor:pointer;">✕</button>
+            </div>
+            <div style="flex:1;overflow:auto;padding:14px 18px;">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;color:#e0e6ef;">
+                <thead>
+                  <tr style="background:#13234a;color:rgba(255,255,255,0.7);">
+                    <th style="padding:8px;text-align:right;">#</th>
+                    <th style="padding:8px;text-align:right;">رقم البند (من الملف)</th>
+                    <th style="padding:8px;text-align:right;">البند</th>
+                    <th style="padding:8px;text-align:right;">رقم بند بديل من جدول الكميات</th>
+                  </tr>
+                </thead>
+                <tbody id="${id}_body">
+                  ${missingPayloads.map((p,i)=>`
+                    <tr data-idx="${i}" style="border-top:1px solid rgba(255,255,255,0.06);">
+                      <td style="padding:8px;color:#90caf9;font-weight:700;">${i+1}</td>
+                      <td style="padding:8px;color:#ff8a80;font-weight:700;">${esc(p.itemNo||'—')}</td>
+                      <td style="padding:8px;">${esc(p.item||'')}</td>
+                      <td style="padding:8px;">
+                        <select class="mb-remap" data-idx="${i}" style="width:100%;padding:7px;border-radius:6px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.18);font-family:Cairo,sans-serif;font-size:12px;">
+                          <option value="__skip__">— تخطّى هذا الصف —</option>
+                          ${boqOptions.map(b => `<option value="${esc(b.no)}">${esc(b.no)} — ${esc(b.desc).slice(0,80)}</option>`).join('')}
+                        </select>
+                      </td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+            <div style="padding:12px 18px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:10px;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.25);flex-wrap:wrap;">
+              <div style="font-size:11px;color:rgba(255,255,255,0.55);">يمكنك ترك الاختيار "تخطّى" لإهمال الصف.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button id="${id}_skipAll" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);color:#fff;padding:9px 14px;border-radius:8px;font-family:Cairo,sans-serif;font-weight:700;cursor:pointer;">⏭️ تخطّى الكل</button>
+                <button id="${id}_confirm" style="background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:#fff;padding:9px 18px;border-radius:8px;font-family:Cairo,sans-serif;font-weight:800;cursor:pointer;">✔ تأكيد ومتابعة الرفع</button>
+              </div>
+            </div>
+          </div>`;
+        document.body.appendChild(wrap);
+
+        const close = (result) => { try { wrap.remove(); } catch(_){} resolve(result); };
+        wrap.querySelector('#'+id+'_x').onclick = () => close({ confirmed: [], skipped: missingPayloads });
+        wrap.querySelector('#'+id+'_skipAll').onclick = () => close({ confirmed: [], skipped: missingPayloads });
+        wrap.querySelector('#'+id+'_confirm').onclick = () => {
+            const confirmed = [];
+            const skipped = [];
+            missingPayloads.forEach((p, i) => {
+                const sel = wrap.querySelector(`.mb-remap[data-idx="${i}"]`);
+                const v = sel ? sel.value : '__skip__';
+                if (!v || v === '__skip__') { skipped.push(p); return; }
+                confirmed.push(Object.assign({}, p, { itemNo: _normItemNo(v) }));
+            });
+            close({ confirmed, skipped });
+        };
+    });
+}
