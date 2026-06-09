@@ -1881,7 +1881,7 @@ window.refreshBOQData = async function () {
         const lines = csv.split(/\r?\n/).filter(l => l.trim());
         for (let i = 1; i < lines.length; i++) {
             const v = parseCSVLine(lines[i]);
-            const no = (v[0]||'').trim(), desc = (v[1]||'').trim();
+            const no = _normItemNo((v[0]||'').trim()), desc = (v[1]||'').trim();
             if (!no && !desc) continue;
             items.push({
                 row: i + 1,
@@ -1897,6 +1897,31 @@ window.refreshBOQData = async function () {
     window._boqItems = items;
     _renderBOQTable();
 };
+
+/* Normalize item numbers:
+   "1.10" → "1.1"   |   "1.00" → "1"   |   "1.0" → "1"   |   "01" → "1"
+   - Only applies when the numeric part is a single-dot decimal (1.x) or plain integer.
+   - Multi-segment hierarchies like "1.10.20" are left untouched.
+   - Any non-digit trailing marker (e.g. "*", "**", letters) is preserved verbatim,
+     so re-added duplicates keep their disambiguation suffix. */
+function _normItemNo(s){
+    let str = (s == null ? '' : String(s)).trim();
+    if (!str) return '';
+    const m = str.match(/^([0-9.\-_/\s]+)(.*)$/);
+    if (!m) return str;
+    let core = m[1].trim();
+    const suffix = m[2] || '';
+    if (/^\d+\.\d+$/.test(core)){
+        core = String(parseFloat(core));        // "1.10" → "1.1"
+    } else if (/^\d+\.0*$/.test(core)){
+        core = core.replace(/\.0*$/, '');       // "1.0" / "1.00" → "1"
+    } else if (/^0+\d+$/.test(core)){
+        core = String(parseInt(core, 10));      // "01" → "1"
+    }
+    return core + suffix;
+}
+
+
 
 function _cmpItemNo(a, b){
     const sa = String(a == null ? '' : a).trim();
@@ -2056,7 +2081,7 @@ window.loadBOQItemForEdit = function (row) {
 
 /* ──────── Save (add / update) ──────── */
 window.saveBOQItem = async function () {
-    const itemNo      = (document.getElementById('boqItemNo')?.value || '').trim();
+    const itemNo      = _normItemNo((document.getElementById('boqItemNo')?.value || '').trim());
     const desc        = (document.getElementById('boqDesc')?.value || '').trim();
     const unit        = (document.getElementById('boqUnit')?.value || '').trim();
     const price       = (document.getElementById('boqPrice')?.value || '').trim();
@@ -2138,7 +2163,7 @@ function _boqParseDelimited(text){
 function _boqBuildPayloadFromRow(r){
     const payload = {
         action: 'addBOQ',
-        itemNo: (r[0]||'').trim(),
+        itemNo: _normItemNo((r[0]||'').trim()),
         description: (r[1]||'').trim(),
         unit: (r[2]||'').trim(),
         price: (r[3]||'').trim(),
@@ -2235,7 +2260,7 @@ window.importBOQFromFile = async function (inputEl) {
         const missingItemNo = [];  // rows without itemNo — never sent
         for (let i = start; i < rows.length; i++) {
             const r = rows[i];
-            const itemNo = (r[0]||'').trim();
+            const itemNo = _normItemNo((r[0]||'').trim());
             const desc   = (r[1]||'').trim();
             if (!itemNo) {
                 missingItemNo.push({ row: i + 1, itemNo, description: desc, reason: 'رقم البند مفقود' });
@@ -2283,9 +2308,22 @@ window.importBOQFromFile = async function (inputEl) {
                 allSkipped,
                 {
                     onAddSelected: async (selectedRows) => {
+                        // When re-adding skipped rows, if their itemNo collides with an
+                        // already-uploaded item, append "*" markers to keep them distinct.
+                        const existingNos = new Set(
+                            (window._boqItems || []).map(it => String(it.itemNo || '').trim())
+                        );
                         const retryItems = selectedRows
                             .filter(r => r.__payload)
-                            .map(r => { const p = Object.assign({}, r.__payload); p.__row = r.row; return p; });
+                            .map(r => {
+                                const p = Object.assign({}, r.__payload);
+                                let no = _normItemNo(p.itemNo || '');
+                                while (existingNos.has(no)) no = no + '*';
+                                existingNos.add(no);
+                                p.itemNo = no;
+                                p.__row = r.row;
+                                return p;
+                            });
                         const dropped = selectedRows.length - retryItems.length;
                         if (!retryItems.length){
                             (window.showAlert || alert)('⚠️ الصفوف المحددة بياناتها ناقصة ولا يمكن إضافتها');
@@ -2682,7 +2720,7 @@ async function refreshScheduleData() {
     // server returns rows with header keys; normalize
     const items = (snap.items || []).map(r => ({
         row      : r._row || r.row,
-        itemNo   : String(r['رقم البند'] || r.itemNo || ''),
+        itemNo   : _normItemNo(String(r['رقم البند'] || r.itemNo || '')),
         item     : r['البند'] || r.item || '',
         startDate: _normDateInput(r['تاريخ البداية'] || r.startDate),
         endDate  : _normDateInput(r['تاريخ النهاية'] || r.endDate),
@@ -2850,7 +2888,7 @@ function _resetItemForm() {
 }
 
 window.saveScheduleItem = async function () {
-    const itemNo = document.getElementById('schedItemNoSelect')?.value || '';
+    const itemNo = _normItemNo(document.getElementById('schedItemNoSelect')?.value || '');
     const item = document.getElementById('schedItemSelect')?.value || '';
     const startDate = document.getElementById('schedItemStart')?.value || '';
     const endDate = document.getElementById('schedItemEnd')?.value || '';
@@ -3080,7 +3118,7 @@ window.importScheduleItemsFromFile = async function (inputEl) {
         const skipped = [];
         for (let i = startIdx; i < rows.length; i++) {
             const r = rows[i];
-            const itemNo = _schedCleanCell(r[0]);
+            const itemNo = _normItemNo(_schedCleanCell(r[0]));
             const item = _schedCleanCell(r[1]);
             const startDate = _normDateInput(_schedCleanCell(r[2]));
             const endDate = _normDateInput(_schedCleanCell(r[3]));
