@@ -1,4 +1,91 @@
 /* ====================================================
+   GLOBAL LOADING OVERLAY (يمنع التفاعل أثناء الحفظ/الرفع)
+   ==================================================== */
+(function(){
+    function injectStyle(){
+        if (document.getElementById('lvOverlayStyle')) return;
+        const s = document.createElement('style');
+        s.id = 'lvOverlayStyle';
+        s.textContent = `
+            #lvOverlay{position:fixed;inset:0;background:rgba(5,8,16,0.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:2147483600;display:none;align-items:center;justify-content:center;font-family:'Cairo','Tajawal',sans-serif;direction:rtl;}
+            #lvOverlay.show{display:flex;}
+            #lvOverlay .lv-ov-box{background:linear-gradient(145deg,#1c2235,#0e1422);border:1px solid rgba(245,200,66,0.35);border-radius:16px;padding:30px 38px;min-width:340px;max-width:92vw;box-shadow:0 25px 70px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04) inset;text-align:center;color:#fff;}
+            #lvOverlay .lv-ov-spinner{width:54px;height:54px;border:4px solid rgba(245,200,66,0.20);border-top-color:#f5c842;border-radius:50%;margin:0 auto 16px;animation:lvOvSpin 0.9s linear infinite;}
+            #lvOverlay .lv-ov-title{font-size:18px;font-weight:900;margin-bottom:6px;color:#fff;}
+            #lvOverlay .lv-ov-msg{font-size:13px;color:rgba(255,255,255,0.78);margin-bottom:14px;min-height:18px;}
+            #lvOverlay .lv-ov-bar{height:9px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden;margin-bottom:10px;border:1px solid rgba(255,255,255,0.05);}
+            #lvOverlay .lv-ov-bar > div{height:100%;background:linear-gradient(90deg,#f5c842,#ffd968);width:0%;transition:width .25s ease;border-radius:5px;}
+            #lvOverlay .lv-ov-count{font-size:13px;font-weight:700;color:#f5c842;direction:ltr;letter-spacing:0.3px;}
+            #lvOverlay .lv-ov-note{font-size:11px;color:rgba(255,255,255,0.5);margin-top:8px;}
+            @keyframes lvOvSpin{to{transform:rotate(360deg);}}
+        `;
+        document.head.appendChild(s);
+    }
+    function ensure(){
+        injectStyle();
+        let el = document.getElementById('lvOverlay');
+        if (el) return el;
+        el = document.createElement('div');
+        el.id = 'lvOverlay';
+        el.setAttribute('aria-live', 'polite');
+        el.setAttribute('aria-busy', 'true');
+        el.innerHTML = `
+            <div class="lv-ov-box" role="dialog" aria-modal="true">
+                <div class="lv-ov-spinner"></div>
+                <div id="lvOvTitle" class="lv-ov-title">جاري المعالجة...</div>
+                <div id="lvOvMsg" class="lv-ov-msg"></div>
+                <div class="lv-ov-bar"><div id="lvOvBarFill"></div></div>
+                <div id="lvOvCount" class="lv-ov-count"></div>
+                <div class="lv-ov-note">⚠️ من فضلك انتظر حتى انتهاء العملية</div>
+            </div>`;
+        // block clicks/keys while open
+        el.addEventListener('click', e => e.stopPropagation(), true);
+        document.body.appendChild(el);
+        return el;
+    }
+    let _keyBlocker = null;
+    window.LV = window.LV || {};
+    window.LV.showOverlay = function(title, msg){
+        const el = ensure();
+        document.getElementById('lvOvTitle').textContent = title || 'جاري الحفظ...';
+        document.getElementById('lvOvMsg').textContent = msg || '';
+        document.getElementById('lvOvCount').textContent = '';
+        document.getElementById('lvOvBarFill').style.width = '0%';
+        el.classList.add('show');
+        document.documentElement.style.overflow = 'hidden';
+        if (!_keyBlocker){
+            _keyBlocker = function(e){
+                if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); }
+            };
+            document.addEventListener('keydown', _keyBlocker, true);
+        }
+    };
+    window.LV.updateOverlay = function(done, total, msg){
+        const t = Math.max(1, Number(total) || 0);
+        const d = Math.min(t, Math.max(0, Number(done) || 0));
+        const pct = Math.round((d / t) * 100);
+        const bar = document.getElementById('lvOvBarFill'); if (bar) bar.style.width = pct + '%';
+        const cnt = document.getElementById('lvOvCount');
+        if (cnt) cnt.textContent = `تم ${d} من أصل ${t}  (${pct}%)`;
+        if (msg !== undefined){
+            const m = document.getElementById('lvOvMsg'); if (m) m.textContent = msg;
+        }
+    };
+    window.LV.setOverlayMsg = function(msg){
+        const m = document.getElementById('lvOvMsg'); if (m) m.textContent = msg || '';
+    };
+    window.LV.setOverlayTitle = function(title){
+        const t = document.getElementById('lvOvTitle'); if (t) t.textContent = title || '';
+    };
+    window.LV.hideOverlay = function(){
+        const el = document.getElementById('lvOverlay');
+        if (el) el.classList.remove('show');
+        document.documentElement.style.overflow = '';
+        if (_keyBlocker){ document.removeEventListener('keydown', _keyBlocker, true); _keyBlocker = null; }
+    };
+})();
+
+/* ====================================================
    CONSTANTS & STATE
    (الثوابت والـ URLs مُعرَّفة في config.js)
    ==================================================== */
@@ -1651,6 +1738,31 @@ window.refreshBOQData = async function () {
     _renderBOQTable();
 };
 
+function _cmpItemNo(a, b){
+    const sa = String(a == null ? '' : a).trim();
+    const sb = String(b == null ? '' : b).trim();
+    const pa = sa.split(/[.\-_/\s]+/).map(s => { const n = parseFloat(s); return (s !== '' && !isNaN(n)) ? n : s; });
+    const pb = sb.split(/[.\-_/\s]+/).map(s => { const n = parseFloat(s); return (s !== '' && !isNaN(n)) ? n : s; });
+    const n = Math.max(pa.length, pb.length);
+    for (let i = 0; i < n; i++){
+        const x = pa[i], y = pb[i];
+        if (x === undefined) return -1;
+        if (y === undefined) return 1;
+        if (typeof x === 'number' && typeof y === 'number'){ if (x !== y) return x - y; }
+        else { const r = String(x).localeCompare(String(y), 'ar', { numeric: true }); if (r) return r; }
+    }
+    return 0;
+}
+
+function _lastRevisedQty(it){
+    const arr = Array.isArray(it && it.revised) ? it.revised : [];
+    for (let i = arr.length - 1; i >= 0; i--){
+        const v = String(arr[i] == null ? '' : arr[i]).trim();
+        if (v !== '') return v;
+    }
+    return '';
+}
+
 function _renderBOQTable(){
     const tb = document.getElementById('boqItemsBody');
     const cnt = document.getElementById('boqItemsCount');
@@ -1672,7 +1784,7 @@ function _renderBOQTable(){
         match(it.unit, fUnit) &&
         matchNum(it.price, fPrice) &&
         matchNum(it.contractQty, fQty)
-    );
+    ).slice().sort((a, b) => _cmpItemNo(a.itemNo, b.itemNo));
 
     const totalLbl = items.length === all.length
         ? (all.length ? `(${all.length})` : '')
@@ -1680,13 +1792,19 @@ function _renderBOQTable(){
     if (cnt) cnt.textContent = totalLbl;
 
     if (!items.length) {
-        tb.innerHTML = '<tr><td colspan="6" class="boq-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة — أضف بنداً أو ارفع ملف CSV') + '</td></tr>';
+        tb.innerHTML = '<tr><td colspan="7" class="boq-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة — أضف بنداً أو ارفع ملف CSV') + '</td></tr>';
         return;
     }
     tb.innerHTML = items.map(it => {
         const price = Number(String(it.price||'').replace(/,/g,'')) || 0;
-        const qty   = Number(String(it.contractQty||'').replace(/,/g,'')) || 0;
-        const total = price * qty;
+        const contractQty = Number(String(it.contractQty||'').replace(/,/g,'')) || 0;
+        const lastRevStr = _lastRevisedQty(it);
+        const lastRev = lastRevStr !== '' ? (Number(String(lastRevStr).replace(/,/g,'')) || 0) : null;
+        const qtyForTotal = lastRev != null ? lastRev : contractQty;
+        const total = price * qtyForTotal;
+        const revCell = lastRevStr !== ''
+            ? `<span style="color:#7fd1ff;font-weight:700;">${_boqFmt(lastRevStr)}</span>`
+            : `<span style="color:rgba(255,255,255,0.35);">—</span>`;
         return `
         <tr data-row="${it.row}" onclick="loadBOQItemForEdit(${it.row})" class="${window._boqEditRow === it.row ? 'active-edit' : ''}">
             <td>${_boqEsc(it.itemNo)}</td>
@@ -1694,6 +1812,7 @@ function _renderBOQTable(){
             <td>${_boqEsc(it.unit)}</td>
             <td>${_boqFmt(it.price)}</td>
             <td>${_boqFmt(it.contractQty)}</td>
+            <td>${revCell}</td>
             <td style="color:#f5c842;font-weight:700;">${_boqFmt(total)}</td>
         </tr>`;
     }).join('');
@@ -1782,6 +1901,8 @@ window.saveBOQItem = async function () {
     };
 
     _boqSetStatus('⏳ جاري الحفظ...');
+    LV.showOverlay(window._boqEditRow ? 'جاري تحديث البند...' : 'جاري حفظ البند...', 'يتم إرسال البيانات إلى الشيت');
+    LV.updateOverlay(0, 1);
     try {
         const res = await fetch(url, {
             method: 'POST', redirect: 'follow',
@@ -1791,13 +1912,16 @@ window.saveBOQItem = async function () {
         const text = await res.text();
         let result; try { result = JSON.parse(text); } catch(_){ throw new Error('استجابة غير صالحة: ' + text.slice(0,200)); }
         if (!result || !result.success) throw new Error((result && result.message) || 'فشل الحفظ');
+        LV.updateOverlay(1, 1, 'تم — جاري تحديث الجدول...');
         _boqSetStatus('✅ تم الحفظ');
-        (window.showAlert || alert)('✅ ' + (result.message || 'تم الحفظ'));
         cancelBOQEdit();
         await refreshBOQData();
+        LV.hideOverlay();
+        (window.showAlert || alert)('✅ ' + (result.message || 'تم الحفظ'));
     } catch (e) {
         console.error(e);
         _boqSetStatus('❌ ' + e.message);
+        LV.hideOverlay();
         (window.showAlert || alert)('❌ ' + e.message);
     }
 };
@@ -1831,14 +1955,18 @@ window.importBOQFromFile = async function (inputEl) {
         const existing = new Set((window._boqItems||[]).map(it => (it.itemNo||'').trim() + '||' + (it.description||'').trim()));
         const seen = new Set();
         let added = 0, skipped = 0;
-        _boqSetStatus(`⏳ جاري رفع ${rows.length - start} صف...`);
+        const totalRows = rows.length - start;
+        _boqSetStatus(`⏳ جاري رفع ${totalRows} صف...`);
+        LV.showOverlay('جاري رفع بنود جدول الكميات...', `إجمالي الصفوف: ${totalRows}`);
+        LV.updateOverlay(0, Math.max(1, totalRows));
         for (let i = start; i < rows.length; i++) {
             const r = rows[i];
             const itemNo = (r[0]||'').trim();
             const desc   = (r[1]||'').trim();
-            if (!itemNo || !desc) { skipped++; continue; }
+            const processed = (i - start) + 1;
+            if (!itemNo || !desc) { skipped++; LV.updateOverlay(processed, totalRows, `تم رفع ${added} — تخطى ${skipped}`); continue; }
             const k = itemNo + '||' + desc;
-            if (existing.has(k) || seen.has(k)) { skipped++; continue; }
+            if (existing.has(k) || seen.has(k)) { skipped++; LV.updateOverlay(processed, totalRows, `تم رفع ${added} — تخطى ${skipped}`); continue; }
             seen.add(k);
             const payload = {
                 action: 'addBOQ',
@@ -1864,15 +1992,19 @@ window.importBOQFromFile = async function (inputEl) {
                 let rr; try{ rr=JSON.parse(t); }catch(_){ rr=null; }
                 if (rr && rr.success) added++; else skipped++;
             } catch(_){ skipped++; }
-            if (i % 5 === 0) _boqSetStatus(`⏳ تم رفع ${added}/${rows.length - start}...`);
+            LV.updateOverlay(processed, totalRows, `تم رفع ${added} — تخطى ${skipped}`);
+            if (i % 5 === 0) _boqSetStatus(`⏳ تم رفع ${added}/${totalRows}...`);
         }
         inputEl.value = '';
+        LV.setOverlayMsg('جاري تحديث الجدول...');
         _boqSetStatus(`✅ تم رفع ${added} بند — تخطّى ${skipped}`);
-        (window.showAlert || alert)(`✅ تم رفع ${added} بند — تخطّى ${skipped}`);
         await refreshBOQData();
+        LV.hideOverlay();
+        (window.showAlert || alert)(`✅ تم رفع ${added} بند — تخطّى ${skipped}`);
     } catch (e) {
         console.error(e);
         _boqSetStatus('❌ ' + e.message);
+        LV.hideOverlay();
         (window.showAlert || alert)('❌ ' + e.message);
     }
 };
@@ -2218,7 +2350,7 @@ function _renderItemsTable() {
         match(it.item, fItem) &&
         (!fStart || String(it.startDate||'') === fStart) &&
         (!fEnd   || String(it.endDate||'')   === fEnd)
-    );
+    ).slice().sort((a, b) => (typeof _cmpItemNo === 'function') ? _cmpItemNo(a.itemNo, b.itemNo) : String(a.itemNo||'').localeCompare(String(b.itemNo||'')));
 
     const lbl = items.length === all.length
         ? (all.length ? `(${all.length})` : '')
@@ -2357,6 +2489,8 @@ window.saveScheduleItem = async function () {
         return;
     }
     _schedSetStatus('⏳ جاري الحفظ...');
+    LV.showOverlay(window._schedEditItemRow ? 'جاري تحديث البند...' : 'جاري حفظ البند...', 'يتم إرسال البيانات إلى الشيت');
+    LV.updateOverlay(0, 1);
     try {
         const user = _schedCurrentUser();
         if (window._schedEditItemRow) {
@@ -2364,14 +2498,17 @@ window.saveScheduleItem = async function () {
         } else {
             await _schedPost({ action: 'addScheduleItem', itemNo, item, startDate, endDate, user });
         }
+        LV.updateOverlay(1, 1, 'تم — جاري تحديث الجدول...');
         window._schedEditItemRow = null;
         document.getElementById('schedItemsFormWrap').classList.remove('edit-mode');
         _resetItemForm();
         await refreshScheduleData();
         _schedSetStatus('✅ تم الحفظ');
+        LV.hideOverlay();
     } catch (e) {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
+        LV.hideOverlay();
         (window.showAlert || alert)('❌ ' + e.message);
     }
 };
@@ -2412,6 +2549,8 @@ window.saveSchedulePlan = async function () {
         return;
     }
     _schedSetStatus('⏳ جاري الحفظ وإعادة الحساب...');
+    LV.showOverlay(window._schedEditPlanRow ? 'جاري تحديث الصف...' : 'جاري حفظ الصف...', 'حفظ القيمة وإعادة حساب التراكمي');
+    LV.updateOverlay(0, 2);
     try {
         const user = _schedCurrentUser();
         if (window._schedEditPlanRow) {
@@ -2419,16 +2558,20 @@ window.saveSchedulePlan = async function () {
         } else {
             await _schedPost({ action: 'addSchedulePlan', date, plannedValue, user });
         }
+        LV.updateOverlay(1, 2, 'إعادة حساب التراكمي...');
         // recalc cumulative on server
         await _schedPost({ action: 'recalcSchedulePlan', user });
+        LV.updateOverlay(2, 2, 'تم — جاري تحديث الجدول...');
         window._schedEditPlanRow = null;
         document.getElementById('schedPlanFormWrap').classList.remove('edit-mode');
         const v = document.getElementById('schedPlanValue'); if (v) v.value = '';
         await refreshScheduleData();
         _schedSetStatus('✅ تم الحفظ');
+        LV.hideOverlay();
     } catch (e) {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
+        LV.hideOverlay();
         (window.showAlert || alert)('❌ ' + e.message);
     }
 };
@@ -2572,11 +2715,14 @@ window.importScheduleItemsFromFile = async function (inputEl) {
             return;
         }
         _schedSetStatus(`⏳ جاري رفع ${toAdd.length} بند${skipped.length ? ' (متخطى ' + skipped.length + ')' : ''}...`);
+        LV.showOverlay('جاري رفع بنود البرنامج الزمني...', `إجمالي: ${toAdd.length}${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
+        LV.updateOverlay(0, toAdd.length);
         const user = _schedCurrentUser();
         let ok = 0, fail = 0;
         try {
             await _schedPost({ action: 'bulkScheduleItems', rows: toAdd, user });
             ok = toAdd.length;
+            LV.updateOverlay(ok, toAdd.length, `تم رفع ${ok}/${toAdd.length}`);
             _schedSetStatus(`⏳ تم رفع ${ok}/${toAdd.length}...`);
             await _schedYield();
         } catch (bulkErr) {
@@ -2586,15 +2732,19 @@ window.importScheduleItemsFromFile = async function (inputEl) {
                     ok++;
                     _schedSetStatus(`⏳ تم رفع ${ok}/${toAdd.length}...`);
                 } catch (e) { console.warn('row failed', toAdd[i], e); fail++; }
+                LV.updateOverlay(ok + fail, toAdd.length, `نجح ${ok} — فشل ${fail}`);
                 await _schedYield();
             }
         }
+        LV.setOverlayMsg('جاري تحديث الجدول...');
         await refreshScheduleData();
         _schedSetStatus(`✅ تم رفع ${ok} بند${fail ? ' — فشل ' + fail : ''}${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
+        LV.hideOverlay();
         _schedToast(`✅ تم رفع ${ok} بند${fail ? ' — فشل ' + fail : ''}${skipped.length ? ' — متخطى ' + skipped.length : ''}`, fail ? 'warning' : 'success');
     } catch (e) {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
+        LV.hideOverlay();
         _schedToast('❌ فشل قراءة الملف: ' + e.message, 'error');
     } finally {
         inputEl.value = '';
@@ -2633,25 +2783,34 @@ window.importSchedulePlanFromFile = async function (inputEl) {
             return;
         }
         _schedSetStatus(`⏳ جاري رفع ${toAdd.length} صف${skipped.length ? ' (متخطى ' + skipped.length + ')' : ''}...`);
+        LV.showOverlay('جاري رفع صفوف الخطة...', `إجمالي: ${toAdd.length}${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
+        LV.updateOverlay(0, toAdd.length);
         const user = _schedCurrentUser();
+        let ok = 0;
         // bulk action available on server
         try {
             await _schedPost({ action: 'bulkSchedulePlan', rows: toAdd, user });
+            ok = toAdd.length;
+            LV.updateOverlay(ok, toAdd.length, `تم رفع ${ok}/${toAdd.length}`);
         } catch (e) {
             // fallback to per-row
-            let ok = 0;
             for (const r of toAdd) {
                 try { await _schedPost(Object.assign({ action: 'addSchedulePlan', user }, r)); ok++; } catch(_){}
+                LV.updateOverlay(ok, toAdd.length, `تم رفع ${ok}/${toAdd.length}`);
                 await _schedYield();
             }
         }
+        LV.setOverlayMsg('إعادة حساب التراكمي...');
         await _schedPost({ action: 'recalcSchedulePlan', user });
+        LV.setOverlayMsg('جاري تحديث الجدول...');
         await refreshScheduleData();
         _schedSetStatus(`✅ تم رفع ${toAdd.length} صف${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
+        LV.hideOverlay();
         _schedToast(`✅ تم رفع ${toAdd.length} صف${skipped.length ? ' — متخطى ' + skipped.length : ''}`, 'success');
     } catch (e) {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
+        LV.hideOverlay();
         _schedToast('❌ فشل قراءة الملف: ' + e.message, 'error');
     } finally {
         inputEl.value = '';
