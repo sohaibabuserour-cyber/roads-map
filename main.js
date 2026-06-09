@@ -2517,6 +2517,8 @@ function _schedSetItemDescValue(value) {
     window.onSchedItemDescChange();
     _schedBuildItemDescMenu();
     _schedSyncItemDescLabel();
+    try { selDesc.dispatchEvent(new Event('change', { bubbles: true })); } catch(_){}
+    if (typeof window.updateScheduleItemPreview === 'function') window.updateScheduleItemPreview();
 }
 
 window.toggleSchedItemMenu = function (event) {
@@ -2567,6 +2569,8 @@ function _schedSetItemNoValue(value) {
     window.onSchedItemNoChange();
     _schedBuildItemNoMenu();
     _schedSyncItemNoLabel();
+    try { selNo.dispatchEvent(new Event('change', { bubbles: true })); } catch(_){}
+    if (typeof window.updateScheduleItemPreview === 'function') window.updateScheduleItemPreview();
 }
 window.toggleSchedItemNoMenu = function (event) {
     if (event) event.stopPropagation();
