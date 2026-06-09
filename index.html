@@ -1605,7 +1605,13 @@
   #scheduleFormModal .edit-mode .btn-cancel-edit{display:inline-block;}
   #scheduleFormModal .edit-badge{display:none;font-size:11px;color:#f5c842;font-weight:800;font-family:'Cairo',sans-serif;margin-bottom:8px;}
   #scheduleFormModal .edit-mode .edit-badge{display:block;}
-  #scheduleFormModal .sched-table-wrap{max-height:50vh;overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);}
+  #scheduleFormModal .sched-table-wrap{flex:1;min-height:160px;max-height:none;overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);}
+  /* Custom scrollbar to match modal */
+  #scheduleFormModal .sched-table-wrap::-webkit-scrollbar{width:10px;height:10px;}
+  #scheduleFormModal .sched-table-wrap::-webkit-scrollbar-track{background:rgba(255,255,255,0.04);border-radius:8px;}
+  #scheduleFormModal .sched-table-wrap::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2196f3,#0d47a1);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
+  #scheduleFormModal .sched-table-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#42a5f5,#1565c0);background-clip:content-box;border:2px solid transparent;}
+  #scheduleFormModal .sched-table-wrap{scrollbar-color:#1565c0 rgba(255,255,255,0.04);scrollbar-width:thin;}
   #scheduleFormModal .sched-data{width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;}
   #scheduleFormModal .sched-data th{background:#13234a;color:rgba(255,255,255,0.7);font-size:11px;padding:9px;text-align:right;font-weight:800;position:sticky;top:0;z-index:2;}
   #scheduleFormModal .sched-data td{padding:9px;font-size:12px;color:#e0e6ef;border-top:1px solid rgba(255,255,255,0.05);vertical-align:top;}
@@ -1615,12 +1621,18 @@
   #scheduleFormModal .sched-data tbody tr:hover{background:rgba(33,150,243,0.12);}
   #scheduleFormModal .sched-data tbody tr.active-edit{background:rgba(245,200,66,0.15);}
   #scheduleFormModal .sched-empty{text-align:center;padding:24px;color:rgba(255,255,255,0.45);font-size:12px;}
-  #scheduleFormModal .sched-section-title{font-size:12px;font-weight:800;color:rgba(255,255,255,0.75);font-family:'Cairo',sans-serif;margin:14px 0 8px;display:flex;align-items:center;gap:6px;}
+  #scheduleFormModal .sched-section-title{font-size:12px;font-weight:800;color:rgba(255,255,255,0.75);font-family:'Cairo',sans-serif;margin:14px 0 8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  #scheduleFormModal .sched-section-title .spacer{flex:1;}
+  #scheduleFormModal .btn-import{background:linear-gradient(135deg,#7e57c2,#4527a0);border:none;color:#fff;padding:7px 14px;border-radius:7px;font-size:11px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(126,87,194,0.35);}
+  #scheduleFormModal .btn-import:hover{filter:brightness(1.1);}
+  #scheduleFormModal #schedPanelItems,
+  #scheduleFormModal #schedPanelPlan{display:flex;flex-direction:column;height:100%;min-height:0;}
+  #scheduleFormModal #schedPanelItems > .sched-table-wrap,
+  #scheduleFormModal #schedPanelPlan > .sched-table-wrap{flex:1;min-height:0;}
   @media (max-width: 720px){
     #scheduleFormModal .sched-form{grid-template-columns:100px 1fr;}
     #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr 1fr;}
     #scheduleFormModal .sched-form > .form-actions{grid-column:1 / -1;display:flex;gap:8px;}
-    #scheduleFormModal .sched-table-wrap{max-height:55vh;}
   }
 </style>
 <div id="scheduleFormModal" style="display:none;position:fixed;inset:0;z-index:70003;align-items:center;justify-content:center;">
@@ -1640,7 +1652,7 @@
             <button id="schedTabItemsBtn" onclick="switchScheduleTab('items')" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(33,150,243,0.18);color:#90caf9;font-family:'Cairo',sans-serif;font-weight:800;cursor:pointer;">📋 البنود</button>
             <button id="schedTabPlanBtn" onclick="switchScheduleTab('plan')" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.6);font-family:'Cairo',sans-serif;font-weight:800;cursor:pointer;">📈 الخطة اليومية</button>
         </div>
-        <div style="flex:1;overflow-y:auto;padding:18px 22px;">
+        <div style="flex:1;overflow:hidden;padding:18px 22px;display:flex;flex-direction:column;min-height:0;">
             <!-- ITEMS PANEL -->
             <div id="schedPanelItems">
                 <div id="schedItemsFormWrap" class="">
@@ -1672,7 +1684,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="sched-section-title">📊 البنود المحفوظة <span id="schedItemsCount" style="color:#90caf9;"></span></div>
+                <div class="sched-section-title">
+                    📊 البنود المحفوظة <span id="schedItemsCount" style="color:#90caf9;"></span>
+                    <span class="spacer"></span>
+                    <input type="file" id="schedItemsImportFile" accept=".csv,.txt" style="display:none;" onchange="importScheduleItemsFromFile(this)">
+                    <button class="btn-import" onclick="document.getElementById('schedItemsImportFile').click()">⬆️ رفع من ملف (CSV / TXT)</button>
+                </div>
                 <div class="sched-table-wrap">
                     <table class="sched-data">
                         <thead>
@@ -1700,6 +1717,23 @@
                             <button class="btn-cancel-edit" onclick="cancelSchedulePlanEdit()">إلغاء التعديل</button>
                         </div>
                     </div>
+                </div>
+                <div class="sched-section-title">
+                    📊 الخطة اليومية المحفوظة <span id="schedPlanCount" style="color:#90caf9;"></span>
+                    <span class="spacer"></span>
+                    <input type="file" id="schedPlanImportFile" accept=".csv,.txt" style="display:none;" onchange="importSchedulePlanFromFile(this)">
+                    <button class="btn-import" onclick="document.getElementById('schedPlanImportFile').click()">⬆️ رفع من ملف (CSV / TXT)</button>
+                </div>
+                <div class="sched-table-wrap">
+                    <table class="sched-data">
+                        <thead>
+                            <tr><th>التاريخ</th><th>القيمة</th><th>تراكمي القيمة</th><th>% اليومي</th><th>% التراكمي</th></tr>
+                        </thead>
+                        <tbody id="schedPlanBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
                 </div>
                 <div class="sched-section-title">📊 الخطة اليومية المحفوظة <span id="schedPlanCount" style="color:#90caf9;"></span></div>
                 <div class="sched-table-wrap">

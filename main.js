@@ -1749,7 +1749,7 @@ function _refreshBoqDropdown() {
     const usedKeys = new Set(
         (window._schedItems || [])
             .filter(it => !editingRow || it.row !== editingRow)
-            .map(it => String(it.itemNo == null ? '' : it.itemNo).trim() + '||' + String(it.item == null ? '' : it.item).trim())
+            .map(it => (it.itemNo || '').trim() + '||' + (it.item || '').trim())
     );
     const prevNo = selNo.value, prevDesc = selDesc.value;
     selNo.innerHTML = '<option value="">— اختر رقم —</option>';
@@ -1867,8 +1867,8 @@ async function refreshScheduleData() {
     // server returns rows with header keys; normalize
     const items = (snap.items || []).map(r => ({
         row      : r._row || r.row,
-        itemNo   : String(r['رقم البند'] ?? r.itemNo ?? ''),
-        item     : String(r['البند'] ?? r.item ?? ''),
+        itemNo   : String(r['رقم البند'] || r.itemNo || ''),
+        item     : r['البند'] || r.item || '',
         startDate: _normDateInput(r['تاريخ البداية'] || r.startDate),
         endDate  : _normDateInput(r['تاريخ النهاية'] || r.endDate),
         days     : r['المدة (يوم)'] || r.days || ''
@@ -1907,8 +1907,8 @@ function _renderItemsTable() {
     }
     tb.innerHTML = window._schedItems.map(it => `
         <tr data-row="${it.row}" onclick="loadScheduleItemForEdit(${it.row})" class="${window._schedEditItemRow === it.row ? 'active-edit' : ''}">
-            <td class="col-itemno">${_esc(it.itemNo)}</td>
-            <td class="col-itemdesc">${_esc(it.item)}</td>
+            <td>${_esc(it.itemNo)}</td>
+            <td>${_esc(it.item)}</td>
             <td>${_esc(it.startDate)}</td>
             <td>${_esc(it.endDate)}</td>
             <td>${_esc(it.days)}</td>
@@ -2000,6 +2000,16 @@ window.saveScheduleItem = async function () {
         (window.showAlert || alert)('⚠️ اختر البند وأدخل التاريخين');
         return;
     }
+    // Duplicate-detection: do not allow same itemNo+item if not editing current row
+    const key = String(itemNo).trim() + '||' + String(item).trim();
+    const dup = (window._schedItems || []).find(it =>
+        (String(it.itemNo || '').trim() + '||' + String(it.item || '').trim()) === key
+        && it.row !== window._schedEditItemRow
+    );
+    if (dup) {
+        (window.showAlert || alert)('⚠️ هذا البند موجود بالفعل (مكرر) — لن يتم الحفظ');
+        return;
+    }
     _schedSetStatus('⏳ جاري الحفظ...');
     try {
         const user = _schedCurrentUser();
@@ -2046,6 +2056,15 @@ window.saveSchedulePlan = async function () {
     const valStr = document.getElementById('schedPlanValue')?.value || '';
     if (!date) { (window.showAlert || alert)('⚠️ أدخل التاريخ'); return; }
     const plannedValue = Number(valStr) || 0;
+    // Duplicate-detection: do not allow same date if not editing current row
+    const dup = (window._schedPlan || []).find(p =>
+        String(p.date || '').trim() === String(date).trim()
+        && p.row !== window._schedEditPlanRow
+    );
+    if (dup) {
+        (window.showAlert || alert)('⚠️ يوجد صف بنفس التاريخ بالفعل — اختر تاريخاً آخر أو حدّث الصف الموجود');
+        return;
+    }
     _schedSetStatus('⏳ جاري الحفظ وإعادة الحساب...');
     try {
         const user = _schedCurrentUser();
@@ -2065,5 +2084,149 @@ window.saveSchedulePlan = async function () {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
         (window.showAlert || alert)('❌ ' + e.message);
+    }
+};
+
+/* ──────── CSV / TXT Import ──────── */
+function _schedParseDelimitedFile(text) {
+    // detect delimiter: tab > ; > ,
+    const sample = text.split(/\r?\n/).slice(0, 5).join('\n');
+    let delim = ',';
+    if (sample.indexOf('\t') > -1) delim = '\t';
+    else if (sample.indexOf(';') > -1 && sample.indexOf(';') > sample.indexOf(',')) delim = ';';
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+    return lines.map(line => {
+        if (delim === ',') return parseCSVLine(line);
+        return line.split(delim).map(s => s.trim().replace(/^"|"$/g, ''));
+    });
+}
+
+function _schedDetectHeader(row, keywords) {
+    // returns true if the row looks like header (contains any keyword)
+    return row.some(c => keywords.some(k => String(c || '').toLowerCase().includes(k)));
+}
+
+window.importScheduleItemsFromFile = async function (inputEl) {
+    const f = inputEl && inputEl.files && inputEl.files[0];
+    if (!f) return;
+    try {
+        const text = await f.text();
+        const rows = _schedParseDelimitedFile(text);
+        if (!rows.length) throw new Error('الملف فارغ');
+        // skip header
+        let startIdx = 0;
+        if (_schedDetectHeader(rows[0], ['رقم', 'البند', 'بداية', 'نهاية', 'item', 'date', 'start', 'end'])) startIdx = 1;
+        // existing dedup set
+        const existing = new Set(
+            (window._schedItems || []).map(it =>
+                String(it.itemNo || '').trim() + '||' + String(it.item || '').trim()
+            )
+        );
+        // in-file dedup
+        const seenInFile = new Set();
+        const toAdd = [];
+        const skipped = [];
+        for (let i = startIdx; i < rows.length; i++) {
+            const r = rows[i];
+            const itemNo = String(r[0] || '').trim();
+            const item = String(r[1] || '').trim();
+            const startDate = _normDateInput(String(r[2] || '').trim());
+            const endDate = _normDateInput(String(r[3] || '').trim());
+            if (!item || !startDate || !endDate) { skipped.push({ row: i + 1, reason: 'بيانات ناقصة' }); continue; }
+            const key = itemNo + '||' + item;
+            if (existing.has(key)) { skipped.push({ row: i + 1, reason: 'مكرر مع الشيت' }); continue; }
+            if (seenInFile.has(key)) { skipped.push({ row: i + 1, reason: 'مكرر داخل الملف' }); continue; }
+            seenInFile.add(key);
+            toAdd.push({ itemNo, item, startDate, endDate });
+        }
+        if (!toAdd.length) {
+            _schedSetStatus('⚠️ لا توجد صفوف صالحة للإضافة (تم تخطي ' + skipped.length + ')');
+            (window.showAlert || alert)('⚠️ لا توجد صفوف صالحة للإضافة. تم تخطي ' + skipped.length + ' صف.');
+            inputEl.value = '';
+            return;
+        }
+        if (!confirm(`سيتم إضافة ${toAdd.length} بند${skipped.length ? ' (تخطي ' + skipped.length + ' مكرر/ناقص)' : ''}. متابعة؟`)) {
+            inputEl.value = '';
+            return;
+        }
+        _schedSetStatus('⏳ جاري رفع البنود...');
+        const user = _schedCurrentUser();
+        let ok = 0, fail = 0;
+        for (let i = 0; i < toAdd.length; i++) {
+            try {
+                await _schedPost(Object.assign({ action: 'addScheduleItem', user }, toAdd[i]));
+                ok++;
+                _schedSetStatus(`⏳ تم رفع ${ok}/${toAdd.length}...`);
+            } catch (e) { console.warn('row failed', toAdd[i], e); fail++; }
+        }
+        await refreshScheduleData();
+        _schedSetStatus(`✅ تم رفع ${ok} بند${fail ? ' — فشل ' + fail : ''}${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
+        (window.showAlert || alert)(`✅ تم رفع ${ok} بند\n${fail ? 'فشل ' + fail + '\n' : ''}${skipped.length ? 'متخطى ' + skipped.length : ''}`);
+    } catch (e) {
+        console.error(e);
+        _schedSetStatus('❌ ' + e.message);
+        (window.showAlert || alert)('❌ فشل قراءة الملف: ' + e.message);
+    } finally {
+        inputEl.value = '';
+    }
+};
+
+window.importSchedulePlanFromFile = async function (inputEl) {
+    const f = inputEl && inputEl.files && inputEl.files[0];
+    if (!f) return;
+    try {
+        const text = await f.text();
+        const rows = _schedParseDelimitedFile(text);
+        if (!rows.length) throw new Error('الملف فارغ');
+        let startIdx = 0;
+        if (_schedDetectHeader(rows[0], ['تاريخ', 'قيمة', 'date', 'value', 'planned'])) startIdx = 1;
+        const existing = new Set(
+            (window._schedPlan || []).map(p => String(p.date || '').trim())
+        );
+        const seenInFile = new Set();
+        const toAdd = [];
+        const skipped = [];
+        for (let i = startIdx; i < rows.length; i++) {
+            const r = rows[i];
+            const date = _normDateInput(String(r[0] || '').trim());
+            const plannedValue = Number(String(r[1] || '').replace(/[,\s]/g, '')) || 0;
+            if (!date) { skipped.push({ row: i + 1, reason: 'تاريخ ناقص' }); continue; }
+            if (existing.has(date)) { skipped.push({ row: i + 1, reason: 'مكرر مع الشيت' }); continue; }
+            if (seenInFile.has(date)) { skipped.push({ row: i + 1, reason: 'مكرر داخل الملف' }); continue; }
+            seenInFile.add(date);
+            toAdd.push({ date, plannedValue });
+        }
+        if (!toAdd.length) {
+            _schedSetStatus('⚠️ لا توجد صفوف صالحة (تم تخطي ' + skipped.length + ')');
+            (window.showAlert || alert)('⚠️ لا توجد صفوف صالحة. تم تخطي ' + skipped.length + ' صف.');
+            inputEl.value = '';
+            return;
+        }
+        if (!confirm(`سيتم إضافة ${toAdd.length} صف خطة${skipped.length ? ' (تخطي ' + skipped.length + ' مكرر/ناقص)' : ''}. متابعة؟`)) {
+            inputEl.value = '';
+            return;
+        }
+        _schedSetStatus('⏳ جاري رفع صفوف الخطة...');
+        const user = _schedCurrentUser();
+        // bulk action available on server
+        try {
+            await _schedPost({ action: 'bulkSchedulePlan', rows: toAdd, user });
+        } catch (e) {
+            // fallback to per-row
+            let ok = 0;
+            for (const r of toAdd) {
+                try { await _schedPost(Object.assign({ action: 'addSchedulePlan', user }, r)); ok++; } catch(_){}
+            }
+        }
+        await _schedPost({ action: 'recalcSchedulePlan', user });
+        await refreshScheduleData();
+        _schedSetStatus(`✅ تم رفع ${toAdd.length} صف${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
+        (window.showAlert || alert)(`✅ تم رفع ${toAdd.length} صف\n${skipped.length ? 'متخطى ' + skipped.length : ''}`);
+    } catch (e) {
+        console.error(e);
+        _schedSetStatus('❌ ' + e.message);
+        (window.showAlert || alert)('❌ فشل قراءة الملف: ' + e.message);
+    } finally {
+        inputEl.value = '';
     }
 };
