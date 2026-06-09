@@ -2194,72 +2194,90 @@ async function _boqBulkUpload(url, items, onProgress){
     return { added, failures };
 }
 
+// POST a bulk BOQ payload in ONE request. Returns server result or throws.
+async function _boqBulkPost(url, rows, forceAdd){
+    const res = await fetch(url, {
+        method:'POST', redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({
+            action: 'bulkBOQ',
+            forceAdd: !!forceAdd,
+            rows: rows,
+            user: (window.currentUser && (currentUser.name||currentUser.email)) || '',
+            timestamp: new Date().toISOString()
+        })
+    });
+    const t = await res.text();
+    let rr; try { rr = JSON.parse(t); } catch(_){ throw new Error('استجابة غير صالحة من الخادم'); }
+    if (!rr || rr.success !== true) throw new Error((rr && (rr.message||rr.error)) || 'فشل الإرسال');
+    return rr; // {success, added, total, skipped:[{index,row,itemNo,description,reason}]}
+}
+
 window.importBOQFromFile = async function (inputEl) {
     const f = inputEl && inputEl.files && inputEl.files[0];
     if (!f) return;
     try {
-        // Reuse the schedule's smart reader if available; otherwise basic FileReader
         let text;
         if (typeof _schedReadTextSmart === 'function') text = await _schedReadTextSmart(f);
         else text = await f.text();
         const rows = _boqParseDelimited(text);
         if (!rows.length) throw new Error('الملف فارغ');
-        // Skip header if it looks like header
         let start = 0;
         const first = rows[0].map(c => String(c||'').toLowerCase());
         if (first.some(c => /رقم|البند|item|description|unit|price|سعر|كمية/.test(c))) start = 1;
         const url = _boqScriptUrl();
         if (!url) { (window.showAlert || alert)('⚠️ أضف رابط سكريبت جدول الكميات في الإعدادات'); return; }
-        const existing = new Set((window._boqItems||[]).map(it => (it.itemNo||'').trim() + '||' + (it.description||'').trim()));
-        const seen = new Set();
-        const toUpload = [];   // {row, itemNo, description, payload}
-        const skippedRows = []; // pre-validation skipped (will include __payload for retry-eligible ones)
+
+        // Build payloads — validation ONLY by itemNo (per user request).
+        // Any duplicates/skipped will be handled by the server and shown in the skipped dialog.
+        const allPayloads = [];   // payloads sent to server
+        const rowInfoByIndex = []; // mirrors allPayloads for skipped-dialog enrichment
+        const missingItemNo = [];  // rows without itemNo — never sent
         for (let i = start; i < rows.length; i++) {
             const r = rows[i];
             const itemNo = (r[0]||'').trim();
             const desc   = (r[1]||'').trim();
-            if (!itemNo || !desc) { skippedRows.push({ row: i + 1, itemNo, description: desc, reason: 'بيانات ناقصة (رقم البند أو الوصف)' }); continue; }
-            const k = itemNo + '||' + desc;
-            if (existing.has(k)) {
-                // duplicate with sheet — allow user to force-add via retry
-                skippedRows.push({ row: i + 1, itemNo, description: desc, reason: 'مكرر مع الشيت', __payload: _boqBuildPayloadFromRow(r) });
+            if (!itemNo) {
+                missingItemNo.push({ row: i + 1, itemNo, description: desc, reason: 'رقم البند مفقود' });
                 continue;
             }
-            if (seen.has(k)) {
-                skippedRows.push({ row: i + 1, itemNo, description: desc, reason: 'مكرر داخل الملف', __payload: _boqBuildPayloadFromRow(r) });
-                continue;
-            }
-            seen.add(k);
-            toUpload.push({ row: i + 1, itemNo, description: desc, payload: _boqBuildPayloadFromRow(r) });
+            const payload = _boqBuildPayloadFromRow(r);
+            payload.__row = i + 1;
+            allPayloads.push(payload);
+            rowInfoByIndex.push({ row: i + 1, itemNo, description: desc, payload });
         }
-        const totalRows = toUpload.length;
-        _boqSetStatus(`⏳ جاري رفع ${totalRows} صف بالتوازي...`);
-        LV.showOverlay('جاري رفع بنود جدول الكميات...', `إجمالي الصفوف: ${totalRows}${skippedRows.length ? ' — متخطى مسبقاً: ' + skippedRows.length : ''}`);
-        LV.updateOverlay(0, Math.max(1, totalRows));
+
+        const total = allPayloads.length;
+        _boqSetStatus(`⏳ جاري رفع ${total} صف دفعة واحدة...`);
+        LV.showOverlay('جاري رفع بنود جدول الكميات...', `إجمالي الصفوف: ${total}`);
+        LV.updateOverlay(0, Math.max(1, total));
+
         let added = 0;
-        const failureList = []; // {row,itemNo,description,reason,__payload}
-        if (totalRows > 0){
-            const res = await _boqBulkUpload(url, toUpload, (done, tot, ok, fail) => {
-                LV.updateOverlay(done, tot, `تم رفع ${ok} — فشل ${fail}`);
-                _boqSetStatus(`⏳ تم رفع ${ok}/${tot}...`);
+        const skippedFromServer = [];
+        if (total > 0){
+            const rr = await _boqBulkPost(url, allPayloads, false);
+            added = rr.added || 0;
+            LV.updateOverlay(total, total, `تم رفع ${added}`);
+            (rr.skipped || []).forEach(s => {
+                const info = (typeof s.index === 'number') ? rowInfoByIndex[s.index] : null;
+                skippedFromServer.push({
+                    row: (info && info.row) || s.row || '',
+                    itemNo: s.itemNo || (info && info.itemNo) || '',
+                    description: s.description || (info && info.description) || '',
+                    reason: s.reason || 'تم التخطي',
+                    __payload: info ? info.payload : null
+                });
             });
-            added = res.added;
-            res.failures.forEach(fl => failureList.push({
-                row: fl.item.row,
-                itemNo: fl.item.itemNo,
-                description: fl.item.description,
-                reason: fl.reason,
-                __payload: fl.item.payload
-            }));
         }
+
         inputEl.value = '';
         LV.setOverlayMsg('جاري تحديث الجدول...');
-        const allSkipped = skippedRows.concat(failureList);
+        const allSkipped = missingItemNo.concat(skippedFromServer);
         _boqSetStatus(`✅ تم رفع ${added} بند — تخطّى ${allSkipped.length}`);
         await refreshBOQData();
         LV.hideOverlay();
+
         if (allSkipped.length){
-            // Provide retry callback for rows that have a payload
             LV.showSkipped(
                 `صفوف تم تخطيها أثناء رفع جدول الكميات (تم رفع ${added})`,
                 allSkipped,
@@ -2267,8 +2285,8 @@ window.importBOQFromFile = async function (inputEl) {
                     onAddSelected: async (selectedRows) => {
                         const retryItems = selectedRows
                             .filter(r => r.__payload)
-                            .map(r => ({ row: r.row, itemNo: r.itemNo, description: r.description, payload: r.__payload }));
-                        const skipped = selectedRows.length - retryItems.length;
+                            .map(r => { const p = Object.assign({}, r.__payload); p.__row = r.row; return p; });
+                        const dropped = selectedRows.length - retryItems.length;
                         if (!retryItems.length){
                             (window.showAlert || alert)('⚠️ الصفوف المحددة بياناتها ناقصة ولا يمكن إضافتها');
                             return;
@@ -2276,19 +2294,26 @@ window.importBOQFromFile = async function (inputEl) {
                         _boqSetStatus(`⏳ إعادة محاولة رفع ${retryItems.length} صف...`);
                         LV.showOverlay('إعادة رفع البنود المحددة...', `إجمالي: ${retryItems.length}`);
                         LV.updateOverlay(0, retryItems.length);
-                        const res2 = await _boqBulkUpload(url, retryItems, (done, tot, ok, fail) => {
-                            LV.updateOverlay(done, tot, `تم رفع ${ok} — فشل ${fail}`);
-                        });
+                        let rr2;
+                        try { rr2 = await _boqBulkPost(url, retryItems, true); }
+                        catch(err){
+                            LV.hideOverlay();
+                            (window.showAlert || alert)('❌ ' + err.message);
+                            return;
+                        }
+                        LV.updateOverlay(retryItems.length, retryItems.length);
                         LV.setOverlayMsg('جاري تحديث الجدول...');
                         await refreshBOQData();
                         LV.hideOverlay();
-                        const msg = `✅ تم رفع ${res2.added} بند${res2.failures.length ? ' — فشل ' + res2.failures.length : ''}${skipped ? ' — استُبعد ' + skipped + ' (بدون بيانات)' : ''}`;
+                        const added2 = rr2.added || 0;
+                        const failed2 = (rr2.skipped || []).length;
+                        const msg = `✅ تم رفع ${added2} بند${failed2 ? ' — فشل ' + failed2 : ''}${dropped ? ' — استُبعد ' + dropped + ' (بدون بيانات)' : ''}`;
                         _boqSetStatus(msg);
                         (window.showAlert || alert)(msg);
-                        if (res2.failures.length){
-                            const failRows = res2.failures.map(fl => ({
-                                row: fl.item.row, itemNo: fl.item.itemNo, description: fl.item.description,
-                                reason: fl.reason, __payload: fl.item.payload
+                        if (failed2){
+                            const failRows = (rr2.skipped || []).map(s => ({
+                                row: s.row || '', itemNo: s.itemNo || '', description: s.description || '',
+                                reason: s.reason || 'فشل', __payload: null
                             }));
                             LV.showSkipped('فشل رفع بعض الصفوف بعد المحاولة', failRows);
                         }
@@ -2305,6 +2330,7 @@ window.importBOQFromFile = async function (inputEl) {
         (window.showAlert || alert)('❌ ' + e.message);
     }
 };
+
 
 
 /* ====================================================

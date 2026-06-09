@@ -1667,9 +1667,12 @@
   #scheduleFormModal .sched-hidden-select{display:none!important;}
   #scheduleFormModal .sched-combo{position:relative;}
   #scheduleFormModal .sched-combo-btn{width:100%;min-height:38px;box-sizing:border-box;padding:8px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;text-align:right;cursor:pointer;}
-  #scheduleFormModal .sched-combo-label{flex:1;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.55;max-height:72px;overflow:auto;}
+  #scheduleFormModal .sched-combo-label{flex:1;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.55;overflow:hidden;}
   #scheduleFormModal .sched-combo-arrow{flex-shrink:0;line-height:1.5;color:rgba(255,255,255,.65);}
-  #scheduleFormModal .sched-combo-menu{display:none;position:absolute;z-index:8;inset-inline:0;top:calc(100% + 4px);max-height:240px;overflow:auto;border:1px solid rgba(144,202,249,.35);border-radius:8px;background:#10182f;box-shadow:0 14px 34px rgba(0,0,0,.45);padding:4px;}
+  #scheduleFormModal .sched-combo-menu{display:none;position:absolute;z-index:8;inset-inline:0;top:calc(100% + 4px);max-height:min(60vh,360px);overflow-y:auto;overflow-x:hidden;border:1px solid rgba(144,202,249,.35);border-radius:8px;background:#10182f;box-shadow:0 14px 34px rgba(0,0,0,.45);padding:4px;overscroll-behavior:contain;}
+  #scheduleFormModal .sched-combo-menu::-webkit-scrollbar{width:8px;}
+  #scheduleFormModal .sched-combo-menu::-webkit-scrollbar-thumb{background:rgba(144,202,249,.35);border-radius:4px;}
+  #scheduleFormModal .sched-combo-menu::-webkit-scrollbar-track{background:transparent;}
   #scheduleFormModal .sched-combo-menu.active{display:block;}
   #scheduleFormModal .sched-combo-option{padding:8px 10px;border-radius:6px;color:#eaf2ff;font-family:'Cairo',sans-serif;font-size:12px;line-height:1.6;white-space:normal;overflow-wrap:anywhere;word-break:normal;cursor:pointer;}
   #scheduleFormModal .sched-combo-option:hover,
@@ -1716,7 +1719,7 @@
      #scheduleFormModal .sched-tabs button{padding:7px 12px;font-size:12px;}
      #scheduleFormModal{padding:0;}
      #scheduleFormModal > div:last-child{width:100%!important;max-height:100vh!important;height:100vh;border-radius:0!important;}
-     #scheduleFormModal .sched-combo-menu{max-height:200px;}
+      #scheduleFormModal .sched-combo-menu{max-height:min(50vh,260px);}
    }
    @media (max-width: 480px){
      #scheduleFormModal .sched-form{grid-template-columns:1fr;}
