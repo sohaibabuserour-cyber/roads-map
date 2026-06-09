@@ -1749,14 +1749,15 @@ window.saveBOQItem = async function () {
         (window.showAlert || alert)('⚠️ أدخل رقم البند والوصف');
         return;
     }
-    // Duplicate check (skip when editing same row)
-    const key = itemNo + '||' + desc;
+    // Duplicate check: BOTH itemNo AND description must match exactly (as strings) to be a duplicate.
+    // "19.1" and "19.10" are different strings → treated as distinct.
     const dup = (window._boqItems || []).find(it =>
-        (String(it.itemNo||'').trim() + '||' + String(it.description||'').trim()) === key
-        && it.row !== window._boqEditRow
+        String(it.itemNo || '').trim()       === itemNo &&
+        String(it.description || '').trim()  === desc   &&
+        it.row !== window._boqEditRow
     );
     if (dup) {
-        (window.showAlert || alert)('⚠️ هذا البند موجود بالفعل');
+        (window.showAlert || alert)('⚠️ هذا البند موجود بالفعل (رقم البند والبند متطابقان)');
         return;
     }
     const revised = {};
@@ -2342,14 +2343,17 @@ window.saveScheduleItem = async function () {
         (window.showAlert || alert)('⚠️ اختر البند وأدخل التاريخين');
         return;
     }
-    // Duplicate-detection: do not allow same itemNo+item if not editing current row
-    const key = String(itemNo).trim() + '||' + String(item).trim();
+    // Duplicate-detection: BOTH itemNo AND item must match exactly (as strings).
+    // "19.1" and "19.10" remain distinct.
+    const itemNoStr = String(itemNo).trim();
+    const itemStr   = String(item).trim();
     const dup = (window._schedItems || []).find(it =>
-        (String(it.itemNo || '').trim() + '||' + String(it.item || '').trim()) === key
-        && it.row !== window._schedEditItemRow
+        String(it.itemNo || '').trim() === itemNoStr &&
+        String(it.item   || '').trim() === itemStr   &&
+        it.row !== window._schedEditItemRow
     );
     if (dup) {
-        (window.showAlert || alert)('⚠️ هذا البند موجود بالفعل (مكرر) — لن يتم الحفظ');
+        (window.showAlert || alert)('⚠️ هذا البند موجود بالفعل (رقم البند والبند متطابقان) — لن يتم الحفظ');
         return;
     }
     _schedSetStatus('⏳ جاري الحفظ...');
