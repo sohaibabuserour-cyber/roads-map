@@ -23,7 +23,6 @@
 <base target="_blank">
 </head>
 <body>
-<body>
 
 <!-- ==================== LOGIN SCREEN ==================== -->
 <div id="loginScreen">
@@ -1598,8 +1597,18 @@
   #scheduleFormModal .sched-form label{display:block;font-size:11px;color:rgba(255,255,255,0.65);font-family:'Cairo',sans-serif;margin-bottom:4px;font-weight:700;}
   #scheduleFormModal .sched-form input,
   #scheduleFormModal .sched-form select{width:100%;box-sizing:border-box;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;}
-  #scheduleFormModal .sched-form select{max-width:100%;}
-  #scheduleFormModal .sched-form select option{background:#162548;color:#fff;white-space:normal;word-break:break-word;}
+  #scheduleFormModal .sched-form select{max-width:100%;height:38px;}
+  #scheduleFormModal .sched-form select option{background:#162548;color:#fff;white-space:normal;overflow-wrap:anywhere;line-height:1.55;}
+  #scheduleFormModal .sched-hidden-select{display:none!important;}
+  #scheduleFormModal .sched-combo{position:relative;}
+  #scheduleFormModal .sched-combo-btn{width:100%;min-height:38px;box-sizing:border-box;padding:8px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;text-align:right;cursor:pointer;}
+  #scheduleFormModal .sched-combo-label{flex:1;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.55;max-height:72px;overflow:auto;}
+  #scheduleFormModal .sched-combo-arrow{flex-shrink:0;line-height:1.5;color:rgba(255,255,255,.65);}
+  #scheduleFormModal .sched-combo-menu{display:none;position:absolute;z-index:8;inset-inline:0;top:calc(100% + 4px);max-height:240px;overflow:auto;border:1px solid rgba(144,202,249,.35);border-radius:8px;background:#10182f;box-shadow:0 14px 34px rgba(0,0,0,.45);padding:4px;}
+  #scheduleFormModal .sched-combo-menu.active{display:block;}
+  #scheduleFormModal .sched-combo-option{padding:8px 10px;border-radius:6px;color:#eaf2ff;font-family:'Cairo',sans-serif;font-size:12px;line-height:1.6;white-space:normal;overflow-wrap:anywhere;word-break:normal;cursor:pointer;}
+  #scheduleFormModal .sched-combo-option:hover,
+  #scheduleFormModal .sched-combo-option.selected{background:rgba(33,150,243,.18);color:#fff;}
   #scheduleFormModal .btn-save{background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:#fff;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;}
   #scheduleFormModal .btn-cancel-edit{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;display:none;}
   #scheduleFormModal .edit-mode .btn-cancel-edit{display:inline-block;}
@@ -1616,7 +1625,7 @@
   #scheduleFormModal .sched-data th{background:#13234a;color:rgba(255,255,255,0.7);font-size:11px;padding:9px;text-align:right;font-weight:800;position:sticky;top:0;z-index:2;}
   #scheduleFormModal .sched-data td{padding:9px;font-size:12px;color:#e0e6ef;border-top:1px solid rgba(255,255,255,0.05);vertical-align:top;}
   #scheduleFormModal .sched-data .col-itemno{width:90px;white-space:nowrap;}
-  #scheduleFormModal .sched-data .col-itemdesc{white-space:normal;word-break:break-word;min-width:240px;}
+  #scheduleFormModal .sched-data .col-itemdesc{white-space:normal;overflow-wrap:anywhere;word-break:normal;min-width:260px;max-width:520px;line-height:1.65;}
   #scheduleFormModal .sched-data tbody tr{cursor:pointer;transition:background 0.15s;}
   #scheduleFormModal .sched-data tbody tr:hover{background:rgba(33,150,243,0.12);}
   #scheduleFormModal .sched-data tbody tr.active-edit{background:rgba(245,200,66,0.15);}
@@ -1666,9 +1675,16 @@
                         </div>
                         <div>
                             <label>البند</label>
-                            <select id="schedItemSelect" onchange="onSchedItemDescChange()">
-                                <option value="">— اختر بنداً —</option>
-                            </select>
+                            <div class="sched-combo" id="schedItemCombo">
+                                <button type="button" class="sched-combo-btn" id="schedItemSelectBtn" onclick="toggleSchedItemMenu(event)" title="— اختر بنداً —">
+                                    <span class="sched-combo-label" id="schedItemSelectLabel">— اختر بنداً —</span>
+                                    <span class="sched-combo-arrow">▾</span>
+                                </button>
+                                <div class="sched-combo-menu" id="schedItemSelectMenu"></div>
+                                <select id="schedItemSelect" class="sched-hidden-select" onchange="onSchedItemDescChange()">
+                                    <option value="">— اختر بنداً —</option>
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <label>تاريخ البداية</label>

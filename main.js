@@ -1741,6 +1741,63 @@ async function _loadBoqItems() {
     }
 }
 
+
+function _schedSyncItemDescLabel() {
+    const selDesc = document.getElementById('schedItemSelect');
+    const label = document.getElementById('schedItemSelectLabel');
+    const btn = document.getElementById('schedItemSelectBtn');
+    if (!selDesc || !label) return;
+    const opt = selDesc.selectedOptions && selDesc.selectedOptions[0];
+    const text = (opt && opt.value) ? (opt.textContent || opt.value) : '— اختر بنداً —';
+    label.textContent = text;
+    if (btn) btn.title = text;
+}
+
+function _schedBuildItemDescMenu() {
+    const selDesc = document.getElementById('schedItemSelect');
+    const menu = document.getElementById('schedItemSelectMenu');
+    if (!selDesc || !menu) return;
+    const options = Array.from(selDesc.options || []);
+    menu.innerHTML = options.map(opt => `
+        <div class="sched-combo-option ${opt.value === selDesc.value ? 'selected' : ''}" data-value="${_esc(opt.value)}" title="${_esc(opt.textContent || opt.value)}">
+            ${_esc(opt.textContent || opt.value)}
+        </div>
+    `).join('');
+    menu.querySelectorAll('.sched-combo-option').forEach(el => {
+        el.addEventListener('click', () => {
+            _schedSetItemDescValue(el.dataset.value || '');
+            closeSchedItemMenu();
+        });
+    });
+}
+
+function _schedSetItemDescValue(value) {
+    const selDesc = document.getElementById('schedItemSelect');
+    if (!selDesc) return;
+    selDesc.value = value;
+    window.onSchedItemDescChange();
+    _schedBuildItemDescMenu();
+    _schedSyncItemDescLabel();
+}
+
+window.toggleSchedItemMenu = function (event) {
+    if (event) event.stopPropagation();
+    _schedBuildItemDescMenu();
+    _schedSyncItemDescLabel();
+    const menu = document.getElementById('schedItemSelectMenu');
+    if (menu) menu.classList.toggle('active');
+};
+
+window.closeSchedItemMenu = function () {
+    const menu = document.getElementById('schedItemSelectMenu');
+    if (menu) menu.classList.remove('active');
+};
+
+document.addEventListener('click', e => {
+    const combo = document.getElementById('schedItemCombo');
+    if (combo && !combo.contains(e.target)) window.closeSchedItemMenu();
+});
+
 function _refreshBoqDropdown() {
     const selNo = document.getElementById('schedItemNoSelect');
     const selDesc = document.getElementById('schedItemSelect');
@@ -1763,6 +1820,7 @@ function _refreshBoqDropdown() {
         const o2 = document.createElement('option');
         o2.value = desc; o2.textContent = desc || '—';
         o2.dataset.no = no;
+        o2.title = desc || '';
         selDesc.appendChild(o2);
     });
     if (editingRow) {
@@ -1782,11 +1840,15 @@ function _refreshBoqDropdown() {
             }
             selNo.value = editing.itemNo || '';
             selDesc.value = editing.item || '';
+            _schedBuildItemDescMenu();
+            _schedSyncItemDescLabel();
             return;
         }
     }
     if (prevNo && selNo.querySelector(`option[value="${CSS.escape(prevNo)}"]`)) selNo.value = prevNo;
     if (prevDesc && selDesc.querySelector(`option[value="${CSS.escape(prevDesc)}"]`)) selDesc.value = prevDesc;
+    _schedBuildItemDescMenu();
+    _schedSyncItemDescLabel();
 }
 
 window.onSchedItemNoChange = function () {
@@ -1798,6 +1860,8 @@ window.onSchedItemNoChange = function () {
     if (desc && selDesc.querySelector(`option[value="${CSS.escape(desc)}"]`)) {
         selDesc.value = desc;
     }
+    _schedBuildItemDescMenu();
+    _schedSyncItemDescLabel();
 };
 
 window.onSchedItemDescChange = function () {
@@ -1809,6 +1873,8 @@ window.onSchedItemDescChange = function () {
     if (no && selNo.querySelector(`option[value="${CSS.escape(no)}"]`)) {
         selNo.value = no;
     }
+    _schedBuildItemDescMenu();
+    _schedSyncItemDescLabel();
 };
 
 
@@ -1908,7 +1974,7 @@ function _renderItemsTable() {
     tb.innerHTML = window._schedItems.map(it => `
         <tr data-row="${it.row}" onclick="loadScheduleItemForEdit(${it.row})" class="${window._schedEditItemRow === it.row ? 'active-edit' : ''}">
             <td>${_esc(it.itemNo)}</td>
-            <td>${_esc(it.item)}</td>
+            <td class="col-itemdesc" title="${_esc(it.item)}">${_esc(it.item)}</td>
             <td>${_esc(it.startDate)}</td>
             <td>${_esc(it.endDate)}</td>
             <td>${_esc(it.days)}</td>
@@ -1967,6 +2033,8 @@ window.loadScheduleItemForEdit = function (row) {
     const sel = document.getElementById('schedItemSelect');
     if (selNo) selNo.value = it.itemNo || '';
     if (sel) sel.value = it.item || '';
+    _schedBuildItemDescMenu();
+    _schedSyncItemDescLabel();
     document.getElementById('schedItemStart').value = it.startDate || '';
     document.getElementById('schedItemEnd').value = it.endDate || '';
     _renderItemsTable();
@@ -1986,6 +2054,8 @@ function _resetItemForm() {
     if (selNo) selNo.value = '';
     const sel = document.getElementById('schedItemSelect');
     if (sel) sel.value = '';
+    _schedBuildItemDescMenu();
+    _schedSyncItemDescLabel();
     const s = document.getElementById('schedItemStart');
     const e = document.getElementById('schedItemEnd');
     if (s) s.value = ''; if (e) e.value = '';
@@ -2088,36 +2158,83 @@ window.saveSchedulePlan = async function () {
 };
 
 /* ──────── CSV / TXT Import ──────── */
-/**
- * Read a file as text with Arabic-friendly encoding detection.
- * - UTF-8 BOM → UTF-8
- * - Otherwise: try UTF-8; if it contains U+FFFD (replacement char) or no
- *   Arabic letters while bytes look Arabic, fall back to Windows-1256.
- */
+function _schedWindows1256Decode(bytes) {
+    try { return new TextDecoder('windows-1256').decode(bytes); } catch (_) {}
+    const map = {
+        0x80:'€',0x81:'پ',0x82:'‚',0x83:'ƒ',0x84:'„',0x85:'…',0x86:'†',0x87:'‡',0x88:'ˆ',0x89:'‰',0x8A:'ٹ',0x8B:'‹',0x8C:'Œ',0x8D:'چ',0x8E:'ژ',0x8F:'ڈ',
+        0x90:'گ',0x91:'‘',0x92:'’',0x93:'“',0x94:'”',0x95:'•',0x96:'–',0x97:'—',0x98:'ک',0x99:'™',0x9A:'ڑ',0x9B:'›',0x9C:'œ',0x9D:'‌',0x9E:'‍',0x9F:'ں',
+        0xA0:' ',0xA1:'،',0xA2:'¢',0xA3:'£',0xA4:'¤',0xA5:'¥',0xA6:'¦',0xA7:'§',0xA8:'¨',0xA9:'©',0xAA:'ھ',0xAB:'«',0xAC:'¬',0xAD:'­',0xAE:'®',0xAF:'¯',
+        0xB0:'°',0xB1:'±',0xB2:'²',0xB3:'³',0xB4:'´',0xB5:'µ',0xB6:'¶',0xB7:'·',0xB8:'¸',0xB9:'¹',0xBA:'؛',0xBB:'»',0xBC:'¼',0xBD:'½',0xBE:'¾',0xBF:'؟',
+        0xC0:'ہ',0xC1:'ء',0xC2:'آ',0xC3:'أ',0xC4:'ؤ',0xC5:'إ',0xC6:'ئ',0xC7:'ا',0xC8:'ب',0xC9:'ة',0xCA:'ت',0xCB:'ث',0xCC:'ج',0xCD:'ح',0xCE:'خ',0xCF:'د',
+        0xD0:'ذ',0xD1:'ر',0xD2:'ز',0xD3:'س',0xD4:'ش',0xD5:'ص',0xD6:'ض',0xD7:'×',0xD8:'ط',0xD9:'ظ',0xDA:'ع',0xDB:'غ',0xDC:'ـ',0xDD:'ف',0xDE:'ق',0xDF:'ك',
+        0xE0:'à',0xE1:'ل',0xE2:'â',0xE3:'م',0xE4:'ن',0xE5:'ه',0xE6:'و',0xE7:'ç',0xE8:'è',0xE9:'é',0xEA:'ê',0xEB:'ë',0xEC:'ى',0xED:'ي',0xEE:'î',0xEF:'ï',
+        0xF0:'ً',0xF1:'ٌ',0xF2:'ٍ',0xF3:'َ',0xF4:'ُ',0xF5:'ِ',0xF6:'ّ',0xF7:'÷',0xF8:'ْ',0xF9:'ù',0xFA:'ْ',0xFB:'û',0xFC:'ü',0xFD:'‎',0xFE:'‏',0xFF:'ے'
+    };
+    return Array.from(bytes, b => b < 128 ? String.fromCharCode(b) : (map[b] || '')).join('');
+}
+
+function _schedArabicScore(text) {
+    const s = String(text || '');
+    const arabic = (s.match(/[؀-ۿ]/g) || []).length;
+    const replacement = (s.match(/�/g) || []).length;
+    const mojibake = (s.match(/(?:Ø|Ù|Ã|Â|ط§|ظ„|ظ…|ظ†|ظٹ|ط¨|ط©|ط±|ط¹|طھ|ط³|ط¯|ط¥|ط£|Ç|á|È)/g) || []).length;
+    const questionRuns = (s.match(/\?{3,}/g) || []).join('').length;
+    return arabic * 6 - replacement * 25 - mojibake * 10 - questionRuns * 8;
+}
+
+function _schedDecodeByteString(text, encoding) {
+    const bytes = new Uint8Array(Array.from(String(text || ''), ch => ch.charCodeAt(0) & 255));
+    if (encoding === 'windows-1256') return _schedWindows1256Decode(bytes);
+    try { return new TextDecoder(encoding, { fatal: false }).decode(bytes); } catch (_) { return ''; }
+}
+
+function _schedRepairArabicText(text) {
+    const raw = String(text == null ? '' : text).replace(/^\uFEFF/, '').trim();
+    if (!raw) return '';
+    const candidates = [raw];
+    if (/[^\x00-\x7F]/.test(raw)) {
+        candidates.push(_schedDecodeByteString(raw, 'windows-1256'));
+        candidates.push(_schedDecodeByteString(raw, 'utf-8'));
+    }
+    let best = raw, bestScore = _schedArabicScore(raw);
+    for (const c of candidates) {
+        const score = _schedArabicScore(c);
+        if (score > bestScore) { best = c; bestScore = score; }
+    }
+    return best.trim();
+}
+
 async function _schedReadTextSmart(file) {
     const buf = await file.arrayBuffer();
     const bytes = new Uint8Array(buf);
-    // UTF-8 BOM
+    const candidates = [];
     if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
-        return new TextDecoder('utf-8').decode(bytes.subarray(3));
+        candidates.push(new TextDecoder('utf-8').decode(bytes.subarray(3)));
     }
-    // Try strict UTF-8
-    try {
-        const utf8 = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-        return utf8;
-    } catch (_) {
-        // Not valid UTF-8 — most Arabic CSVs exported from Excel use Windows-1256
-        try { return new TextDecoder('windows-1256').decode(bytes); }
-        catch (_) { return new TextDecoder('utf-8').decode(bytes); }
+    try { candidates.push(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch (_) {}
+    candidates.push(new TextDecoder('utf-8').decode(bytes));
+    candidates.push(_schedWindows1256Decode(bytes));
+    let best = candidates[0] || '', bestScore = _schedArabicScore(best);
+    for (const c of candidates) {
+        const fixed = _schedRepairArabicText(c);
+        const score = _schedArabicScore(fixed);
+        if (score > bestScore) { best = fixed; bestScore = score; }
     }
+    return best;
 }
 
-// Non-blocking toast helper (never blocks the UI)
+function _schedCleanCell(value) {
+    return _schedRepairArabicText(value).replace(/[‎‏‪-‮]/g, '').trim();
+}
+
+function _schedYield() {
+    return new Promise(r => setTimeout(r, 0));
+}
+
 function _schedToast(msg, type) {
     if (typeof window.showAlert === 'function') {
         try { window.showAlert(msg, type || 'info'); return; } catch (_) {}
     }
-    // Fallback: just log; we intentionally avoid alert() which freezes the page
     console.log('[schedule]', msg);
 }
 
@@ -2161,10 +2278,10 @@ window.importScheduleItemsFromFile = async function (inputEl) {
         const skipped = [];
         for (let i = startIdx; i < rows.length; i++) {
             const r = rows[i];
-            const itemNo = String(r[0] || '').trim();
-            const item = String(r[1] || '').trim();
-            const startDate = _normDateInput(String(r[2] || '').trim());
-            const endDate = _normDateInput(String(r[3] || '').trim());
+            const itemNo = _schedCleanCell(r[0]);
+            const item = _schedCleanCell(r[1]);
+            const startDate = _normDateInput(_schedCleanCell(r[2]));
+            const endDate = _normDateInput(_schedCleanCell(r[3]));
             if (!item || !startDate || !endDate) { skipped.push({ row: i + 1, reason: 'بيانات ناقصة' }); continue; }
             const key = itemNo + '||' + item;
             if (existing.has(key)) { skipped.push({ row: i + 1, reason: 'مكرر مع الشيت' }); continue; }
@@ -2181,14 +2298,20 @@ window.importScheduleItemsFromFile = async function (inputEl) {
         _schedSetStatus(`⏳ جاري رفع ${toAdd.length} بند${skipped.length ? ' (متخطى ' + skipped.length + ')' : ''}...`);
         const user = _schedCurrentUser();
         let ok = 0, fail = 0;
-        for (let i = 0; i < toAdd.length; i++) {
-            try {
-                await _schedPost(Object.assign({ action: 'addScheduleItem', user }, toAdd[i]));
-                ok++;
-                _schedSetStatus(`⏳ تم رفع ${ok}/${toAdd.length}...`);
-            } catch (e) { console.warn('row failed', toAdd[i], e); fail++; }
-            // yield to UI so status updates render and the page stays responsive
-            await new Promise(r => setTimeout(r, 0));
+        try {
+            await _schedPost({ action: 'bulkScheduleItems', rows: toAdd, user });
+            ok = toAdd.length;
+            _schedSetStatus(`⏳ تم رفع ${ok}/${toAdd.length}...`);
+            await _schedYield();
+        } catch (bulkErr) {
+            for (let i = 0; i < toAdd.length; i++) {
+                try {
+                    await _schedPost(Object.assign({ action: 'addScheduleItem', user }, toAdd[i]));
+                    ok++;
+                    _schedSetStatus(`⏳ تم رفع ${ok}/${toAdd.length}...`);
+                } catch (e) { console.warn('row failed', toAdd[i], e); fail++; }
+                await _schedYield();
+            }
         }
         await refreshScheduleData();
         _schedSetStatus(`✅ تم رفع ${ok} بند${fail ? ' — فشل ' + fail : ''}${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
@@ -2219,8 +2342,8 @@ window.importSchedulePlanFromFile = async function (inputEl) {
         const skipped = [];
         for (let i = startIdx; i < rows.length; i++) {
             const r = rows[i];
-            const date = _normDateInput(String(r[0] || '').trim());
-            const plannedValue = Number(String(r[1] || '').replace(/[,\s]/g, '')) || 0;
+            const date = _normDateInput(_schedCleanCell(r[0]));
+            const plannedValue = Number(_schedCleanCell(r[1]).replace(/[,\s]/g, '')) || 0;
             if (!date) { skipped.push({ row: i + 1, reason: 'تاريخ ناقص' }); continue; }
             if (existing.has(date)) { skipped.push({ row: i + 1, reason: 'مكرر مع الشيت' }); continue; }
             if (seenInFile.has(date)) { skipped.push({ row: i + 1, reason: 'مكرر داخل الملف' }); continue; }
@@ -2243,7 +2366,7 @@ window.importSchedulePlanFromFile = async function (inputEl) {
             let ok = 0;
             for (const r of toAdd) {
                 try { await _schedPost(Object.assign({ action: 'addSchedulePlan', user }, r)); ok++; } catch(_){}
-                await new Promise(r => setTimeout(r, 0));
+                await _schedYield();
             }
         }
         await _schedPost({ action: 'recalcSchedulePlan', user });
