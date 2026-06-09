@@ -2088,6 +2088,39 @@ window.saveSchedulePlan = async function () {
 };
 
 /* ──────── CSV / TXT Import ──────── */
+/**
+ * Read a file as text with Arabic-friendly encoding detection.
+ * - UTF-8 BOM → UTF-8
+ * - Otherwise: try UTF-8; if it contains U+FFFD (replacement char) or no
+ *   Arabic letters while bytes look Arabic, fall back to Windows-1256.
+ */
+async function _schedReadTextSmart(file) {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    // UTF-8 BOM
+    if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+        return new TextDecoder('utf-8').decode(bytes.subarray(3));
+    }
+    // Try strict UTF-8
+    try {
+        const utf8 = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        return utf8;
+    } catch (_) {
+        // Not valid UTF-8 — most Arabic CSVs exported from Excel use Windows-1256
+        try { return new TextDecoder('windows-1256').decode(bytes); }
+        catch (_) { return new TextDecoder('utf-8').decode(bytes); }
+    }
+}
+
+// Non-blocking toast helper (never blocks the UI)
+function _schedToast(msg, type) {
+    if (typeof window.showAlert === 'function') {
+        try { window.showAlert(msg, type || 'info'); return; } catch (_) {}
+    }
+    // Fallback: just log; we intentionally avoid alert() which freezes the page
+    console.log('[schedule]', msg);
+}
+
 function _schedParseDelimitedFile(text) {
     // detect delimiter: tab > ; > ,
     const sample = text.split(/\r?\n/).slice(0, 5).join('\n');
@@ -2110,7 +2143,7 @@ window.importScheduleItemsFromFile = async function (inputEl) {
     const f = inputEl && inputEl.files && inputEl.files[0];
     if (!f) return;
     try {
-        const text = await f.text();
+        const text = await _schedReadTextSmart(f);
         const rows = _schedParseDelimitedFile(text);
         if (!rows.length) throw new Error('الملف فارغ');
         // skip header
@@ -2141,15 +2174,11 @@ window.importScheduleItemsFromFile = async function (inputEl) {
         }
         if (!toAdd.length) {
             _schedSetStatus('⚠️ لا توجد صفوف صالحة للإضافة (تم تخطي ' + skipped.length + ')');
-            (window.showAlert || alert)('⚠️ لا توجد صفوف صالحة للإضافة. تم تخطي ' + skipped.length + ' صف.');
+            _schedToast('⚠️ لا توجد صفوف صالحة للإضافة. تم تخطي ' + skipped.length + ' صف.', 'warning');
             inputEl.value = '';
             return;
         }
-        if (!confirm(`سيتم إضافة ${toAdd.length} بند${skipped.length ? ' (تخطي ' + skipped.length + ' مكرر/ناقص)' : ''}. متابعة؟`)) {
-            inputEl.value = '';
-            return;
-        }
-        _schedSetStatus('⏳ جاري رفع البنود...');
+        _schedSetStatus(`⏳ جاري رفع ${toAdd.length} بند${skipped.length ? ' (متخطى ' + skipped.length + ')' : ''}...`);
         const user = _schedCurrentUser();
         let ok = 0, fail = 0;
         for (let i = 0; i < toAdd.length; i++) {
@@ -2158,14 +2187,16 @@ window.importScheduleItemsFromFile = async function (inputEl) {
                 ok++;
                 _schedSetStatus(`⏳ تم رفع ${ok}/${toAdd.length}...`);
             } catch (e) { console.warn('row failed', toAdd[i], e); fail++; }
+            // yield to UI so status updates render and the page stays responsive
+            await new Promise(r => setTimeout(r, 0));
         }
         await refreshScheduleData();
         _schedSetStatus(`✅ تم رفع ${ok} بند${fail ? ' — فشل ' + fail : ''}${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
-        (window.showAlert || alert)(`✅ تم رفع ${ok} بند\n${fail ? 'فشل ' + fail + '\n' : ''}${skipped.length ? 'متخطى ' + skipped.length : ''}`);
+        _schedToast(`✅ تم رفع ${ok} بند${fail ? ' — فشل ' + fail : ''}${skipped.length ? ' — متخطى ' + skipped.length : ''}`, fail ? 'warning' : 'success');
     } catch (e) {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
-        (window.showAlert || alert)('❌ فشل قراءة الملف: ' + e.message);
+        _schedToast('❌ فشل قراءة الملف: ' + e.message, 'error');
     } finally {
         inputEl.value = '';
     }
@@ -2175,7 +2206,7 @@ window.importSchedulePlanFromFile = async function (inputEl) {
     const f = inputEl && inputEl.files && inputEl.files[0];
     if (!f) return;
     try {
-        const text = await f.text();
+        const text = await _schedReadTextSmart(f);
         const rows = _schedParseDelimitedFile(text);
         if (!rows.length) throw new Error('الملف فارغ');
         let startIdx = 0;
@@ -2198,15 +2229,11 @@ window.importSchedulePlanFromFile = async function (inputEl) {
         }
         if (!toAdd.length) {
             _schedSetStatus('⚠️ لا توجد صفوف صالحة (تم تخطي ' + skipped.length + ')');
-            (window.showAlert || alert)('⚠️ لا توجد صفوف صالحة. تم تخطي ' + skipped.length + ' صف.');
+            _schedToast('⚠️ لا توجد صفوف صالحة. تم تخطي ' + skipped.length + ' صف.', 'warning');
             inputEl.value = '';
             return;
         }
-        if (!confirm(`سيتم إضافة ${toAdd.length} صف خطة${skipped.length ? ' (تخطي ' + skipped.length + ' مكرر/ناقص)' : ''}. متابعة؟`)) {
-            inputEl.value = '';
-            return;
-        }
-        _schedSetStatus('⏳ جاري رفع صفوف الخطة...');
+        _schedSetStatus(`⏳ جاري رفع ${toAdd.length} صف${skipped.length ? ' (متخطى ' + skipped.length + ')' : ''}...`);
         const user = _schedCurrentUser();
         // bulk action available on server
         try {
@@ -2216,16 +2243,17 @@ window.importSchedulePlanFromFile = async function (inputEl) {
             let ok = 0;
             for (const r of toAdd) {
                 try { await _schedPost(Object.assign({ action: 'addSchedulePlan', user }, r)); ok++; } catch(_){}
+                await new Promise(r => setTimeout(r, 0));
             }
         }
         await _schedPost({ action: 'recalcSchedulePlan', user });
         await refreshScheduleData();
         _schedSetStatus(`✅ تم رفع ${toAdd.length} صف${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
-        (window.showAlert || alert)(`✅ تم رفع ${toAdd.length} صف\n${skipped.length ? 'متخطى ' + skipped.length : ''}`);
+        _schedToast(`✅ تم رفع ${toAdd.length} صف${skipped.length ? ' — متخطى ' + skipped.length : ''}`, 'success');
     } catch (e) {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
-        (window.showAlert || alert)('❌ فشل قراءة الملف: ' + e.message);
+        _schedToast('❌ فشل قراءة الملف: ' + e.message, 'error');
     } finally {
         inputEl.value = '';
     }
