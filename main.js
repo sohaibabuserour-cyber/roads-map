@@ -83,6 +83,87 @@
         document.documentElement.style.overflow = '';
         if (_keyBlocker){ document.removeEventListener('keydown', _keyBlocker, true); _keyBlocker = null; }
     };
+
+    /* ----- Skipped-rows modal (persists until user closes) ----- */
+    function injectSkippedStyle(){
+        if (document.getElementById('lvSkippedStyle')) return;
+        const s = document.createElement('style');
+        s.id = 'lvSkippedStyle';
+        s.textContent = `
+            #lvSkipped{position:fixed;inset:0;background:rgba(5,8,16,0.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:2147483601;display:none;align-items:center;justify-content:center;font-family:'Cairo','Tajawal',sans-serif;direction:rtl;}
+            #lvSkipped.show{display:flex;}
+            #lvSkipped .lv-sk-box{background:linear-gradient(145deg,#241a1a,#140e0e);border:1px solid rgba(255,170,80,0.45);border-radius:16px;padding:22px 26px;min-width:520px;max-width:94vw;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 25px 70px rgba(0,0,0,0.75);color:#fff;}
+            #lvSkipped .lv-sk-title{font-size:17px;font-weight:900;margin-bottom:6px;color:#ffb86b;display:flex;align-items:center;gap:8px;}
+            #lvSkipped .lv-sk-sub{font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:12px;}
+            #lvSkipped .lv-sk-wrap{overflow:auto;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(0,0,0,0.25);}
+            #lvSkipped table{width:100%;border-collapse:collapse;font-size:12.5px;}
+            #lvSkipped th{background:rgba(255,170,80,0.12);color:#ffd0a3;font-weight:800;padding:8px 10px;text-align:right;position:sticky;top:0;border-bottom:1px solid rgba(255,255,255,0.08);}
+            #lvSkipped td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.05);color:#fff;}
+            #lvSkipped tr:hover td{background:rgba(255,255,255,0.03);}
+            #lvSkipped .lv-sk-reason{color:#ffb86b;font-weight:700;}
+            #lvSkipped .lv-sk-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+            #lvSkipped .lv-sk-btn{background:linear-gradient(135deg,#f5c842,#ffb84d);color:#1a1a1a;border:none;border-radius:8px;padding:9px 20px;font-weight:900;cursor:pointer;font-family:inherit;font-size:13px;}
+            #lvSkipped .lv-sk-btn:hover{filter:brightness(1.08);}
+        `;
+        document.head.appendChild(s);
+    }
+    let _skKeyBlocker = null;
+    window.LV.showSkipped = function(title, rows){
+        if (!Array.isArray(rows) || !rows.length) return;
+        injectSkippedStyle();
+        let el = document.getElementById('lvSkipped');
+        if (!el){
+            el = document.createElement('div');
+            el.id = 'lvSkipped';
+            document.body.appendChild(el);
+        }
+        const cols = Array.from(rows.reduce((s,r)=>{ Object.keys(r||{}).forEach(k=>s.add(k)); return s; }, new Set()));
+        // Preferred column order
+        const order = ['row','itemNo','item','description','desc','date','reason'];
+        cols.sort((a,b)=>{
+            const ia = order.indexOf(a), ib = order.indexOf(b);
+            if (ia===-1 && ib===-1) return a.localeCompare(b);
+            if (ia===-1) return 1;
+            if (ib===-1) return -1;
+            return ia - ib;
+        });
+        const labels = {row:'الصف',itemNo:'رقم البند',item:'البند',description:'البند',desc:'البند',date:'التاريخ',reason:'السبب'};
+        const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        el.innerHTML = `
+            <div class="lv-sk-box" role="dialog" aria-modal="true">
+                <div class="lv-sk-title">⚠️ ${esc(title || 'صفوف تم تخطيها')}</div>
+                <div class="lv-sk-sub">عدد الصفوف المتخطاة: <b>${rows.length}</b> — راجع البيانات ثم اضغط إغلاق</div>
+                <div class="lv-sk-wrap">
+                    <table>
+                        <thead><tr>${cols.map(c=>`<th>${esc(labels[c]||c)}</th>`).join('')}</tr></thead>
+                        <tbody>${rows.map(r=>`<tr>${cols.map(c=>{
+                            const v = r[c];
+                            const cls = c==='reason' ? ' class="lv-sk-reason"' : '';
+                            return `<td${cls}>${esc(v==null?'':v)}</td>`;
+                        }).join('')}</tr>`).join('')}</tbody>
+                    </table>
+                </div>
+                <div class="lv-sk-actions">
+                    <button type="button" class="lv-sk-btn" id="lvSkClose">إغلاق</button>
+                </div>
+            </div>`;
+        el.classList.add('show');
+        document.documentElement.style.overflow = 'hidden';
+        const close = () => {
+            el.classList.remove('show');
+            document.documentElement.style.overflow = '';
+            if (_skKeyBlocker){ document.removeEventListener('keydown', _skKeyBlocker, true); _skKeyBlocker = null; }
+        };
+        document.getElementById('lvSkClose').addEventListener('click', close);
+        // Block accidental dismiss — only the button closes
+        el.addEventListener('click', e => e.stopPropagation(), true);
+        if (!_skKeyBlocker){
+            _skKeyBlocker = function(e){
+                if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); }
+            };
+            document.addEventListener('keydown', _skKeyBlocker, true);
+        }
+    };
 })();
 
 /* ====================================================
@@ -1766,10 +1847,11 @@ function _lastRevisedQty(it){
 function _renderBOQTable(){
     const tb = document.getElementById('boqItemsBody');
     const cnt = document.getElementById('boqItemsCount');
+    const thead = document.getElementById('boqItemsHead');
     if (!tb) return;
     const all = window._boqItems || [];
 
-    // فلتر من خانات الإدخال (substring case-insensitive للنصوص)
+    // فلتر من خانات الإدخال
     const fNo    = (document.getElementById('boqItemNo')?.value || '').trim().toLowerCase();
     const fDesc  = (document.getElementById('boqDesc')?.value || '').trim().toLowerCase();
     const fUnit  = (document.getElementById('boqUnit')?.value || '').trim().toLowerCase();
@@ -1786,25 +1868,62 @@ function _renderBOQTable(){
         matchNum(it.contractQty, fQty)
     ).slice().sort((a, b) => _cmpItemNo(a.itemNo, b.itemNo));
 
+    // أقصى عدد لأعمدة "كمية معدلة" بناءً على البيانات
+    let maxRev = 0;
+    items.forEach(it => {
+        const arr = Array.isArray(it.revised) ? it.revised : [];
+        // اعتبر آخر قيمة غير فارغة
+        let last = 0;
+        for (let i = arr.length - 1; i >= 0; i--){
+            if (String(arr[i]==null?'':arr[i]).trim() !== ''){ last = i + 1; break; }
+        }
+        if (last > maxRev) maxRev = last;
+    });
+
+    // أعد بناء رؤوس الأعمدة ديناميكياً
+    if (thead){
+        const revHeads = Array.from({length: maxRev}, (_, i) =>
+            `<th>كمية معدلة ${i + 1}</th>`
+        ).join('');
+        thead.innerHTML = `<tr>
+            <th class="col-itemno">رقم البند</th>
+            <th class="col-itemdesc">البند</th>
+            <th>الوحدة</th>
+            <th>السعر</th>
+            <th>الكمية التعاقدية</th>
+            ${revHeads}
+            <th>الإجمالي</th>
+        </tr>`;
+    }
+
     const totalLbl = items.length === all.length
         ? (all.length ? `(${all.length})` : '')
         : `(${items.length} / ${all.length})`;
     if (cnt) cnt.textContent = totalLbl;
 
+    const colspan = 6 + maxRev; // 5 ثابتة + إجمالي + maxRev
     if (!items.length) {
-        tb.innerHTML = '<tr><td colspan="7" class="boq-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة — أضف بنداً أو ارفع ملف CSV') + '</td></tr>';
+        tb.innerHTML = '<tr><td colspan="' + colspan + '" class="boq-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة — أضف بنداً أو ارفع ملف CSV') + '</td></tr>';
         return;
     }
     tb.innerHTML = items.map(it => {
         const price = Number(String(it.price||'').replace(/,/g,'')) || 0;
         const contractQty = Number(String(it.contractQty||'').replace(/,/g,'')) || 0;
-        const lastRevStr = _lastRevisedQty(it);
-        const lastRev = lastRevStr !== '' ? (Number(String(lastRevStr).replace(/,/g,'')) || 0) : null;
-        const qtyForTotal = lastRev != null ? lastRev : contractQty;
+        const arr = Array.isArray(it.revised) ? it.revised : [];
+        // ابن خلايا الكميات المعدلة
+        let lastRevNum = null;
+        const revCells = [];
+        for (let i = 0; i < maxRev; i++){
+            const v = String(arr[i] == null ? '' : arr[i]).trim();
+            if (v !== ''){
+                lastRevNum = Number(v.replace(/,/g,'')) || 0;
+                revCells.push(`<td style="color:#7fd1ff;font-weight:700;">${_boqFmt(v)}</td>`);
+            } else {
+                revCells.push(`<td style="color:rgba(255,255,255,0.3);">—</td>`);
+            }
+        }
+        const qtyForTotal = lastRevNum != null ? lastRevNum : contractQty;
         const total = price * qtyForTotal;
-        const revCell = lastRevStr !== ''
-            ? `<span style="color:#7fd1ff;font-weight:700;">${_boqFmt(lastRevStr)}</span>`
-            : `<span style="color:rgba(255,255,255,0.35);">—</span>`;
         return `
         <tr data-row="${it.row}" onclick="loadBOQItemForEdit(${it.row})" class="${window._boqEditRow === it.row ? 'active-edit' : ''}">
             <td>${_boqEsc(it.itemNo)}</td>
@@ -1812,7 +1931,7 @@ function _renderBOQTable(){
             <td>${_boqEsc(it.unit)}</td>
             <td>${_boqFmt(it.price)}</td>
             <td>${_boqFmt(it.contractQty)}</td>
-            <td>${revCell}</td>
+            ${revCells.join('')}
             <td style="color:#f5c842;font-weight:700;">${_boqFmt(total)}</td>
         </tr>`;
     }).join('');
@@ -1954,7 +2073,8 @@ window.importBOQFromFile = async function (inputEl) {
         if (!url) { (window.showAlert || alert)('⚠️ أضف رابط سكريبت جدول الكميات في الإعدادات'); return; }
         const existing = new Set((window._boqItems||[]).map(it => (it.itemNo||'').trim() + '||' + (it.description||'').trim()));
         const seen = new Set();
-        let added = 0, skipped = 0;
+        let added = 0;
+        const skippedRows = [];
         const totalRows = rows.length - start;
         _boqSetStatus(`⏳ جاري رفع ${totalRows} صف...`);
         LV.showOverlay('جاري رفع بنود جدول الكميات...', `إجمالي الصفوف: ${totalRows}`);
@@ -1964,9 +2084,14 @@ window.importBOQFromFile = async function (inputEl) {
             const itemNo = (r[0]||'').trim();
             const desc   = (r[1]||'').trim();
             const processed = (i - start) + 1;
-            if (!itemNo || !desc) { skipped++; LV.updateOverlay(processed, totalRows, `تم رفع ${added} — تخطى ${skipped}`); continue; }
+            const pushSkip = (reason) => {
+                skippedRows.push({ row: i + 1, itemNo, description: desc, reason });
+                LV.updateOverlay(processed, totalRows, `تم رفع ${added} — تخطى ${skippedRows.length}`);
+            };
+            if (!itemNo || !desc) { pushSkip('بيانات ناقصة (رقم البند أو الوصف)'); continue; }
             const k = itemNo + '||' + desc;
-            if (existing.has(k) || seen.has(k)) { skipped++; LV.updateOverlay(processed, totalRows, `تم رفع ${added} — تخطى ${skipped}`); continue; }
+            if (existing.has(k)) { pushSkip('مكرر مع الشيت'); continue; }
+            if (seen.has(k)) { pushSkip('مكرر داخل الملف'); continue; }
             seen.add(k);
             const payload = {
                 action: 'addBOQ',
@@ -1977,7 +2102,6 @@ window.importBOQFromFile = async function (inputEl) {
                 timestamp: new Date().toISOString(),
                 user: (window.currentUser && (currentUser.name||currentUser.email)) || ''
             };
-            // pass any extra cols as revised
             for (let j = 5; j < r.length; j++) {
                 const v = (r[j]||'').trim();
                 if (v !== '') payload['revisedQty' + (j-4)] = v;
@@ -1990,17 +2114,22 @@ window.importBOQFromFile = async function (inputEl) {
                 });
                 const t = await res.text();
                 let rr; try{ rr=JSON.parse(t); }catch(_){ rr=null; }
-                if (rr && rr.success) added++; else skipped++;
-            } catch(_){ skipped++; }
-            LV.updateOverlay(processed, totalRows, `تم رفع ${added} — تخطى ${skipped}`);
+                if (rr && rr.success) added++;
+                else pushSkip('فشل الإضافة: ' + ((rr && rr.error) || 'خطأ من الخادم'));
+            } catch(err){ pushSkip('خطأ شبكة: ' + (err && err.message || 'غير معروف')); }
+            LV.updateOverlay(processed, totalRows, `تم رفع ${added} — تخطى ${skippedRows.length}`);
             if (i % 5 === 0) _boqSetStatus(`⏳ تم رفع ${added}/${totalRows}...`);
         }
         inputEl.value = '';
         LV.setOverlayMsg('جاري تحديث الجدول...');
-        _boqSetStatus(`✅ تم رفع ${added} بند — تخطّى ${skipped}`);
+        _boqSetStatus(`✅ تم رفع ${added} بند — تخطّى ${skippedRows.length}`);
         await refreshBOQData();
         LV.hideOverlay();
-        (window.showAlert || alert)(`✅ تم رفع ${added} بند — تخطّى ${skipped}`);
+        if (skippedRows.length){
+            LV.showSkipped(`صفوف تم تخطيها أثناء رفع جدول الكميات (تم رفع ${added})`, skippedRows);
+        } else {
+            (window.showAlert || alert)(`✅ تم رفع ${added} بند`);
+        }
     } catch (e) {
         console.error(e);
         _boqSetStatus('❌ ' + e.message);
@@ -2701,16 +2830,17 @@ window.importScheduleItemsFromFile = async function (inputEl) {
             const item = _schedCleanCell(r[1]);
             const startDate = _normDateInput(_schedCleanCell(r[2]));
             const endDate = _normDateInput(_schedCleanCell(r[3]));
-            if (!item || !startDate || !endDate) { skipped.push({ row: i + 1, reason: 'بيانات ناقصة' }); continue; }
+            if (!item || !startDate || !endDate) { skipped.push({ row: i + 1, itemNo, item, reason: 'بيانات ناقصة (البند/تاريخ البداية/النهاية)' }); continue; }
             const key = itemNo + '||' + item;
-            if (existing.has(key)) { skipped.push({ row: i + 1, reason: 'مكرر مع الشيت' }); continue; }
-            if (seenInFile.has(key)) { skipped.push({ row: i + 1, reason: 'مكرر داخل الملف' }); continue; }
+            if (existing.has(key)) { skipped.push({ row: i + 1, itemNo, item, reason: 'مكرر مع الشيت' }); continue; }
+            if (seenInFile.has(key)) { skipped.push({ row: i + 1, itemNo, item, reason: 'مكرر داخل الملف' }); continue; }
             seenInFile.add(key);
             toAdd.push({ itemNo, item, startDate, endDate });
         }
         if (!toAdd.length) {
             _schedSetStatus('⚠️ لا توجد صفوف صالحة للإضافة (تم تخطي ' + skipped.length + ')');
-            _schedToast('⚠️ لا توجد صفوف صالحة للإضافة. تم تخطي ' + skipped.length + ' صف.', 'warning');
+            if (skipped.length) LV.showSkipped('صفوف تم تخطيها أثناء رفع بنود البرنامج الزمني', skipped);
+            else _schedToast('⚠️ لا توجد صفوف صالحة للإضافة', 'warning');
             inputEl.value = '';
             return;
         }
@@ -2741,6 +2871,7 @@ window.importScheduleItemsFromFile = async function (inputEl) {
         _schedSetStatus(`✅ تم رفع ${ok} بند${fail ? ' — فشل ' + fail : ''}${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
         LV.hideOverlay();
         _schedToast(`✅ تم رفع ${ok} بند${fail ? ' — فشل ' + fail : ''}${skipped.length ? ' — متخطى ' + skipped.length : ''}`, fail ? 'warning' : 'success');
+        if (skipped.length) LV.showSkipped(`صفوف تم تخطيها أثناء رفع بنود البرنامج الزمني (تم رفع ${ok})`, skipped);
     } catch (e) {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
@@ -2768,17 +2899,19 @@ window.importSchedulePlanFromFile = async function (inputEl) {
         const skipped = [];
         for (let i = startIdx; i < rows.length; i++) {
             const r = rows[i];
-            const date = _normDateInput(_schedCleanCell(r[0]));
+            const rawDate = _schedCleanCell(r[0]);
+            const date = _normDateInput(rawDate);
             const plannedValue = Number(_schedCleanCell(r[1]).replace(/[,\s]/g, '')) || 0;
-            if (!date) { skipped.push({ row: i + 1, reason: 'تاريخ ناقص' }); continue; }
-            if (existing.has(date)) { skipped.push({ row: i + 1, reason: 'مكرر مع الشيت' }); continue; }
-            if (seenInFile.has(date)) { skipped.push({ row: i + 1, reason: 'مكرر داخل الملف' }); continue; }
+            if (!date) { skipped.push({ row: i + 1, date: rawDate, reason: 'تاريخ ناقص أو غير صالح' }); continue; }
+            if (existing.has(date)) { skipped.push({ row: i + 1, date, reason: 'مكرر مع الشيت' }); continue; }
+            if (seenInFile.has(date)) { skipped.push({ row: i + 1, date, reason: 'مكرر داخل الملف' }); continue; }
             seenInFile.add(date);
             toAdd.push({ date, plannedValue });
         }
         if (!toAdd.length) {
             _schedSetStatus('⚠️ لا توجد صفوف صالحة (تم تخطي ' + skipped.length + ')');
-            _schedToast('⚠️ لا توجد صفوف صالحة. تم تخطي ' + skipped.length + ' صف.', 'warning');
+            if (skipped.length) LV.showSkipped('صفوف تم تخطيها أثناء رفع خطة البرنامج الزمني', skipped);
+            else _schedToast('⚠️ لا توجد صفوف صالحة', 'warning');
             inputEl.value = '';
             return;
         }
@@ -2807,6 +2940,7 @@ window.importSchedulePlanFromFile = async function (inputEl) {
         _schedSetStatus(`✅ تم رفع ${toAdd.length} صف${skipped.length ? ' — متخطى ' + skipped.length : ''}`);
         LV.hideOverlay();
         _schedToast(`✅ تم رفع ${toAdd.length} صف${skipped.length ? ' — متخطى ' + skipped.length : ''}`, 'success');
+        if (skipped.length) LV.showSkipped(`صفوف تم تخطيها أثناء رفع خطة البرنامج الزمني (تم رفع ${toAdd.length})`, skipped);
     } catch (e) {
         console.error(e);
         _schedSetStatus('❌ ' + e.message);
