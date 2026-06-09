@@ -316,6 +316,9 @@
         <div class="mmRow mmRow-gold" onclick="openContractorCashflowForm();closeMobileMenu()">
             <span>👷</span><span>تدفق نقدي - المقاولون</span>
         </div>
+        <div class="mmRow" onclick="openBOQFormModal();closeMobileMenu()">
+            <span>📋</span><span>جدول الكميات</span>
+        </div>
         <div class="mmRow" onclick="openScheduleFormModal();closeMobileMenu()">
             <span>📅</span><span>البرنامج الزمني</span>
         </div>
@@ -1700,11 +1703,27 @@
   #scheduleFormModal #schedPanelPlan{display:flex;flex-direction:column;height:100%;min-height:0;}
   #scheduleFormModal #schedPanelItems > .sched-table-wrap,
   #scheduleFormModal #schedPanelPlan > .sched-table-wrap{flex:1;min-height:0;}
-  @media (max-width: 720px){
-    #scheduleFormModal .sched-form{grid-template-columns:100px 1fr;}
-    #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr 1fr;}
-    #scheduleFormModal .sched-form > .form-actions{grid-column:1 / -1;display:flex;gap:8px;}
-  }
+   @media (max-width: 720px){
+     #scheduleFormModal .sched-form{grid-template-columns:1fr 1fr;gap:10px;padding:10px;}
+     #scheduleFormModal .sched-form > div{min-width:0;}
+     #scheduleFormModal .sched-form > div:nth-child(1),
+     #scheduleFormModal .sched-form > div:nth-child(2){grid-column:1 / -1;}
+     #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr 1fr;}
+     #scheduleFormModal .sched-form > .form-actions{grid-column:1 / -1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+     #scheduleFormModal .sched-section-title{font-size:11px;flex-wrap:wrap;}
+     #scheduleFormModal .btn-import{padding:6px 10px;font-size:10px;}
+     #scheduleFormModal .sched-tabs{padding:10px 12px!important;}
+     #scheduleFormModal .sched-tabs button{padding:7px 12px;font-size:12px;}
+     #scheduleFormModal{padding:0;}
+     #scheduleFormModal > div:last-child{width:100%!important;max-height:100vh!important;height:100vh;border-radius:0!important;}
+     #scheduleFormModal .sched-combo-menu{max-height:200px;}
+   }
+   @media (max-width: 480px){
+     #scheduleFormModal .sched-form{grid-template-columns:1fr;}
+     #scheduleFormModal .sched-form > div:nth-child(1),
+     #scheduleFormModal .sched-form > div:nth-child(2){grid-column:auto;}
+     #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr;}
+   }
 </style>
 <div id="scheduleFormModal" style="display:none;position:fixed;inset:0;z-index:70003;align-items:center;justify-content:center;">
     <div onclick="closeScheduleFormModal()" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);"></div>
@@ -1731,9 +1750,16 @@
                     <div class="sched-form">
                         <div>
                             <label>رقم البند</label>
-                            <select id="schedItemNoSelect" onchange="onSchedItemNoChange()">
-                                <option value="">— اختر رقم —</option>
-                            </select>
+                            <div class="sched-combo" id="schedItemNoCombo">
+                                <button type="button" class="sched-combo-btn" id="schedItemNoSelectBtn" onclick="toggleSchedItemNoMenu(event)" title="— اختر رقم —">
+                                    <span class="sched-combo-label" id="schedItemNoSelectLabel">— اختر رقم —</span>
+                                    <span class="sched-combo-arrow">▾</span>
+                                </button>
+                                <div class="sched-combo-menu" id="schedItemNoSelectMenu"></div>
+                                <select id="schedItemNoSelect" class="sched-hidden-select" onchange="onSchedItemNoChange()">
+                                    <option value="">— اختر رقم —</option>
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <label>البند</label>
