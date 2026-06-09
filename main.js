@@ -1560,19 +1560,10 @@ window.closeBOQFormModal = function () {
 
 /* ──────── Live preview ──────── */
 window.updateBOQPreview = function () {
-    const no    = (document.getElementById('boqItemNo')?.value || '').trim();
-    const desc  = (document.getElementById('boqDesc')?.value || '').trim();
-    const unit  = (document.getElementById('boqUnit')?.value || '').trim();
-    const price = Number(document.getElementById('boqPrice')?.value || 0);
-    const qty   = Number(document.getElementById('boqContractQty')?.value || 0);
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    set('bpvItemNo', no || '—');
-    set('bpvDesc',   desc || '—');
-    set('bpvUnit',   unit || '—');
-    set('bpvPrice',  _boqFmt(price));
-    set('bpvQty',    _boqFmt(qty));
-    set('bpvTotal',  _boqFmt(price * qty));
+    // إطار المعاينة محذوف — الخانات الآن تعمل كفلتر للجدول
+    if (typeof _renderBOQTable === 'function') _renderBOQTable();
 };
+
 
 /* ──────── Revised columns ──────── */
 window.addBOQRevisedColumn = function (preset) {
@@ -1664,12 +1655,35 @@ function _renderBOQTable(){
     const tb = document.getElementById('boqItemsBody');
     const cnt = document.getElementById('boqItemsCount');
     if (!tb) return;
-    if (cnt) cnt.textContent = window._boqItems.length ? `(${window._boqItems.length})` : '';
-    if (!window._boqItems.length) {
-        tb.innerHTML = '<tr><td colspan="6" class="boq-empty">لا توجد بنود محفوظة — أضف بنداً أو ارفع ملف CSV</td></tr>';
+    const all = window._boqItems || [];
+
+    // فلتر من خانات الإدخال (substring case-insensitive للنصوص)
+    const fNo    = (document.getElementById('boqItemNo')?.value || '').trim().toLowerCase();
+    const fDesc  = (document.getElementById('boqDesc')?.value || '').trim().toLowerCase();
+    const fUnit  = (document.getElementById('boqUnit')?.value || '').trim().toLowerCase();
+    const fPrice = (document.getElementById('boqPrice')?.value || '').trim();
+    const fQty   = (document.getElementById('boqContractQty')?.value || '').trim();
+    const match = (val, q) => !q || String(val||'').toLowerCase().includes(q);
+    const matchNum = (val, q) => !q || String(val||'').replace(/,/g,'').includes(q.replace(/,/g,''));
+
+    const items = all.filter(it =>
+        match(it.itemNo, fNo) &&
+        match(it.description, fDesc) &&
+        match(it.unit, fUnit) &&
+        matchNum(it.price, fPrice) &&
+        matchNum(it.contractQty, fQty)
+    );
+
+    const totalLbl = items.length === all.length
+        ? (all.length ? `(${all.length})` : '')
+        : `(${items.length} / ${all.length})`;
+    if (cnt) cnt.textContent = totalLbl;
+
+    if (!items.length) {
+        tb.innerHTML = '<tr><td colspan="6" class="boq-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة — أضف بنداً أو ارفع ملف CSV') + '</td></tr>';
         return;
     }
-    tb.innerHTML = window._boqItems.map(it => {
+    tb.innerHTML = items.map(it => {
         const price = Number(String(it.price||'').replace(/,/g,'')) || 0;
         const qty   = Number(String(it.contractQty||'').replace(/,/g,'')) || 0;
         const total = price * qty;
@@ -1684,6 +1698,25 @@ function _renderBOQTable(){
         </tr>`;
     }).join('');
 }
+
+// وايرنق خانات BOQ كفلتر — يُستدعى مرة على DOMReady
+(function _wireBOQFilter(){
+    function wireOne(id){
+        const el = document.getElementById(id);
+        if (!el || el._wiredBoqFilter) return;
+        const fn = () => { if (typeof _renderBOQTable === 'function') _renderBOQTable(); };
+        el.addEventListener('input', fn);
+        el.addEventListener('change', fn);
+        el._wiredBoqFilter = true;
+    }
+    function wireAll(){
+        ['boqItemNo','boqDesc','boqUnit','boqPrice','boqContractQty'].forEach(wireOne);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(wireAll, 100));
+    else setTimeout(wireAll, 100);
+    setTimeout(wireAll, 1500);
+})();
+
 
 window.loadBOQItemForEdit = function (row) {
     const it = window._boqItems.find(x => x.row === row);
@@ -2011,17 +2044,12 @@ function _refreshBoqDropdown() {
     const selNo = document.getElementById('schedItemNoSelect');
     const selDesc = document.getElementById('schedItemSelect');
     if (!selNo || !selDesc) return;
-    const editingRow = window._schedEditItemRow;
-    const usedKeys = new Set(
-        (window._schedItems || [])
-            .filter(it => !editingRow || it.row !== editingRow)
-            .map(it => (it.itemNo || '').trim() + '||' + (it.item || '').trim())
-    );
+    // عرض كل بنود BOQ بدون استبعاد المستخدَم منها (التكرار يُكشف عند الحفظ)
     const prevNo = selNo.value, prevDesc = selDesc.value;
     selNo.innerHTML = '<option value="">— اختر رقم —</option>';
     selDesc.innerHTML = '<option value="">— اختر بنداً —</option>';
+    const editingRow = window._schedEditItemRow;
     (window._boqItemsList || []).forEach(({ no, desc }) => {
-        if (usedKeys.has((no || '').trim() + '||' + (desc || '').trim())) return;
         const o1 = document.createElement('option');
         o1.value = no; o1.textContent = no || '—';
         o1.dataset.desc = desc;
@@ -2175,12 +2203,32 @@ function _renderItemsTable() {
     const tb = document.getElementById('schedItemsBody');
     const cnt = document.getElementById('schedItemsCount');
     if (!tb) return;
-    if (cnt) cnt.textContent = window._schedItems.length ? `(${window._schedItems.length})` : '';
-    if (!window._schedItems.length) {
-        tb.innerHTML = '<tr><td colspan="5" class="sched-empty">لا توجد بنود محفوظة</td></tr>';
+    const all = window._schedItems || [];
+
+    // فلتر من خانات الفورم
+    const fNo    = (document.getElementById('schedItemNoSelect')?.value || '').trim().toLowerCase();
+    const fItem  = (document.getElementById('schedItemSelect')?.value || '').trim().toLowerCase();
+    const fStart = (document.getElementById('schedItemStart')?.value || '').trim();
+    const fEnd   = (document.getElementById('schedItemEnd')?.value || '').trim();
+    const match  = (val, q) => !q || String(val||'').toLowerCase().includes(q);
+
+    const items = all.filter(it =>
+        match(it.itemNo, fNo) &&
+        match(it.item, fItem) &&
+        (!fStart || String(it.startDate||'') === fStart) &&
+        (!fEnd   || String(it.endDate||'')   === fEnd)
+    );
+
+    const lbl = items.length === all.length
+        ? (all.length ? `(${all.length})` : '')
+        : `(${items.length} / ${all.length})`;
+    if (cnt) cnt.textContent = lbl;
+
+    if (!items.length) {
+        tb.innerHTML = '<tr><td colspan="5" class="sched-empty">' + (all.length ? 'لا توجد بنود مطابقة للفلتر' : 'لا توجد بنود محفوظة') + '</td></tr>';
         return;
     }
-    tb.innerHTML = window._schedItems.map(it => `
+    tb.innerHTML = items.map(it => `
         <tr data-row="${it.row}" onclick="loadScheduleItemForEdit(${it.row})" class="${window._schedEditItemRow === it.row ? 'active-edit' : ''}">
             <td>${_esc(it.itemNo)}</td>
             <td class="col-itemdesc" title="${_esc(it.item)}">${_esc(it.item)}</td>
@@ -2195,13 +2243,27 @@ function _renderPlanTable() {
     const tb = document.getElementById('schedPlanBody');
     const cnt = document.getElementById('schedPlanCount');
     if (!tb) return;
-    if (cnt) cnt.textContent = window._schedPlan.length ? `(${window._schedPlan.length})` : '';
-    if (!window._schedPlan.length) {
-        tb.innerHTML = '<tr><td colspan="5" class="sched-empty">لا توجد صفوف خطة محفوظة</td></tr>';
+    const all = window._schedPlan || [];
+
+    // فلتر من خانات الفورم
+    const fDate = (document.getElementById('schedPlanDate')?.value || '').trim();
+    const fVal  = (document.getElementById('schedPlanValue')?.value || '').trim();
+    const plan = all.filter(p =>
+        (!fDate || String(p.date||'') === fDate) &&
+        (!fVal  || String(p.plannedValue||'').replace(/,/g,'').includes(fVal.replace(/,/g,'')))
+    );
+
+    const lbl = plan.length === all.length
+        ? (all.length ? `(${all.length})` : '')
+        : `(${plan.length} / ${all.length})`;
+    if (cnt) cnt.textContent = lbl;
+
+    if (!plan.length) {
+        tb.innerHTML = '<tr><td colspan="5" class="sched-empty">' + (all.length ? 'لا توجد صفوف مطابقة للفلتر' : 'لا توجد صفوف خطة محفوظة') + '</td></tr>';
         return;
     }
     const fmt = n => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
-    tb.innerHTML = window._schedPlan.map(p => `
+    tb.innerHTML = plan.map(p => `
         <tr data-row="${p.row}" onclick="loadSchedulePlanForEdit(${p.row})" class="${window._schedEditPlanRow === p.row ? 'active-edit' : ''}">
             <td>${_esc(p.date)}</td>
             <td>${fmt(p.plannedValue)}</td>
@@ -2211,6 +2273,7 @@ function _renderPlanTable() {
         </tr>
     `).join('');
 }
+
 
 function _esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -2606,42 +2669,14 @@ window.importSchedulePlanFromFile = async function (inputEl) {
         if (isNaN(ds) || isNaN(de) || de < ds) return 0;
         return Math.round((de - ds) / 86400000) + 1;
     }
+    // إطار المعاينة محذوف — الخانات تعمل كفلتر مباشر على جدول العرض
     window.updateScheduleItemPreview = function(){
-        const noEl = document.getElementById('schedItemNoSelect');
-        const itEl = document.getElementById('schedItemSelect');
-        const sEl  = document.getElementById('schedItemStart');
-        const eEl  = document.getElementById('schedItemEnd');
-        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-        const no  = noEl ? (noEl.value || '') : '';
-        const it  = itEl ? (itEl.value || '') : '';
-        const s   = sEl ? sEl.value : '';
-        const e   = eEl ? eEl.value : '';
-        const d   = diffDays(s, e);
-        set('spvItemNo', no || '—');
-        set('spvItem',   it || '—');
-        set('spvStart',  s  || '—');
-        set('spvEnd',    e  || '—');
-        set('spvDays',   d ? (d + ' يوم') : '0 يوم');
+        if (typeof _renderItemsTable === 'function') _renderItemsTable();
     };
     window.updateSchedulePlanPreview = function(){
-        const dEl = document.getElementById('schedPlanDate');
-        const vEl = document.getElementById('schedPlanValue');
-        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-        const date = dEl ? dEl.value : '';
-        const val  = Number(vEl ? vEl.value : 0) || 0;
-        // Current cumulative from saved plan
-        let cumNow = 0;
-        (window._schedPlan || []).forEach(p => { cumNow += Number(p.plannedValue || 0); });
-        // Subtract if editing existing row
-        if (window._schedEditPlanRow){
-            const existing = (window._schedPlan || []).find(p => p.row === window._schedEditPlanRow);
-            if (existing) cumNow -= Number(existing.plannedValue || 0);
-        }
-        set('ppvDate',     date || '—');
-        set('ppvValue',    fmtN(val));
-        set('ppvCumNow',   fmtN(cumNow));
-        set('ppvCumAfter', fmtN(cumNow + val));
+        if (typeof _renderPlanTable === 'function') _renderPlanTable();
     };
+
 
     function wire(id, fn){
         const el = document.getElementById(id);
