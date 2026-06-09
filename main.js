@@ -1503,23 +1503,53 @@ function _updateGroupsTabState() {
 
 
 /* ====================================================
-   BOQ FORM (جدول الكميات)
+   BOQ FORM (جدول الكميات) — frame مطابق للبرنامج الزمني
    ==================================================== */
+window._boqEditRow = null;       // row being edited (from sheet)
+window._boqItems   = [];         // existing BOQ items loaded from sheet
 window._boqRevisedCount = 0;
 
-window.openBOQFormModal = function () {
+function _boqScriptUrl() {
+    return (window.sheetIdsConfig && window.sheetIdsConfig['BOQ_SCRIPT_URL'])
+        || window.BOQ_SCRIPT_URL
+        || localStorage.getItem('BOQ_SCRIPT_URL') || '';
+}
+function _boqSheetId() {
+    let id = (window.sheetIdsConfig && window.sheetIdsConfig.BOQ_SHEET_ID)
+          || window.BOQ_SHEET_ID || window.BILLS_SHEET_ID || '';
+    if (id && /\/d\//.test(id)) {
+        const m = id.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (m) id = m[1];
+    }
+    return id;
+}
+function _boqSetStatus(msg) {
+    const el = document.getElementById('boqStatusMsg');
+    if (el) el.textContent = msg || '';
+}
+function _boqEsc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function _boqFmt(n){
+    const v = Number(String(n||'').replace(/,/g,'')) || 0;
+    return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+window.openBOQFormModal = async function () {
     const m = document.getElementById('boqFormModal');
-    if (!m) return;
-    // reset fields
-    ['boqItemNo','boqUnit','boqDesc','boqPrice','boqContractQty'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    const list = document.getElementById('boqRevisedList');
-    if (list) list.innerHTML = '';
-    window._boqRevisedCount = 0;
+    if (!m) { (window.showAlert || alert)('شاشة جدول الكميات غير موجودة'); return; }
     m.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    cancelBOQEdit();
+    updateBOQPreview();
+    _boqSetStatus('⏳ جاري تحميل البيانات...');
+    try {
+        await refreshBOQData();
+        _boqSetStatus('✅ جاهز');
+    } catch (e) {
+        console.warn(e);
+        _boqSetStatus('⚠️ ' + (e.message || 'فشل التحميل'));
+    }
 };
 
 window.closeBOQFormModal = function () {
@@ -1528,7 +1558,24 @@ window.closeBOQFormModal = function () {
     document.body.style.overflow = '';
 };
 
-window.addBOQRevisedColumn = function () {
+/* ──────── Live preview ──────── */
+window.updateBOQPreview = function () {
+    const no    = (document.getElementById('boqItemNo')?.value || '').trim();
+    const desc  = (document.getElementById('boqDesc')?.value || '').trim();
+    const unit  = (document.getElementById('boqUnit')?.value || '').trim();
+    const price = Number(document.getElementById('boqPrice')?.value || 0);
+    const qty   = Number(document.getElementById('boqContractQty')?.value || 0);
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('bpvItemNo', no || '—');
+    set('bpvDesc',   desc || '—');
+    set('bpvUnit',   unit || '—');
+    set('bpvPrice',  _boqFmt(price));
+    set('bpvQty',    _boqFmt(qty));
+    set('bpvTotal',  _boqFmt(price * qty));
+};
+
+/* ──────── Revised columns ──────── */
+window.addBOQRevisedColumn = function (preset) {
     const list = document.getElementById('boqRevisedList');
     if (!list) return;
     window._boqRevisedCount = (window._boqRevisedCount || 0) + 1;
@@ -1536,104 +1583,266 @@ window.addBOQRevisedColumn = function () {
     const row = document.createElement('div');
     row.className = 'boq-rev-row';
     row.dataset.revIdx = String(idx);
-    row.style.cssText = 'display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;';
     row.innerHTML = `
-        <div style="font-size:12px;font-weight:800;color:#5cc890;font-family:'Cairo',sans-serif;white-space:nowrap;min-width:120px;">
-            كمية جدول معدل ${idx}
-        </div>
-        <input type="number" step="any" class="settings-input boq-rev-qty"
-               placeholder="الكمية" style="flex:1;">
+        <div class="lbl">كمية جدول معدل ${idx}</div>
+        <input type="number" step="any" class="boq-rev-qty" placeholder="الكمية" value="${preset != null ? _boqEsc(preset) : ''}">
         <button type="button" onclick="this.parentNode.remove()" title="حذف"
             style="background:rgba(244,67,54,0.12);border:1px solid rgba(244,67,54,0.35);color:#ff8a80;width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:14px;">✕</button>
     `;
     list.appendChild(row);
 };
 
-window.submitBOQForm = async function () {
-    const itemNo      = document.getElementById('boqItemNo')?.value.trim() || '';
-    const desc        = document.getElementById('boqDesc')?.value.trim() || '';
-    const unit        = document.getElementById('boqUnit')?.value.trim() || '';
-    const price       = document.getElementById('boqPrice')?.value.trim() || '';
-    const contractQty = document.getElementById('boqContractQty')?.value.trim() || '';
+function _boqResetForm() {
+    ['boqItemNo','boqDesc','boqUnit','boqPrice','boqContractQty'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    const list = document.getElementById('boqRevisedList');
+    if (list) list.innerHTML = '';
+    window._boqRevisedCount = 0;
+    updateBOQPreview();
+}
 
-    if (!itemNo || !desc) {
-        if (typeof showAlert === 'function') showAlert('⚠️ أدخل رقم البند والوصف', 'warning');
-        else alert('أدخل رقم البند والوصف');
+window.cancelBOQEdit = function () {
+    window._boqEditRow = null;
+    const wrap = document.getElementById('boqFormWrap');
+    if (wrap) wrap.classList.remove('edit-mode');
+    _boqResetForm();
+    _renderBOQTable();
+};
+
+/* ──────── Load existing BOQ items via CSV gviz ──────── */
+window.refreshBOQData = async function () {
+    const id = _boqSheetId();
+    if (!id) {
+        window._boqItems = [];
+        _renderBOQTable();
+        _boqSetStatus('⚠️ أضف شيت جدول الكميات في الإعدادات');
         return;
     }
+    const tabs = ['جدول الكميات','BOQ','boq','Sheet1'];
+    let csv = '';
+    for (const tab of tabs) {
+        try {
+            const u = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}&_t=${Date.now()}`;
+            const r = await fetch(u);
+            if (r.ok) {
+                const t = await r.text();
+                if (t && !t.trim().startsWith('<') && t.includes(',')) { csv = t; break; }
+            }
+        } catch(_){}
+    }
+    if (!csv) {
+        try {
+            const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=0&_t=${Date.now()}`;
+            const r = await fetch(url);
+            if (r.ok) csv = await r.text();
+        } catch(_){}
+    }
+    const items = [];
+    if (csv && !csv.trim().startsWith('<')) {
+        const lines = csv.split(/\r?\n/).filter(l => l.trim());
+        for (let i = 1; i < lines.length; i++) {
+            const v = parseCSVLine(lines[i]);
+            const no = (v[0]||'').trim(), desc = (v[1]||'').trim();
+            if (!no && !desc) continue;
+            items.push({
+                row: i + 1,
+                itemNo: no,
+                description: desc,
+                unit: (v[2]||'').trim(),
+                price: (v[3]||'').trim(),
+                contractQty: (v[4]||'').trim(),
+                revised: v.slice(5).map(x => (x||'').trim()).filter(x => x !== '')
+            });
+        }
+    }
+    window._boqItems = items;
+    _renderBOQTable();
+};
 
+function _renderBOQTable(){
+    const tb = document.getElementById('boqItemsBody');
+    const cnt = document.getElementById('boqItemsCount');
+    if (!tb) return;
+    if (cnt) cnt.textContent = window._boqItems.length ? `(${window._boqItems.length})` : '';
+    if (!window._boqItems.length) {
+        tb.innerHTML = '<tr><td colspan="6" class="boq-empty">لا توجد بنود محفوظة — أضف بنداً أو ارفع ملف CSV</td></tr>';
+        return;
+    }
+    tb.innerHTML = window._boqItems.map(it => {
+        const price = Number(String(it.price||'').replace(/,/g,'')) || 0;
+        const qty   = Number(String(it.contractQty||'').replace(/,/g,'')) || 0;
+        const total = price * qty;
+        return `
+        <tr data-row="${it.row}" onclick="loadBOQItemForEdit(${it.row})" class="${window._boqEditRow === it.row ? 'active-edit' : ''}">
+            <td>${_boqEsc(it.itemNo)}</td>
+            <td class="col-itemdesc" title="${_boqEsc(it.description)}">${_boqEsc(it.description)}</td>
+            <td>${_boqEsc(it.unit)}</td>
+            <td>${_boqFmt(it.price)}</td>
+            <td>${_boqFmt(it.contractQty)}</td>
+            <td style="color:#f5c842;font-weight:700;">${_boqFmt(total)}</td>
+        </tr>`;
+    }).join('');
+}
+
+window.loadBOQItemForEdit = function (row) {
+    const it = window._boqItems.find(x => x.row === row);
+    if (!it) return;
+    window._boqEditRow = row;
+    document.getElementById('boqFormWrap').classList.add('edit-mode');
+    document.getElementById('boqItemNo').value      = it.itemNo || '';
+    document.getElementById('boqDesc').value        = it.description || '';
+    document.getElementById('boqUnit').value        = it.unit || '';
+    document.getElementById('boqPrice').value       = String(it.price||'').replace(/,/g,'');
+    document.getElementById('boqContractQty').value = String(it.contractQty||'').replace(/,/g,'');
+    // load revised
+    const list = document.getElementById('boqRevisedList');
+    if (list) list.innerHTML = '';
+    window._boqRevisedCount = 0;
+    (it.revised || []).forEach(v => addBOQRevisedColumn(v));
+    updateBOQPreview();
+    _renderBOQTable();
+};
+
+/* ──────── Save (add / update) ──────── */
+window.saveBOQItem = async function () {
+    const itemNo      = (document.getElementById('boqItemNo')?.value || '').trim();
+    const desc        = (document.getElementById('boqDesc')?.value || '').trim();
+    const unit        = (document.getElementById('boqUnit')?.value || '').trim();
+    const price       = (document.getElementById('boqPrice')?.value || '').trim();
+    const contractQty = (document.getElementById('boqContractQty')?.value || '').trim();
+
+    if (!itemNo || !desc) {
+        (window.showAlert || alert)('⚠️ أدخل رقم البند والوصف');
+        return;
+    }
+    // Duplicate check (skip when editing same row)
+    const key = itemNo + '||' + desc;
+    const dup = (window._boqItems || []).find(it =>
+        (String(it.itemNo||'').trim() + '||' + String(it.description||'').trim()) === key
+        && it.row !== window._boqEditRow
+    );
+    if (dup) {
+        (window.showAlert || alert)('⚠️ هذا البند موجود بالفعل');
+        return;
+    }
     const revised = {};
     document.querySelectorAll('#boqRevisedList .boq-rev-row').forEach(row => {
         const idx = row.dataset.revIdx;
-        const val = row.querySelector('.boq-rev-qty')?.value.trim() || '';
-        if (val !== '') revised['revisedQty' + idx] = val;
+        const v   = row.querySelector('.boq-rev-qty')?.value.trim() || '';
+        if (v !== '') revised['revisedQty' + idx] = v;
     });
 
-    const payload = {
-        action      : 'addBOQ',
-        itemNo      : itemNo,
-        description : desc,
-        unit        : unit,
-        price       : price,
-        contractQty : contractQty,
-        ...revised,
-        timestamp   : new Date().toISOString(),
-        user        : (currentUser && currentUser.email) || ''
-    };
-
-    const url = (window.sheetIdsConfig && window.sheetIdsConfig['BOQ_SCRIPT_URL']) || window.BOQ_SCRIPT_URL || '';
+    const url = _boqScriptUrl();
     if (!url) {
-        if (typeof showAlert === 'function') showAlert('⚠️ أضف رابط سكريبت جدول الكميات في الإعدادات أولاً', 'warning');
-        else alert('أضف رابط سكريبت جدول الكميات في الإعدادات أولاً');
+        (window.showAlert || alert)('⚠️ أضف رابط سكريبت جدول الكميات في الإعدادات');
         return;
     }
+    const payload = {
+        action      : window._boqEditRow ? 'updateBOQ' : 'addBOQ',
+        row         : window._boqEditRow || undefined,
+        itemNo, description: desc, unit, price, contractQty,
+        ...revised,
+        timestamp   : new Date().toISOString(),
+        user        : (window.currentUser && (currentUser.name||currentUser.email)) || ''
+    };
 
-    // مؤشر تحميل على زر الحفظ
-    const saveBtn = document.querySelector('#boqFormModal [onclick*="submitBOQForm"]');
-    const oldText = saveBtn ? saveBtn.textContent : '';
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ جاري الحفظ...'; }
-
+    _boqSetStatus('⏳ جاري الحفظ...');
     try {
         const res = await fetch(url, {
-            method: 'POST',
-            redirect: 'follow',
-            // text/plain يمنع preflight ويوصّل الـ body لـ Apps Script
+            method: 'POST', redirect: 'follow',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
         });
-
         const text = await res.text();
-        let result;
-        try {
-            result = JSON.parse(text);
-        } catch (_e) {
-            throw new Error(
-                'السكريبت رجّع استجابة غير صالحة. تأكد أن الـ Deploy:\n' +
-                '• Execute as: Me\n' +
-                '• Who has access: Anyone\n' +
-                'وأنك عملت "New version" بعد آخر تعديل.\n\n' +
-                'الاستجابة: ' + text.substring(0, 200)
-            );
-        }
-
-        if (result && result.success) {
-            if (typeof showAlert === 'function') showAlert('✅ ' + (result.message || 'تم الحفظ'), 'success');
-            else alert(result.message || 'تم الحفظ');
-            closeBOQFormModal();
-        } else {
-            const msg = '❌ فشل الحفظ: ' + (result?.message || 'خطأ غير معروف') + (result?.error ? '\n' + result.error : '');
-            if (typeof showAlert === 'function') showAlert(msg, 'error');
-            else alert(msg);
-        }
+        let result; try { result = JSON.parse(text); } catch(_){ throw new Error('استجابة غير صالحة: ' + text.slice(0,200)); }
+        if (!result || !result.success) throw new Error((result && result.message) || 'فشل الحفظ');
+        _boqSetStatus('✅ تم الحفظ');
+        (window.showAlert || alert)('✅ ' + (result.message || 'تم الحفظ'));
+        cancelBOQEdit();
+        await refreshBOQData();
     } catch (e) {
-        const msg = '❌ خطأ في الاتصال بالسكريبت:\n' + e.message;
-        if (typeof showAlert === 'function') showAlert(msg, 'error');
-        else alert(msg);
-        console.error('BOQ submit error:', e);
-    } finally {
-        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = oldText; }
+        console.error(e);
+        _boqSetStatus('❌ ' + e.message);
+        (window.showAlert || alert)('❌ ' + e.message);
     }
 };
+
+/* ──────── CSV / TXT Import ──────── */
+function _boqParseDelimited(text){
+    const sample = text.split(/\r?\n/).slice(0,5).join('\n');
+    let delim = ',';
+    if (sample.indexOf('\t') > -1) delim = '\t';
+    else if (sample.indexOf(';') > -1 && sample.split(';').length > sample.split(',').length) delim = ';';
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+    return lines.map(l => delim === ',' ? parseCSVLine(l) : l.split(delim).map(s => s.trim().replace(/^"|"$/g,'')));
+}
+
+window.importBOQFromFile = async function (inputEl) {
+    const f = inputEl && inputEl.files && inputEl.files[0];
+    if (!f) return;
+    try {
+        // Reuse the schedule's smart reader if available; otherwise basic FileReader
+        let text;
+        if (typeof _schedReadTextSmart === 'function') text = await _schedReadTextSmart(f);
+        else text = await f.text();
+        const rows = _boqParseDelimited(text);
+        if (!rows.length) throw new Error('الملف فارغ');
+        // Skip header if it looks like header
+        let start = 0;
+        const first = rows[0].map(c => String(c||'').toLowerCase());
+        if (first.some(c => /رقم|البند|item|description|unit|price|سعر|كمية/.test(c))) start = 1;
+        const url = _boqScriptUrl();
+        if (!url) { (window.showAlert || alert)('⚠️ أضف رابط سكريبت جدول الكميات في الإعدادات'); return; }
+        const existing = new Set((window._boqItems||[]).map(it => (it.itemNo||'').trim() + '||' + (it.description||'').trim()));
+        const seen = new Set();
+        let added = 0, skipped = 0;
+        _boqSetStatus(`⏳ جاري رفع ${rows.length - start} صف...`);
+        for (let i = start; i < rows.length; i++) {
+            const r = rows[i];
+            const itemNo = (r[0]||'').trim();
+            const desc   = (r[1]||'').trim();
+            if (!itemNo || !desc) { skipped++; continue; }
+            const k = itemNo + '||' + desc;
+            if (existing.has(k) || seen.has(k)) { skipped++; continue; }
+            seen.add(k);
+            const payload = {
+                action: 'addBOQ',
+                itemNo, description: desc,
+                unit: (r[2]||'').trim(),
+                price: (r[3]||'').trim(),
+                contractQty: (r[4]||'').trim(),
+                timestamp: new Date().toISOString(),
+                user: (window.currentUser && (currentUser.name||currentUser.email)) || ''
+            };
+            // pass any extra cols as revised
+            for (let j = 5; j < r.length; j++) {
+                const v = (r[j]||'').trim();
+                if (v !== '') payload['revisedQty' + (j-4)] = v;
+            }
+            try {
+                const res = await fetch(url, {
+                    method:'POST', redirect:'follow',
+                    headers:{'Content-Type':'text/plain;charset=utf-8'},
+                    body: JSON.stringify(payload)
+                });
+                const t = await res.text();
+                let rr; try{ rr=JSON.parse(t); }catch(_){ rr=null; }
+                if (rr && rr.success) added++; else skipped++;
+            } catch(_){ skipped++; }
+            if (i % 5 === 0) _boqSetStatus(`⏳ تم رفع ${added}/${rows.length - start}...`);
+        }
+        inputEl.value = '';
+        _boqSetStatus(`✅ تم رفع ${added} بند — تخطّى ${skipped}`);
+        (window.showAlert || alert)(`✅ تم رفع ${added} بند — تخطّى ${skipped}`);
+        await refreshBOQData();
+    } catch (e) {
+        console.error(e);
+        _boqSetStatus('❌ ' + e.message);
+        (window.showAlert || alert)('❌ ' + e.message);
+    }
+};
+
 
 /* ====================================================
    SCHEDULE UI HANDLERS — لائحة منسدلة من BOQ + عرض/تحديث الصفوف
@@ -2381,3 +2590,83 @@ window.importSchedulePlanFromFile = async function (inputEl) {
         inputEl.value = '';
     }
 };
+
+
+/* ====================================================
+   SCHEDULE — LIVE PREVIEW (يتحدّث وأنت بتكتب في الخانات)
+   ==================================================== */
+(function(){
+    function fmtN(n){
+        const v = Number(String(n||'').replace(/,/g,'')) || 0;
+        return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    }
+    function diffDays(s, e){
+        if (!s || !e) return 0;
+        const ds = new Date(s), de = new Date(e);
+        if (isNaN(ds) || isNaN(de) || de < ds) return 0;
+        return Math.round((de - ds) / 86400000) + 1;
+    }
+    window.updateScheduleItemPreview = function(){
+        const noEl = document.getElementById('schedItemNoSelect');
+        const itEl = document.getElementById('schedItemSelect');
+        const sEl  = document.getElementById('schedItemStart');
+        const eEl  = document.getElementById('schedItemEnd');
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        const no  = noEl ? (noEl.value || '') : '';
+        const it  = itEl ? (itEl.value || '') : '';
+        const s   = sEl ? sEl.value : '';
+        const e   = eEl ? eEl.value : '';
+        const d   = diffDays(s, e);
+        set('spvItemNo', no || '—');
+        set('spvItem',   it || '—');
+        set('spvStart',  s  || '—');
+        set('spvEnd',    e  || '—');
+        set('spvDays',   d ? (d + ' يوم') : '0 يوم');
+    };
+    window.updateSchedulePlanPreview = function(){
+        const dEl = document.getElementById('schedPlanDate');
+        const vEl = document.getElementById('schedPlanValue');
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        const date = dEl ? dEl.value : '';
+        const val  = Number(vEl ? vEl.value : 0) || 0;
+        // Current cumulative from saved plan
+        let cumNow = 0;
+        (window._schedPlan || []).forEach(p => { cumNow += Number(p.plannedValue || 0); });
+        // Subtract if editing existing row
+        if (window._schedEditPlanRow){
+            const existing = (window._schedPlan || []).find(p => p.row === window._schedEditPlanRow);
+            if (existing) cumNow -= Number(existing.plannedValue || 0);
+        }
+        set('ppvDate',     date || '—');
+        set('ppvValue',    fmtN(val));
+        set('ppvCumNow',   fmtN(cumNow));
+        set('ppvCumAfter', fmtN(cumNow + val));
+    };
+
+    function wire(id, fn){
+        const el = document.getElementById(id);
+        if (!el || el._wiredPreview) return;
+        el.addEventListener('input',  fn);
+        el.addEventListener('change', fn);
+        el._wiredPreview = true;
+    }
+    function wireAll(){
+        ['schedItemNoSelect','schedItemSelect','schedItemStart','schedItemEnd']
+            .forEach(id => wire(id, window.updateScheduleItemPreview));
+        ['schedPlanDate','schedPlanValue']
+            .forEach(id => wire(id, window.updateSchedulePlanPreview));
+        window.updateScheduleItemPreview();
+        window.updateSchedulePlanPreview();
+    }
+    // wire on modal open and after each render
+    const origOpen = window.openScheduleFormModal;
+    if (typeof origOpen === 'function') {
+        window.openScheduleFormModal = async function(){
+            const r = await origOpen.apply(this, arguments);
+            setTimeout(wireAll, 50);
+            return r;
+        };
+    }
+    document.addEventListener('DOMContentLoaded', () => setTimeout(wireAll, 200));
+    setTimeout(wireAll, 1000);
+})();
