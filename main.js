@@ -1749,7 +1749,7 @@ function _refreshBoqDropdown() {
     const usedKeys = new Set(
         (window._schedItems || [])
             .filter(it => !editingRow || it.row !== editingRow)
-            .map(it => (it.itemNo || '').trim() + '||' + (it.item || '').trim())
+            .map(it => String(it.itemNo == null ? '' : it.itemNo).trim() + '||' + String(it.item == null ? '' : it.item).trim())
     );
     const prevNo = selNo.value, prevDesc = selDesc.value;
     selNo.innerHTML = '<option value="">— اختر رقم —</option>';
@@ -1867,8 +1867,8 @@ async function refreshScheduleData() {
     // server returns rows with header keys; normalize
     const items = (snap.items || []).map(r => ({
         row      : r._row || r.row,
-        itemNo   : String(r['رقم البند'] || r.itemNo || ''),
-        item     : r['البند'] || r.item || '',
+        itemNo   : String(r['رقم البند'] ?? r.itemNo ?? ''),
+        item     : String(r['البند'] ?? r.item ?? ''),
         startDate: _normDateInput(r['تاريخ البداية'] || r.startDate),
         endDate  : _normDateInput(r['تاريخ النهاية'] || r.endDate),
         days     : r['المدة (يوم)'] || r.days || ''
@@ -1907,8 +1907,8 @@ function _renderItemsTable() {
     }
     tb.innerHTML = window._schedItems.map(it => `
         <tr data-row="${it.row}" onclick="loadScheduleItemForEdit(${it.row})" class="${window._schedEditItemRow === it.row ? 'active-edit' : ''}">
-            <td>${_esc(it.itemNo)}</td>
-            <td>${_esc(it.item)}</td>
+            <td class="col-itemno">${_esc(it.itemNo)}</td>
+            <td class="col-itemdesc">${_esc(it.item)}</td>
             <td>${_esc(it.startDate)}</td>
             <td>${_esc(it.endDate)}</td>
             <td>${_esc(it.days)}</td>

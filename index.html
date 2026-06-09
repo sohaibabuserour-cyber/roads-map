@@ -1593,30 +1593,34 @@
 <!-- ==================== MODAL: SCHEDULE (البرنامج الزمني) ==================== -->
 <style>
   #scheduleFormModal .sched-tabs{flex-wrap:wrap;}
-  #scheduleFormModal .sched-form{display:grid;grid-template-columns:1fr 160px 160px auto auto;gap:8px;align-items:end;background:rgba(0,0,0,0.18);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);margin-bottom:14px;}
+  #scheduleFormModal .sched-form{display:grid;grid-template-columns:110px 1fr 150px 150px auto;gap:8px;align-items:end;background:rgba(0,0,0,0.18);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);margin-bottom:14px;}
   #scheduleFormModal .sched-form.plan-form{grid-template-columns:160px 1fr auto auto;}
   #scheduleFormModal .sched-form label{display:block;font-size:11px;color:rgba(255,255,255,0.65);font-family:'Cairo',sans-serif;margin-bottom:4px;font-weight:700;}
   #scheduleFormModal .sched-form input,
   #scheduleFormModal .sched-form select{width:100%;box-sizing:border-box;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;}
-  #scheduleFormModal .sched-form select option{background:#162548;color:#fff;}
+  #scheduleFormModal .sched-form select{max-width:100%;}
+  #scheduleFormModal .sched-form select option{background:#162548;color:#fff;white-space:normal;word-break:break-word;}
   #scheduleFormModal .btn-save{background:linear-gradient(135deg,#2196f3,#1565c0);border:none;color:#fff;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;}
   #scheduleFormModal .btn-cancel-edit{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;display:none;}
   #scheduleFormModal .edit-mode .btn-cancel-edit{display:inline-block;}
   #scheduleFormModal .edit-badge{display:none;font-size:11px;color:#f5c842;font-weight:800;font-family:'Cairo',sans-serif;margin-bottom:8px;}
   #scheduleFormModal .edit-mode .edit-badge{display:block;}
-  #scheduleFormModal .sched-data{width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;background:rgba(0,0,0,0.12);border-radius:10px;overflow:hidden;}
-  #scheduleFormModal .sched-data th{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-size:11px;padding:9px;text-align:right;font-weight:800;}
-  #scheduleFormModal .sched-data td{padding:9px;font-size:12px;color:#e0e6ef;border-top:1px solid rgba(255,255,255,0.05);}
+  #scheduleFormModal .sched-table-wrap{max-height:50vh;overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);}
+  #scheduleFormModal .sched-data{width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;}
+  #scheduleFormModal .sched-data th{background:#13234a;color:rgba(255,255,255,0.7);font-size:11px;padding:9px;text-align:right;font-weight:800;position:sticky;top:0;z-index:2;}
+  #scheduleFormModal .sched-data td{padding:9px;font-size:12px;color:#e0e6ef;border-top:1px solid rgba(255,255,255,0.05);vertical-align:top;}
+  #scheduleFormModal .sched-data .col-itemno{width:90px;white-space:nowrap;}
+  #scheduleFormModal .sched-data .col-itemdesc{white-space:normal;word-break:break-word;min-width:240px;}
   #scheduleFormModal .sched-data tbody tr{cursor:pointer;transition:background 0.15s;}
   #scheduleFormModal .sched-data tbody tr:hover{background:rgba(33,150,243,0.12);}
   #scheduleFormModal .sched-data tbody tr.active-edit{background:rgba(245,200,66,0.15);}
   #scheduleFormModal .sched-empty{text-align:center;padding:24px;color:rgba(255,255,255,0.45);font-size:12px;}
   #scheduleFormModal .sched-section-title{font-size:12px;font-weight:800;color:rgba(255,255,255,0.75);font-family:'Cairo',sans-serif;margin:14px 0 8px;display:flex;align-items:center;gap:6px;}
   @media (max-width: 720px){
-    #scheduleFormModal .sched-form{grid-template-columns:1fr 1fr;}
+    #scheduleFormModal .sched-form{grid-template-columns:100px 1fr;}
     #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr 1fr;}
     #scheduleFormModal .sched-form > .form-actions{grid-column:1 / -1;display:flex;gap:8px;}
-    #scheduleFormModal .sched-data{display:block;overflow-x:auto;}
+    #scheduleFormModal .sched-table-wrap{max-height:55vh;}
   }
 </style>
 <div id="scheduleFormModal" style="display:none;position:fixed;inset:0;z-index:70003;align-items:center;justify-content:center;">
@@ -1669,12 +1673,14 @@
                     </div>
                 </div>
                 <div class="sched-section-title">📊 البنود المحفوظة <span id="schedItemsCount" style="color:#90caf9;"></span></div>
-                <table class="sched-data">
-                    <thead>
-                        <tr><th>رقم البند</th><th>البند</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>المدة (يوم)</th></tr>
-                    </thead>
-                    <tbody id="schedItemsBody"></tbody>
-                </table>
+                <div class="sched-table-wrap">
+                    <table class="sched-data">
+                        <thead>
+                            <tr><th class="col-itemno">رقم البند</th><th class="col-itemdesc">البند</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>المدة (يوم)</th></tr>
+                        </thead>
+                        <tbody id="schedItemsBody"></tbody>
+                    </table>
+                </div>
             </div>
             <!-- PLAN PANEL -->
             <div id="schedPanelPlan" style="display:none;">
@@ -1696,12 +1702,14 @@
                     </div>
                 </div>
                 <div class="sched-section-title">📊 الخطة اليومية المحفوظة <span id="schedPlanCount" style="color:#90caf9;"></span></div>
-                <table class="sched-data">
-                    <thead>
-                        <tr><th>التاريخ</th><th>القيمة</th><th>تراكمي القيمة</th><th>% اليومي</th><th>% التراكمي</th></tr>
-                    </thead>
-                    <tbody id="schedPlanBody"></tbody>
-                </table>
+                <div class="sched-table-wrap">
+                    <table class="sched-data">
+                        <thead>
+                            <tr><th>التاريخ</th><th>القيمة</th><th>تراكمي القيمة</th><th>% اليومي</th><th>% التراكمي</th></tr>
+                        </thead>
+                        <tbody id="schedPlanBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <div style="padding:14px 22px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:10px;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.2);flex-wrap:wrap;">
