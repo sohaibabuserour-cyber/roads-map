@@ -1707,35 +1707,24 @@
   #scheduleFormModal #schedPanelPlan{display:flex;flex-direction:column;height:100%;min-height:0;}
   #scheduleFormModal #schedPanelItems > .sched-table-wrap,
   #scheduleFormModal #schedPanelPlan > .sched-table-wrap{flex:1;min-height:0;}
-   @media (max-width: 900px){
-     #scheduleFormModal .sched-form{grid-template-columns:1fr 1fr;gap:10px;padding:10px;}
-     #scheduleFormModal .sched-form > div{min-width:0;}
-     #scheduleFormModal .sched-form > div:nth-child(1),
-     #scheduleFormModal .sched-form > div:nth-child(2){grid-column:1 / -1;}
-     #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr 1fr;}
-     #scheduleFormModal .sched-form > .form-actions{grid-column:1 / -1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
-     #scheduleFormModal .sched-section-title{font-size:11px;flex-wrap:wrap;}
-     #scheduleFormModal .btn-import{padding:6px 10px;font-size:10px;}
-     #scheduleFormModal .sched-tabs{padding:10px 12px!important;flex-wrap:wrap;}
-     #scheduleFormModal .sched-tabs button{padding:7px 12px;font-size:12px;}
-     #scheduleFormModal .sched-data .col-itemno{width:auto;min-width:64px;}
-     #scheduleFormModal .sched-data .col-itemdesc{min-width:140px;}
-     #scheduleFormModal .sched-data th,
-     #scheduleFormModal .sched-data td{padding:7px;font-size:11px;}
-     #scheduleFormModal .sched-combo-menu{max-height:min(50vh,260px);}
-   }
-   @media (max-width: 720px){
-     #scheduleFormModal{padding:0;}
-     #scheduleFormModal > div:last-child{width:100%!important;max-height:100vh!important;height:100vh;border-radius:0!important;}
-   }
-   @media (max-width: 480px){
-     #scheduleFormModal .sched-form{grid-template-columns:1fr;}
-     #scheduleFormModal .sched-form > div:nth-child(1),
-     #scheduleFormModal .sched-form > div:nth-child(2){grid-column:auto;}
-     #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr;}
-     #scheduleFormModal .sched-data th,
-     #scheduleFormModal .sched-data td{padding:6px;font-size:10.5px;}
-   }
+    @media (max-width: 820px){
+      #scheduleFormModal .sched-form{grid-template-columns:1fr 1fr;gap:10px;padding:10px;}
+      #scheduleFormModal .sched-form > div{min-width:0;}
+      #scheduleFormModal .sched-form > div:nth-child(1),
+      #scheduleFormModal .sched-form > div:nth-child(2){grid-column:1 / -1;}
+      #scheduleFormModal .sched-form.plan-form{grid-template-columns:1fr 1fr;}
+      #scheduleFormModal .sched-form > .form-actions{grid-column:1 / -1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+      #scheduleFormModal .sched-section-title{font-size:11px;flex-wrap:wrap;}
+      #scheduleFormModal .btn-import{padding:6px 10px;font-size:10px;}
+      #scheduleFormModal .sched-tabs{padding:10px 12px!important;flex-wrap:wrap;}
+      #scheduleFormModal .sched-tabs button{padding:7px 12px;font-size:12px;}
+      #scheduleFormModal .sched-data .col-itemno{width:auto;min-width:64px;}
+      #scheduleFormModal .sched-data .col-itemdesc{min-width:140px;}
+      #scheduleFormModal .sched-data th,
+      #scheduleFormModal .sched-data td{padding:7px;font-size:11px;}
+      #scheduleFormModal .sched-combo-menu{max-height:min(50vh,260px);}
+    }
+
 </style>
 <div id="scheduleFormModal" style="display:none;position:fixed;inset:0;z-index:70003;align-items:center;justify-content:center;">
     <div onclick="closeScheduleFormModal()" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);"></div>
