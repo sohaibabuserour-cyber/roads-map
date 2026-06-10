@@ -97,27 +97,27 @@
         <div class="nav-tab" id="navTabAdd" style="flex-shrink:0;position:relative;" onclick="toggleAddDropdown(event)">
             <span>✏️ إضافة</span>
             <div class="tab-sub-dropdown" id="addDropdown" style="min-width:220px;">
-                <div class="tab-sub-item" onclick="openUnifiedAdd('equipment');closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openEquipmentFormModal();closeAddDropdown()">
                     <span style="font-size:14px;">🚜</span>
                     <label>تسجيل الكمية - المعدات</label>
                 </div>
-                <div class="tab-sub-item" onclick="openUnifiedAdd('companyCf');closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openCompanyCashflowForm();closeAddDropdown()">
                     <span style="font-size:14px;">🏢</span>
                     <label>تدفق نقدي - الشركة</label>
                 </div>
-                <div class="tab-sub-item" onclick="openUnifiedAdd('contractorCf');closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openContractorCashflowForm();closeAddDropdown()">
                     <span style="font-size:14px;">👷</span>
                     <label>تدفق نقدي - المقاولون</label>
                 </div>
-                <div class="tab-sub-item" onclick="openUnifiedAdd('target');closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openTargetFormTab();closeAddDropdown()">
                     <span style="font-size:14px;">🎯</span>
                     <label>المستهدف الشهري</label>
                 </div>
-                <div class="tab-sub-item" onclick="openUnifiedAdd('boq');closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openBOQFormModal();closeAddDropdown()">
                     <span style="font-size:14px;">📋</span>
                     <label>جدول الكميات</label>
                 </div>
-                <div class="tab-sub-item" onclick="openUnifiedAdd('schedule');closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openScheduleFormModal();closeAddDropdown()">
                     <span style="font-size:14px;">📅</span>
                     <label>البرنامج الزمني</label>
                 </div>
@@ -307,19 +307,19 @@
                     letter-spacing:.8px;padding:10px 2px 4px;border-bottom:1px solid rgba(255,255,255,0.07);
                     margin-bottom:4px;">✏️ إضافة</div>
 
-        <div class="mmRow mmRow-green" onclick="openUnifiedAdd('equipment');closeMobileMenu()">
+        <div class="mmRow mmRow-green" onclick="openEquipmentFormModal();closeMobileMenu()">
             <span>🚜</span><span>تسجيل الكمية - المعدات</span>
         </div>
-        <div class="mmRow mmRow-blue" onclick="openUnifiedAdd('companyCf');closeMobileMenu()">
+        <div class="mmRow mmRow-blue" onclick="openCompanyCashflowForm();closeMobileMenu()">
             <span>🏢</span><span>تدفق نقدي - الشركة</span>
         </div>
-        <div class="mmRow mmRow-gold" onclick="openUnifiedAdd('contractorCf');closeMobileMenu()">
+        <div class="mmRow mmRow-gold" onclick="openContractorCashflowForm();closeMobileMenu()">
             <span>👷</span><span>تدفق نقدي - المقاولون</span>
         </div>
-        <div class="mmRow" onclick="openUnifiedAdd('boq');closeMobileMenu()">
+        <div class="mmRow" onclick="openBOQFormModal();closeMobileMenu()">
             <span>📋</span><span>جدول الكميات</span>
         </div>
-        <div class="mmRow" onclick="openUnifiedAdd('schedule');closeMobileMenu()">
+        <div class="mmRow" onclick="openScheduleFormModal();closeMobileMenu()">
             <span>📅</span><span>البرنامج الزمني</span>
         </div>
 
@@ -1872,33 +1872,6 @@
     </div>
 </div>
     
-
-<!-- ===== Unified Add Modal (single screen with side tabs) ===== -->
-<div class="modal" id="unifiedAddModal" style="z-index:65500;padding:20px;align-items:center;justify-content:center;">
-    <div class="bd-modal-overlay" onclick="closeUnifiedAdd()" style="position:fixed;inset:0;"></div>
-    <div class="dark-modal-shell ua-shell">
-        <div class="dark-modal-header ua-header">
-            <div class="ua-title-wrap">
-                <span class="ua-tab-icon" id="uaActiveIcon">✏️</span>
-                <div>
-                    <div class="dark-modal-title" id="uaActiveTitle">إضافة</div>
-                    <div class="ua-subtitle">شاشة موحدة لجميع عمليات الإضافة</div>
-                </div>
-            </div>
-            <button class="cf-close-btn" onclick="closeUnifiedAdd()" title="إغلاق">✕</button>
-        </div>
-        <div class="ua-body">
-            <aside class="ua-sidebar" id="uaSidebar" data-pinned="false">
-                <button class="ua-pin-btn" onclick="uaTogglePin()" title="تثبيت/تصغير الشريط الجانبي">📌</button>
-                <nav class="ua-nav" id="uaNav"></nav>
-            </aside>
-            <main class="ua-content" id="uaContent">
-                <div class="ua-empty">اختر تبويباً من الشريط الجانبي للبدء</div>
-            </main>
-        </div>
-    </div>
-</div>
-
     <script src="config.js"></script>
     <script src="utils.js"></script>
     <script src="map.js"></script>
@@ -1916,5 +1889,6 @@
     <script src="ui_panels.js"></script>
     <script src="addtarget.js"></script>
     <script src="users_permissions.js"></script>
+    <script src="addscreen.js"></script>
 </body>
 </html>
