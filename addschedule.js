@@ -29,6 +29,40 @@
     window._addSchedActiveTab = 'items';
     let   _rendered = false;
 
+    /* ===================== Inject scoped CSS (combo + scrollbar) ===================== */
+    function _injectStyle(){
+        if (document.getElementById('addSchedStyle')) return;
+        const s = document.createElement('style');
+        s.id = 'addSchedStyle';
+        s.textContent = `
+        #addScheduleRoot .ascd-combo{position:relative;}
+        #addScheduleRoot .ascd-combo-btn{width:100%;min-height:38px;box-sizing:border-box;padding:8px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;text-align:right;cursor:pointer;}
+        #addScheduleRoot .ascd-combo-btn:hover{border-color:rgba(144,202,249,.45);}
+        #addScheduleRoot .ascd-combo-label{flex:1;white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.55;overflow:hidden;}
+        #addScheduleRoot .ascd-combo-arrow{flex-shrink:0;line-height:1.5;color:rgba(255,255,255,.65);}
+        #addScheduleRoot .ascd-combo-menu{display:none;position:absolute;z-index:50;inset-inline:0;top:calc(100% + 4px);max-height:min(60vh,360px);overflow-y:auto;overflow-x:hidden;border:1px solid rgba(144,202,249,.35);border-radius:8px;background:#10182f;box-shadow:0 14px 34px rgba(0,0,0,.45);padding:4px;overscroll-behavior:contain;}
+        #addScheduleRoot .ascd-combo-menu::-webkit-scrollbar{width:8px;}
+        #addScheduleRoot .ascd-combo-menu::-webkit-scrollbar-thumb{background:rgba(144,202,249,.35);border-radius:4px;}
+        #addScheduleRoot .ascd-combo-menu::-webkit-scrollbar-track{background:transparent;}
+        #addScheduleRoot .ascd-combo-menu.active{display:block;}
+        #addScheduleRoot .ascd-combo-option{padding:8px 10px;border-radius:6px;color:#eaf2ff;font-family:'Cairo',sans-serif;font-size:12px;line-height:1.6;white-space:normal;overflow-wrap:anywhere;word-break:normal;cursor:pointer;}
+        #addScheduleRoot .ascd-combo-option:hover,
+        #addScheduleRoot .ascd-combo-option.selected{background:rgba(33,150,243,.18);color:#fff;}
+        #addScheduleRoot .ascd-hidden-select{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+
+        /* Styled horizontal + vertical scrollbars on the table wrap */
+        #addScheduleRoot .boq-table-wrap{overflow:auto;scrollbar-width:thin;scrollbar-color:#1565c0 rgba(255,255,255,.04);}
+        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar{width:10px;height:10px;}
+        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:8px;}
+        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#2196f3,#0d47a1);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
+        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#42a5f5,#1565c0);background-clip:content-box;border:2px solid transparent;}
+        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-corner{background:transparent;}
+        #addScheduleRoot .boq-data{min-width:640px;}
+        `;
+        document.head.appendChild(s);
+    }
+
+
     /* ===================== Helpers ===================== */
     function _scriptUrl() {
         return (window.sheetIdsConfig && window.sheetIdsConfig.SCHEDULE_SCRIPT_URL)
@@ -105,8 +139,11 @@
 
     /* ===================== Render Panel ===================== */
     function _render(root){
+        _injectStyle();
         root.classList.remove('panel-placeholder');
+        if (!root.id) root.id = 'addScheduleRoot';
         root.innerHTML = `
+
         <!-- Sub-tabs (Items / Plan) -->
         <div style="display:flex;gap:6px;margin-bottom:10px;background:rgba(0,0,0,0.18);padding:6px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
             <button type="button" id="addSchedTabItemsBtn" class="add-sub-tab" data-sub="items"
@@ -126,20 +163,33 @@
                 <div class="boq-form" style="grid-template-columns:140px 1fr 140px 140px auto;">
                     <div>
                         <label>رقم البند</label>
-                        <select id="addSchedItemNoSelect" onchange="onAddSchedItemNoChange()"
-                            style="width:100%;box-sizing:border-box;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;">
-                            <option value="">— اختر رقم —</option>
-                        </select>
+                        <div class="ascd-combo" id="addSchedItemNoCombo">
+                            <button type="button" class="ascd-combo-btn" id="addSchedItemNoSelectBtn" onclick="toggleAddSchedItemNoMenu(event)" title="— اختر رقم —">
+                                <span class="ascd-combo-label" id="addSchedItemNoSelectLabel">— اختر رقم —</span>
+                                <span class="ascd-combo-arrow">▾</span>
+                            </button>
+                            <select id="addSchedItemNoSelect" class="ascd-hidden-select" onchange="onAddSchedItemNoChange()" tabindex="-1" aria-hidden="true">
+                                <option value="">— اختر رقم —</option>
+                            </select>
+                            <div class="ascd-combo-menu" id="addSchedItemNoSelectMenu"></div>
+                        </div>
                     </div>
                     <div>
                         <label>البند</label>
-                        <select id="addSchedItemSelect" onchange="onAddSchedItemDescChange()"
-                            style="width:100%;box-sizing:border-box;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;">
-                            <option value="">— اختر بنداً —</option>
-                        </select>
+                        <div class="ascd-combo" id="addSchedItemCombo">
+                            <button type="button" class="ascd-combo-btn" id="addSchedItemSelectBtn" onclick="toggleAddSchedItemMenu(event)" title="— اختر بنداً —">
+                                <span class="ascd-combo-label" id="addSchedItemSelectLabel">— اختر بنداً —</span>
+                                <span class="ascd-combo-arrow">▾</span>
+                            </button>
+                            <select id="addSchedItemSelect" class="ascd-hidden-select" onchange="onAddSchedItemDescChange()" tabindex="-1" aria-hidden="true">
+                                <option value="">— اختر بنداً —</option>
+                            </select>
+                            <div class="ascd-combo-menu" id="addSchedItemSelectMenu"></div>
+                        </div>
                     </div>
                     <div><label>تاريخ البداية</label><input type="date" id="addSchedItemStart"></div>
                     <div><label>تاريخ النهاية</label><input type="date" id="addSchedItemEnd"></div>
+
                     <div class="form-actions">
                         <button class="btn-save" onclick="saveAddScheduleItem()">💾 حفظ</button>
                         <button class="btn-cancel-edit" onclick="cancelAddScheduleItemEdit()">إلغاء</button>
@@ -234,9 +284,121 @@
     }
     function _wireFilters(){
         const fn = () => { _renderItemsTable(); _renderPlanTable(); };
-        ['addSchedItemStart','addSchedItemEnd','addSchedPlanDate','addSchedPlanValue']
+        ['addSchedItemNoSelect','addSchedItemSelect','addSchedItemStart','addSchedItemEnd','addSchedPlanDate','addSchedPlanValue']
             .forEach(id => { const el = document.getElementById(id); if (el){ el.addEventListener('input', fn); el.addEventListener('change', fn); } });
     }
+
+    /* ===================== Custom combo (description) ===================== */
+    function _syncAddSchedItemDescLabel(){
+        const sel = document.getElementById('addSchedItemSelect');
+        const lbl = document.getElementById('addSchedItemSelectLabel');
+        const btn = document.getElementById('addSchedItemSelectBtn');
+        if (!sel || !lbl) return;
+        const opt = sel.selectedOptions && sel.selectedOptions[0];
+        const text = (opt && opt.value) ? (opt.textContent || opt.value) : '— اختر بنداً —';
+        lbl.textContent = text;
+        if (btn) btn.title = text;
+    }
+    function _buildAddSchedItemDescMenu(){
+        const sel = document.getElementById('addSchedItemSelect');
+        const menu = document.getElementById('addSchedItemSelectMenu');
+        if (!sel || !menu) return;
+        const options = Array.from(sel.options || []);
+        menu.innerHTML = options.map(opt => `
+            <div class="ascd-combo-option ${opt.value === sel.value ? 'selected' : ''}" data-value="${_esc(opt.value)}" title="${_esc(opt.textContent || opt.value)}">
+                ${_esc(opt.textContent || opt.value)}
+            </div>
+        `).join('');
+        menu.querySelectorAll('.ascd-combo-option').forEach(el => {
+            el.addEventListener('click', () => {
+                _setAddSchedItemDescValue(el.dataset.value || '');
+                window.closeAddSchedItemMenu();
+            });
+        });
+    }
+    function _setAddSchedItemDescValue(value){
+        const sel = document.getElementById('addSchedItemSelect');
+        if (!sel) return;
+        sel.value = value;
+        try { window.onAddSchedItemDescChange && window.onAddSchedItemDescChange(); } catch(_){}
+        _buildAddSchedItemDescMenu();
+        _syncAddSchedItemDescLabel();
+        _syncAddSchedItemNoLabel();
+        try { sel.dispatchEvent(new Event('change', { bubbles:true })); } catch(_){}
+    }
+    window.toggleAddSchedItemMenu = function(event){
+        if (event) event.stopPropagation();
+        _buildAddSchedItemDescMenu();
+        _syncAddSchedItemDescLabel();
+        const menu = document.getElementById('addSchedItemSelectMenu');
+        if (menu) menu.classList.toggle('active');
+        const other = document.getElementById('addSchedItemNoSelectMenu');
+        if (other) other.classList.remove('active');
+    };
+    window.closeAddSchedItemMenu = function(){
+        const menu = document.getElementById('addSchedItemSelectMenu');
+        if (menu) menu.classList.remove('active');
+    };
+
+    /* ===================== Custom combo (item number) ===================== */
+    function _syncAddSchedItemNoLabel(){
+        const sel = document.getElementById('addSchedItemNoSelect');
+        const lbl = document.getElementById('addSchedItemNoSelectLabel');
+        const btn = document.getElementById('addSchedItemNoSelectBtn');
+        if (!sel || !lbl) return;
+        const opt = sel.selectedOptions && sel.selectedOptions[0];
+        const text = (opt && opt.value) ? (opt.textContent || opt.value) : '— اختر رقم —';
+        lbl.textContent = text;
+        if (btn) btn.title = text;
+    }
+    function _buildAddSchedItemNoMenu(){
+        const sel = document.getElementById('addSchedItemNoSelect');
+        const menu = document.getElementById('addSchedItemNoSelectMenu');
+        if (!sel || !menu) return;
+        const options = Array.from(sel.options || []);
+        menu.innerHTML = options.map(opt => `
+            <div class="ascd-combo-option ${opt.value === sel.value ? 'selected' : ''}" data-value="${_esc(opt.value)}" title="${_esc(opt.textContent || opt.value)}">
+                ${_esc(opt.textContent || opt.value)}
+            </div>
+        `).join('');
+        menu.querySelectorAll('.ascd-combo-option').forEach(el => {
+            el.addEventListener('click', () => {
+                _setAddSchedItemNoValue(el.dataset.value || '');
+                window.closeAddSchedItemNoMenu();
+            });
+        });
+    }
+    function _setAddSchedItemNoValue(value){
+        const sel = document.getElementById('addSchedItemNoSelect');
+        if (!sel) return;
+        sel.value = value;
+        try { window.onAddSchedItemNoChange && window.onAddSchedItemNoChange(); } catch(_){}
+        _buildAddSchedItemNoMenu();
+        _syncAddSchedItemNoLabel();
+        _syncAddSchedItemDescLabel();
+        try { sel.dispatchEvent(new Event('change', { bubbles:true })); } catch(_){}
+    }
+    window.toggleAddSchedItemNoMenu = function(event){
+        if (event) event.stopPropagation();
+        _buildAddSchedItemNoMenu();
+        _syncAddSchedItemNoLabel();
+        const menu = document.getElementById('addSchedItemNoSelectMenu');
+        if (menu) menu.classList.toggle('active');
+        const other = document.getElementById('addSchedItemSelectMenu');
+        if (other) other.classList.remove('active');
+    };
+    window.closeAddSchedItemNoMenu = function(){
+        const menu = document.getElementById('addSchedItemNoSelectMenu');
+        if (menu) menu.classList.remove('active');
+    };
+
+    document.addEventListener('click', e => {
+        const c1 = document.getElementById('addSchedItemCombo');
+        if (c1 && !c1.contains(e.target)) window.closeAddSchedItemMenu();
+        const c2 = document.getElementById('addSchedItemNoCombo');
+        if (c2 && !c2.contains(e.target)) window.closeAddSchedItemNoMenu();
+    });
+
 
     /* ===================== BOQ items loader (for dropdowns) ===================== */
     async function _loadBoqList(){
@@ -305,7 +467,12 @@
         }
         if (prevNo && selNo.querySelector(`option[value="${CSS.escape(prevNo)}"]`)) selNo.value = prevNo;
         if (prevDesc && selDesc.querySelector(`option[value="${CSS.escape(prevDesc)}"]`)) selDesc.value = prevDesc;
+        _buildAddSchedItemNoMenu();
+        _buildAddSchedItemDescMenu();
+        _syncAddSchedItemNoLabel();
+        _syncAddSchedItemDescLabel();
     }
+
 
     window.onAddSchedItemNoChange = function(){
         const selNo = document.getElementById('addSchedItemNoSelect');
@@ -314,6 +481,8 @@
         const opt = selNo.selectedOptions[0];
         const desc = opt ? (opt.dataset.desc || '') : '';
         if (desc && selDesc.querySelector(`option[value="${CSS.escape(desc)}"]`)) selDesc.value = desc;
+        _syncAddSchedItemDescLabel();
+        _syncAddSchedItemNoLabel();
     };
     window.onAddSchedItemDescChange = function(){
         const selNo = document.getElementById('addSchedItemNoSelect');
@@ -322,7 +491,10 @@
         const opt = selDesc.selectedOptions[0];
         const no = opt ? (opt.dataset.no || '') : '';
         if (no && selNo.querySelector(`option[value="${CSS.escape(no)}"]`)) selNo.value = no;
+        _syncAddSchedItemNoLabel();
+        _syncAddSchedItemDescLabel();
     };
+
 
     /* ===================== Refresh data ===================== */
     window.refreshAddScheduleData = async function(){
@@ -367,12 +539,18 @@
         const cnt = document.getElementById('addSchedItemsCount');
         if (!tb) return;
         const all = window._addSchedItems || [];
+        const fNo    = (document.getElementById('addSchedItemNoSelect')?.value || '').trim().toLowerCase();
+        const fItem  = (document.getElementById('addSchedItemSelect')?.value || '').trim().toLowerCase();
         const fStart = (document.getElementById('addSchedItemStart')?.value || '').trim();
         const fEnd   = (document.getElementById('addSchedItemEnd')?.value || '').trim();
+        const match  = (val, q) => !q || String(val||'').toLowerCase().includes(q);
         const items = all.filter(it =>
+            match(it.itemNo, fNo) &&
+            match(it.item,   fItem) &&
             (!fStart || String(it.startDate||'') === fStart) &&
             (!fEnd   || String(it.endDate||'')   === fEnd)
         ).slice().sort((a,b) => _cmpItemNo(a.itemNo, b.itemNo));
+
         if (cnt) cnt.textContent = '(' + items.length + (items.length !== all.length ? ' / ' + all.length : '') + ')';
         if (!items.length){
             tb.innerHTML = '<tr><td colspan="6" class="boq-empty">' + (all.length ? 'لا توجد صفوف مطابقة' : 'لا توجد بنود محفوظة') + '</td></tr>';
@@ -442,9 +620,12 @@
         const sel   = document.getElementById('addSchedItemSelect');
         if (selNo) selNo.value = it.itemNo || '';
         if (sel)   sel.value   = it.item || '';
+        _syncAddSchedItemNoLabel();
+        _syncAddSchedItemDescLabel();
         document.getElementById('addSchedItemStart').value = it.startDate || '';
         document.getElementById('addSchedItemEnd').value   = it.endDate   || '';
         _renderItemsTable();
+
     };
     window.cancelAddScheduleItemEdit = function(){
         window._addSchedEditItemRow = null;
@@ -456,7 +637,10 @@
         const sel   = document.getElementById('addSchedItemSelect');   if (sel)   sel.value   = '';
         const s = document.getElementById('addSchedItemStart'); const e = document.getElementById('addSchedItemEnd');
         if (s) s.value = ''; if (e) e.value = '';
+        _syncAddSchedItemNoLabel();
+        _syncAddSchedItemDescLabel();
     }
+
     window.saveAddScheduleItem = async function(){
         const itemNo = _normItemNo(document.getElementById('addSchedItemNoSelect')?.value || '');
         const item   = document.getElementById('addSchedItemSelect')?.value || '';
