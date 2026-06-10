@@ -3529,3 +3529,147 @@ async function _schedShowMissingBOQ(missingPayloads, boqList){
         };
     });
 }
+
+/* =====================================================================
+ * Unified Add Modal — يجمع كل شاشات الإضافة في شاشة واحدة بتبويبات جانبية
+ * الشريط الجانبي يبدأ مصغراً (أيقونات فقط) ويتوسع عند hover،
+ * مع زر تثبيت (📌) يحفظ الحالة في localStorage.
+ * ===================================================================== */
+(function () {
+    const TABS = [
+        { id: 'equipment',   icon: '🚜', label: 'تسجيل الكمية - المعدات',  modalId: 'equipmentFormModal',      openFn: 'openEquipmentFormModal',    closeFn: 'closeEquipmentFormModal',    shellSel: '#eqFormBox' },
+        { id: 'companyCf',   icon: '🏢', label: 'تدفق نقدي - الشركة',      modalId: 'companyCashflowModal',    openFn: 'openCompanyCashflowForm',   closeFn: 'closeCompanyCashflowForm',   shellSel: '.dark-modal-shell' },
+        { id: 'contractorCf',icon: '👷', label: 'تدفق نقدي - المقاولون',   modalId: 'contractorCashflowModal', openFn: 'openContractorCashflowForm',closeFn: 'closeContractorCashflowForm',shellSel: '.dark-modal-shell' },
+        { id: 'target',      icon: '🎯', label: 'المستهدف الشهري',          modalId: 'targetFormModal',         openFn: 'openTargetFormTab',         closeFn: 'closeTargetFormModal',       shellSel: '.dark-modal-shell' },
+        { id: 'boq',         icon: '📋', label: 'جدول الكميات',              modalId: 'boqFormModal',            openFn: 'openBOQFormModal',          closeFn: 'closeBOQFormModal',          shellSel: null },
+        { id: 'schedule',    icon: '📅', label: 'البرنامج الزمني',           modalId: 'scheduleFormModal',       openFn: 'openScheduleFormModal',     closeFn: 'closeScheduleFormModal',     shellSel: null },
+    ];
+    const mountState = {};
+
+    function pickShell(orig, sel) {
+        if (sel) {
+            const el = orig.querySelector(sel);
+            if (el) return el;
+        }
+        return Array.from(orig.children).find(c =>
+            c.tagName === 'DIV' &&
+            !c.classList.contains('bd-modal-overlay') &&
+            !c.classList.contains('cf-modal-overlay') &&
+            !c.classList.contains('similar-modal-overlay')
+        ) || null;
+    }
+
+    function renderNav() {
+        const nav = document.getElementById('uaNav');
+        if (!nav) return;
+        nav.innerHTML = TABS.map(t => `
+            <button type="button" class="ua-nav-item" data-tab="${t.id}" onclick="uaActivate('${t.id}')" title="${t.label}">
+                <span class="ua-nav-icon">${t.icon}</span>
+                <span class="ua-nav-label">${t.label}</span>
+            </button>`).join('');
+    }
+
+    window.uaTogglePin = function () {
+        const sb = document.getElementById('uaSidebar');
+        if (!sb) return;
+        const pinned = sb.dataset.pinned === 'true';
+        sb.dataset.pinned = pinned ? 'false' : 'true';
+        try { localStorage.setItem('ua_sidebar_pinned', sb.dataset.pinned); } catch (e) {}
+    };
+
+    window.openUnifiedAdd = function (tabId) {
+        const m = document.getElementById('unifiedAddModal');
+        if (!m) return;
+        renderNav();
+        m.style.display = 'flex';
+        const sb = document.getElementById('uaSidebar');
+        try {
+            sb.dataset.pinned = localStorage.getItem('ua_sidebar_pinned') === 'true' ? 'true' : 'false';
+        } catch (e) {}
+        window.uaActivate(tabId || 'equipment');
+    };
+
+    window.closeUnifiedAdd = function () {
+        // أعِد كل shell إلى مودالها الأصلي ثم أغلقها
+        TABS.forEach(t => {
+            const st = mountState[t.id];
+            if (st && st.shell && st.parent) {
+                st.shell.classList.remove('ua-mounted-shell');
+                if (st.next && st.next.parentNode === st.parent) {
+                    st.parent.insertBefore(st.shell, st.next);
+                } else {
+                    st.parent.appendChild(st.shell);
+                }
+            }
+            delete mountState[t.id];
+            const orig = document.getElementById(t.modalId);
+            if (orig) orig.style.display = 'none';
+            const cf = window[t.closeFn];
+            if (typeof cf === 'function') { try { cf(); } catch (e) {} }
+        });
+        const m = document.getElementById('unifiedAddModal');
+        if (m) m.style.display = 'none';
+    };
+
+    window.uaActivate = function (tabId) {
+        const tab = TABS.find(t => t.id === tabId);
+        if (!tab) return;
+
+        document.querySelectorAll('.ua-nav-item').forEach(b => {
+            b.classList.toggle('is-active', b.dataset.tab === tabId);
+        });
+        const ic = document.getElementById('uaActiveIcon'); if (ic) ic.textContent = tab.icon;
+        const tt = document.getElementById('uaActiveTitle'); if (tt) tt.textContent = tab.label;
+
+        const content = document.getElementById('uaContent');
+        if (!content) return;
+
+        // أخفِ كل المحتويات السابقة المرفقة
+        const empty = content.querySelector('.ua-empty');
+        if (empty) empty.remove();
+        Array.from(content.children).forEach(ch => { ch.style.display = 'none'; });
+
+        // لو مرفق بالفعل، فقط أظهره
+        const existing = mountState[tab.id];
+        if (existing && existing.shell && existing.shell.parentNode === content) {
+            existing.shell.style.display = '';
+            return;
+        }
+
+        // افتح المودال الأصلي لتعبئة محتواه
+        const opener = window[tab.openFn];
+        if (typeof opener !== 'function') {
+            const msg = document.createElement('div');
+            msg.className = 'ua-empty';
+            msg.textContent = `الدالة ${tab.openFn} غير متاحة`;
+            content.appendChild(msg);
+            return;
+        }
+        try { opener(); } catch (e) { console.error('UA opener error', e); }
+
+        const orig = document.getElementById(tab.modalId);
+        if (!orig) return;
+        const shell = pickShell(orig, tab.shellSel);
+        if (!shell) return;
+
+        mountState[tab.id] = { shell, parent: shell.parentNode, next: shell.nextSibling };
+        orig.style.display = 'none';
+        shell.style.display = '';
+        shell.classList.add('ua-mounted-shell');
+        content.appendChild(shell);
+    };
+
+    // أغلق بـ Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const m = document.getElementById('unifiedAddModal');
+            if (m && m.style.display === 'flex') window.closeUnifiedAdd();
+        }
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', renderNav);
+    } else {
+        renderNav();
+    }
+})();
