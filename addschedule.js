@@ -50,14 +50,14 @@
         #addScheduleRoot .ascd-combo-option.selected{background:rgba(33,150,243,.18);color:#fff;}
         #addScheduleRoot .ascd-hidden-select{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
 
-        /* Styled horizontal + vertical scrollbars on the table wrap */
-        #addScheduleRoot .boq-table-wrap{overflow:auto;scrollbar-width:thin;scrollbar-color:#1565c0 rgba(255,255,255,.04);}
+        /* Styled scrollbar on the table wrap only — matches BOQ popup */
+        #addScheduleRoot .boq-table-wrap{overflow:auto;scrollbar-width:thin;scrollbar-color:#1a7a4a rgba(255,255,255,.04);}
         #addScheduleRoot .boq-table-wrap::-webkit-scrollbar{width:10px;height:10px;}
         #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:8px;}
-        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#2196f3,#0d47a1);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
-        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#42a5f5,#1565c0);background-clip:content-box;border:2px solid transparent;}
+        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3aaa5c,#1a7a4a);border-radius:8px;border:2px solid transparent;background-clip:content-box;}
+        #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#4cc370,#1f8a55);background-clip:content-box;border:2px solid transparent;}
         #addScheduleRoot .boq-table-wrap::-webkit-scrollbar-corner{background:transparent;}
-        #addScheduleRoot .boq-data{min-width:640px;}
+        #addScheduleRoot .boq-data{min-width:760px;}
         `;
         document.head.appendChild(s);
     }
