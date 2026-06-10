@@ -97,27 +97,27 @@
         <div class="nav-tab" id="navTabAdd" style="flex-shrink:0;position:relative;" onclick="toggleAddDropdown(event)">
             <span>✏️ إضافة</span>
             <div class="tab-sub-dropdown" id="addDropdown" style="min-width:220px;">
-                <div class="tab-sub-item" onclick="openEquipmentFormModal();closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openUnifiedAdd('equipment');closeAddDropdown()">
                     <span style="font-size:14px;">🚜</span>
                     <label>تسجيل الكمية - المعدات</label>
                 </div>
-                <div class="tab-sub-item" onclick="openCompanyCashflowForm();closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openUnifiedAdd('cfCompany');closeAddDropdown()">
                     <span style="font-size:14px;">🏢</span>
                     <label>تدفق نقدي - الشركة</label>
                 </div>
-                <div class="tab-sub-item" onclick="openContractorCashflowForm();closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openUnifiedAdd('cfContractor');closeAddDropdown()">
                     <span style="font-size:14px;">👷</span>
                     <label>تدفق نقدي - المقاولون</label>
                 </div>
-                <div class="tab-sub-item" onclick="openTargetFormTab();closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openUnifiedAdd('target');closeAddDropdown()">
                     <span style="font-size:14px;">🎯</span>
                     <label>المستهدف الشهري</label>
                 </div>
-                <div class="tab-sub-item" onclick="openBOQFormModal();closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openUnifiedAdd('boq');closeAddDropdown()">
                     <span style="font-size:14px;">📋</span>
                     <label>جدول الكميات</label>
                 </div>
-                <div class="tab-sub-item" onclick="openScheduleFormModal();closeAddDropdown()">
+                <div class="tab-sub-item" onclick="openUnifiedAdd('schedule');closeAddDropdown()">
                     <span style="font-size:14px;">📅</span>
                     <label>البرنامج الزمني</label>
                 </div>
@@ -307,19 +307,19 @@
                     letter-spacing:.8px;padding:10px 2px 4px;border-bottom:1px solid rgba(255,255,255,0.07);
                     margin-bottom:4px;">✏️ إضافة</div>
 
-        <div class="mmRow mmRow-green" onclick="openEquipmentFormModal();closeMobileMenu()">
+        <div class="mmRow mmRow-green" onclick="openUnifiedAdd('equipment');closeMobileMenu()">
             <span>🚜</span><span>تسجيل الكمية - المعدات</span>
         </div>
-        <div class="mmRow mmRow-blue" onclick="openCompanyCashflowForm();closeMobileMenu()">
+        <div class="mmRow mmRow-blue" onclick="openUnifiedAdd('cfCompany');closeMobileMenu()">
             <span>🏢</span><span>تدفق نقدي - الشركة</span>
         </div>
-        <div class="mmRow mmRow-gold" onclick="openContractorCashflowForm();closeMobileMenu()">
+        <div class="mmRow mmRow-gold" onclick="openUnifiedAdd('cfContractor');closeMobileMenu()">
             <span>👷</span><span>تدفق نقدي - المقاولون</span>
         </div>
-        <div class="mmRow" onclick="openBOQFormModal();closeMobileMenu()">
+        <div class="mmRow" onclick="openUnifiedAdd('boq');closeMobileMenu()">
             <span>📋</span><span>جدول الكميات</span>
         </div>
-        <div class="mmRow" onclick="openScheduleFormModal();closeMobileMenu()">
+        <div class="mmRow" onclick="openUnifiedAdd('schedule');closeMobileMenu()">
             <span>📅</span><span>البرنامج الزمني</span>
         </div>
 
@@ -1889,5 +1889,6 @@
     <script src="ui_panels.js"></script>
     <script src="addtarget.js"></script>
     <script src="users_permissions.js"></script>
+    <script src="unified_add.js"></script>
 </body>
 </html>
