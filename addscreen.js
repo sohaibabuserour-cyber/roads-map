@@ -28,56 +28,84 @@
         const s = document.createElement('style');
         s.id = 'addScreenStyle';
         s.textContent = `
-#addScreen{position:fixed;inset:0;z-index:80000;background:#0a0716;display:none;flex-direction:row;font-family:'Cairo',sans-serif;direction:rtl;}
+/* ===== backdrop ===== */
+#addScreen{position:fixed;inset:0;z-index:80000;background:rgba(5,3,15,0.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;font-family:'Cairo',sans-serif;direction:rtl;padding:24px;}
 #addScreen.show{display:flex;}
+
+/* ===== centered shell (NOT fullscreen) ===== */
+#addScreen .as-shell{display:flex;flex-direction:row;width:min(1180px,96vw);height:min(760px,92vh);background:#0a0716;border:1px solid rgba(245,200,66,0.22);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(245,200,66,0.08);}
 
 /* ===== content area (right visually in RTL via order) ===== */
 #addScreen .as-content{flex:1;order:1;overflow:auto;background:linear-gradient(180deg,#0e0a1f 0%,#080513 100%);position:relative;}
-#addScreen .as-content-header{position:sticky;top:0;z-index:5;background:linear-gradient(135deg,#1a0a2e,#3d1060);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(245,200,66,0.18);box-shadow:0 4px 18px rgba(0,0,0,0.4);}
-#addScreen .as-content-title{color:#fff;font-weight:900;font-size:17px;display:flex;align-items:center;gap:10px;}
-#addScreen .as-close-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;width:38px;height:38px;border-radius:10px;font-size:16px;cursor:pointer;font-weight:800;transition:all .15s;}
+#addScreen .as-content-header{position:sticky;top:0;z-index:5;background:linear-gradient(135deg,#1a0a2e,#3d1060);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(245,200,66,0.18);box-shadow:0 4px 18px rgba(0,0,0,0.4);}
+#addScreen .as-content-title{color:#fff;font-weight:900;font-size:16px;display:flex;align-items:center;gap:10px;}
+#addScreen .as-close-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;width:34px;height:34px;border-radius:9px;font-size:15px;cursor:pointer;font-weight:800;transition:all .15s;}
 #addScreen .as-close-btn:hover{background:rgba(244,67,54,0.25);border-color:rgba(244,67,54,0.5);}
-#addScreen .as-tab-panel{display:none;padding:0;}
+#addScreen .as-tab-panel{display:none;padding:18px 20px 22px;}
 #addScreen .as-tab-panel.active{display:block;}
 
 /* ===== sidebar (left visually) ===== */
-#addScreen .as-sidebar{order:2;width:64px;background:linear-gradient(180deg,#15102a 0%,#0d0820 100%);border-left:1px solid rgba(245,200,66,0.15);transition:width .22s ease;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;position:relative;}
-#addScreen .as-sidebar.expanded,#addScreen .as-sidebar.pinned{width:240px;}
-#addScreen .as-sidebar-head{padding:14px 12px;border-bottom:1px solid rgba(245,200,66,0.12);display:flex;align-items:center;gap:10px;color:#f5c842;font-weight:900;font-size:13px;min-height:54px;}
-#addScreen .as-sidebar-head .as-pin-btn{margin-inline-start:auto;background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.25);color:#f5c842;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+#addScreen .as-sidebar{order:2;width:60px;background:linear-gradient(180deg,#15102a 0%,#0d0820 100%);border-left:1px solid rgba(245,200,66,0.15);transition:width .22s ease;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;position:relative;}
+#addScreen .as-sidebar.expanded,#addScreen .as-sidebar.pinned{width:220px;}
+#addScreen .as-sidebar-head{padding:12px 10px;border-bottom:1px solid rgba(245,200,66,0.12);display:flex;align-items:center;gap:10px;color:#f5c842;font-weight:900;font-size:13px;min-height:50px;}
+#addScreen .as-sidebar-head .as-pin-btn{margin-inline-start:auto;background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.25);color:#f5c842;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
 #addScreen .as-sidebar-head .as-pin-btn:hover{background:rgba(245,200,66,0.22);}
 #addScreen .as-sidebar-head .as-pin-btn.pinned{background:#f5c842;color:#1a0a2e;}
 #addScreen .as-sidebar-head .as-head-text{white-space:nowrap;opacity:0;transition:opacity .15s;}
 #addScreen .as-sidebar.expanded .as-head-text,#addScreen .as-sidebar.pinned .as-head-text{opacity:1;}
-#addScreen .as-tabs{flex:1;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:4px;}
-#addScreen .as-tab{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:rgba(255,255,255,0.75);cursor:pointer;font-size:13px;font-weight:700;border:1px solid transparent;transition:all .15s;white-space:nowrap;overflow:hidden;}
+#addScreen .as-tabs{flex:1;overflow-y:auto;padding:8px 6px;display:flex;flex-direction:column;gap:4px;}
+#addScreen .as-tab{display:flex;align-items:center;gap:12px;padding:10px 11px;border-radius:10px;color:rgba(255,255,255,0.75);cursor:pointer;font-size:13px;font-weight:700;border:1px solid transparent;transition:all .15s;white-space:nowrap;overflow:hidden;}
 #addScreen .as-tab:hover{background:rgba(245,200,66,0.08);color:#fff;}
 #addScreen .as-tab.active{background:rgba(245,200,66,0.18);border-color:rgba(245,200,66,0.4);color:#f5c842;}
-#addScreen .as-tab .as-tab-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center;}
+#addScreen .as-tab .as-tab-icon{font-size:17px;flex-shrink:0;width:22px;text-align:center;}
 #addScreen .as-tab .as-tab-label{opacity:0;transition:opacity .15s;}
 #addScreen .as-sidebar.expanded .as-tab-label,#addScreen .as-sidebar.pinned .as-tab-label{opacity:1;}
 
-/* ===== embed original modal inside tab panel ===== */
+/* ===== FLATTEN embedded modal: strip its outer shell so only fields/buttons show ===== */
 #addScreen .as-tab-panel .modal,
-#addScreen .as-tab-panel > [id$="FormModal"]{
+#addScreen .as-tab-panel > [id$="FormModal"],
+#addScreen .as-tab-panel > [id$="Modal"]{
     position:static !important;inset:auto !important;display:block !important;
     background:transparent !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
-    padding:0 !important;align-items:initial !important;justify-content:initial !important;
-    z-index:auto !important;width:100% !important;height:auto !important;opacity:1 !important;visibility:visible !important;
+    padding:0 !important;margin:0 !important;align-items:initial !important;justify-content:initial !important;
+    z-index:auto !important;width:100% !important;height:auto !important;max-width:none !important;
+    opacity:1 !important;visibility:visible !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;
 }
 #addScreen .as-tab-panel .modal.active,
 #addScreen .as-tab-panel .modal.open{display:block !important;}
-/* hide backdrop / overlay children that were used to close on click */
-#addScreen .as-tab-panel > div > div[onclick*="close"][style*="position:fixed"],
-#addScreen .as-tab-panel .bd-modal-overlay{display:none !important;}
-/* relax inner modal box sizing so it fits the content area */
+
+/* hide any fixed-position overlay/backdrop that was inside the original modal */
+#addScreen .as-tab-panel [style*="position:fixed"],
+#addScreen .as-tab-panel [style*="position: fixed"],
+#addScreen .as-tab-panel .bd-modal-overlay,
+#addScreen .as-tab-panel .modal-overlay,
+#addScreen .as-tab-panel .modal-backdrop{display:none !important;}
+
+/* hide the inner modal's own header/title bar & its own close button (we have ours) */
+#addScreen .as-tab-panel .modal-header,
+#addScreen .as-tab-panel .dark-modal-header,
+#addScreen .as-tab-panel [class*="modal-title-bar"],
+#addScreen .as-tab-panel [class*="ModalHeader"]{display:none !important;}
+#addScreen .as-tab-panel button[onclick*="close"][class*="close"],
+#addScreen .as-tab-panel .modal-close,
+#addScreen .as-tab-panel .close-modal-btn,
+#addScreen .as-tab-panel [aria-label="إغلاق"]:not(.as-close-btn),
+#addScreen .as-tab-panel [aria-label="Close"]:not(.as-close-btn){display:none !important;}
+
+/* relax inner modal box sizing so it fills the panel naturally */
 #addScreen .as-tab-panel .dark-modal-shell,
 #addScreen .as-tab-panel [class*="modal-box"],
-#addScreen .as-tab-panel > div > div:not([style*="position:fixed"]){max-width:none !important;width:auto !important;margin:0 !important;}
+#addScreen .as-tab-panel [class*="modal-content"],
+#addScreen .as-tab-panel [class*="modal-body"]{
+    max-width:none !important;width:auto !important;margin:0 !important;
+    background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;
+}
 
 @media (max-width:768px){
-    #addScreen .as-sidebar{width:54px;}
-    #addScreen .as-sidebar.expanded,#addScreen .as-sidebar.pinned{width:220px;}
+    #addScreen{padding:0;}
+    #addScreen .as-shell{width:100vw;height:100vh;border-radius:0;border:0;}
+    #addScreen .as-sidebar{width:52px;}
+    #addScreen .as-sidebar.expanded,#addScreen .as-sidebar.pinned{width:200px;}
 }
         `;
         document.head.appendChild(s);
@@ -89,6 +117,7 @@
         const root = document.createElement('div');
         root.id = 'addScreen';
         root.innerHTML = `
+<div class="as-shell" id="asShell">
 <div class="as-content">
     <div class="as-content-header">
         <div class="as-content-title" id="asCurrentTitle">✏️ شاشة الإضافة</div>
@@ -109,8 +138,14 @@
                 <span class="as-tab-label">${t.label}</span>
             </div>`).join('')}
     </div>
-</aside>`;
+</aside>
+</div>`;
         document.body.appendChild(root);
+
+        // click on backdrop (outside shell) to close
+        root.addEventListener('click', (e) => {
+            if (e.target === root) window.closeAddScreen();
+        });
 
         const sidebar = root.querySelector('#asSidebar');
         sidebar.addEventListener('mouseenter', () => sidebar.classList.add('expanded'));
