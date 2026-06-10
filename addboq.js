@@ -493,11 +493,17 @@
     };
 
     window.switchAdditionTab = function (tabId) {
-        document.querySelectorAll('#additionScreen .add-side-tab').forEach(el => {
-            el.classList.toggle('active', el.dataset.tab === tabId);
-        });
-        document.querySelectorAll('#additionScreen .add-tab-panel').forEach(el => {
-            el.style.display = (el.dataset.tab === tabId) ? 'flex' : 'none';
-        });
-    };
+    document.querySelectorAll('#additionScreen .add-side-tab').forEach(el => {
+        el.classList.toggle('active', el.dataset.tab === tabId);
+    });
+    document.querySelectorAll('#additionScreen .add-tab-panel').forEach(el => {
+        el.style.display = (el.dataset.tab === tabId) ? 'flex' : 'none';
+    });
+    // أضف الـ event
+    setTimeout(function() {
+        try {
+            window.dispatchEvent(new CustomEvent('additionTab:changed', { detail: { tab: tabId } }));
+        } catch(_) {}
+    }, 50);
+};
 })();
