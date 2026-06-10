@@ -2183,12 +2183,18 @@
   };
   // تبديل التبويب داخل شاشة الإضافة
   window.switchAdditionTab = function(name){
-    const root = document.getElementById('additionScreen'); if(!root) return;
-    root.querySelectorAll('.add-side-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    root.querySelectorAll('.add-tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === name));
-    // إعلام أي ملف منطق مهتم بالتبويب
-    try { window.dispatchEvent(new CustomEvent('additionTab:changed', { detail: { tab: name } })); } catch(_){}
-  };
+    document.querySelectorAll('#additionScreen .add-side-tab')
+        .forEach(el => el.classList.toggle('active', el.dataset.tab === name));
+    document.querySelectorAll('#additionScreen .add-tab-panel')
+        .forEach(p => p.classList.toggle('active', p.dataset.tab === name));
+    
+    // أعطِ الـ DOM وقت يتحدث الأول، ثم ابعت الـ event
+    setTimeout(function() {
+        try { 
+            window.dispatchEvent(new CustomEvent('additionTab:changed', { detail: { tab: name } })); 
+        } catch(_){}
+    }, 50);
+};
 </script>
 
     <script src="config.js"></script>
