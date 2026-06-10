@@ -124,6 +124,11 @@
             </div>
         </div>
 
+        <!-- تبويب إضافة (شاشة كاملة) -->
+        <div class="nav-tab" id="navTabAddPage" style="flex-shrink:0;" onclick="openAdditionScreen()">
+            <span>✏️ إضافة</span>
+        </div>
+
         <!-- تبويب مجموعات البنود -->
         <div class="nav-tab" id="navTabGroups" style="flex-shrink:0;position:relative;" onclick="toggleGroupsDropdown(event)">
             <span>🔗 مجموعات البنود</span>
@@ -1872,6 +1877,167 @@
     </div>
 </div>
     
+
+<!-- ==================== ADDITION SCREEN (شاشة كاملة — Sidebar يمين) ==================== -->
+<style>
+  #additionScreen{
+      display:none;position:fixed;inset:0;z-index:70010;
+      background:linear-gradient(180deg,#0c1e15 0%,#13261d 60%,#0c1e15 100%);
+      flex-direction:column;font-family:'Cairo',sans-serif;direction:rtl;
+  }
+  #additionScreen .add-topbar{
+      flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+      gap:10px;padding:14px 20px;background:linear-gradient(135deg,#3aaa5c,#1a7a4a);
+      color:#fff;border-bottom:1px solid rgba(255,255,255,0.1);
+  }
+  #additionScreen .add-topbar .ttl{display:flex;align-items:center;gap:10px;font-weight:900;font-size:16px;}
+  #additionScreen .add-topbar .ttl span:first-child{font-size:22px;}
+  #additionScreen .add-topbar .close-x{
+      background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;
+      width:34px;height:34px;border-radius:8px;font-size:16px;cursor:pointer;
+  }
+  #additionScreen .add-body{flex:1;display:flex;min-height:0;}
+  #additionScreen .add-sidebar{
+      flex-shrink:0;width:230px;background:rgba(0,0,0,0.35);
+      border-inline-start:1px solid rgba(255,255,255,0.06);
+      padding:14px 10px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;
+  }
+  #additionScreen .add-sidebar .side-title{
+      font-size:11px;font-weight:800;color:rgba(255,255,255,0.5);
+      padding:6px 10px;letter-spacing:0.3px;
+  }
+  #additionScreen .add-side-tab{
+      display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;
+      color:rgba(255,255,255,0.78);font-size:13px;font-weight:700;cursor:pointer;
+      border:1px solid transparent;transition:background .15s,border-color .15s,color .15s;
+  }
+  #additionScreen .add-side-tab:hover{background:rgba(255,255,255,0.05);color:#fff;}
+  #additionScreen .add-side-tab.active{
+      background:rgba(58,170,92,0.18);border-color:rgba(58,170,92,0.45);color:#a8e6bc;
+  }
+  #additionScreen .add-side-tab .ico{font-size:16px;}
+  #additionScreen .add-content{
+      flex:1;min-width:0;padding:18px 22px;overflow:auto;display:flex;flex-direction:column;
+  }
+  #additionScreen .add-tab-panel{display:none;flex-direction:column;flex:1;min-height:0;}
+  /* استخدام نفس تنسيقات #boqFormModal لجدول الكميات هنا */
+  #additionScreen .boq-form{display:grid;grid-template-columns:120px 1fr 110px 130px 130px auto;gap:8px;align-items:end;background:rgba(0,0,0,0.18);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);margin-bottom:10px;}
+  #additionScreen .boq-form label{display:block;font-size:11px;color:rgba(255,255,255,0.65);font-family:'Cairo',sans-serif;margin-bottom:4px;font-weight:700;}
+  #additionScreen .boq-form input{width:100%;box-sizing:border-box;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;}
+  #additionScreen .btn-save{background:linear-gradient(135deg,#3aaa5c,#1a7a4a);border:none;color:#fff;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;}
+  #additionScreen .btn-cancel-edit{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;white-space:nowrap;display:none;}
+  #additionScreen .edit-mode .btn-cancel-edit{display:inline-block;}
+  #additionScreen .edit-badge{display:none;font-size:11px;color:#f5c842;font-weight:800;font-family:'Cairo',sans-serif;margin-bottom:8px;}
+  #additionScreen .edit-mode .edit-badge{display:block;}
+  #additionScreen .boq-section-title{font-size:12px;font-weight:800;color:rgba(255,255,255,0.75);font-family:'Cairo',sans-serif;margin:10px 0 8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  #additionScreen .boq-section-title .spacer{flex:1;}
+  #additionScreen .btn-import{background:linear-gradient(135deg,#7e57c2,#4527a0);border:none;color:#fff;padding:7px 14px;border-radius:7px;font-size:11px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(126,87,194,0.35);}
+  #additionScreen .btn-import:hover{filter:brightness(1.1);}
+  #additionScreen .btn-revised{background:rgba(58,170,92,0.15);border:1px solid rgba(58,170,92,0.4);color:#5cc890;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;}
+  #additionScreen .boq-rev-row{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;}
+  #additionScreen .boq-rev-row .lbl{font-size:12px;font-weight:800;color:#5cc890;font-family:'Cairo',sans-serif;white-space:nowrap;min-width:120px;}
+  #additionScreen .boq-rev-row input{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:'Cairo',sans-serif;font-size:12px;}
+  #additionScreen .boq-table-wrap{flex:1;min-height:160px;overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);}
+  #additionScreen .boq-data{width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;}
+  #additionScreen .boq-data th{background:#0e2a1d;color:rgba(255,255,255,0.7);font-size:11px;padding:9px;text-align:right;font-weight:800;position:sticky;top:0;z-index:2;}
+  #additionScreen .boq-data td{padding:9px;font-size:12px;color:#e0e6ef;border-top:1px solid rgba(255,255,255,0.05);vertical-align:top;}
+  #additionScreen .boq-data .col-itemno{width:90px;white-space:nowrap;}
+  #additionScreen .boq-data .col-itemdesc{white-space:normal;overflow-wrap:anywhere;min-width:220px;max-width:480px;line-height:1.6;}
+  #additionScreen .boq-data tbody tr{cursor:pointer;transition:background 0.15s;}
+  #additionScreen .boq-data tbody tr:hover{background:rgba(58,170,92,0.10);}
+  #additionScreen .boq-data tbody tr.active-edit{background:rgba(245,200,66,0.15);}
+  #additionScreen .boq-empty{text-align:center;padding:24px;color:rgba(255,255,255,0.45);font-size:12px;}
+  #additionScreen .add-footer{flex-shrink:0;padding:10px 22px;border-top:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);}
+  #additionScreen .add-footer .status{font-size:11px;color:rgba(255,255,255,0.55);font-family:'Cairo',sans-serif;}
+  @media (max-width: 820px){
+    #additionScreen .add-sidebar{width:64px;padding:10px 6px;}
+    #additionScreen .add-sidebar .side-title{display:none;}
+    #additionScreen .add-side-tab{justify-content:center;padding:11px 6px;}
+    #additionScreen .add-side-tab .lbl{display:none;}
+    #additionScreen .boq-form{grid-template-columns:1fr 1fr;}
+    #additionScreen .boq-form > .form-actions{grid-column:1 / -1;display:flex;gap:8px;}
+  }
+</style>
+<div id="additionScreen">
+    <div class="add-topbar">
+        <div class="ttl"><span>✏️</span><span>إضافة</span></div>
+        <button class="close-x" onclick="closeAdditionScreen()">✕</button>
+    </div>
+    <div class="add-body">
+        <!-- Sidebar (right because dir=rtl) -->
+        <aside class="add-sidebar">
+            <div class="side-title">التبويبات</div>
+            <div class="add-side-tab active" data-tab="boq" onclick="switchAdditionTab('boq')">
+                <span class="ico">📋</span><span class="lbl">جدول الكميات</span>
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <section class="add-content">
+            <!-- Panel: جدول الكميات -->
+            <div class="add-tab-panel" data-tab="boq" style="display:flex;">
+                <div id="addBoqFormWrap">
+                    <div class="edit-badge">✏️ تعديل بند موجود — اضغط حفظ لتحديثه</div>
+                    <div class="boq-form">
+                        <div>
+                            <label>رقم البند</label>
+                            <input type="text" id="addBoqItemNo" placeholder="1-1" oninput="updateAddBOQPreview()">
+                        </div>
+                        <div>
+                            <label>البند (الوصف)</label>
+                            <input type="text" id="addBoqDesc" placeholder="وصف البند" oninput="updateAddBOQPreview()">
+                        </div>
+                        <div>
+                            <label>الوحدة</label>
+                            <input type="text" id="addBoqUnit" placeholder="م³" oninput="updateAddBOQPreview()">
+                        </div>
+                        <div>
+                            <label>السعر</label>
+                            <input type="number" step="any" id="addBoqPrice" placeholder="0.00" oninput="updateAddBOQPreview()">
+                        </div>
+                        <div>
+                            <label>الكمية التعاقدية</label>
+                            <input type="number" step="any" id="addBoqContractQty" placeholder="0" oninput="updateAddBOQPreview()">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-save" onclick="saveAddBOQItem()">💾 حفظ</button>
+                            <button class="btn-cancel-edit" onclick="cancelAddBOQEdit()">إلغاء</button>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(0,0,0,0.18);padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);margin-bottom:14px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                            <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);font-family:'Cairo',sans-serif;">📊 الكميات المعدّلة (اختياري)</div>
+                            <button type="button" class="btn-revised" onclick="addAddBOQRevisedColumn()">＋ إضافة جدول معدل</button>
+                        </div>
+                        <div id="addBoqRevisedList" style="display:flex;flex-direction:column;gap:8px;"></div>
+                    </div>
+                </div>
+
+                <div class="boq-section-title">
+                    📊 البنود المحفوظة <span id="addBoqItemsCount" style="color:#5cc890;"></span>
+                    <span class="spacer"></span>
+                    <input type="file" id="addBoqImportFile" accept=".csv,.txt" style="display:none;" onchange="importAddBOQFromFile(this)">
+                    <button class="btn-import" onclick="document.getElementById('addBoqImportFile').click()">⬆️ رفع من ملف (CSV / TXT)</button>
+                    <button class="btn-import" style="background:linear-gradient(135deg,#1565c0,#0d47a1);" onclick="refreshAddBOQData()">🔄 تحديث</button>
+                </div>
+                <div class="boq-table-wrap">
+                    <table class="boq-data">
+                        <thead id="addBoqItemsHead">
+                            <tr><th class="col-itemno">رقم البند</th><th class="col-itemdesc">البند</th><th>الوحدة</th><th>السعر</th><th>الكمية التعاقدية</th><th>كمية معدلة</th><th>الإجمالي</th><th class="col-actions"></th></tr>
+                        </thead>
+                        <tbody id="addBoqItemsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="add-footer">
+        <div class="status" id="addBoqStatusMsg"></div>
+        <button class="close-x" style="width:auto;padding:8px 16px;font-size:12px;font-weight:700;" onclick="closeAdditionScreen()">إغلاق</button>
+    </div>
+</div>
+
     <script src="config.js"></script>
     <script src="utils.js"></script>
     <script src="map.js"></script>
@@ -1880,6 +2046,7 @@
     <script src="main.js"></script>
     <script src="settings.js"></script>
     <script src="categories.js"></script>
+    <script src="addboq.js"></script>
     <script src="stats.js"></script>
     <script src="viewcashflow.js"></script>
     <script src="viewequipment.js"></script>
