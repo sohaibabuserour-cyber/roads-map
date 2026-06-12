@@ -53,7 +53,7 @@
     function _getDropdown(id) { return document.getElementById(id); }
 
     function _openDropdown(ddId, triggerEl) {
-        ['reportsDropdown', 'addDropdown'].forEach(id => {
+        ['reportsDropdown'].forEach(id => {
             if (id !== ddId) {
                 const d = _getDropdown(id);
                 if (d) d.style.display = 'none';
@@ -94,21 +94,9 @@
         if (d) d.style.display = 'none';
     };
 
-    window.toggleAddDropdown = function (e) {
-        if (e) e.stopPropagation();
-        _openDropdown('addDropdown', e && e.currentTarget);
-    };
-    window.closeAddDropdown = function () {
-        const d = _getDropdown('addDropdown');
-        if (d) d.style.display = 'none';
-    };
-
     document.addEventListener('click', function (e) {
         if (!e.target.closest('#navTabReports') && !e.target.closest('#reportsDropdown')) {
             window.closeReportsDropdown();
-        }
-        if (!e.target.closest('#navTabAdd') && !e.target.closest('#addDropdown')) {
-            window.closeAddDropdown();
         }
         if (!e.target.closest('#navTabGroups') && !e.target.closest('#groupsDropdown')) {
             window.closeGroupsDropdown?.();
@@ -666,8 +654,8 @@
         window.closeCompanyCashflowForm?.();
         window.closeContractorCashflowForm?.();
         window.closeReportsDropdown?.();
-        window.closeAddDropdown?.();
         window.closeGroupsDropdown?.();
+        window.closeAdditionScreen?.();
         document.querySelectorAll(
             '.notif-panel,.theme-panel,.user-dropdown,.coords-panel,.contractor-panel,.settings-panel'
         ).forEach(p => p.classList.remove('active'));

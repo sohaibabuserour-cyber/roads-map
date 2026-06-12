@@ -3727,7 +3727,7 @@
 
             /* تبويب التقارير وإضافة — يصغروا ويحتفظوا بشكلهم */
             #navTabReports,
-            #navTabAdd {
+            #navTabAddPage {
                 padding: 0 8px !important;
                 font-size: 11px !important;
                 height: 40px;
@@ -3738,7 +3738,7 @@
             /* نص التبويبات: اختصر لأيقونة فقط على أصغر الشاشات */
             @media (max-width: 400px) {
                 #navTabReports span:first-child,
-                #navTabAdd span:first-child {
+                #navTabAddPage span:first-child {
                     display: none;
                 }
             }
@@ -3831,7 +3831,7 @@
             .nav-logo img { height: 34px; }
 
             #navTabReports,
-            #navTabAdd {
+            #navTabAddPage {
                 padding: 0 10px !important;
                 font-size: 11.5px !important;
             }
@@ -4002,7 +4002,7 @@
 
             /* أخفِ كل تبويبات الـ navbar */
             #navTabReports,
-            #navTabAdd,
+            #navTabAddPage,
             .nav-tabs { display: none !important; }
 
             /* أخفِ أيقونات الأدوات في شريط التنقل، لكن دع لوحات الـ panel تعمل من القائمة */

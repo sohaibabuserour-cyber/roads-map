@@ -32,18 +32,20 @@ const UP_PERMISSIONS = [
       selectors: ['[onclick*="openEquipmentModal"]'] },
 
     // الإضافة
-    { key: 'add.equipment',         label: '🚜 تسجيل كمية المعدات',       group: 'الإضافة',
-      selectors: ['[onclick*="openEquipmentFormModal"]'] },
+    { key: 'add.equipment',         label: '🚜 المنفذ اليومي - المعدات', group: 'الإضافة',
+      selectors: ['#additionScreen .add-side-tab[data-tab="equipment"]', '[onclick*="openEquipmentFormModal"]'] },
     { key: 'add.cfCompany',         label: '🏢 تدفق نقدي - الشركة',       group: 'الإضافة',
-      selectors: ['[onclick*="openCompanyCashflowForm"]'] },
+      selectors: ['#additionScreen .add-side-tab[data-tab="cashco"]', '[onclick*="openCompanyCashflowForm"]'] },
     { key: 'add.cfContractors',     label: '👷 تدفق نقدي - المقاولون',    group: 'الإضافة',
-      selectors: ['[onclick*="openContractorCashflowForm"]'] },
+      selectors: ['#additionScreen .add-side-tab[data-tab="cashctr"]', '[onclick*="openContractorCashflowForm"]'] },
+    { key: 'add.qty',               label: '📊 تسجيل الكمية التراكمية',   group: 'الإضافة',
+      selectors: ['#additionScreen .add-side-tab[data-tab="qty"]'] },
     { key: 'add.target',            label: '🎯 المستهدف الشهري',          group: 'الإضافة',
-      selectors: ['[onclick*="openTargetFormTab"]'] },
+      selectors: ['#additionScreen .add-side-tab[data-tab="target"]'] },
     { key: 'add.boq',               label: '📋 جدول الكميات',             group: 'الإضافة',
-      selectors: ['[onclick*="openBOQFormModal"]'] },
+      selectors: ['#additionScreen .add-side-tab[data-tab="boq"]'] },
     { key: 'add.schedule',          label: '📅 البرنامج الزمني',          group: 'الإضافة',
-      selectors: ['[onclick*="openScheduleFormModal"]'] },
+      selectors: ['#additionScreen .add-side-tab[data-tab="schedule"]'] },
 
     // الأدوات
     { key: 'tools.groups',          label: '🔗 مجموعات البنود',           group: 'الأدوات',
@@ -93,14 +95,21 @@ function applyUserPermissions() {
         });
     });
 
-    // إخفاء التبويبات الأم (التقارير/الإضافة) إذا كانت كل عناصرها مخفية
-    ['navTabReports', 'navTabAdd'].forEach(id => {
-        const tab = document.getElementById(id);
-        if (!tab) return;
-        const items = tab.querySelectorAll('.tab-sub-item');
+    // إخفاء تبويب التقارير إذا كانت كل عناصره مخفية
+    const reportsTab = document.getElementById('navTabReports');
+    if (reportsTab) {
+        const items = reportsTab.querySelectorAll('.tab-sub-item');
         const visible = Array.from(items).some(i => i.style.display !== 'none');
-        tab.style.display = visible ? '' : 'none';
-    });
+        reportsTab.style.display = visible ? '' : 'none';
+    }
+
+    // إخفاء تبويب الإضافة إذا لم يتبقَّ أي تبويب داخل الشاشة
+    const addPage = document.getElementById('navTabAddPage');
+    if (addPage) {
+        const tabs = document.querySelectorAll('#additionScreen .add-side-tab');
+        const anyVisible = Array.from(tabs).some(t => t.style.display !== 'none');
+        addPage.style.display = anyVisible ? '' : 'none';
+    }
 }
 
 window.applyUserPermissions = applyUserPermissions;

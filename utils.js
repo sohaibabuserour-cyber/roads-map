@@ -100,6 +100,113 @@ function parseNum(v) {
     return isNaN(n) ? 0 : n;
 }
 
+// HTML escape for safe template insertion
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+    );
+}
+
+// Extract Google Sheet ID from URL or return trimmed raw id
+function extractSheetId(idOrUrl) {
+    if (!idOrUrl) return '';
+    let id = String(idOrUrl).trim();
+    if (/\/d\//.test(id)) {
+        const m = id.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (m) return m[1];
+    }
+    return id;
+}
+
+function sheetIdFromUrl(url) {
+    return extractSheetId(url);
+}
+
+function getConfigScriptUrl(configKey, windowVarName, localStorageKey) {
+    return (window.sheetIdsConfig && window.sheetIdsConfig[configKey])
+        || (windowVarName && window[windowVarName])
+        || (localStorageKey && localStorage.getItem(localStorageKey))
+        || '';
+}
+
+function getConfigSheetId(configKey, ...fallbacks) {
+    let id = (window.sheetIdsConfig && window.sheetIdsConfig[configKey]) || '';
+    if (!id) {
+        for (const fb of fallbacks) {
+            if (fb) { id = fb; break; }
+        }
+    }
+    return extractSheetId(id);
+}
+
+function getCurrentUser() {
+    return (window.currentUser && (window.currentUser.name || window.currentUser.email))
+        || (typeof currentUser !== 'undefined' && currentUser && (currentUser.name || currentUser.email))
+        || 'unknown';
+}
+
+/* Normalize item numbers:
+   "1.10" → "1.1"   |   "1.00" → "1"   |   "1.0" → "1"   |   "01" → "1" */
+function normItemNo(s) {
+    let str = (s == null ? '' : String(s)).trim();
+    if (!str) return '';
+    const m = str.match(/^([0-9.\-_/\s]+)(.*)$/);
+    if (!m) return str;
+    let core = m[1].trim();
+    const suffix = m[2] || '';
+    if (/^\d+\.\d+$/.test(core))       core = String(parseFloat(core));
+    else if (/^\d+\.0*$/.test(core))   core = core.replace(/\.0*$/, '');
+    else if (/^0+\d+$/.test(core))     core = String(parseInt(core, 10));
+    return core + suffix;
+}
+
+function cmpItemNo(a, b) {
+    const sa = String(a == null ? '' : a).trim();
+    const sb = String(b == null ? '' : b).trim();
+    const pa = sa.split(/[.\-_/\s]+/).map(s => { const n = parseFloat(s); return (s !== '' && !isNaN(n)) ? n : s; });
+    const pb = sb.split(/[.\-_/\s]+/).map(s => { const n = parseFloat(s); return (s !== '' && !isNaN(n)) ? n : s; });
+    const n = Math.max(pa.length, pb.length);
+    for (let i = 0; i < n; i++) {
+        const x = pa[i], y = pb[i];
+        if (x === undefined) return -1;
+        if (y === undefined) return 1;
+        if (typeof x === 'number' && typeof y === 'number') { if (x !== y) return x - y; }
+        else { const r = String(x).localeCompare(String(y), 'ar', { numeric: true }); if (r) return r; }
+    }
+    return 0;
+}
+
+// Parse CSV / TSV / semicolon-delimited text into row arrays
+function parseDelimitedText(text) {
+    const sample = text.split(/\r?\n/).slice(0, 5).join('\n');
+    let delim = ',';
+    if (sample.indexOf('\t') > -1) delim = '\t';
+    else if (sample.indexOf(';') > -1 && sample.split(';').length > sample.split(',').length) delim = ';';
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+    return lines.map(l => delim === ','
+        ? parseCSVLine(l)
+        : l.split(delim).map(s => s.trim().replace(/^"|"$/g, '')));
+}
+
+function detectHeaderRow(row, keywords) {
+    return row.some(c => keywords.some(k => String(c || '').toLowerCase().includes(k)));
+}
+
+// Normalize date values to YYYY-MM-DD for <input type="date">
+function normDateInput(v) {
+    if (!v) return '';
+    if (v instanceof Date) return _dateToInputVal(v);
+    const d = _parseAnyDate(v);
+    if (d) return _dateToInputVal(d);
+    const s = String(v).trim();
+    let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (m) return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+    m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+    if (m) return `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+    const d2 = new Date(s);
+    return isNaN(d2.getTime()) ? s : _dateToInputVal(d2);
+}
+
 // أيضاً على window للتوافق مع الكود القديم
 window.parseCSVLine        = parseCSVLine;
 window.fmtNum              = fmtNum;
@@ -109,8 +216,25 @@ window._fmtDate            = _fmtDate;
 window._dateToStorage      = _dateToStorage;
 window._dateToInputVal     = _dateToInputVal;
 window.parseNum            = parseNum;
+window.escHtml             = escHtml;
+window._esc                = escHtml;
+window.extractSheetId      = extractSheetId;
+window.sheetIdFromUrl      = sheetIdFromUrl;
+window.getConfigScriptUrl  = getConfigScriptUrl;
+window.getConfigSheetId    = getConfigSheetId;
+window.getCurrentUser      = getCurrentUser;
+window.normItemNo          = normItemNo;
+window._normItemNo         = normItemNo;
+window.cmpItemNo           = cmpItemNo;
+window._cmpItemNo          = cmpItemNo;
+window.parseDelimitedText  = parseDelimitedText;
+window.detectHeaderRow     = detectHeaderRow;
+window.normDateInput       = normDateInput;
+window._normDateInput      = normDateInput;
 window.Utils = {
     parseCSVLine, fmtNum, fmtNumShort,
     _parseAnyDate, _fmtDate, _dateToStorage, _dateToInputVal,
-    parseNum
+    parseNum, escHtml, extractSheetId, sheetIdFromUrl,
+    getConfigScriptUrl, getConfigSheetId, getCurrentUser,
+    normItemNo, cmpItemNo, parseDelimitedText, detectHeaderRow, normDateInput
 };
