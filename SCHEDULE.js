@@ -1,9 +1,0 @@
-/* SCHEDULE.js */
-(function (global) {
-'use strict';
-function toNum(v){if(v==null||v==='') return 0;const n=parseFloat(String(v).replace(/,/g,'').trim());return isNaN(n)?0:n;}
-function processItemsTab(rows){return (rows||[]).map(r=>{const s=_parseAnyDate(r.startDate);const e=_parseAnyDate(r.endDate);const days=(s&&e)?Math.max(1,Math.round((e-s)/86400000)+1):0;return {item:(r.item||'').trim(),startDate:_dateToInputVal(s),endDate:_dateToInputVal(e),days};}).filter(r=>r.item).sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));}
-function processPlanTab(rows,opts){opts=opts||{};const cleaned=(rows||[]).map(r=>({date:_parseAnyDate(r.date),plannedValue:toNum(r.plannedValue||r.value)})).filter(r=>r.date).sort((a,b)=>a.date-b.date);const sum=cleaned.reduce((a,r)=>a+r.plannedValue,0);const total=toNum(opts.totalValue)>0?toNum(opts.totalValue):sum;let cumVal=0;let cumPct=0;return cleaned.map(r=>{cumVal+=r.plannedValue;const dailyPct=total>0?(r.plannedValue/total)*100:0;cumPct+=dailyPct;return {date:_dateToInputVal(r.date),plannedValue:r.plannedValue,cumValue:+cumVal.toFixed(2),dailyPct:+dailyPct.toFixed(2),cumPct:+Math.min(cumPct,100).toFixed(2)};});}
-function buildPlanFromItems(items){const merge={};(items||[]).forEach(it=>{const s=_parseAnyDate(it.startDate);const e=_parseAnyDate(it.endDate);const v=toNum(it.value);if(!s||!e||v<=0)return;const days=Math.max(1,Math.round((e-s)/86400000)+1);const per=v/days;for(let i=0;i<days;i++){const d=new Date(s.getFullYear(),s.getMonth(),s.getDate()+i);const k=_dateToInputVal(d);merge[k]=(merge[k]||0)+per;}});return Object.keys(merge).sort().map(d=>({date:d,plannedValue:+merge[d].toFixed(2)}));}
-global.Schedule={processItemsTab,processPlanTab,buildPlanFromItems};
-})(window);
